@@ -1,0 +1,6 @@
+[workspace]
+members = [
+  "example",
+  "packages/nestrs",
+  "packages/openapi"
+]
