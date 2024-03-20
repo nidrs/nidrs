@@ -1,5 +1,4 @@
 use std::any::Any;
-
 pub trait Module {
   fn register() -> DynamicModule;
 }

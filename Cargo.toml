@@ -2,5 +2,5 @@
 members = [
   "example",
   "packages/nestrs",
-  "packages/openapi"
+  "packages/nestrs-macro"
 ]
