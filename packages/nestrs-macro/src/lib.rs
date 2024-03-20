@@ -106,3 +106,21 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
         #input
     })
 }
+
+#[proc_macro_attribute]
+pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
+    // 解析宏的参数
+    // let attr_args = parse_macro_input!(args as );
+
+    // 解析输入的结构体
+    // let input2 = parse_macro_input!(input as ItemStruct);
+
+    // 打印宏的参数
+    // println!("Controller args: {:?}", attr_args);
+
+    // 打印输入的结构体
+    // println!("Controller input: {:?}", input2.ident);
+
+    // 返回原始的输入，因为我们并没有修改它
+    return input;
+}
