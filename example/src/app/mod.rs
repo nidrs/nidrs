@@ -1,4 +1,4 @@
-use std::{any::Any, collections::HashMap, rc::Rc};
+use std::{any::Any, collections::HashMap, rc::Rc, sync::Arc};
 
 use nestrs_macro::module;
 
@@ -20,15 +20,17 @@ impl nestrs::Module for AppModule {
         services: HashMap::new(),
       };
       let app_service = service::AppService{};
-      ctx.services.insert("app_service".to_string(), Box::new(Rc::new(app_service)));
+      ctx.services.insert("app_service".to_string(), Box::new(Arc::new(app_service)));
 
       let app_service = ctx.services.get("app_service");
       let app_service = app_service.unwrap();
       let app_service = app_service.clone();
-      let app_service = app_service.downcast_ref::<Rc<service::AppService>>().unwrap();
+      let app_service = app_service.downcast_ref::<Arc<service::AppService>>().unwrap();
       let app_controller = controller::AppController{
         app_service: app_service.clone(),
       };
+
+      app_controller.register();
 
       nestrs::DynamicModule{
         controllers: vec![],

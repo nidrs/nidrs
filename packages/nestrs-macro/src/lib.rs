@@ -67,7 +67,19 @@ pub fn get(args: TokenStream, input: TokenStream) -> TokenStream {
     // };
     
     // expanded.into()
-    return  input;
+    // 解析输入的结构体
+    let input = parse_macro_input!(input as ItemFn);
+
+    // 打印宏的参数
+    // println!("Controller args: {:?}", attr_args);
+
+    // 打印输入的结构体
+    println!("Get: {:?}", input.sig.ident);
+
+    // 返回原始的输入，因为我们并没有修改它
+    TokenStream::from(quote! {
+        #input
+    })
 }
 
 #[proc_macro_attribute]
