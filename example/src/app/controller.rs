@@ -1,10 +1,12 @@
+use std::rc::Rc;
+
 use nestrs_macro::{controller, get};
 
-use super::service;
+use super::{service, Ctx};
 
 #[controller("/app")]
 pub struct  AppController{
-  app_service: service::AppService
+  pub app_service: Rc<service::AppService>
 }
 
 impl AppController {
@@ -12,6 +14,7 @@ impl AppController {
   fn get_hello_world(&self)-> String{
     self.app_service.get_hello_world()
   }
+
 }
 
 impl nestrs::Controller for AppController {

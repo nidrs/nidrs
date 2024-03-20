@@ -1,0 +1,15 @@
+{
+  name: 'root'
+  services: {
+    appService: AppService.register(self)
+  }
+  controllers: {
+    appController: AppController.register(self)
+  }
+  routes: {
+    '/hello': 'AppController.hello'
+  }
+  children: {
+    userModule: {}
+  }
+}
