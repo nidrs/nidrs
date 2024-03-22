@@ -1,10 +1,14 @@
+#![allow(warnings, unused)]
 extern crate proc_macro;
 
+use std::any::Any;
+
 use proc_macro::{TokenStream, Span};
-use syn::{parse_macro_input, ItemFn, ItemStruct};
+use proc_macro2::Punct;
+use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatType};
 use syn::punctuated::Punctuated;
 use syn::parse::{Parse, ParseStream};
-use quote::quote;
+use quote::{quote, ToTokens};
 
 struct Args {
     vars: Vec<syn::Expr>
@@ -45,40 +49,43 @@ impl Args {
 #[proc_macro_attribute]
 pub fn get(args: TokenStream, input: TokenStream) -> TokenStream {
     // let args = parse_macro_input!(args as Args);
-    // let func = parse_macro_input!(input as ItemFn);
-    
-    // let vis = func.vis.clone();
-    // let ident = func.sig.ident.clone();
-    
-    // let method = args.get_method().unwrap();
-    // let route = args.get_route().unwrap();
-    
-    // let expanded = quote! {
-    //     #[allow(non_camel_case_types)]
-    //     #vis struct #ident;
-        
-    //     impl #ident {
-    //         #vis fn route() -> axum::Router::<AppState> {
-    //             #func
-                
-    //             axum::Router::new().route(#route, #method (#ident))
-    //         }
-    //     }
-    // };
-    
+    let t2 = input.clone();
+
     // expanded.into()
     // 解析输入的结构体
-    let input = parse_macro_input!(input as ItemFn);
+    let func = parse_macro_input!(input as ItemFn);
 
-    // 打印宏的参数
-    // println!("Controller args: {:?}", attr_args);
+    let vis = func.vis.clone();
+    let ident = func.sig.ident.clone();
 
-    // 打印输入的结构体
-    println!("Get: {:?}", input.sig.ident);
+    let func_args = func.sig.inputs.iter().map(|arg| {
+        match arg {
+            FnArg::Typed(PatType { pat, ty, .. }) => {
+                let pat = pat.to_token_stream();
+                let ty = ty.to_token_stream();
+                quote! {
+                    #pat: #ty
+                }
+            }
+            _ => quote! {}
+        }
+    }).reduce(|a, b| {
+        if(a.to_string().is_empty()) {
+            return b;
+        }
+        quote! {
+            #a, #b
+        }
+    }).unwrap_or(quote! {});
+
+    println!("Get: {:?}, Params: {:?}", ident, func_args.to_string());
+
+
+    // println!("Get: {:?}, Params {:?}", ident, func.sig.inputs.first().unwrap());
 
     // 返回原始的输入，因为我们并没有修改它
     TokenStream::from(quote! {
-        #input
+        #func
     })
 }
 

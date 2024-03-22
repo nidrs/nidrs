@@ -1,3 +1,4 @@
+#[derive(Clone, Debug, Default)]
 pub struct AppService{}
 
 impl AppService {
