@@ -1,7 +1,8 @@
 #![allow(warnings, unused)]
 use std::{any::Any, collections::HashMap, rc::Rc, sync::Arc};
 
-use nestrs::Ctx;
+use axum::Router;
+use nestrs::{Ctx, Module};
 use nestrs_macro::module;
 
 use crate::AppState;
@@ -16,9 +17,9 @@ pub mod service;
 pub struct AppModule;
 
 impl nestrs::Module for AppModule {
-    fn register(self, router: axum::Router<Ctx>) -> nestrs::DynamicModule {
+    fn register(self) -> nestrs::DynamicModule {
       println!("Registering App Module");
-      let mut ctx = Ctx{
+      let mut ctx = ModuleCtx{
         services: HashMap::new(),
       };
       let app_service = service::AppService{};
@@ -31,15 +32,14 @@ impl nestrs::Module for AppModule {
       let app_controller = controller::AppController{
         app_service: app_service.clone(),
       };
-      app_controller.register(router);
+      let router = app_controller.register();
 
       nestrs::DynamicModule{
-        controllers: vec![],
-        services: vec![]
+        router: router,
       }
     }
 }
 
-struct Ctx{
+struct ModuleCtx{
   services: HashMap<String, Box<dyn Any>>
 }

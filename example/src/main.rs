@@ -7,7 +7,8 @@ fn main() {
 
     let app_state = AppState{};
 
-    nestrs::NestFactory::create(app::AppModule, app_state).listen::<AppError>(3000);
+    let app = nestrs::NestFactory::create(app::AppModule, app_state).listen::<AppError>(3000);
+    let _ = tokio::runtime::Runtime::new().unwrap().block_on(app);
 }
 
 

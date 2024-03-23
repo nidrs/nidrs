@@ -3,7 +3,7 @@
 
 use std::{any::Any, fmt::Debug, sync::Arc};
 pub trait Module {
-    fn register(self, router: axum::Router<Arc<Ctx>>) -> DynamicModule;
+    fn register(self) -> DynamicModule;
 }
 
 pub trait Controller {}
@@ -11,12 +11,11 @@ pub trait Controller {}
 pub trait Service {}
 
 pub struct DynamicModule {
-    pub controllers: Vec<Box<dyn Controller>>,
-    pub services: Vec<Box<dyn Service>>,
+    pub router: axum::Router<Ctx>,
 }
 
 pub struct NestFactory {
-    router: axum::Router<Arc<Ctx>>,
+    router: axum::Router<Ctx>,
 }
 
 impl NestFactory {
@@ -24,27 +23,30 @@ impl NestFactory {
         module: T,
         state: S,
     ) -> Self {
-        let router: axum::Router<Arc<Ctx>> = axum::Router::new();
-        let dynamic_module = module.register(router.clone());
+        let router = axum::Router::new().route("/", axum::routing::get(|| async move {
+            "Hello, World!"
+        }));
+        let dynamic_module = module.register();
         NestFactory {
-            router: router.with_state(Arc::new(Ctx{}) as Arc<Ctx>),
+            router: router.merge(dynamic_module.router)
         }
     }
 
-    pub async fn listen<E>(&self, port: u32) -> Result<(), E>
+    pub async fn listen<E>(self, port: u32) -> Result<(), E>
     where
         E: std::convert::From<std::io::Error>,
     {
         let tcp = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await.map_err(E::from)?;
         let addr = tcp.local_addr().map_err(E::from)?;
         println!("Listening on {}", addr);
-        let base_router = axum::Router::new();
-        let router = self.router.clone();
-        base_router.merge(router);
-        axum::serve(tcp, base_router).await?;
+        
+        axum::serve(tcp, self.router.with_state(Ctx{})).await?;
         Ok(())
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Ctx{
 }
+
+pub type Inject<T> = Arc<T>;
