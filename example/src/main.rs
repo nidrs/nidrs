@@ -1,10 +1,14 @@
 use std::sync::Arc;
 
+use nestrs_macro::get_route_meta;
+
 mod app;
 mod user;
 
 fn main() {
     println!("Hello, world!");
+
+    get_route_meta!(println!("Hello, Nestrs!"));
 
     let app_state = AppState{};
 

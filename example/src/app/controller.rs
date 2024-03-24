@@ -21,6 +21,10 @@ impl AppController {
     pub async fn get_hello_world(&self, State(state): State<StateCtx>) -> String {
         self.app_service.get_hello_world()
     }
+    #[get("/hello2")]
+    pub async fn get_hello_world2(&self, State(state): State<StateCtx>) -> String {
+        self.app_service.get_hello_world()
+    }
 }
 
 

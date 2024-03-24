@@ -569,6 +569,7 @@ dependencies = [
 name = "nestrs-macro"
 version = "0.1.0"
 dependencies = [
+ "once_cell",
  "proc-macro2",
  "quote",
  "syn",
