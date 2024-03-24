@@ -1,6 +1,10 @@
+use nestrs::Inject;
+
 
 #[derive(Clone, Debug, Default)]
-pub struct AppService{}
+pub struct AppService{
+    user_service: Inject<crate::user::service::UserService>
+}
 
 impl AppService {
     pub fn get_hello_world(&self) -> String {

@@ -5,7 +5,7 @@ use std::any::Any;
 
 use proc_macro::{TokenStream, Span};
 use proc_macro2::Punct;
-use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatType};
+use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatType, Type};
 use syn::punctuated::Punctuated;
 use syn::parse::{Parse, ParseStream};
 use quote::{quote, ToTokens};
@@ -118,7 +118,9 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
     // println!("Controller args: {:?}", attr_args);
 
     // 打印输入的结构体
-    println!("Controller input: {:?}", input.ident);
+    println!("Controller input: {:?}", input.fields.iter().map(|field| {
+        field.ty.clone()
+    }).collect::<Vec<Type>>());
 
     // 返回原始的输入，因为我们并没有修改它
     TokenStream::from(quote! {

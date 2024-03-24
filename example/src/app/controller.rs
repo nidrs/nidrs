@@ -7,7 +7,7 @@ use nestrs_macro::{controller, get};
 
 use crate::AppState;
 
-use super::{service, Ctx};
+use super::{service, StateCtx};
 use std::sync::Arc;
 
 #[controller("/app")]
@@ -18,13 +18,14 @@ pub struct AppController {
 
 impl AppController {
     #[get("/hello")]
-    pub async fn get_hello_world(&self, State(state): State<Ctx>) -> String {
+    pub async fn get_hello_world(&self, State(state): State<StateCtx>) -> String {
         self.app_service.get_hello_world()
     }
 }
 
-impl AppController {
-    pub fn register(self) -> Router<Ctx> {
+
+impl nestrs::Controller for AppController {
+    fn register(self) -> Router<StateCtx> {
         let router = axum::Router::new();
         let that = Arc::new(self);
         let cloned_that = Arc::clone(&that); // Clone the Arc before using it in the closure
@@ -39,5 +40,3 @@ impl AppController {
         ))
     }
 }
-
-impl nestrs::Controller for AppController {}

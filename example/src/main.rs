@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 mod app;
+mod user;
 
 fn main() {
     println!("Hello, world!");
