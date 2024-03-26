@@ -12,13 +12,13 @@ pub mod service;
 
 use controller::AppController;
 use service::AppService;
-// use crate::user::UserModule;
+use crate::user::UserModule;
 
-#[module(
-  // imports = [UserModule],
-  controllers = [AppController],
-  services = [AppService]
-)]
+#[module({
+    imports = [UserModule];
+    controllers = [AppController];
+    services = [AppService];
+})]
 pub struct AppModule;
 
 // impl AppModule {
@@ -41,29 +41,29 @@ pub struct AppModule;
 //     }
 // }
 
-impl nestrs::Module for AppModule {
-    fn register(self, ctx: &nestrs::ModuleCtx) -> nestrs::DynamicModule {
-      println!("Registering App Module");
-      let base_router: Router<StateCtx> = axum::Router::new();
+// impl nestrs::Module for AppModule {
+//     fn register(self, ctx: &nestrs::ModuleCtx) -> nestrs::DynamicModule {
+//       println!("Registering App Module");
+//       let base_router: Router<StateCtx> = axum::Router::new();
 
-      // let user_module = UserModule::default();
-      // let user_module_dyn = user_module.register(ctx);
+//       // let user_module = UserModule::default();
+//       // let user_module_dyn = user_module.register(ctx);
 
 
-      ctx.services.lock().unwrap().insert("AppService".to_string(), Box::new(Inject::new(service::AppService::default())) as Box<dyn Any>);
+//       ctx.services.lock().unwrap().insert("AppService".to_string(), Box::new(Inject::new(service::AppService::default())) as Box<dyn Any>);
 
-      ctx.controllers.lock().unwrap().insert("AppController".to_string(), Box::new(Inject::new(controller::AppController::default())));
+//       ctx.controllers.lock().unwrap().insert("AppController".to_string(), Box::new(Inject::new(controller::AppController::default())));
       
-      // let base_router = base_router.merge(app_controller.register());
+//       // let base_router = base_router.merge(app_controller.register());
 
-      // let mut routers = ctx.routers.lock().unwrap();
-      // routers.push(base_router);
+//       // let mut routers = ctx.routers.lock().unwrap();
+//       // routers.push(base_router);
       
-      nestrs::DynamicModule{
-      }
-    }
-}
+//       nestrs::DynamicModule{
+//       }
+//     }
+// }
 
-struct ModuleCtx{
-  services: HashMap<String, Box<dyn Any>>
-}
+// struct ModuleCtx{
+//   services: HashMap<String, Box<dyn Any>>
+// }

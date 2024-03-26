@@ -9,30 +9,85 @@ use once_cell::sync::Lazy;
 use proc_macro::{Span, TokenStream};
 use proc_macro2::Punct;
 use quote::{quote, ToTokens};
-use syn::parse::{Parse, ParseStream};
+use syn::{parse::{Parse, ParseStream}, Expr, Token};
 use syn::punctuated::Punctuated;
 use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatType, Type};
+use proc_macro2::TokenStream as TokenStream2;
 
-static mut CURRENT_CONTROLLER: Option<ControllerMeta> = None;
-static mut ROUTES: Lazy<Arc<Mutex<HashMap<String, HashMap<String, RouteMeta>>>>> =
-    Lazy::new(|| Arc::new(Mutex::new(HashMap::new())));
-
-// struct Args {
-//     args: Punctuated<syn::Expr, Punct>
-// }
+static CURRENT_CONTROLLER: Mutex<Option<ControllerMeta>> = Mutex::new(None);
+static ROUTES: Lazy<Mutex<HashMap<String, HashMap<String, RouteMeta>>>> = Lazy::new(||Mutex::new(HashMap::new()));
+// static MAP: Lazy<Mutex<HashMap<String, RouteMeta>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Debug, Clone)]
 struct RouteMeta {
     method: String,
     path: String,
     name: String,
-    handler: TokenStream,
+    handler: String,
 }
 
 #[derive(Debug, Clone)]
 struct ControllerMeta {
     name: String,
     path: String,
+}
+
+#[derive(Debug, Clone)]
+struct ModuleArgs {
+    imports: Vec<String>,
+    controllers: Vec<String>,
+    services: Vec<String>,
+    exports: Vec<String>,
+}
+
+impl Parse for ModuleArgs {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let args:syn::Block = input.parse()?;
+        // let args = parse_macro_input!(input.parse::<Expr>()) as Expr;
+
+        let mut imports = Vec::new();
+        let mut controllers = Vec::new();
+        let mut services = Vec::new();
+        let mut exports = Vec::new();
+
+        let parse_args_map = args.stmts.iter().map(|stmt| {
+            if let syn::Stmt::Expr(exp, _) = stmt {
+                if let syn::Expr::Assign(assign) = exp {
+                    if let syn::Expr::Path(path) = *assign.left.clone() {
+                        return (path.path.segments.first().unwrap().ident.to_string(), if let syn::Expr::Array(array) = *assign.right.clone() {
+                            array.elems.iter().map(|elem| {
+                                if let syn::Expr::Path(path) = elem {
+                                    return path.path.segments.first().unwrap().ident.to_string();
+                                }
+                                return "".to_string();
+                            }).collect::<Vec<String>>()
+                        } else {
+                            vec![]
+                        });
+                    }
+                }
+    
+            }
+            panic!("Invalid argument");
+        }).collect::<HashMap<String, Vec<String>>>();
+
+        parse_args_map.iter().for_each(|(k, v)| {
+            match k.as_str() {
+                "imports" => imports = v.clone(),
+                "controllers" => controllers = v.clone(),
+                "services" => services = v.clone(),
+                "exports" => exports = v.clone(),
+                _ => {}
+            }
+        });
+    
+        Ok(ModuleArgs {
+            imports,
+            controllers,
+            services,
+            exports,
+        })
+    }
 }
 
 #[proc_macro_attribute]
@@ -88,22 +143,12 @@ pub fn get(args: TokenStream, input: TokenStream) -> TokenStream {
             |state| async move {
                 t_controller.#ident(state).await
             }
-        }),
+        }).to_string(),
     };
-    
-    unsafe {
-        let routes_clone = ROUTES.clone();
-        let controller = CURRENT_CONTROLLER.as_ref().unwrap();
-        println!("routes_clone.lock");
-        let mut routes = routes_clone.lock().unwrap();
-        println!("routes_clone.locked");
-        let mut controller_routes = routes.get_mut(&controller.name).unwrap();
-        println!("routes_clone.insert");
-        controller_routes.insert(name.clone(), route);
-        println!("routes_clone.inserted");
-        println!("Routes: {:?}", controller_routes.len());
-        println!("routes_clone.read");
-    };
+
+    let mut binding = ROUTES.lock().unwrap();
+    let controller = binding.get_mut(&CURRENT_CONTROLLER.lock().unwrap().as_ref().unwrap().name).unwrap();
+    controller.insert(name.clone(), route);
 
     // println!("Get: {:?}, Params: {:?}", ident, func_args.to_string());
     // println!("Get: {:?}, Params {:?}", ident, func.sig.inputs.first().unwrap());
@@ -149,17 +194,11 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let ident = input.ident.clone();
 
-    unsafe {
-        CURRENT_CONTROLLER = Some(ControllerMeta {
-            name: ident.to_string(),
-            path: path,
-        });
-        ROUTES
-            .clone()
-            .lock()
-            .unwrap()
-            .insert(ident.to_string(), HashMap::new());
-    }
+    CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta {
+        name: ident.to_string(),
+        path: path,
+    });
+    ROUTES.lock().unwrap().insert(ident.to_string(), HashMap::new());
 
     // 打印宏的参数
     // println!("Controller args: {:?}", attr_args);
@@ -178,26 +217,103 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     // 解析宏的参数
+    let args = parse_macro_input!(args as ModuleArgs);
     let func = parse_macro_input!(input as ItemStruct);
+    let ident = func.ident.clone();
 
-    println!("Module: {:?}, Router: {:?}", func.ident, unsafe {
-        ROUTES.lock().unwrap().iter().map(|(k, v)| {
-            (k, v.len())
-        }).collect::<Vec<(&String, usize)>>()
+    // println!("Module: {:?}, Router: {:?}", func.ident, unsafe {
+    //     ROUTES.lock().unwrap().iter().map(|(k, v)| {
+    //         (k, v.iter().map(|(k, v)| {
+    //             (k, v.path.clone())
+    //         }).collect::<Vec<(&String, String)>>())
+    //     }).collect::<Vec<(&String, Vec<(&String, String)>)>>()
+    // });
+
+    // println!("Args: {:?}", args);
+
+    let controller_tokens= controller_register_tokens(args.controllers.clone());
+    let service_tokens= service_register_tokens(args.services.clone());
+    let import_tokens = imports_register_tokens(args.imports.clone());
+
+
+    CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta {
+        name: "".to_string(),
+        path: "".to_string(),
     });
-
-    unsafe {
-        let mut routes = ROUTES.lock().unwrap();
-        // routes.clear();
-        CURRENT_CONTROLLER = None;
-    };
+    ROUTES.lock().unwrap().clear();
 
     // 返回原始的输入，因为我们并没有修改它
     return TokenStream::from(quote! {
         #func
+
+        impl nestrs::Module for #ident {
+            fn register(self, ctx: &nestrs::ModuleCtx) -> nestrs::DynamicModule {
+                println!("Registering {} success.", stringify!(#ident));
+
+                #import_tokens
+
+                #controller_tokens
+
+                #service_tokens
+
+                nestrs::DynamicModule{}
+            }
+        }
     });
 }
 #[proc_macro]
 pub fn get_route_meta(input: TokenStream) -> TokenStream {
     return input;
+}
+
+
+
+fn controller_register_tokens(services: Vec<String>) -> TokenStream2 {
+    let controller_tokens= services.iter().map(|controller_str| {
+        let binding = ROUTES.lock().unwrap();
+        let controller = binding.get(controller_str).unwrap();
+        let controller_ident = syn::Ident::new(controller_str, Span::call_site().into());
+        
+        quote! {
+            ctx.controllers.lock().unwrap().insert(#controller_str.to_string(), Box::new(Inject::new(controller::#controller_ident::default())));
+        }
+    }).collect::<Vec<TokenStream2>>();
+    let controller_tokens = TokenStream2::from(quote! {
+        #(#controller_tokens)*
+    });
+    return controller_tokens;
+}
+
+
+fn service_register_tokens(services: Vec<String>) -> TokenStream2 {
+    let controller_tokens= services.iter().map(|controller_str| {
+        let controller_ident = syn::Ident::new(controller_str, Span::call_site().into());
+        
+        quote! {
+            ctx.services.lock().unwrap().insert(#controller_str.to_string(), Box::new(Inject::new(service::#controller_ident::default())) as Box<dyn std::any::Any>);
+        }
+    }).collect::<Vec<TokenStream2>>();
+    let controller_tokens = TokenStream2::from(quote! {
+        #(#controller_tokens)*
+    });
+    return controller_tokens;
+}
+
+fn imports_register_tokens(imports: Vec<String>) -> TokenStream2 {
+    let imports = imports.iter().map(|import| {
+        let import_let = (import.to_string() + "_module").to_string();
+        let import_let_indent = syn::Ident::new(&import_let, Span::call_site().into());
+        let import_ident = syn::Ident::new(import, Span::call_site().into());
+        
+        quote! {
+            let #import_let_indent = #import_ident::default();
+            #import_let_indent.register(ctx);
+        }
+    }).collect::<Vec<TokenStream2>>();
+
+    let imports = TokenStream2::from(quote! {
+        #(#imports)*
+    });
+
+    return imports;
 }

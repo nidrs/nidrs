@@ -40,6 +40,7 @@ impl NestFactory {
         //     controller.register(&module_ctx)
         // }).collect::<Vec<axum::Router<StateCtx>>>();
         // let router_sub = routers.iter().fold(axum::Router::new(), |acc, r| acc.merge(r.clone()));
+        
         NestFactory {
             router: router
         }
