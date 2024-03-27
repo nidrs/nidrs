@@ -247,13 +247,13 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
         impl nestrs::Module for #ident {
             fn register(self, ctx: &nestrs::ModuleCtx) -> nestrs::DynamicModule {
-                println!("Registering {} success.", stringify!(#ident));
-
                 #import_tokens
 
                 #controller_tokens
 
                 #service_tokens
+
+                println!("Registering {} success.", stringify!(#ident));
 
                 nestrs::DynamicModule{}
             }
@@ -277,7 +277,7 @@ fn controller_register_tokens(services: Vec<String>) -> TokenStream2 {
         let controller_ident = syn::Ident::new(controller_str, Span::call_site().into());
         let router_path = controller.iter().map(|(name, route)| {
             let method = route.method.clone();
-            let method = syn::Ident::new(&method, Span::call_site().into());
+            let method_ident = syn::Ident::new(&method, Span::call_site().into());
             let path = controller_path.clone() + &route.path.clone();
             let handler = route.handler.clone();
             let handler = syn::parse_str::<Expr>(&handler).unwrap();
@@ -285,9 +285,10 @@ fn controller_register_tokens(services: Vec<String>) -> TokenStream2 {
                 let t_controller = controllers.get(#controller_str).unwrap();
                 let t_controller = t_controller.downcast_ref::<Inject<controller::#controller_ident>>().unwrap();
                 let t_controller = t_controller.clone();
+                println!("Registering router '{} {}'.", #method.to_uppercase(),#path);
                 ctx.routers.lock().unwrap().push(axum::Router::new().route(
                     #path,
-                    axum::routing::#method(#handler),
+                    axum::routing::#method_ident(#handler),
                 ));
             }
         }).collect::<Vec<TokenStream2>>();
