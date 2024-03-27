@@ -21,26 +21,6 @@ use crate::user::UserModule;
 })]
 pub struct AppModule;
 
-// impl AppModule {
-//     fn controller_handel(&self, ctx: &nestrs::ModuleCtx){
-//       // let controllers = vec!["AppController"]; // ctx.router_mate;
-//       let controllers = ctx.controllers.lock().unwrap();
-
-//       {
-//         let t_controller = controllers.get("AppController").unwrap();
-//         let t_controller = t_controller.downcast_ref::<Inject<controller::AppController>>().unwrap();
-//         let t_controller = t_controller.clone();
-//         ctx.routers.lock().unwrap().push(axum::Router::new().route(
-//           "/app/hello",
-//           axum::routing::get(|state| async move { // Specify the lifetime of the captured variable
-//             t_controller.get_hello_world(state).await
-//           }),
-//         ));
-//       }
-
-//     }
-// }
-
 // impl nestrs::Module for AppModule {
 //     fn register(self, ctx: &nestrs::ModuleCtx) -> nestrs::DynamicModule {
 //       println!("Registering App Module");
@@ -53,6 +33,28 @@ pub struct AppModule;
 //       ctx.services.lock().unwrap().insert("AppService".to_string(), Box::new(Inject::new(service::AppService::default())) as Box<dyn Any>);
 
 //       ctx.controllers.lock().unwrap().insert("AppController".to_string(), Box::new(Inject::new(controller::AppController::default())));
+
+//       let controllers = ctx.controllers.lock().unwrap();
+
+//       let t_controller = controllers.get("AppController").unwrap();
+//       let t_controller = t_controller.downcast_ref::<Inject<controller::AppController>>().unwrap();
+//       let t_controller = t_controller.clone();
+//       ctx.routers.lock().unwrap().push(axum::Router::new().route(
+//         "/app/hello",
+//         axum::routing::get(|state| async move { // Specify the lifetime of the captured variable
+//           t_controller.get_hello_world(state).await
+//         }),
+//       ));
+
+//       let t_controller = controllers.get("AppController").unwrap();
+//       let t_controller = t_controller.downcast_ref::<Inject<controller::AppController>>().unwrap();
+//       let t_controller = t_controller.clone();
+//       ctx.routers.lock().unwrap().push(axum::Router::new().route(
+//         "/app/hello2",
+//         axum::routing::get(|state| async move { // Specify the lifetime of the captured variable
+//           t_controller.get_hello_world2(state).await
+//         }),
+//       ));
       
 //       // let base_router = base_router.merge(app_controller.register());
 

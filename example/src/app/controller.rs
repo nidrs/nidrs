@@ -23,7 +23,7 @@ impl AppController {
     }
     #[get("/hello2")]
     pub async fn get_hello_world2(&self, State(state): State<StateCtx>) -> String {
-        self.app_service.get_hello_world()
+        "Hello, World2!".to_string()
     }
 }
 

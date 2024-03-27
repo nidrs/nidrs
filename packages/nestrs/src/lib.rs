@@ -32,17 +32,13 @@ impl NestFactory {
         }));
         let module_ctx = ModuleCtx::new();
         let dynamic_module = module.register(&module_ctx);
-        
-        // let routers = module_ctx.controllers.lock().unwrap().iter().map(|(_, c)| {
-        //     let binding = c.lock().unwrap();
-        //     let c = binding.downcast_ref::<Box<Arc<Mutex<dyn Controller>>>>().unwrap();
-        //     let controller = c.lock().unwrap();
-        //     controller.register(&module_ctx)
-        // }).collect::<Vec<axum::Router<StateCtx>>>();
-        // let router_sub = routers.iter().fold(axum::Router::new(), |acc, r| acc.merge(r.clone()));
-        
+        let routers = module_ctx.routers.lock().unwrap();
+        let mut sub_router = axum::Router::new();
+        for router in routers.iter() {
+            sub_router = sub_router.merge(router.clone());
+        }
         NestFactory {
-            router: router
+            router: router.merge(sub_router),
         }
     }
 

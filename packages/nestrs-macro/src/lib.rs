@@ -16,7 +16,6 @@ use proc_macro2::TokenStream as TokenStream2;
 
 static CURRENT_CONTROLLER: Mutex<Option<ControllerMeta>> = Mutex::new(None);
 static ROUTES: Lazy<Mutex<HashMap<String, HashMap<String, RouteMeta>>>> = Lazy::new(||Mutex::new(HashMap::new()));
-// static MAP: Lazy<Mutex<HashMap<String, RouteMeta>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Debug, Clone)]
 struct RouteMeta {
@@ -269,13 +268,38 @@ pub fn get_route_meta(input: TokenStream) -> TokenStream {
 
 
 fn controller_register_tokens(services: Vec<String>) -> TokenStream2 {
+    let binding = CURRENT_CONTROLLER.lock().unwrap();
+    let current_controller = binding.as_ref().unwrap();
+    let controller_path = current_controller.path.clone();
     let controller_tokens= services.iter().map(|controller_str| {
         let binding = ROUTES.lock().unwrap();
         let controller = binding.get(controller_str).unwrap();
         let controller_ident = syn::Ident::new(controller_str, Span::call_site().into());
+        let router_path = controller.iter().map(|(name, route)| {
+            let method = route.method.clone();
+            let method = syn::Ident::new(&method, Span::call_site().into());
+            let path = controller_path.clone() + &route.path.clone();
+            let handler = route.handler.clone();
+            let handler = syn::parse_str::<Expr>(&handler).unwrap();
+            quote! {
+                let t_controller = controllers.get(#controller_str).unwrap();
+                let t_controller = t_controller.downcast_ref::<Inject<controller::#controller_ident>>().unwrap();
+                let t_controller = t_controller.clone();
+                ctx.routers.lock().unwrap().push(axum::Router::new().route(
+                    #path,
+                    axum::routing::#method(#handler),
+                ));
+            }
+        }).collect::<Vec<TokenStream2>>();
+        let router_path = TokenStream2::from(quote! {
+            #(#router_path)*
+        });
         
         quote! {
             ctx.controllers.lock().unwrap().insert(#controller_str.to_string(), Box::new(Inject::new(controller::#controller_ident::default())));
+            let controllers = ctx.controllers.lock().unwrap();
+            
+            #router_path
         }
     }).collect::<Vec<TokenStream2>>();
     let controller_tokens = TokenStream2::from(quote! {
