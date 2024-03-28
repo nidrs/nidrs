@@ -233,6 +233,9 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     let controller_tokens= controller_register_tokens(args.controllers.clone());
     let service_tokens= service_register_tokens(args.services.clone());
     let import_tokens = imports_register_tokens(args.imports.clone());
+    let services_dep_inject_tokens = dep_inject_tokens("services", args.services.clone());
+    let controller_dep_inject_tokens = dep_inject_tokens("controllers", args.controllers.clone());
+    
 
 
     CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta {
@@ -252,6 +255,10 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
                 #controller_tokens
 
                 #service_tokens
+
+                #services_dep_inject_tokens
+
+                #controller_dep_inject_tokens
 
                 println!("Registering {} success.", stringify!(#ident));
 
@@ -283,7 +290,7 @@ fn controller_register_tokens(services: Vec<String>) -> TokenStream2 {
             let handler = syn::parse_str::<Expr>(&handler).unwrap();
             quote! {
                 let t_controller = controllers.get(#controller_str).unwrap();
-                let t_controller = t_controller.downcast_ref::<Inject<controller::#controller_ident>>().unwrap();
+                let t_controller = t_controller.downcast_ref::<std::sync::Arc<controller::#controller_ident>>().unwrap();
                 let t_controller = t_controller.clone();
                 println!("Registering router '{} {}'.", #method.to_uppercase(),#path);
                 ctx.routers.lock().unwrap().push(axum::Router::new().route(
@@ -297,7 +304,7 @@ fn controller_register_tokens(services: Vec<String>) -> TokenStream2 {
         });
         
         quote! {
-            ctx.controllers.lock().unwrap().insert(#controller_str.to_string(), Box::new(Inject::new(controller::#controller_ident::default())));
+            ctx.controllers.lock().unwrap().insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(controller::#controller_ident::default())));
             let controllers = ctx.controllers.lock().unwrap();
             
             #router_path
@@ -315,7 +322,7 @@ fn service_register_tokens(services: Vec<String>) -> TokenStream2 {
         let controller_ident = syn::Ident::new(controller_str, Span::call_site().into());
         
         quote! {
-            ctx.services.lock().unwrap().insert(#controller_str.to_string(), Box::new(Inject::new(service::#controller_ident::default())) as Box<dyn std::any::Any>);
+            ctx.services.lock().unwrap().insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(service::#controller_ident::default())) as Box<dyn std::any::Any>);
         }
     }).collect::<Vec<TokenStream2>>();
     let controller_tokens = TokenStream2::from(quote! {
@@ -341,4 +348,27 @@ fn imports_register_tokens(imports: Vec<String>) -> TokenStream2 {
     });
 
     return imports;
+}
+
+fn dep_inject_tokens(con: &str, services: Vec<String>) -> TokenStream2 {
+    let con_ident = syn::Ident::new(con, Span::call_site().into());
+    let controller_tokens= services.iter().map(|controller_str| {
+        let controller_ident = syn::Ident::new(controller_str, Span::call_site().into());
+        
+        quote! {
+            println!("Injecting dependencies for {}.", stringify!(#controller_ident));
+            let t = #con_ident.get(#controller_str).unwrap();
+            let t = t.downcast_ref::<std::sync::Arc<#controller_ident>>().unwrap();
+            let t = t.clone();
+            t.inject(ctx);
+            println!("Injecting dependencies for {} ok.", stringify!(#controller_ident));
+        }
+    }).collect::<Vec<TokenStream2>>();
+    let controller_tokens = TokenStream2::from(quote! {
+        let #con_ident = ctx.#con_ident.lock().unwrap();
+        println!("Injecting dependencies for {}.", stringify!(#con_ident));
+        #(#controller_tokens)*
+        println!("Injecting dependencies for {} ok.", stringify!(#con_ident));
+    });
+    return controller_tokens;
 }

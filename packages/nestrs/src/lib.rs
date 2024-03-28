@@ -1,17 +1,19 @@
 #![allow(warnings, unused)]
 
 
-use std::{any::Any, collections::HashMap, fmt::Debug, sync::{Arc, Mutex}};
+use std::{any::Any, cell::RefCell, collections::HashMap, fmt::Debug, sync::{Arc, Mutex}};
 pub trait Module {
     fn register(self, ctx: &ModuleCtx) -> DynamicModule;
 }
 
 
 pub trait Service {
+    fn inject(&self, ctx: &ModuleCtx);
 }
 
 pub trait Controller {
     fn register(self) -> axum::Router<StateCtx>;
+    fn inject(&self, ctx: &ModuleCtx);
 }
 
 pub struct DynamicModule {
@@ -32,9 +34,18 @@ impl NestFactory {
         }));
         let module_ctx = ModuleCtx::new();
         let dynamic_module = module.register(&module_ctx);
+
+        let services = module_ctx.services.lock().unwrap();
+        for (key, value) in services.iter() {
+            // let value = value.downcast_ref::<Box<dyn Service>>().unwrap();
+            // let value = value.clone();
+            // value.
+
+        }
         let routers = module_ctx.routers.lock().unwrap();
         let mut sub_router = axum::Router::new();
         for router in routers.iter() {
+            // 打印路由信息, path 和 method
             sub_router = sub_router.merge(router.clone());
         }
         NestFactory {
@@ -59,30 +70,30 @@ impl NestFactory {
 pub struct StateCtx{
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Inject<T>{
-    value: Option<Arc<T>>
+    value: Arc<Mutex<Option<Arc<T>>>>
 }
 
 impl<T> Inject<T> {
-    pub fn new(value: T) -> Self {
+    pub fn new() -> Self {
         Inject {
-            value: Some(Arc::new(value))
+            value: Arc::new(Mutex::new(None))
         }
     }
     
-    pub fn inject(&self, services: Arc<HashMap<String, Box<dyn Any>>>) {
-        let value = self.value.clone();
+    pub fn inject(&self, value: Arc<T>) {
+        self.value.lock().unwrap().replace(value);
     }
     
  
 }
 
 impl<T> std::ops::Deref for Inject<T> {
-    type Target = Arc<T>;
+    type Target = Mutex<Option<Arc<T>>>;
 
     fn deref(&self) -> &Self::Target {
-        &self.value.as_ref().unwrap()
+        &self.value
     }
 }
 
@@ -105,3 +116,48 @@ impl ModuleCtx {
         }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use std::any::Any;
+
+
+    trait Service {
+        fn inject(&self);
+    }
+
+    struct UserService {
+    }
+
+    impl Service for UserService {
+        fn inject(&self) {
+            println!("Inject UserService");
+        }
+    }
+
+    struct  Injectable{
+        value: Box<dyn Any>
+    }
+
+    impl Injectable {
+        fn new(value: Box<dyn Any>) -> Self {
+            Injectable {
+                value
+            }
+        }
+    }
+    
+
+    #[test]
+    fn it_works() {
+        let map = std::collections::HashMap::<String, Box<dyn Service>>::new();
+        let mut map = map;
+        map.insert("UserService".to_string(), Box::new(UserService{}));
+
+        let user_service = map.get("UserService").unwrap();
+        user_service.inject();
+    }
+}
+
+ 

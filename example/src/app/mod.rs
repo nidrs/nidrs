@@ -2,7 +2,7 @@
 use std::{any::Any, collections::HashMap, ptr::NonNull, rc::Rc, sync::{Arc, Mutex}};
 
 use axum::Router;
-use nestrs::{StateCtx, Inject, Module};
+use nestrs::{StateCtx, Inject, Module, Controller, Service};
 use nestrs_macro::module;
 
 use crate::AppState;
@@ -30,14 +30,14 @@ pub struct AppModule;
 //       // let user_module_dyn = user_module.register(ctx);
 
 
-//       ctx.services.lock().unwrap().insert("AppService".to_string(), Box::new(Inject::new(service::AppService::default())) as Box<dyn Any>);
+//       ctx.services.lock().unwrap().insert("AppService".to_string(), Box::new(Arc::new(service::AppService::default())) as Box<dyn Any>);
 
-//       ctx.controllers.lock().unwrap().insert("AppController".to_string(), Box::new(Inject::new(controller::AppController::default())));
+//       ctx.controllers.lock().unwrap().insert("AppController".to_string(), Box::new(Arc::new(controller::AppController::default())));
 
 //       let controllers = ctx.controllers.lock().unwrap();
 
 //       let t_controller = controllers.get("AppController").unwrap();
-//       let t_controller = t_controller.downcast_ref::<Inject<controller::AppController>>().unwrap();
+//       let t_controller = t_controller.downcast_ref::<Arc<controller::AppController>>().unwrap();
 //       let t_controller = t_controller.clone();
 //       ctx.routers.lock().unwrap().push(axum::Router::new().route(
 //         "/app/hello",
@@ -47,7 +47,7 @@ pub struct AppModule;
 //       ));
 
 //       let t_controller = controllers.get("AppController").unwrap();
-//       let t_controller = t_controller.downcast_ref::<Inject<controller::AppController>>().unwrap();
+//       let t_controller = t_controller.downcast_ref::<Arc<controller::AppController>>().unwrap();
 //       let t_controller = t_controller.clone();
 //       ctx.routers.lock().unwrap().push(axum::Router::new().route(
 //         "/app/hello2",
@@ -56,16 +56,14 @@ pub struct AppModule;
 //         }),
 //       ));
       
-//       // let base_router = base_router.merge(app_controller.register());
 
-//       // let mut routers = ctx.routers.lock().unwrap();
-//       // routers.push(base_router);
+//       let t_controller = controllers.get("AppController").unwrap();
+//       let t_controller = t_controller.downcast_ref::<Arc<controller::AppController>>().unwrap();
+//       let mut t_controller = t_controller.clone();
+//       t_controller.inject(ctx);
+
       
 //       nestrs::DynamicModule{
 //       }
 //     }
-// }
-
-// struct ModuleCtx{
-//   services: HashMap<String, Box<dyn Any>>
 // }

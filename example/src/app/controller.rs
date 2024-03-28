@@ -7,19 +7,21 @@ use nestrs_macro::{controller, get};
 
 use crate::AppState;
 
-use super::{service, StateCtx};
+use super::{service::AppService, StateCtx};
 use std::sync::Arc;
 
 #[controller("/app")]
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub struct AppController {
-    pub app_service: Inject<service::AppService>,
+    pub app_service: Inject<AppService>,
 }
 
 impl AppController {
     #[get("/hello")]
     pub async fn get_hello_world(&self, State(state): State<StateCtx>) -> String {
-        self.app_service.get_hello_world()
+        let app_service = self.app_service.lock().unwrap();
+        let app_service = app_service.as_ref().unwrap();
+        app_service.get_hello_world2()
     }
     #[get("/hello2")]
     pub async fn get_hello_world2(&self, State(state): State<StateCtx>) -> String {
@@ -42,5 +44,13 @@ impl nestrs::Controller for AppController {
                 }
             }),
         ))
+    }
+
+    fn inject(&self, ctx: &nestrs::ModuleCtx) {
+        let binding = ctx.services.clone();
+        let binding = binding.lock().unwrap();
+        let app_service = binding.get("AppService").unwrap();
+        let app_service = app_service.downcast_ref::<Arc<AppService>>().unwrap();
+        self.app_service.inject(app_service.clone());
     }
 }

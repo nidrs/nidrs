@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use nestrs::{Inject, ModuleCtx};
+use nestrs::{Inject, ModuleCtx, Service, Controller};
 use nestrs_macro::module;
 
 pub mod service;
