@@ -1,5 +1,5 @@
 #![allow(warnings, unused)]
-use std::{collections::HashSet, rc::Rc};
+use std::{any::Any, collections::{HashMap, HashSet}, rc::Rc, sync::{Mutex, MutexGuard}};
 
 use axum::{extract::State, Router};
 use nestrs::Inject;
@@ -13,7 +13,7 @@ use std::sync::Arc;
 #[controller("/app")]
 #[derive(Debug, Default)]
 pub struct AppController {
-    pub app_service: Inject<AppService>,
+    app_service: Inject<AppService>,
 }
 
 impl AppController {
@@ -31,25 +31,8 @@ impl AppController {
 
 
 impl nestrs::Controller for AppController {
-    fn register(self) -> Router<StateCtx> {
-        let router = axum::Router::new();
-        let that = Arc::new(self);
-        let cloned_that = Arc::clone(&that); // Clone the Arc before using it in the closure
-        router.merge(axum::Router::new().route(
-            "/app/hello",
-            axum::routing::get(move |state| {
-                let cloned_that: Arc<AppController> = Arc::clone(&cloned_that); // Clone the Arc again inside the closure
-                async move {
-                    cloned_that.get_hello_world(state).await
-                }
-            }),
-        ))
-    }
-
-    fn inject(&self, ctx: &nestrs::ModuleCtx) {
-        let binding = ctx.services.clone();
-        let binding = binding.lock().unwrap();
-        let app_service = binding.get("AppService").unwrap();
+    fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>) {
+        let app_service = services.get("AppService").unwrap();
         let app_service = app_service.downcast_ref::<Arc<AppService>>().unwrap();
         self.app_service.inject(app_service.clone());
     }

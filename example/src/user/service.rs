@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{any::Any, collections::HashMap, sync::{Arc, MutexGuard}};
 
 use nestrs::Inject;
 
@@ -10,17 +10,20 @@ pub struct UserService{
 
 impl UserService {
     pub fn get_hello_world(&self) -> String {
-      // self.app_service.unwrap().clone().get_hello_world();
-        "Hello, Nestrs!".to_string()
+      let app_service = self.app_service.lock().expect("Failed to lock app_service");
+      println!("Get Hello World {:?}", app_service);
+      let app_service = app_service.as_ref().expect("Failed to get app_service");
+      app_service.get_hello_world2()
     }
 }
 
 impl nestrs::Service for UserService {
-    fn inject(&self, ctx: &nestrs::ModuleCtx) {
-      let binding = ctx.services.clone();
-      let binding = binding.lock().unwrap();
-      let app_service = binding.get("AppService").unwrap();
-      let app_service = app_service.downcast_ref::<Arc<crate::app::service::AppService>>().unwrap();
-      self.app_service.inject(app_service.clone());
+    fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>) {
+      println!("Inject UserService {}", services.len());
+      let app_service = services.get("AppService");
+      if let Some(app_service) = app_service {
+        let app_service = app_service.downcast_ref::<Arc<crate::app::service::AppService>>().unwrap();
+        self.app_service.inject(app_service.clone());
+      } 
     }
 }

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{any::Any, collections::HashMap, sync::{Arc, Mutex, MutexGuard}};
 
 use nestrs::Inject;
 
@@ -21,10 +21,8 @@ impl AppService {
 }
 
 impl nestrs::Service for AppService {
-    fn inject(&self, ctx: &nestrs::ModuleCtx) {
-        let binding = ctx.services.clone();
-        let binding = binding.lock().unwrap();
-        let user_service = binding.get("UserService").unwrap();
+    fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>) {
+        let user_service = services.get("UserService").unwrap();
         let user_service = user_service.downcast_ref::<Arc<crate::user::service::UserService>>().unwrap();
         self.user_service.inject(user_service.clone().into());
     }

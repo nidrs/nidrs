@@ -233,8 +233,9 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     let controller_tokens= controller_register_tokens(args.controllers.clone());
     let service_tokens= service_register_tokens(args.services.clone());
     let import_tokens = imports_register_tokens(args.imports.clone());
-    let services_dep_inject_tokens = dep_inject_tokens("services", args.services.clone());
-    let controller_dep_inject_tokens = dep_inject_tokens("controllers", args.controllers.clone());
+    let services_dep_inject_tokens = if ident.to_string() == "AppModule"  {dep_inject_tokens("services", args.services.clone())} else {TokenStream2::new()};
+
+    let controller_dep_inject_tokens = if ident.to_string() == "AppModule"  { dep_inject_tokens("controllers", args.controllers.clone())} else {TokenStream2::new()};
     
 
 
@@ -251,6 +252,8 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
         impl nestrs::Module for #ident {
             fn register(self, ctx: &nestrs::ModuleCtx) -> nestrs::DynamicModule {
                 #import_tokens
+                
+                println!("Registering {} success.", stringify!(#ident));
 
                 #controller_tokens
 
@@ -259,8 +262,6 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
                 #services_dep_inject_tokens
 
                 #controller_dep_inject_tokens
-
-                println!("Registering {} success.", stringify!(#ident));
 
                 nestrs::DynamicModule{}
             }
@@ -322,11 +323,14 @@ fn service_register_tokens(services: Vec<String>) -> TokenStream2 {
         let controller_ident = syn::Ident::new(controller_str, Span::call_site().into());
         
         quote! {
+            println!("Registering service {}.", #controller_str);
             ctx.services.lock().unwrap().insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(service::#controller_ident::default())) as Box<dyn std::any::Any>);
         }
     }).collect::<Vec<TokenStream2>>();
     let controller_tokens = TokenStream2::from(quote! {
         #(#controller_tokens)*
+
+        let services = ctx.services.lock().unwrap();
     });
     return controller_tokens;
 }
@@ -356,19 +360,15 @@ fn dep_inject_tokens(con: &str, services: Vec<String>) -> TokenStream2 {
         let controller_ident = syn::Ident::new(controller_str, Span::call_site().into());
         
         quote! {
-            println!("Injecting dependencies for {}.", stringify!(#controller_ident));
             let t = #con_ident.get(#controller_str).unwrap();
             let t = t.downcast_ref::<std::sync::Arc<#controller_ident>>().unwrap();
             let t = t.clone();
-            t.inject(ctx);
-            println!("Injecting dependencies for {} ok.", stringify!(#controller_ident));
+            println!("Injecting {}.", #controller_str);
+            t.inject(&services);
         }
     }).collect::<Vec<TokenStream2>>();
     let controller_tokens = TokenStream2::from(quote! {
-        let #con_ident = ctx.#con_ident.lock().unwrap();
-        println!("Injecting dependencies for {}.", stringify!(#con_ident));
         #(#controller_tokens)*
-        println!("Injecting dependencies for {} ok.", stringify!(#con_ident));
     });
     return controller_tokens;
 }

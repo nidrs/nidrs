@@ -1,19 +1,18 @@
 #![allow(warnings, unused)]
 
 
-use std::{any::Any, cell::RefCell, collections::HashMap, fmt::Debug, sync::{Arc, Mutex}};
+use std::{any::Any, cell::RefCell, collections::HashMap, fmt::Debug, sync::{Arc, Mutex, MutexGuard}};
 pub trait Module {
     fn register(self, ctx: &ModuleCtx) -> DynamicModule;
 }
 
 
 pub trait Service {
-    fn inject(&self, ctx: &ModuleCtx);
+    fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>);
 }
 
 pub trait Controller {
-    fn register(self) -> axum::Router<StateCtx>;
-    fn inject(&self, ctx: &ModuleCtx);
+    fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>);
 }
 
 pub struct DynamicModule {
@@ -120,7 +119,7 @@ impl ModuleCtx {
 
 #[cfg(test)]
 mod tests {
-    use std::any::Any;
+    use std::{any::Any, sync::Mutex};
 
 
     trait Service {
@@ -151,12 +150,16 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let map = std::collections::HashMap::<String, Box<dyn Service>>::new();
-        let mut map = map;
-        map.insert("UserService".to_string(), Box::new(UserService{}));
+        let map = Mutex::new(std::collections::HashMap::<String, Box<dyn Service>>::new());
+        // let mut map1 = map.lock().unwrap();
+        // let mut map2 = map.lock().unwrap();
+        // map1.insert("UserService".to_string(), Box::new(UserService{}));
+        // map1.insert("UserService".to_string(), Box::new(UserService{}));
+        map.lock().unwrap().insert("UserService".to_string(), Box::new(UserService{}));
+        map.lock().unwrap().insert("UserService".to_string(), Box::new(UserService{}));
 
-        let user_service = map.get("UserService").unwrap();
-        user_service.inject();
+        // let user_service = map1.get("UserService").unwrap();
+        // user_service.inject();
     }
 }
 
