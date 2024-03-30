@@ -2,12 +2,11 @@ use axum::{routing::get, Router};
 use nidrs::StateCtx;
 
 mod app;
+mod conf;
 mod user;
 
 fn main() {
-    let app_state = AppState{};
-
-    let mut app = nidrs::NestFactory::create(app::AppModule, app_state);
+    let mut app = nidrs::NestFactory::create(app::AppModule);
 
     app.router = app.router.merge(Router::<StateCtx>::new().route("/api", get(|| async { "Hello, World!" })));
     

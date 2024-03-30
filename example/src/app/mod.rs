@@ -6,10 +6,12 @@ pub mod service;
 use controller::AppController;
 use service::AppService;
 use crate::user::UserModule;
+use crate::conf::ConfModule;
 
 #[module({
-    imports = [UserModule];
+    imports = [ConfModule, UserModule];
     controllers = [AppController];
     services = [AppService];
 })]
+#[derive(Clone, Debug, Default)]
 pub struct AppModule;

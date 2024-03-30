@@ -172,6 +172,10 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
             fn register(self, ctx: &nidrs::ModuleCtx) -> nidrs::DynamicModule {
                 use nidrs::Service;
                 use nidrs::Controller;
+                if ctx.modules.lock().unwrap().contains_key(stringify!(#ident)) {
+                    return nidrs::DynamicModule{};
+                }
+                ctx.modules.lock().unwrap().insert(stringify!(#ident).to_string(), Box::new(self) as Box<dyn std::any::Any>);
                 println!("Registering module {}.", stringify!(#ident));
                 {
                     #controller_tokens

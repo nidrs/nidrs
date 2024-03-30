@@ -24,9 +24,8 @@ pub struct NestFactory {
 }
 
 impl NestFactory {
-    pub fn create<T: Module, S>(
+    pub fn create<T: Module>(
         module: T,
-        state: S,
     ) -> Self {
         let router = axum::Router::new().route("/", axum::routing::get(|| async move {
             "Hello, Nidrs!"
@@ -89,6 +88,7 @@ impl<T> std::ops::Deref for Inject<T> {
 
 #[derive(Debug, Clone)]
 pub struct ModuleCtx{
+    pub modules: Arc<Mutex<HashMap<String, Box<dyn Any>>>>,
     pub services: Arc<Mutex<HashMap<String, Box<dyn Any>>>>,
     pub controllers: Arc<Mutex<HashMap<String, Box<dyn Any>>>>,
     pub routers: Arc<Mutex<Vec<axum::Router<StateCtx>>>>
@@ -97,6 +97,7 @@ pub struct ModuleCtx{
 impl ModuleCtx {
     pub fn new() -> Self {
         ModuleCtx {
+            modules: Arc::new(Mutex::new(HashMap::new())),
             services: Arc::new(Mutex::new(HashMap::new())),
             controllers: Arc::new(Mutex::new(HashMap::new())),
             routers: Arc::new(Mutex::new(Vec::new())),
