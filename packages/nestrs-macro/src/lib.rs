@@ -280,6 +280,72 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
         }
     });
 }
+
+
+#[proc_macro_attribute]
+pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
+    // impl nestrs::Service for AppService {
+    //     fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>) {
+    //         let user_service = services.get("UserService").unwrap();
+    //         let user_service = user_service.downcast_ref::<Arc<crate::user::service::UserService>>().unwrap();
+    //         self.user_service.inject(user_service.clone().into());
+    //     }
+    // }
+    let func = parse_macro_input!(input as ItemStruct);
+    let ident = func.ident.clone();
+
+    let fields = if let syn::Fields::Named(fields) = &func.fields {
+        fields.named.iter().map(|field| {
+            let field_ident = field.ident.as_ref().unwrap();
+            let field_type = &field.ty;
+
+            if let Type::Path(type_path) = field_type {
+                let type_ident = type_path.path.segments.first().unwrap().ident.to_string();
+                if type_ident == "Inject" {
+                    let type_args = type_path.path.segments.first().unwrap().arguments.to_owned();
+                    if let syn::PathArguments::AngleBracketed(args) = type_args {
+                        let type_arg = args.args.first().unwrap();
+                        if let syn::GenericArgument::Type(ty) = type_arg {
+                            let injected_type = ty.to_token_stream();
+                            let injected_type_str = injected_type.to_string();
+                            quote! {
+                                let service = services.get(#injected_type_str).unwrap();
+                                let service = service.downcast_ref::<Arc<#injected_type>>().unwrap();
+                                self.#field_ident.inject(service.clone());
+                            }
+                        } else{
+                            quote! {}
+                        }
+                    }else {
+                        quote! {}
+                    }
+                } else {
+                    quote! {}
+                }
+            }else{
+                quote! {}
+            }
+        }).collect::<Vec<TokenStream2>>()
+    } else {
+        vec![]
+    };
+
+    let inject_tokens = TokenStream2::from(quote! {
+        impl nestrs::Service for #ident {
+            fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>) {
+                #(#fields)*
+            }
+        }
+    });
+
+    return TokenStream::from(quote! {
+        #func
+
+        #inject_tokens
+    });
+}
+
+
 #[proc_macro]
 pub fn get_route_meta(input: TokenStream) -> TokenStream {
     return input;
