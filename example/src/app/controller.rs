@@ -21,7 +21,7 @@ impl AppController {
     pub async fn get_hello_world(&self, State(state): State<StateCtx>) -> String {
         let app_service = self.app_service.lock().unwrap();
         let app_service = app_service.as_ref().unwrap();
-        app_service.get_hello_world2()
+        app_service.get_hello_world()
     }
     #[get("/hello2")]
     pub async fn get_hello_world2(&self, State(state): State<StateCtx>) -> String {

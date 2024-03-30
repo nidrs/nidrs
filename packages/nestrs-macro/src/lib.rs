@@ -233,9 +233,9 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     let controller_tokens= controller_register_tokens(args.controllers.clone());
     let service_tokens= service_register_tokens(args.services.clone());
     let import_tokens = imports_register_tokens(args.imports.clone());
-    let services_dep_inject_tokens = if ident.to_string() == "AppModule"  {dep_inject_tokens("services", args.services.clone())} else {TokenStream2::new()};
+    let services_dep_inject_tokens = dep_inject_tokens("services", args.services.clone());
 
-    let controller_dep_inject_tokens = if ident.to_string() == "AppModule"  { dep_inject_tokens("controllers", args.controllers.clone())} else {TokenStream2::new()};
+    let controller_dep_inject_tokens = dep_inject_tokens("controllers", args.controllers.clone());
     
 
 
@@ -250,18 +250,24 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
         #func
 
         impl nestrs::Module for #ident {
-            fn register(self, ctx: &nestrs::ModuleCtx) -> nestrs::DynamicModule {
-                #import_tokens
-                
+            fn register(self, ctx: &nestrs::ModuleCtx) -> nestrs::DynamicModule {                
                 println!("Registering module {}.", stringify!(#ident));
+                {
+                    #controller_tokens
+    
+                    #service_tokens
+                }
+                {
+                    #import_tokens
+                }
+                {
+                    let services = ctx.services.lock().unwrap();
+                    let controllers = ctx.controllers.lock().unwrap();
 
-                #controller_tokens
-
-                #service_tokens
-
-                #services_dep_inject_tokens
-
-                #controller_dep_inject_tokens
+                    #services_dep_inject_tokens
+    
+                    #controller_dep_inject_tokens
+                }
 
                 nestrs::DynamicModule{}
             }

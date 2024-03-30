@@ -16,7 +16,7 @@ impl AppService {
     }
 
     pub fn get_hello_world2(&self) -> String {
-        "Hello, Nestrs2xx!".to_string()
+        "Hello, Nestrs2xx333!".to_string()
     }
 }
 

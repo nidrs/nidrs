@@ -19,7 +19,6 @@ impl UserService {
 
 impl nestrs::Service for UserService {
     fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>) {
-      println!("Inject UserService {}", services.len());
       let app_service = services.get("AppService");
       if let Some(app_service) = app_service {
         let app_service = app_service.downcast_ref::<Arc<crate::app::service::AppService>>().unwrap();
