@@ -1,7 +1,17 @@
 [package]
 name = "nidrs"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
+keywords = ["nidrs", "tokio", "axum", "http", "web", "framework", "async"]
+categories = [
+    "network-programming",
+    "asynchronous",
+    "web-programming::http-server",
+    "web-programming::websocket"
+]
+homepage = "https://github.com/nidrs/nidrs.git"
+repository = "https://github.com/nidrs/nidrs.git"
+license = "MIT"
 
 [dependencies]
 axum = { version = "0.7.4", features = ["ws"] }

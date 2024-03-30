@@ -1,7 +1,14 @@
 [package]
 name = "nidrs-macro"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
+keywords = ["nidrs"]
+categories = [
+  "macros",
+]
+homepage = "https://github.com/nidrs/nidrs.git"
+repository = "https://github.com/nidrs/nidrs.git"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
