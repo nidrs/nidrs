@@ -310,7 +310,7 @@ pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
                             let injected_type_str = injected_type.to_string();
                             quote! {
                                 let service = services.get(#injected_type_str).unwrap();
-                                let service = service.downcast_ref::<Arc<#injected_type>>().unwrap();
+                                let service = service.downcast_ref::<std::sync::Arc<#injected_type>>().unwrap();
                                 self.#field_ident.inject(service.clone());
                             }
                         } else{
@@ -332,7 +332,7 @@ pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let inject_tokens = TokenStream2::from(quote! {
         impl nestrs::Service for #ident {
-            fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>) {
+            fn inject(&self, services: &std::sync::MutexGuard<std::collections::HashMap<String, Box<dyn std::any::Any>>>) {
                 #(#fields)*
             }
         }
