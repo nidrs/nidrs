@@ -6,7 +6,7 @@ use std::{
 };
 
 use once_cell::sync::Lazy;
-use proc_macro::{Span, TokenStream};
+use proc_macro::{Ident, Span, TokenStream};
 use proc_macro2::Punct;
 use quote::{quote, ToTokens};
 use syn::{parse::{Parse, ParseStream}, Expr, Token};
@@ -194,10 +194,9 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
         panic!("Invalid argument");
     };
 
-    // 解析输入的结构体
-    let input = parse_macro_input!(input as ItemStruct);
+    let func = parse_macro_input!(input as ItemStruct);
 
-    let ident = input.ident.clone();
+    let ident = func.ident.clone();
 
     CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta {
         name: ident.to_string(),
@@ -205,17 +204,12 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
     });
     ROUTES.lock().unwrap().insert(ident.to_string(), HashMap::new());
 
-    // 打印宏的参数
-    // println!("Controller args: {:?}", attr_args);
+    let inject_tokens = service_inject_tokens("Controller", &func);
 
-    // 打印输入的结构体
-    println!(
-        "Controller: {:?}", ident.to_string()
-    );
-
-    // 返回原始的输入，因为我们并没有修改它
     TokenStream::from(quote! {
-        #input
+        #func
+        
+        #inject_tokens
     })
 }
 
@@ -284,59 +278,9 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
-    // impl nestrs::Service for AppService {
-    //     fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>) {
-    //         let user_service = services.get("UserService").unwrap();
-    //         let user_service = user_service.downcast_ref::<Arc<crate::user::service::UserService>>().unwrap();
-    //         self.user_service.inject(user_service.clone().into());
-    //     }
-    // }
     let func = parse_macro_input!(input as ItemStruct);
-    let ident = func.ident.clone();
 
-    let fields = if let syn::Fields::Named(fields) = &func.fields {
-        fields.named.iter().map(|field| {
-            let field_ident = field.ident.as_ref().unwrap();
-            let field_type = &field.ty;
-
-            if let Type::Path(type_path) = field_type {
-                let type_ident = type_path.path.segments.first().unwrap().ident.to_string();
-                if type_ident == "Inject" {
-                    let type_args = type_path.path.segments.first().unwrap().arguments.to_owned();
-                    if let syn::PathArguments::AngleBracketed(args) = type_args {
-                        let type_arg = args.args.first().unwrap();
-                        if let syn::GenericArgument::Type(ty) = type_arg {
-                            let injected_type = ty.to_token_stream();
-                            let injected_type_str = injected_type.to_string();
-                            quote! {
-                                let service = services.get(#injected_type_str).unwrap();
-                                let service = service.downcast_ref::<std::sync::Arc<#injected_type>>().unwrap();
-                                self.#field_ident.inject(service.clone());
-                            }
-                        } else{
-                            quote! {}
-                        }
-                    }else {
-                        quote! {}
-                    }
-                } else {
-                    quote! {}
-                }
-            }else{
-                quote! {}
-            }
-        }).collect::<Vec<TokenStream2>>()
-    } else {
-        vec![]
-    };
-
-    let inject_tokens = TokenStream2::from(quote! {
-        impl nestrs::Service for #ident {
-            fn inject(&self, services: &std::sync::MutexGuard<std::collections::HashMap<String, Box<dyn std::any::Any>>>) {
-                #(#fields)*
-            }
-        }
-    });
+    let inject_tokens = service_inject_tokens("Service", &func);
 
     return TokenStream::from(quote! {
         #func
@@ -449,4 +393,56 @@ fn dep_inject_tokens(con: &str, services: Vec<String>) -> TokenStream2 {
         #(#controller_tokens)*
     });
     return controller_tokens;
+}
+
+fn service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStream2{
+    let service_type = syn::Ident::new(service_type, Span::call_site().into());
+    let ident = func.ident.clone();
+
+    let fields = if let syn::Fields::Named(fields) = &func.fields {
+        fields.named.iter().map(|field| {
+            let field_ident = field.ident.as_ref().unwrap();
+            let field_type = &field.ty;
+
+            if let Type::Path(type_path) = field_type {
+                let type_ident = type_path.path.segments.first().unwrap().ident.to_string();
+                if type_ident == "Inject" {
+                    let type_args = type_path.path.segments.first().unwrap().arguments.to_owned();
+                    if let syn::PathArguments::AngleBracketed(args) = type_args {
+                        let type_arg = args.args.first().unwrap();
+                        if let syn::GenericArgument::Type(ty) = type_arg {
+                            let injected_type = ty.to_token_stream();
+                            let injected_type_str = injected_type.to_string();
+                            quote! {
+                                let service = services.get(#injected_type_str).unwrap();
+                                let service = service.downcast_ref::<std::sync::Arc<#injected_type>>().unwrap();
+                                self.#field_ident.inject(service.clone());
+                            }
+                        } else{
+                            quote! {}
+                        }
+                    }else {
+                        quote! {}
+                    }
+                } else {
+                    quote! {}
+                }
+            }else{
+                quote! {}
+            }
+        }).collect::<Vec<TokenStream2>>()
+    } else {
+        vec![]
+    };
+
+    let inject_tokens = TokenStream2::from(quote! {
+        impl nestrs::#service_type for #ident {
+            fn inject(&self, services: &std::sync::MutexGuard<std::collections::HashMap<String, Box<dyn std::any::Any>>>) {
+                #(#fields)*
+            }
+        }
+    });
+
+    return inject_tokens;
+
 }

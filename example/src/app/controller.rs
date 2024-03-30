@@ -29,12 +29,3 @@ impl AppController {
     //     "Hello, World2!".to_string()
     // }
 }
-
-
-impl nestrs::Controller for AppController {
-    fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>) {
-        let app_service = services.get("AppService").unwrap();
-        let app_service = app_service.downcast_ref::<Arc<AppService>>().unwrap();
-        self.app_service.inject(app_service.clone());
-    }
-}
