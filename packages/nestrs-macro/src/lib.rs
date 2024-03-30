@@ -91,92 +91,22 @@ impl Parse for ModuleArgs {
 
 #[proc_macro_attribute]
 pub fn get(args: TokenStream, input: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(args as syn::Expr);
-    let func = parse_macro_input!(input as ItemFn);
-
-    let path = if let syn::Expr::Lit(lit) = args {
-        if let syn::Lit::Str(str) = lit.lit {
-            str.value().trim().to_string()
-        } else {
-            panic!("Invalid argument")
-        }
-    } else {
-        // throw error
-        panic!("Invalid argument");
-    };
-    let name = func.sig.ident.to_string();
-    println!("Get: {:?}", path);
-
-    let vis = func.vis.clone();
-    let ident = func.sig.ident.clone();
-    let mut pindex = 0;
-    let func_args = func
-        .sig
-        .inputs
-        .iter()
-        .map(|arg| match arg {
-            FnArg::Typed(PatType { pat, ty, .. }) => {
-                // let pat = pat.to_token_stream();
-                // let ty = ty.to_token_stream();
-                let pat = format!("p{}", pindex);
-                let pat_indent = syn::Ident::new(&pat, Span::call_site().into());
-                pindex += 1;
-                quote! {
-                    #pat_indent
-                }
-            }
-            _ => quote! {},
-        })
-        .reduce(|a, b| {
-            if (a.to_string().is_empty()) {
-                return b;
-            }
-            quote! {
-                #a, #b
-            }
-        })
-        .unwrap_or(quote! {});
-
-        println!("Get: {:?}, Params: {:?}", ident, func_args.to_string());
-
-    let handler = TokenStream::from(quote! {
-        |#func_args| async move {
-            t_controller.#ident(#func_args).await
-        }
-    }).to_string();
-
-    let route = RouteMeta {
-        method: "get".to_string(),
-        path: path,
-        name: name.clone(),
-        handler
-    };
-
-    let mut binding = ROUTES.lock().unwrap();
-    let controller = binding.get_mut(&CURRENT_CONTROLLER.lock().unwrap().as_ref().unwrap().name).unwrap();
-    controller.insert(name.clone(), route);
-
-    // println!("Get: {:?}, Params {:?}", ident, func.sig.inputs.first().unwrap());
-
-    // 返回原始的输入，因为我们并没有修改它
-    TokenStream::from(quote! {
-        #func
-    })
+    return route("get", args, input);
 }
 
 #[proc_macro_attribute]
 pub fn post(args: TokenStream, input: TokenStream) -> TokenStream {
-    return input;
+    return route("post", args, input);
 }
 
 #[proc_macro_attribute]
 pub fn put(args: TokenStream, input: TokenStream) -> TokenStream {
-    return input;
+    return route("put", args, input);
 }
 
 #[proc_macro_attribute]
 pub fn delete(args: TokenStream, input: TokenStream) -> TokenStream {
-    return input;
+    return route("delete", args, input);
 }
 
 #[proc_macro_attribute]
@@ -208,7 +138,7 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
 
     TokenStream::from(quote! {
         #func
-        
+
         #inject_tokens
     })
 }
@@ -445,4 +375,72 @@ fn service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStream2{
 
     return inject_tokens;
 
+}
+
+fn route(method:&str, args: TokenStream, input: TokenStream)-> TokenStream{
+    let args = parse_macro_input!(args as syn::Expr);
+    let func = parse_macro_input!(input as ItemFn);
+
+    let path = if let syn::Expr::Lit(lit) = args {
+        if let syn::Lit::Str(str) = lit.lit {
+            str.value().trim().to_string()
+        } else {
+            panic!("Invalid argument")
+        }
+    } else {
+        // throw error
+        panic!("Invalid argument");
+    };
+    let name = func.sig.ident.to_string();
+
+    let vis = func.vis.clone();
+    let ident = func.sig.ident.clone();
+    let mut pindex = 0;
+    let func_args = func
+        .sig
+        .inputs
+        .iter()
+        .map(|arg| match arg {
+            FnArg::Typed(PatType { pat, ty, .. }) => {
+                // let pat = pat.to_token_stream();
+                // let ty = ty.to_token_stream();
+                let pat = format!("p{}", pindex);
+                let pat_indent = syn::Ident::new(&pat, Span::call_site().into());
+                pindex += 1;
+                quote! {
+                    #pat_indent
+                }
+            }
+            _ => quote! {},
+        })
+        .reduce(|a, b| {
+            if (a.to_string().is_empty()) {
+                return b;
+            }
+            quote! {
+                #a, #b
+            }
+        })
+        .unwrap_or(quote! {});
+
+    let handler = TokenStream::from(quote! {
+        |#func_args| async move {
+            t_controller.#ident(#func_args).await
+        }
+    }).to_string();
+
+    let route = RouteMeta {
+        method: method.to_string(),
+        path: path,
+        name: name.clone(),
+        handler
+    };
+
+    let mut binding = ROUTES.lock().unwrap();
+    let controller = binding.get_mut(&CURRENT_CONTROLLER.lock().unwrap().as_ref().unwrap().name).unwrap();
+    controller.insert(name.clone(), route);
+
+    TokenStream::from(quote! {
+        #func
+    })
 }
