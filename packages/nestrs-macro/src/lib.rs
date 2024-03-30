@@ -150,16 +150,6 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemStruct);
     let ident = func.ident.clone();
 
-    // println!("Module: {:?}, Router: {:?}", func.ident, unsafe {
-    //     ROUTES.lock().unwrap().iter().map(|(k, v)| {
-    //         (k, v.iter().map(|(k, v)| {
-    //             (k, v.path.clone())
-    //         }).collect::<Vec<(&String, String)>>())
-    //     }).collect::<Vec<(&String, Vec<(&String, String)>)>>()
-    // });
-
-    // println!("Args: {:?}", args);
-
     let controller_tokens= controller_register_tokens(args.controllers.clone());
     let service_tokens= service_register_tokens(args.services.clone());
     let import_tokens = imports_register_tokens(args.imports.clone());
@@ -167,7 +157,6 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let controller_dep_inject_tokens = dep_inject_tokens("controllers", args.controllers.clone());
     
-
 
     CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta {
         name: "".to_string(),
@@ -178,9 +167,11 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     // 返回原始的输入，因为我们并没有修改它
     return TokenStream::from(quote! {
         #func
-
+        
         impl nestrs::Module for #ident {
-            fn register(self, ctx: &nestrs::ModuleCtx) -> nestrs::DynamicModule {                
+            fn register(self, ctx: &nestrs::ModuleCtx) -> nestrs::DynamicModule {
+                use nestrs::Service;
+                use nestrs::Controller;
                 println!("Registering module {}.", stringify!(#ident));
                 {
                     #controller_tokens

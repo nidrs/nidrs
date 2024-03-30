@@ -1,13 +1,7 @@
-use std::sync::Arc;
-
-use nestrs_macro::get_route_meta;
-
 mod app;
 mod user;
 
 fn main() {
-    get_route_meta!(println!("Hello, Nestrs!"));
-
     let app_state = AppState{};
 
     let app = nestrs::NestFactory::create(app::AppModule, app_state).listen::<AppError>(3000);

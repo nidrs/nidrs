@@ -1,14 +1,10 @@
-#![allow(warnings, unused)]
-use std::{any::Any, collections::{HashMap, HashSet}, rc::Rc, sync::{Mutex, MutexGuard}};
+use std::collections::HashMap;
 
-use axum::{extract::{Query, State}, Json, Router};
-use nestrs::Inject;
+use axum::{extract::{Query, State}, Json};
+use nestrs::{Inject, StateCtx};
 use nestrs_macro::{controller, get, post};
 
-use crate::AppState;
-
-use super::{service::AppService, StateCtx};
-use std::sync::Arc;
+use super::service::AppService;
 
 #[controller("/app")]
 #[derive(Debug, Default)]
