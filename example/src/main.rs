@@ -1,10 +1,17 @@
+use axum::{routing::get, Router};
+use nidrs::StateCtx;
+
 mod app;
 mod user;
 
 fn main() {
     let app_state = AppState{};
 
-    let app = nidrs::NestFactory::create(app::AppModule, app_state).listen::<AppError>(3000);
+    let mut app = nidrs::NestFactory::create(app::AppModule, app_state);
+
+    app.router = app.router.merge(Router::<StateCtx>::new().route("/api", get(|| async { "Hello, World!" })));
+    
+    let app = app.listen::<AppError>(3000);
     let _ = tokio::runtime::Runtime::new().unwrap().block_on(app);
 }
 

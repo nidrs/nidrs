@@ -20,7 +20,7 @@ pub struct DynamicModule {
 }
 
 pub struct NestFactory {
-    router: axum::Router<StateCtx>,
+    pub router: axum::Router<StateCtx>,
 }
 
 impl NestFactory {
@@ -33,14 +33,6 @@ impl NestFactory {
         }));
         let module_ctx = ModuleCtx::new();
         let dynamic_module = module.register(&module_ctx);
-
-        let services = module_ctx.services.lock().unwrap();
-        for (key, value) in services.iter() {
-            // let value = value.downcast_ref::<Box<dyn Service>>().unwrap();
-            // let value = value.clone();
-            // value.
-
-        }
         let routers = module_ctx.routers.lock().unwrap();
         let mut sub_router = axum::Router::new();
         for router in routers.iter() {
@@ -99,9 +91,7 @@ impl<T> std::ops::Deref for Inject<T> {
 #[derive(Debug, Clone)]
 pub struct ModuleCtx{
     pub services: Arc<Mutex<HashMap<String, Box<dyn Any>>>>,
-    // pub controllers: Arc<Mutex<HashMap<String, Arc<Mutex<dyn Any>>>>>,
     pub controllers: Arc<Mutex<HashMap<String, Box<dyn Any>>>>,
-    // pub router: Arc<Mutex<axum::Router<StateCtx>>>
     pub routers: Arc<Mutex<Vec<axum::Router<StateCtx>>>>
 }
 
