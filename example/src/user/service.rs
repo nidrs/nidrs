@@ -7,7 +7,7 @@ use crate::app::service::AppService;
 #[injectable()]
 #[derive(Clone, Debug, Default)]
 pub struct UserService{
-  pub app_service: Inject<AppService>,
+  app_service: Inject<AppService>,
 }
 
 impl UserService {
