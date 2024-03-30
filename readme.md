@@ -1,16 +1,10 @@
-<div align="center">
-  <p><img src="readme.assets/log2.jpg" /></p>
-  <p>
-    <img alt="Discord" src="https://img.shields.io/discord/1223548737075281952?style=for-the-badge" />
-    <img src="https://img.shields.io/github/last-commit/nidrs/nidrs?style=for-the-badge" />
-</p>
-</div>
+![log2](readme.assets/log2.jpg)
 
 
 
 # Nidrs
 
-致敬 Nestjs 框架，Nidrs 是基于 Nestjs 思想的 Rust 企业级模块化开发框架，同时结合 Axum 进行开发和设计。
+致敬 Nestjs 框架，Nidrs 是参考 Nestjs 思想的 Rust 企业级模块化开发框架，同时基于 Axum 进行开发和设计。
 
 Nidrs 提供了一个即插即用的应用程序架构，使开发人员和团队能够轻松创建高度可测试、可扩展、松散耦合且易于维护的应用程序。
 
