@@ -253,7 +253,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
             fn register(self, ctx: &nestrs::ModuleCtx) -> nestrs::DynamicModule {
                 #import_tokens
                 
-                println!("Registering {} success.", stringify!(#ident));
+                println!("Registering module {}.", stringify!(#ident));
 
                 #controller_tokens
 
