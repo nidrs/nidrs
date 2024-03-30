@@ -4,7 +4,7 @@ mod user;
 fn main() {
     let app_state = AppState{};
 
-    let app = nestrs::NestFactory::create(app::AppModule, app_state).listen::<AppError>(3000);
+    let app = nidrs::NestFactory::create(app::AppModule, app_state).listen::<AppError>(3000);
     let _ = tokio::runtime::Runtime::new().unwrap().block_on(app);
 }
 

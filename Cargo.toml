@@ -1,6 +1,6 @@
 [workspace]
 members = [
   "example",
-  "packages/nestrs",
-  "packages/nestrs-macro"
+  "packages/nidrs",
+  "packages/nidrs-macro"
 ]

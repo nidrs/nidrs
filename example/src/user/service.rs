@@ -1,5 +1,5 @@
-use nestrs::Inject;
-use nestrs_macro::injectable;
+use nidrs::Inject;
+use nidrs_macro::injectable;
 
 use crate::app::service::AppService;
 

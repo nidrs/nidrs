@@ -1,6 +1,6 @@
 {
   "rust-analyzer.linkedProjects": [
-    "./packages/nestrs-macro/Cargo.toml",
-    "./packages/nestrs-macro/Cargo.toml"
+    "./packages/nidrs-macro/Cargo.toml",
+    "./packages/nidrs-macro/Cargo.toml"
   ]
 }

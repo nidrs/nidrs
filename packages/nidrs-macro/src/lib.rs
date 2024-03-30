@@ -168,10 +168,10 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     return TokenStream::from(quote! {
         #func
         
-        impl nestrs::Module for #ident {
-            fn register(self, ctx: &nestrs::ModuleCtx) -> nestrs::DynamicModule {
-                use nestrs::Service;
-                use nestrs::Controller;
+        impl nidrs::Module for #ident {
+            fn register(self, ctx: &nidrs::ModuleCtx) -> nidrs::DynamicModule {
+                use nidrs::Service;
+                use nidrs::Controller;
                 println!("Registering module {}.", stringify!(#ident));
                 {
                     #controller_tokens
@@ -190,7 +190,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
                     #controller_dep_inject_tokens
                 }
 
-                nestrs::DynamicModule{}
+                nidrs::DynamicModule{}
             }
         }
     });
@@ -357,7 +357,7 @@ fn service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStream2{
     };
 
     let inject_tokens = TokenStream2::from(quote! {
-        impl nestrs::#service_type for #ident {
+        impl nidrs::#service_type for #ident {
             fn inject(&self, services: &std::sync::MutexGuard<std::collections::HashMap<String, Box<dyn std::any::Any>>>) {
                 #(#fields)*
             }

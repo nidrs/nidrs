@@ -237,8 +237,8 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "axum-extra",
- "nestrs",
- "nestrs-macro",
+ "nidrs",
+ "nidrs-macro",
  "serde",
  "serde_json",
  "tokio",
@@ -558,7 +558,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "nestrs"
+name = "nidrs"
 version = "0.1.0"
 dependencies = [
  "axum",
@@ -568,7 +568,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "nestrs-macro"
+name = "nidrs-macro"
 version = "0.1.0"
 dependencies = [
  "once_cell",

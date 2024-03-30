@@ -1,5 +1,5 @@
-use nestrs::Inject;
-use nestrs_macro::injectable;
+use nidrs::Inject;
+use nidrs_macro::injectable;
 use crate::user::service::UserService;
 
 #[injectable()]
@@ -16,6 +16,6 @@ impl AppService {
     }
 
     pub fn get_hello_world2(&self) -> String {
-        "Hello, Nestrs2xx333!".to_string()
+        "Hello, nidrs2xx333!".to_string()
     }
 }

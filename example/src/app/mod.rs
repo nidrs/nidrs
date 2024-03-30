@@ -1,4 +1,4 @@
-use nestrs_macro::module;
+use nidrs_macro::module;
 
 pub mod controller;
 pub mod service;
