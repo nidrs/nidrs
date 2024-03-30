@@ -1,6 +1,7 @@
 [package]
 name = "nidrs-macro"
 version = "0.0.1"
+authors = ["WumaCoder <wumacoder@gmail.com>"]
 edition = "2021"
 keywords = ["nidrs"]
 categories = [
