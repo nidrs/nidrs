@@ -4,7 +4,7 @@ version = "0.0.1"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
 description = "Nidrs is a web framework based on axum and tokio."
 edition = "2021"
-keywords = ["nidrs", "tokio", "axum", "http", "web", "framework", "async"]
+keywords = ["nidrs", "axum", "http", "web", "framework"]
 categories = [
     "network-programming",
     "asynchronous",
