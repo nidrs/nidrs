@@ -29,7 +29,7 @@ impl NestFactory {
         state: S,
     ) -> Self {
         let router = axum::Router::new().route("/", axum::routing::get(|| async move {
-            "Hello, World!"
+            "Hello, Nidrs!"
         }));
         let module_ctx = ModuleCtx::new();
         let dynamic_module = module.register(&module_ctx);
@@ -100,7 +100,6 @@ impl ModuleCtx {
         ModuleCtx {
             services: Arc::new(Mutex::new(HashMap::new())),
             controllers: Arc::new(Mutex::new(HashMap::new())),
-            // router: Arc::new(Mutex::new(axum::Router::new())),
             routers: Arc::new(Mutex::new(Vec::new())),
         }
     }
