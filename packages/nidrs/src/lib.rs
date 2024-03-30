@@ -36,7 +36,6 @@ impl NestFactory {
         let routers = module_ctx.routers.lock().unwrap();
         let mut sub_router = axum::Router::new();
         for router in routers.iter() {
-            // 打印路由信息, path 和 method
             sub_router = sub_router.merge(router.clone());
         }
         NestFactory {
