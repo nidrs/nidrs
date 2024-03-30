@@ -2,6 +2,7 @@
 name = "nidrs-macro"
 version = "0.0.1"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
+description = "a nidrs macro."
 edition = "2021"
 keywords = ["nidrs"]
 categories = [
