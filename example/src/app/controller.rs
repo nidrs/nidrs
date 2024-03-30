@@ -1,9 +1,9 @@
 #![allow(warnings, unused)]
 use std::{any::Any, collections::{HashMap, HashSet}, rc::Rc, sync::{Mutex, MutexGuard}};
 
-use axum::{extract::{Query, State}, Router};
+use axum::{extract::{Query, State}, Json, Router};
 use nestrs::Inject;
-use nestrs_macro::{controller, get};
+use nestrs_macro::{controller, get, post};
 
 use crate::AppState;
 
@@ -24,8 +24,11 @@ impl AppController {
         let app_service = app_service.as_ref().unwrap();
         app_service.get_hello_world()
     }
-    #[get("/hello2")]
-    pub async fn get_hello_world2(&self, State(state): State<StateCtx>) -> String {
+    #[post("/hello")]
+    pub async fn get_hello_world2(&self, State(state): State<StateCtx>, Query(q): Query<HashMap<String, String>>, Json(j): Json<serde_json::Value>) -> String {
+        println!("Query {:?}", q);
+        println!("Json {:?}", j);
+
         "Hello, World2!".to_string()
     }
 }
