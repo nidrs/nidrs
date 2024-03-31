@@ -19,11 +19,11 @@ pub struct DynamicModule {
 
 }
 
-pub struct NestFactory {
+pub struct NidrsFactory {
     pub router: axum::Router<StateCtx>,
 }
 
-impl NestFactory {
+impl NidrsFactory {
     pub fn create<T: Module>(
         module: T,
     ) -> Self {
@@ -37,7 +37,7 @@ impl NestFactory {
         for router in routers.iter() {
             sub_router = sub_router.merge(router.clone());
         }
-        NestFactory {
+        NidrsFactory {
             router: router.merge(sub_router),
         }
     }

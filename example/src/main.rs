@@ -6,7 +6,7 @@ mod conf;
 mod user;
 
 fn main() {
-    let mut app = nidrs::NestFactory::create(app::AppModule);
+    let mut app = nidrs::NidrsFactory::create(app::AppModule);
 
     app.router = app.router.merge(Router::<StateCtx>::new().route("/api", get(|| async { "Hello, World!" })));
     
