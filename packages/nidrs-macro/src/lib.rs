@@ -426,6 +426,7 @@ fn gen_dep_inject_tokens(con: &str, services: Vec<String>) -> TokenStream2 {
 fn gen_service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStream2{
     let service_type = syn::Ident::new(service_type, Span::call_site().into());
     let ident = func.ident.clone();
+    let ident_str = ident.to_string();
 
     let fields = if let syn::Fields::Named(fields) = &func.fields {
         fields.named.iter().map(|field| {
@@ -442,7 +443,7 @@ fn gen_service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStre
                             let injected_type = ty.to_token_stream();
                             let injected_type_str = injected_type.to_string();
                             quote! {
-                                let service = services.get(#injected_type_str).unwrap();
+                                let service = services.get(#injected_type_str).expect(format!("[{}] Service {} not register.", #ident_str, #injected_type_str).as_str());
                                 let service = service.downcast_ref::<std::sync::Arc<#injected_type>>().unwrap();
                                 self.#field_ident.inject(service.clone());
                             }
