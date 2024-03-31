@@ -141,7 +141,7 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
     });
     ROUTES.lock().unwrap().insert(ident.to_string(), HashMap::new());
 
-    let inject_tokens = service_inject_tokens("Controller", &func);
+    let inject_tokens = gen_service_inject_tokens("Controller", &func);
 
     TokenStream::from(quote! {
         #func
@@ -157,16 +157,15 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemStruct);
     let ident = func.ident.clone();
 
-    let controller_tokens= controller_register_tokens(args.controllers.clone());
-    let service_tokens= service_register_tokens(args.services.clone());
-    let import_tokens = imports_register_tokens(args.imports.clone());
+    let controller_register_tokens= gen_controller_register_tokens(args.controllers.clone());
+    let service_register_tokens= gen_service_register_tokens(args.services.clone());
+    let imports_register_tokens = gen_imports_register_tokens(args.imports.clone());
 
-    let services_dep_inject_tokens = dep_inject_tokens("services", args.services.clone());
-    let controller_dep_inject_tokens = dep_inject_tokens("controllers", args.controllers.clone());
+    let services_dep_inject_tokens = gen_dep_inject_tokens("services", args.services.clone());
+    let controller_dep_inject_tokens = gen_dep_inject_tokens("controllers", args.controllers.clone());
 
     let events_trigger_tokens =  gen_events_trigger_tokens();
     
-    // println!("event {} {:?}", ident, EVENTS.lock().unwrap());
 
     CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta {
         name: "".to_string(),
@@ -175,7 +174,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     ROUTES.lock().unwrap().clear();
     EVENTS.lock().unwrap().clear();
 
-    // 返回原始的输入，因为我们并没有修改它
+
     return TokenStream::from(quote! {
         #func
         
@@ -189,12 +188,12 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
                 ctx.modules.lock().unwrap().insert(stringify!(#ident).to_string(), Box::new(self) as Box<dyn std::any::Any>);
                 println!("Registering module {}.", stringify!(#ident));
                 {
-                    #controller_tokens
+                    #controller_register_tokens
     
-                    #service_tokens
+                    #service_register_tokens
                 }
                 {
-                    #import_tokens
+                    #imports_register_tokens
                 }
                 {
                     let services = ctx.services.lock().unwrap();
@@ -226,7 +225,7 @@ pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
         name: func.ident.to_string(),
     });
 
-    let inject_tokens = service_inject_tokens("Service", &func);
+    let inject_tokens = gen_service_inject_tokens("Service", &func);
 
     return TokenStream::from(quote! {
         #func
@@ -258,157 +257,6 @@ pub fn get_route_meta(input: TokenStream) -> TokenStream {
     return input;
 }
 
-
-
-fn controller_register_tokens(services: Vec<String>) -> TokenStream2 {
-    let binding = CURRENT_CONTROLLER.lock().unwrap();
-    let current_controller = binding.as_ref().unwrap();
-    let controller_path = current_controller.path.clone();
-    let controller_tokens= services.iter().map(|controller_str| {
-        let binding = ROUTES.lock().unwrap();
-        let controller = binding.get(controller_str).unwrap();
-        let controller_ident = syn::Ident::new(controller_str, Span::call_site().into());
-        let router_path = controller.iter().map(|(name, route)| {
-            let method = route.method.clone();
-            let method_ident = syn::Ident::new(&method, Span::call_site().into());
-            let path = controller_path.clone() + &route.path.clone();
-            let handler = route.handler.clone();
-            let handler = syn::parse_str::<Expr>(&handler).unwrap();
-            quote! {
-                let t_controller = controllers.get(#controller_str).unwrap();
-                let t_controller = t_controller.downcast_ref::<std::sync::Arc<controller::#controller_ident>>().unwrap();
-                let t_controller = t_controller.clone();
-                println!("Registering router '{} {}'.", #method.to_uppercase(),#path);
-                ctx.routers.lock().unwrap().push(axum::Router::new().route(
-                    #path,
-                    axum::routing::#method_ident(#handler),
-                ));
-            }
-        }).collect::<Vec<TokenStream2>>();
-        let router_path = TokenStream2::from(quote! {
-            #(#router_path)*
-        });
-        
-        quote! {
-            ctx.controllers.lock().unwrap().insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(controller::#controller_ident::default())));
-            let controllers = ctx.controllers.lock().unwrap();
-            
-            #router_path
-        }
-    }).collect::<Vec<TokenStream2>>();
-    let controller_tokens = TokenStream2::from(quote! {
-        #(#controller_tokens)*
-    });
-    return controller_tokens;
-}
-
-
-fn service_register_tokens(services: Vec<String>) -> TokenStream2 {
-    let controller_tokens= services.iter().map(|controller_str| {
-        let controller_ident = syn::Ident::new(controller_str, Span::call_site().into());
-        
-        quote! {
-            println!("Registering service {}.", #controller_str);
-            ctx.services.lock().unwrap().insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(service::#controller_ident::default())) as Box<dyn std::any::Any>);
-        }
-    }).collect::<Vec<TokenStream2>>();
-    let controller_tokens = TokenStream2::from(quote! {
-        #(#controller_tokens)*
-
-        let services = ctx.services.lock().unwrap();
-    });
-    return controller_tokens;
-}
-
-fn imports_register_tokens(imports: Vec<String>) -> TokenStream2 {
-    let imports = imports.iter().map(|import| {
-        let import_let = (import.to_string() + "_module").to_string();
-        let import_let_indent = syn::Ident::new(&import_let, Span::call_site().into());
-        let import_ident = syn::Ident::new(import, Span::call_site().into());
-        
-        quote! {
-            let #import_let_indent = #import_ident::default();
-            #import_let_indent.register(ctx);
-        }
-    }).collect::<Vec<TokenStream2>>();
-
-    let imports = TokenStream2::from(quote! {
-        #(#imports)*
-    });
-
-    return imports;
-}
-
-fn dep_inject_tokens(con: &str, services: Vec<String>) -> TokenStream2 {
-    let con_ident = syn::Ident::new(con, Span::call_site().into());
-    let controller_tokens= services.iter().map(|controller_str| {
-        let controller_ident = syn::Ident::new(controller_str, Span::call_site().into());
-        
-        quote! {
-            let t = #con_ident.get(#controller_str).unwrap();
-            let t = t.downcast_ref::<std::sync::Arc<#controller_ident>>().unwrap();
-            let t = t.clone();
-            println!("Injecting {}.", #controller_str);
-            t.inject(&services);
-        }
-    }).collect::<Vec<TokenStream2>>();
-    let controller_tokens = TokenStream2::from(quote! {
-        #(#controller_tokens)*
-    });
-    return controller_tokens;
-}
-
-fn service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStream2{
-    let service_type = syn::Ident::new(service_type, Span::call_site().into());
-    let ident = func.ident.clone();
-
-    let fields = if let syn::Fields::Named(fields) = &func.fields {
-        fields.named.iter().map(|field| {
-            let field_ident = field.ident.as_ref().unwrap();
-            let field_type = &field.ty;
-
-            if let Type::Path(type_path) = field_type {
-                let type_ident = type_path.path.segments.first().unwrap().ident.to_string();
-                if type_ident == "Inject" {
-                    let type_args = type_path.path.segments.first().unwrap().arguments.to_owned();
-                    if let syn::PathArguments::AngleBracketed(args) = type_args {
-                        let type_arg = args.args.first().unwrap();
-                        if let syn::GenericArgument::Type(ty) = type_arg {
-                            let injected_type = ty.to_token_stream();
-                            let injected_type_str = injected_type.to_string();
-                            quote! {
-                                let service = services.get(#injected_type_str).unwrap();
-                                let service = service.downcast_ref::<std::sync::Arc<#injected_type>>().unwrap();
-                                self.#field_ident.inject(service.clone());
-                            }
-                        } else{
-                            quote! {}
-                        }
-                    }else {
-                        quote! {}
-                    }
-                } else {
-                    quote! {}
-                }
-            }else{
-                quote! {}
-            }
-        }).collect::<Vec<TokenStream2>>()
-    } else {
-        vec![]
-    };
-
-    let inject_tokens = TokenStream2::from(quote! {
-        impl nidrs::#service_type for #ident {
-            fn inject(&self, services: &std::sync::MutexGuard<std::collections::HashMap<String, Box<dyn std::any::Any>>>) {
-                #(#fields)*
-            }
-        }
-    });
-
-    return inject_tokens;
-
-}
 
 fn route(method:&str, args: TokenStream, input: TokenStream)-> TokenStream{
     let args = parse_macro_input!(args as syn::Expr);
@@ -476,6 +324,155 @@ fn route(method:&str, args: TokenStream, input: TokenStream)-> TokenStream{
     TokenStream::from(quote! {
         #func
     })
+}
+
+fn gen_controller_register_tokens(services: Vec<String>) -> TokenStream2 {
+    let binding = CURRENT_CONTROLLER.lock().unwrap();
+    let current_controller = binding.as_ref().unwrap();
+    let controller_path = current_controller.path.clone();
+    let controller_tokens= services.iter().map(|controller_str| {
+        let binding = ROUTES.lock().unwrap();
+        let controller = binding.get(controller_str).unwrap();
+        let controller_ident = syn::Ident::new(controller_str, Span::call_site().into());
+        let router_path = controller.iter().map(|(name, route)| {
+            let method = route.method.clone();
+            let method_ident = syn::Ident::new(&method, Span::call_site().into());
+            let path = controller_path.clone() + &route.path.clone();
+            let handler = route.handler.clone();
+            let handler = syn::parse_str::<Expr>(&handler).unwrap();
+            quote! {
+                let t_controller = controllers.get(#controller_str).unwrap();
+                let t_controller = t_controller.downcast_ref::<std::sync::Arc<controller::#controller_ident>>().unwrap();
+                let t_controller = t_controller.clone();
+                println!("Registering router '{} {}'.", #method.to_uppercase(),#path);
+                ctx.routers.lock().unwrap().push(axum::Router::new().route(
+                    #path,
+                    axum::routing::#method_ident(#handler),
+                ));
+            }
+        }).collect::<Vec<TokenStream2>>();
+        let router_path = TokenStream2::from(quote! {
+            #(#router_path)*
+        });
+        
+        quote! {
+            ctx.controllers.lock().unwrap().insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(controller::#controller_ident::default())));
+            let controllers = ctx.controllers.lock().unwrap();
+            
+            #router_path
+        }
+    }).collect::<Vec<TokenStream2>>();
+    let controller_tokens = TokenStream2::from(quote! {
+        #(#controller_tokens)*
+    });
+    return controller_tokens;
+}
+
+fn gen_service_register_tokens(services: Vec<String>) -> TokenStream2 {
+    let controller_tokens= services.iter().map(|controller_str| {
+        let controller_ident = syn::Ident::new(controller_str, Span::call_site().into());
+        
+        quote! {
+            println!("Registering service {}.", #controller_str);
+            ctx.services.lock().unwrap().insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(service::#controller_ident::default())) as Box<dyn std::any::Any>);
+        }
+    }).collect::<Vec<TokenStream2>>();
+    let controller_tokens = TokenStream2::from(quote! {
+        #(#controller_tokens)*
+
+        let services = ctx.services.lock().unwrap();
+    });
+    return controller_tokens;
+}
+
+fn gen_imports_register_tokens(imports: Vec<String>) -> TokenStream2 {
+    let imports = imports.iter().map(|import| {
+        let import_let = (import.to_string() + "_module").to_string();
+        let import_let_indent = syn::Ident::new(&import_let, Span::call_site().into());
+        let import_ident = syn::Ident::new(import, Span::call_site().into());
+        
+        quote! {
+            let #import_let_indent = #import_ident::default();
+            #import_let_indent.register(ctx);
+        }
+    }).collect::<Vec<TokenStream2>>();
+
+    let imports = TokenStream2::from(quote! {
+        #(#imports)*
+    });
+
+    return imports;
+}
+
+fn gen_dep_inject_tokens(con: &str, services: Vec<String>) -> TokenStream2 {
+    let con_ident = syn::Ident::new(con, Span::call_site().into());
+    let controller_tokens= services.iter().map(|controller_str| {
+        let controller_ident = syn::Ident::new(controller_str, Span::call_site().into());
+        
+        quote! {
+            let t = #con_ident.get(#controller_str).unwrap();
+            let t = t.downcast_ref::<std::sync::Arc<#controller_ident>>().unwrap();
+            let t = t.clone();
+            println!("Injecting {}.", #controller_str);
+            t.inject(&services);
+        }
+    }).collect::<Vec<TokenStream2>>();
+    let controller_tokens = TokenStream2::from(quote! {
+        #(#controller_tokens)*
+    });
+    return controller_tokens;
+}
+
+fn gen_service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStream2{
+    let service_type = syn::Ident::new(service_type, Span::call_site().into());
+    let ident = func.ident.clone();
+
+    let fields = if let syn::Fields::Named(fields) = &func.fields {
+        fields.named.iter().map(|field| {
+            let field_ident = field.ident.as_ref().unwrap();
+            let field_type = &field.ty;
+
+            if let Type::Path(type_path) = field_type {
+                let type_ident = type_path.path.segments.first().unwrap().ident.to_string();
+                if type_ident == "Inject" {
+                    let type_args = type_path.path.segments.first().unwrap().arguments.to_owned();
+                    if let syn::PathArguments::AngleBracketed(args) = type_args {
+                        let type_arg = args.args.first().unwrap();
+                        if let syn::GenericArgument::Type(ty) = type_arg {
+                            let injected_type = ty.to_token_stream();
+                            let injected_type_str = injected_type.to_string();
+                            quote! {
+                                let service = services.get(#injected_type_str).unwrap();
+                                let service = service.downcast_ref::<std::sync::Arc<#injected_type>>().unwrap();
+                                self.#field_ident.inject(service.clone());
+                            }
+                        } else{
+                            quote! {}
+                        }
+                    }else {
+                        quote! {}
+                    }
+                } else {
+                    quote! {}
+                }
+            }else{
+                quote! {}
+            }
+        }).collect::<Vec<TokenStream2>>()
+    } else {
+        vec![]
+    };
+
+    let inject_tokens = TokenStream2::from(quote! {
+        impl nidrs::#service_type for #ident {
+            fn inject(&self, services: &std::sync::MutexGuard<std::collections::HashMap<String, Box<dyn std::any::Any>>>) {
+                #(#fields)*
+            }
+        }
+    });
+
+    return inject_tokens;
+
 }
 
 fn gen_events_trigger_tokens() -> TokenStream2 {
