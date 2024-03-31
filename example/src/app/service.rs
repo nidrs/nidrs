@@ -1,5 +1,5 @@
 use nidrs::Inject;
-use nidrs_macro::injectable;
+use nidrs_macro::{injectable, on_module_init};
 use crate::user::service::UserService;
 
 #[injectable()]
@@ -9,6 +9,14 @@ pub struct AppService{
 }
 
 impl AppService {
+    
+    #[on_module_init()]
+    pub fn on_module_init(&self){
+        let user_service = self.user_service.lock().unwrap();
+        let user_service = user_service.as_ref().unwrap();
+        println!("AppService on_module_init {}", user_service.get_hello_world());
+    }
+    
     pub fn get_hello_world(&self) -> String {
         let user_service = self.user_service.lock().unwrap();
         let user_service = user_service.as_ref().unwrap();

@@ -15,7 +15,7 @@ pub struct UserController {
 
 impl UserController {
     #[get("/hello")]
-    pub async fn get_hello_world(&self, State(state): State<StateCtx>, Query(q): Query<HashMap<String, String>>) -> String {
+    pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> String {
         println!("Query {:?}", q);
         let user_service = self.user_service.lock().unwrap();
         let user_service = user_service.as_ref().unwrap();

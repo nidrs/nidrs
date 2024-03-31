@@ -15,7 +15,9 @@ use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatTyp
 use proc_macro2::TokenStream as TokenStream2;
 
 static CURRENT_CONTROLLER: Mutex<Option<ControllerMeta>> = Mutex::new(None);
-static ROUTES: Lazy<Mutex<HashMap<String, HashMap<String, RouteMeta>>>> = Lazy::new(||Mutex::new(HashMap::new()));
+static ROUTES: Lazy<Mutex<HashMap<String, HashMap<String, RouteMeta>>>> = Lazy::new(||Mutex::new(HashMap::new())); // HashMap<ControllerName, HashMap<RouteName, RouteMeta>>
+static CURRENT_SERVICE: Mutex<Option<ServiceMeta>> = Mutex::new(None);
+static EVENTS: Lazy<Mutex<HashMap<String, Vec<(String, String)>>>> = Lazy::new(||Mutex::new(HashMap::new())); // HashMap<EventName, Vec<(ServiceName,FName)>>
 
 #[derive(Debug, Clone)]
 struct RouteMeta {
@@ -29,6 +31,11 @@ struct RouteMeta {
 struct ControllerMeta {
     name: String,
     path: String,
+}
+
+#[derive(Debug, Clone)]
+struct ServiceMeta {
+    name: String,
 }
 
 #[derive(Debug, Clone)]
@@ -153,16 +160,20 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     let controller_tokens= controller_register_tokens(args.controllers.clone());
     let service_tokens= service_register_tokens(args.services.clone());
     let import_tokens = imports_register_tokens(args.imports.clone());
-    let services_dep_inject_tokens = dep_inject_tokens("services", args.services.clone());
 
+    let services_dep_inject_tokens = dep_inject_tokens("services", args.services.clone());
     let controller_dep_inject_tokens = dep_inject_tokens("controllers", args.controllers.clone());
+
+    let events_trigger_tokens =  gen_events_trigger_tokens();
     
+    // println!("event {} {:?}", ident, EVENTS.lock().unwrap());
 
     CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta {
         name: "".to_string(),
         path: "".to_string(),
     });
     ROUTES.lock().unwrap().clear();
+    EVENTS.lock().unwrap().clear();
 
     // 返回原始的输入，因为我们并没有修改它
     return TokenStream::from(quote! {
@@ -194,6 +205,12 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
                     #controller_dep_inject_tokens
                 }
 
+                {
+                    let services = ctx.services.lock().unwrap();
+
+                    #events_trigger_tokens
+                }
+
                 nidrs::DynamicModule{}
             }
         }
@@ -205,12 +222,33 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemStruct);
 
+    CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta {
+        name: func.ident.to_string(),
+    });
+
     let inject_tokens = service_inject_tokens("Service", &func);
 
     return TokenStream::from(quote! {
         #func
 
         #inject_tokens
+    });
+}
+
+#[proc_macro_attribute]
+pub fn on_module_init(args: TokenStream, input: TokenStream) -> TokenStream {
+    let func = parse_macro_input!(input as ItemFn);
+    
+    let ident = func.sig.ident.clone();
+    let current_service = CURRENT_SERVICE.lock().unwrap().clone();
+
+    EVENTS.lock().unwrap()
+        .entry("on_module_init".to_string())
+        .or_insert(vec![])
+        .push((current_service.unwrap().name, ident.to_string()));
+
+    return TokenStream::from(quote! {
+        #func
     });
 }
 
@@ -438,4 +476,27 @@ fn route(method:&str, args: TokenStream, input: TokenStream)-> TokenStream{
     TokenStream::from(quote! {
         #func
     })
+}
+
+fn gen_events_trigger_tokens() -> TokenStream2 {
+    let binding = EVENTS.lock().unwrap();
+    let on_module_init = binding.get("on_module_init");
+    if let None = on_module_init {
+        return TokenStream2::new();
+    }
+    let events_trigger_tokens = on_module_init.unwrap().iter().map(|(service, func)| {
+        let service_ident = syn::Ident::new(service, Span::call_site().into());
+        let func_ident = syn::Ident::new(func, Span::call_site().into());
+        quote! {
+            let service = services.get(#service).unwrap();
+            let service = service.downcast_ref::<std::sync::Arc<service::#service_ident>>().unwrap();
+            let service = service.clone();
+            println!("Triggering event on_module_init for {}.", #service);
+            service.#func_ident();
+        }
+    }).collect::<Vec<TokenStream2>>();
+    let events_trigger_tokens = TokenStream2::from(quote! {
+        #(#events_trigger_tokens)*
+    });
+    return events_trigger_tokens;
 }
