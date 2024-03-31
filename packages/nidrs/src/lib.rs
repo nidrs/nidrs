@@ -3,7 +3,7 @@
 
 use std::{any::Any, cell::RefCell, collections::HashMap, fmt::Debug, sync::{Arc, Mutex, MutexGuard}};
 pub trait Module {
-    fn register(self, ctx: &ModuleCtx) -> DynamicModule;
+    fn register(self, ctx: &ModuleCtx);
 }
 
 
@@ -16,7 +16,7 @@ pub trait Controller {
 }
 
 pub struct DynamicModule {
-
+    pub services: HashMap<String, Box<dyn Any>>,
 }
 
 pub struct NidrsFactory {
@@ -31,7 +31,7 @@ impl NidrsFactory {
             "Hello, Nidrs!"
         }));
         let module_ctx = ModuleCtx::new();
-        let dynamic_module = module.register(&module_ctx);
+        module.register(&module_ctx);
         let routers = module_ctx.routers.lock().unwrap();
         let mut sub_router = axum::Router::new();
         for router in routers.iter() {

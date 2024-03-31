@@ -9,7 +9,7 @@ use once_cell::sync::Lazy;
 use proc_macro::{Ident, Span, TokenStream};
 use proc_macro2::Punct;
 use quote::{quote, ToTokens};
-use syn::{parse::{Parse, ParseStream}, Expr, Token};
+use syn::{parse::{Parse, ParseStream}, Expr, ExprCall, PatPath, Token};
 use syn::punctuated::Punctuated;
 use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatType, Type};
 use proc_macro2::TokenStream as TokenStream2;
@@ -40,10 +40,10 @@ struct ServiceMeta {
 
 #[derive(Debug, Clone)]
 struct ModuleArgs {
-    imports: Vec<String>,
-    controllers: Vec<String>,
-    services: Vec<String>,
-    exports: Vec<String>,
+    imports: Vec<TokenStream2>,
+    controllers: Vec<TokenStream2>,
+    services: Vec<TokenStream2>,
+    exports: Vec<TokenStream2>,
 }
 
 impl Parse for ModuleArgs {
@@ -63,10 +63,13 @@ impl Parse for ModuleArgs {
                         return (path.path.segments.first().unwrap().ident.to_string(), if let syn::Expr::Array(array) = *assign.right.clone() {
                             array.elems.iter().map(|elem| {
                                 if let syn::Expr::Path(path) = elem {
-                                    return path.path.segments.first().unwrap().ident.to_string();
+                                    return path.path.segments.first().unwrap().ident.to_token_stream()
                                 }
-                                return "".to_string();
-                            }).collect::<Vec<String>>()
+                                if let syn::Expr::Call(lit) = elem {
+                                    return lit.to_token_stream()
+                                }
+                                return TokenStream2::new();
+                            }).collect::<Vec<TokenStream2>>()
                         } else {
                             vec![]
                         });
@@ -75,7 +78,7 @@ impl Parse for ModuleArgs {
     
             }
             panic!("Invalid argument");
-        }).collect::<HashMap<String, Vec<String>>>();
+        }).collect::<HashMap<String, Vec<TokenStream2>>>();
 
         parse_args_map.iter().for_each(|(k, v)| {
             match k.as_str() {
@@ -86,6 +89,8 @@ impl Parse for ModuleArgs {
                 _ => {}
             }
         });
+        
+        // println!("{:?}", parse_args_map);
     
         Ok(ModuleArgs {
             imports,
@@ -179,11 +184,11 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
         #func
         
         impl nidrs::Module for #ident {
-            fn register(self, ctx: &nidrs::ModuleCtx) -> nidrs::DynamicModule {
+            fn register(self, ctx: &nidrs::ModuleCtx){
                 use nidrs::Service;
                 use nidrs::Controller;
                 if ctx.modules.lock().unwrap().contains_key(stringify!(#ident)) {
-                    return nidrs::DynamicModule{};
+                    return;
                 }
                 ctx.modules.lock().unwrap().insert(stringify!(#ident).to_string(), Box::new(self) as Box<dyn std::any::Any>);
                 println!("Registering module {}.", stringify!(#ident));
@@ -209,8 +214,6 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
                     #events_trigger_tokens
                 }
-
-                nidrs::DynamicModule{}
             }
         }
     });
@@ -220,7 +223,6 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemStruct);
-
     CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta {
         name: func.ident.to_string(),
     });
@@ -326,14 +328,15 @@ fn route(method:&str, args: TokenStream, input: TokenStream)-> TokenStream{
     })
 }
 
-fn gen_controller_register_tokens(services: Vec<String>) -> TokenStream2 {
+fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
     let binding = CURRENT_CONTROLLER.lock().unwrap();
     let current_controller = binding.as_ref().unwrap();
     let controller_path = current_controller.path.clone();
-    let controller_tokens= services.iter().map(|controller_str| {
+    let controller_tokens= services.iter().map(|controller_token| {
+        let controller_str = controller_token.to_string();
         let binding = ROUTES.lock().unwrap();
-        let controller = binding.get(controller_str).unwrap();
-        let controller_ident = syn::Ident::new(controller_str, Span::call_site().into());
+        let controller = binding.get(&controller_str).unwrap();
+        let controller_ident = syn::Ident::new(&controller_str, Span::call_site().into());
         let router_path = controller.iter().map(|(name, route)| {
             let method = route.method.clone();
             let method_ident = syn::Ident::new(&method, Span::call_site().into());
@@ -368,9 +371,10 @@ fn gen_controller_register_tokens(services: Vec<String>) -> TokenStream2 {
     return controller_tokens;
 }
 
-fn gen_service_register_tokens(services: Vec<String>) -> TokenStream2 {
-    let controller_tokens= services.iter().map(|controller_str| {
-        let controller_ident = syn::Ident::new(controller_str, Span::call_site().into());
+fn gen_service_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
+    let controller_tokens= services.iter().map(|controller_tokens| {
+        let controller_str = controller_tokens.to_string();
+        let controller_ident = controller_tokens;
         
         quote! {
             println!("Registering service {}.", #controller_str);
@@ -385,15 +389,33 @@ fn gen_service_register_tokens(services: Vec<String>) -> TokenStream2 {
     return controller_tokens;
 }
 
-fn gen_imports_register_tokens(imports: Vec<String>) -> TokenStream2 {
-    let imports = imports.iter().map(|import| {
-        let import_let = (import.to_string() + "_module").to_string();
-        let import_let_indent = syn::Ident::new(&import_let, Span::call_site().into());
-        let import_ident = syn::Ident::new(import, Span::call_site().into());
-        
-        quote! {
-            let #import_let_indent = #import_ident::default();
-            #import_let_indent.register(ctx);
+fn gen_imports_register_tokens(imports: Vec<TokenStream2>) -> TokenStream2 {
+    println!("test imports_register_tokens. {:?}", imports.iter().map(|import_tokens| import_tokens.to_string()).collect::<Vec<String>>());
+    let imports = imports.iter().map(|import_tokens| {
+        let import = import_tokens.to_string();
+
+        println!("test import {}.", import);
+
+        if import.contains("for_root") {
+            let import_call = syn::parse2::<ExprCall>(import_tokens.clone()).unwrap();
+            if let Expr::Path(path)  = import_call.func.as_ref(){
+                let module_ident = path.path.segments.first().unwrap().ident.clone();
+                quote! {
+                    let dyn_module = #import_call;
+                    let dyn_module_services = dyn_module.services;
+                    for (k, v) in dyn_module_services.iter() {
+                        println!("Registering dyn service {} {:?}.", k, v);
+                        // ctx.services.lock().unwrap().insert(k.clone(), v.to_owned());
+                    }
+                    #module_ident::default().register(ctx);
+                }
+            }else {
+                panic!("Invalid import.")
+            }
+        } else {
+            quote! {
+                #import_tokens::default().register(ctx);
+            }
         }
     }).collect::<Vec<TokenStream2>>();
 
@@ -404,10 +426,11 @@ fn gen_imports_register_tokens(imports: Vec<String>) -> TokenStream2 {
     return imports;
 }
 
-fn gen_dep_inject_tokens(con: &str, services: Vec<String>) -> TokenStream2 {
+fn gen_dep_inject_tokens(con: &str, services: Vec<TokenStream2>) -> TokenStream2 {
     let con_ident = syn::Ident::new(con, Span::call_site().into());
-    let controller_tokens= services.iter().map(|controller_str| {
-        let controller_ident = syn::Ident::new(controller_str, Span::call_site().into());
+    let controller_tokens= services.iter().map(|tokens| {
+        let controller_str = tokens.to_string();
+        let controller_ident = tokens;
         
         quote! {
             let t = #con_ident.get(#controller_str).unwrap();
