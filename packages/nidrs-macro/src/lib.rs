@@ -374,7 +374,7 @@ fn gen_service_register_tokens(services: Vec<String>) -> TokenStream2 {
         
         quote! {
             println!("Registering service {}.", #controller_str);
-            ctx.services.lock().unwrap().insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(service::#controller_ident::default())) as Box<dyn std::any::Any>);
+            ctx.services.lock().unwrap().insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(#controller_ident::default())) as Box<dyn std::any::Any>);
         }
     }).collect::<Vec<TokenStream2>>();
     let controller_tokens = TokenStream2::from(quote! {
@@ -486,7 +486,7 @@ fn gen_events_trigger_tokens() -> TokenStream2 {
         let func_ident = syn::Ident::new(func, Span::call_site().into());
         quote! {
             let service = services.get(#service).unwrap();
-            let service = service.downcast_ref::<std::sync::Arc<service::#service_ident>>().unwrap();
+            let service = service.downcast_ref::<std::sync::Arc<#service_ident>>().unwrap();
             let service = service.clone();
             println!("Triggering event on_module_init for {}.", #service);
             service.#func_ident();
