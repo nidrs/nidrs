@@ -50,7 +50,7 @@ Nidrs 提供了一个即插即用的应用程序架构，使开发人员和团�
 ### example/src/app/controller.rs
 
 ```rs
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use axum::{extract::{Query, State}, Json};
 use nidrs::{Inject, StateCtx};
@@ -68,16 +68,7 @@ impl AppController {
     #[get("/hello")]
     pub async fn get_hello_world(&self, State(state): State<StateCtx>, Query(q): Query<HashMap<String, String>>) -> String {
         println!("Query {:?}", q);
-        let app_service = self.app_service.lock().unwrap();
-        let app_service = app_service.as_ref().unwrap();
-        app_service.get_hello_world()
-    }
-    #[post("/hello")]
-    pub async fn get_hello_world2(&self, State(state): State<StateCtx>, Query(q): Query<HashMap<String, String>>, Json(j): Json<serde_json::Value>) -> String {
-        println!("Query {:?}", q);
-        println!("Json {:?}", j);
-
-        "Hello, World2!".to_string()
+        self.app_service.extract().get_hello_world()
     }
 }
 
@@ -87,7 +78,7 @@ impl AppController {
 
 ```rs
 use nidrs::Inject;
-use nidrs_macro::injectable;
+use nidrs_macro::{injectable, on_module_init};
 use crate::user::service::UserService;
 
 #[injectable()]
@@ -98,9 +89,7 @@ pub struct AppService{
 
 impl AppService {
     pub fn get_hello_world(&self) -> String {
-        let user_service = self.user_service.lock().unwrap();
-        let user_service = user_service.as_ref().unwrap();
-        user_service.get_hello_world()
+        self.user_service.extract().get_hello_world()
     }
 
     pub fn get_hello_world2(&self) -> String {
