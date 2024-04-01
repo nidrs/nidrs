@@ -3,7 +3,7 @@
 
 use std::{any::Any, cell::RefCell, collections::HashMap, fmt::Debug, sync::{Arc, Mutex, MutexGuard}};
 pub trait Module {
-    fn register(self, ctx: &ModuleCtx);
+    fn init(self, ctx: &ModuleCtx);
 }
 
 
@@ -31,7 +31,7 @@ impl NidrsFactory {
             "Hello, Nidrs!"
         }));
         let module_ctx = ModuleCtx::new();
-        module.register(&module_ctx);
+        module.init(&module_ctx);
         let routers = module_ctx.routers.lock().unwrap();
         let mut sub_router = axum::Router::new();
         for router in routers.iter() {

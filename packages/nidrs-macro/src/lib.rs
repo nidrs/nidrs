@@ -184,7 +184,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
         #func
         
         impl nidrs::Module for #ident {
-            fn register(self, ctx: &nidrs::ModuleCtx){
+            fn init(self, ctx: &nidrs::ModuleCtx){
                 use nidrs::Service;
                 use nidrs::Controller;
                 if ctx.modules.lock().unwrap().contains_key(stringify!(#ident)) {
@@ -407,14 +407,14 @@ fn gen_imports_register_tokens(imports: Vec<TokenStream2>) -> TokenStream2 {
                         println!("Registering dyn service {}.", k);
                         ctx.services.lock().unwrap().insert(k.clone(), v.take().unwrap());
                     }
-                    #module_ident::default().register(ctx);
+                    #module_ident::default().init(ctx);
                 }
             }else {
                 panic!("Invalid import.")
             }
         } else {
             quote! {
-                #import_tokens::default().register(ctx);
+                #import_tokens::default().init(ctx);
             }
         }
     }).collect::<Vec<TokenStream2>>();
