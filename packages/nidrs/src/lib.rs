@@ -16,7 +16,7 @@ pub trait Controller {
 }
 
 pub struct DynamicModule {
-    pub services: HashMap<String, Box<dyn Any>>,
+    pub services: HashMap<String, Option<Box<dyn Any>>>,
 }
 
 pub struct NidrsFactory {
@@ -109,46 +109,30 @@ impl ModuleCtx {
 #[cfg(test)]
 mod tests {
     use std::{any::Any, sync::Mutex};
+    use crate::*;
 
-
-    trait Service {
-        fn inject(&self);
+    struct ConfOptions {
+        log_level: String,
     }
 
-    struct UserService {
-    }
-
-    impl Service for UserService {
-        fn inject(&self) {
-            println!("Inject UserService");
+    fn get_dynamic_module() -> DynamicModule {
+        DynamicModule {
+            services: HashMap::from([("ConfOptions".to_string(), Some(Box::new(Arc::new(ConfOptions{
+                log_level: "info".to_string(),
+            })) as Box<dyn Any>))])
         }
     }
-
-    struct  Injectable{
-        value: Box<dyn Any>
-    }
-
-    impl Injectable {
-        fn new(value: Box<dyn Any>) -> Self {
-            Injectable {
-                value
-            }
-        }
-    }
-    
 
     #[test]
-    fn it_works() {
-        let map = Mutex::new(std::collections::HashMap::<String, Box<dyn Service>>::new());
-        // let mut map1 = map.lock().unwrap();
-        // let mut map2 = map.lock().unwrap();
-        // map1.insert("UserService".to_string(), Box::new(UserService{}));
-        // map1.insert("UserService".to_string(), Box::new(UserService{}));
-        map.lock().unwrap().insert("UserService".to_string(), Box::new(UserService{}));
-        map.lock().unwrap().insert("UserService".to_string(), Box::new(UserService{}));
-
-        // let user_service = map1.get("UserService").unwrap();
-        // user_service.inject();
+    fn it_take(){
+        let module_ctx = ModuleCtx::new();
+        let dynamic_module = get_dynamic_module();
+        let mut services = dynamic_module.services;
+        for (key, value) in services.iter_mut() {
+            let t = value.take();
+            module_ctx.services.lock().unwrap().insert(key.clone(), t.unwrap());
+        }
+        println!("{:?}", module_ctx.services.lock().unwrap());
     }
 }
 

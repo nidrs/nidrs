@@ -402,10 +402,10 @@ fn gen_imports_register_tokens(imports: Vec<TokenStream2>) -> TokenStream2 {
                 let module_ident = path.path.segments.first().unwrap().ident.clone();
                 quote! {
                     let dyn_module = #import_call;
-                    let dyn_module_services = dyn_module.services;
-                    for (k, v) in dyn_module_services.iter() {
-                        println!("Registering dyn service {} {:?}.", k, v);
-                        // ctx.services.lock().unwrap().insert(k.clone(), v.to_owned());
+                    let mut dyn_module_services = dyn_module.services;
+                    for (k, v) in dyn_module_services.iter_mut() {
+                        println!("Registering dyn service {}.", k);
+                        ctx.services.lock().unwrap().insert(k.clone(), v.take().unwrap());
                     }
                     #module_ident::default().register(ctx);
                 }

@@ -19,7 +19,9 @@ pub struct ConfModule;
 impl ConfModule {
   pub fn for_root(options: ConfOptions) -> DynamicModule {
     DynamicModule{
-      services: HashMap::from([("ConfOptions".to_string(), Box::new(Arc::new(options)) as Box<dyn Any + 'static>)])
+      services: HashMap::from([
+        ("ConfOptions".to_string(), Some(Box::new(Arc::new(options)) as Box<dyn Any + 'static>))
+      ])
     }
   }
 }
