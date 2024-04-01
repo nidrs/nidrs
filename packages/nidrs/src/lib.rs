@@ -75,7 +75,9 @@ impl<T> Inject<T> {
         self.value.lock().unwrap().replace(value);
     }
     
- 
+    pub fn extract(&self) -> Arc<T> {
+        self.value.lock().unwrap().as_ref().unwrap().clone()
+    }
 }
 
 impl<T> std::ops::Deref for Inject<T> {
