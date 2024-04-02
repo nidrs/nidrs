@@ -138,14 +138,16 @@ cargo run
 ```log
 Registering module AppModule.
 Registering controller AppController.
-Registering router 'POST /app/hello'.
 Registering router 'GET /app/hello'.
+Registering router 'POST /app/hello'.
 Registering service AppService.
 Registering dyn service ConfOptions.
 Registering module ConfModule.
 Registering service ConfService.
 Injecting ConfService.
-Triggering event on_module_init for ConfService.Registering module UserModule.
+Triggering event on_module_init for ConfService.
+ConfService initialized with log_level: ConfOptions { log_level: "info" }
+Registering module UserModule.
 Registering controller UserController.
 Registering router 'GET /user/hello'.
 Registering service UserService.
