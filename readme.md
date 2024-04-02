@@ -37,7 +37,9 @@ Nidrs 提供了一个即插即用的应用程序架构，使开发人员和团�
   - [ ] on_application_bootstrap
   - [ ] on_application_shutdown
 - [ ] 请求响应拦截器
+- [ ] 请求参数校验
 - [ ] 统一返回类型
+- [ ] 错误封装和处理
 - [ ] 自动 OpenAPI
 - [ ] 模块测试
 - [ ] CLI 命令
