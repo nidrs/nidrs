@@ -355,6 +355,9 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
             }
         }).collect::<Vec<TokenStream2>>();
         let router_path = TokenStream2::from(quote! {
+
+            println!("Registering controller {}.", #controller_str);
+
             #(#router_path)*
         });
         
