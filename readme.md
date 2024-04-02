@@ -43,7 +43,7 @@ Nidrs 提供了一个即插即用的应用程序架构，使开发人员和团�
 - [ ] CLI 命令
 - [ ] 完整的文档和例子
 
-## 例子
+## Example
 
 ### example/src/app/controller.rs
 
@@ -107,12 +107,20 @@ pub mod service;
 use controller::AppController;
 use service::AppService;
 use crate::user::UserModule;
+use crate::conf::ConfModule;
+use crate::conf::ConfOptions;
 
 #[module({
-    imports = [UserModule];
+    imports = [
+        ConfModule::for_root(ConfOptions{
+            log_level: "info".to_string(),
+        }),
+        UserModule,
+    ];
     controllers = [AppController];
     services = [AppService];
 })]
+#[derive(Clone, Debug, Default)]
 pub struct AppModule;
 
 ```
@@ -137,9 +145,7 @@ Registering dyn service ConfOptions.
 Registering module ConfModule.
 Registering service ConfService.
 Injecting ConfService.
-Triggering event on_module_init for ConfService.
-ConfService initialized with log_level: ConfOptions { log_level: "info" }
-Registering module UserModule.
+Triggering event on_module_init for ConfService.Registering module UserModule.
 Registering controller UserController.
 Registering router 'GET /user/hello'.
 Registering service UserService.
@@ -150,7 +156,7 @@ Injecting AppController.
 Listening on 0.0.0.0:3000
 ```
 
-## 设计思想
+## Design
 
 整个框架的目标是提高模块复用和极致的开发便携。
 
