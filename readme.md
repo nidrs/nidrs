@@ -6,8 +6,6 @@
 </p>
 </div>
 
-
-
 # Nidrs
 
 致敬 Nestjs 框架，Nidrs 是参考 Nestjs 思想的 Rust 企业级模块化开发框架，同时基于 Axum 进行开发和设计。
@@ -128,8 +126,10 @@ cargo run
 ```
 
 运行日志：
-```
+
+```log
 Registering module AppModule.
+Registering controller AppController.
 Registering router 'POST /app/hello'.
 Registering router 'GET /app/hello'.
 Registering service AppService.
@@ -140,6 +140,7 @@ Injecting ConfService.
 Triggering event on_module_init for ConfService.
 ConfService initialized with log_level: ConfOptions { log_level: "info" }
 Registering module UserModule.
+Registering controller UserController.
 Registering router 'GET /user/hello'.
 Registering service UserService.
 Injecting UserService.
