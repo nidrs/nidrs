@@ -127,6 +127,28 @@ cd nidrs/example
 cargo run
 ```
 
+运行日志：
+```
+Registering module AppModule.
+Registering router 'POST /app/hello'.
+Registering router 'GET /app/hello'.
+Registering service AppService.
+Registering dyn service ConfOptions.
+Registering module ConfModule.
+Registering service ConfService.
+Injecting ConfService.
+Triggering event on_module_init for ConfService.
+ConfService initialized with log_level: ConfOptions { log_level: "info" }
+Registering module UserModule.
+Registering router 'GET /user/hello'.
+Registering service UserService.
+Injecting UserService.
+Injecting UserController.
+Injecting AppService.
+Injecting AppController.
+Listening on 0.0.0.0:3000
+```
+
 ## 设计思想
 
 整个框架的目标是提高模块复用和极致的开发便携。
