@@ -1,7 +1,8 @@
 {
   "rust-analyzer.linkedProjects": [
+    "./packages/nidrs/Cargo.toml",
     "./packages/nidrs-macro/Cargo.toml",
-    "./packages/nidrs-macro/Cargo.toml"
+    "./packages/nidrs-extern/Cargo.toml"
   ],
   "cSpell.words": [
     "Nidrs"

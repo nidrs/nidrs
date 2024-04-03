@@ -247,8 +247,8 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "axum-extra",
- "colored",
  "nidrs",
+ "nidrs-extern",
  "nidrs-macro",
  "serde",
  "serde_json",
@@ -578,10 +578,17 @@ dependencies = [
 name = "nidrs"
 version = "0.0.2"
 dependencies = [
+ "nidrs-extern",
+ "nidrs-macro",
+]
+
+[[package]]
+name = "nidrs-extern"
+version = "0.0.2"
+dependencies = [
  "axum",
  "axum-extra",
  "colored",
- "nidrs-macro",
  "tokio",
  "tower",
 ]

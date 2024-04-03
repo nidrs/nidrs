@@ -2,5 +2,6 @@
 members = [
   "example",
   "packages/nidrs",
-  "packages/nidrs-macro"
+  "packages/nidrs-macro",
+  "packages/nidrs-extern"
 ]

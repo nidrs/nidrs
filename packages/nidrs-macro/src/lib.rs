@@ -266,7 +266,7 @@ pub fn log(input: TokenStream) -> TokenStream {
     let input_tokens = input.into_iter().collect::<Vec<_>>();
     
     return TokenStream::from(quote::quote! {
-        print!("{} ", colored::Colorize::green("[nidrs]"));
+        print!("{} ", nidrs_extern::colored::Colorize::green("[nidrs]"));
         println!(#(#input_tokens)*);
     });
 }

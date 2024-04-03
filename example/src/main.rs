@@ -5,6 +5,7 @@ mod app;
 mod conf;
 mod user;
 
+
 fn main() {
     let mut app = nidrs::NidrsFactory::create(app::AppModule);
 

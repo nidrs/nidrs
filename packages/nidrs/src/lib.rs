@@ -1,5 +1,7 @@
 #![allow(warnings, unused)]
 
+use nidrs_extern::axum;
+use nidrs_extern::tokio;
 
 use std::{any::Any, cell::RefCell, collections::HashMap, fmt::Debug, sync::{Arc, Mutex, MutexGuard}};
 pub trait Module {
