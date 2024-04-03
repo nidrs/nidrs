@@ -48,7 +48,7 @@ impl NidrsFactory {
     {
         let tcp = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await.map_err(E::from)?;
         let addr = tcp.local_addr().map_err(E::from)?;
-        println!("Listening on {}", addr);
+        nidrs_macro::log!("Listening on {}", addr);
         
         axum::serve(tcp, self.router.with_state(StateCtx{})).await?;
         Ok(())

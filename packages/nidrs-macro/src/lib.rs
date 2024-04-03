@@ -7,7 +7,7 @@ use std::{
 
 use once_cell::sync::Lazy;
 use proc_macro::{Ident, Span, TokenStream};
-use proc_macro2::Punct;
+use proc_macro2::{Punct, TokenTree};
 use quote::{quote, ToTokens};
 use syn::{parse::{Parse, ParseStream}, Expr, ExprCall, PatPath, Token};
 use syn::punctuated::Punctuated;
@@ -90,7 +90,7 @@ impl Parse for ModuleArgs {
             }
         });
         
-        // println!("{:?}", parse_args_map);
+        // nidrs_macro::log!("{:?}", parse_args_map);
     
         Ok(ModuleArgs {
             imports,
@@ -191,7 +191,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
                     return;
                 }
                 ctx.modules.lock().unwrap().insert(stringify!(#ident).to_string(), Box::new(self) as Box<dyn std::any::Any>);
-                println!("Registering module {}.", stringify!(#ident));
+                nidrs_macro::log!("Registering module {}.", stringify!(#ident));
                 {
                     #controller_register_tokens
     
@@ -257,6 +257,18 @@ pub fn on_module_init(args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn get_route_meta(input: TokenStream) -> TokenStream {
     return input;
+}
+
+#[proc_macro]
+pub fn log(input: TokenStream) -> TokenStream {
+    let input = TokenStream2::from(input);
+    
+    let input_tokens = input.into_iter().collect::<Vec<_>>();
+    
+    return TokenStream::from(quote::quote! {
+        print!("{} ", colored::Colorize::green("[nidrs]"));
+        println!(#(#input_tokens)*);
+    });
 }
 
 
@@ -347,7 +359,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                 let t_controller = controllers.get(#controller_str).unwrap();
                 let t_controller = t_controller.downcast_ref::<std::sync::Arc<controller::#controller_ident>>().unwrap();
                 let t_controller = t_controller.clone();
-                println!("Registering router '{} {}'.", #method.to_uppercase(),#path);
+                nidrs_macro::log!("Registering router '{} {}'.", #method.to_uppercase(),#path);
                 ctx.routers.lock().unwrap().push(axum::Router::new().route(
                     #path,
                     axum::routing::#method_ident(#handler),
@@ -356,7 +368,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
         }).collect::<Vec<TokenStream2>>();
         let router_path = TokenStream2::from(quote! {
 
-            println!("Registering controller {}.", #controller_str);
+            nidrs_macro::log!("Registering controller {}.", #controller_str);
 
             #(#router_path)*
         });
@@ -380,7 +392,7 @@ fn gen_service_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
         let controller_ident = controller_tokens;
         
         quote! {
-            println!("Registering service {}.", #controller_str);
+            nidrs_macro::log!("Registering service {}.", #controller_str);
             ctx.services.lock().unwrap().insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(#controller_ident::default())) as Box<dyn std::any::Any>);
         }
     }).collect::<Vec<TokenStream2>>();
@@ -393,11 +405,8 @@ fn gen_service_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
 }
 
 fn gen_imports_register_tokens(imports: Vec<TokenStream2>) -> TokenStream2 {
-    println!("test imports_register_tokens. {:?}", imports.iter().map(|import_tokens| import_tokens.to_string()).collect::<Vec<String>>());
     let imports = imports.iter().map(|import_tokens| {
         let import = import_tokens.to_string();
-
-        println!("test import {}.", import);
 
         if import.contains("for_root") {
             let import_call = syn::parse2::<ExprCall>(import_tokens.clone()).unwrap();
@@ -407,7 +416,7 @@ fn gen_imports_register_tokens(imports: Vec<TokenStream2>) -> TokenStream2 {
                     let dyn_module = #import_call;
                     let mut dyn_module_services = dyn_module.services;
                     for (k, v) in dyn_module_services.iter_mut() {
-                        println!("Registering dyn service {}.", k);
+                        nidrs_macro::log!("Registering dyn service {}.", k);
                         ctx.services.lock().unwrap().insert(k.clone(), v.take().unwrap());
                     }
                     #module_ident::default().init(ctx);
@@ -439,7 +448,7 @@ fn gen_dep_inject_tokens(con: &str, services: Vec<TokenStream2>) -> TokenStream2
             let t = #con_ident.get(#controller_str).unwrap();
             let t = t.downcast_ref::<std::sync::Arc<#controller_ident>>().unwrap();
             let t = t.clone();
-            println!("Injecting {}.", #controller_str);
+            nidrs_macro::log!("Injecting {}.", #controller_str);
             t.inject(&services);
         }
     }).collect::<Vec<TokenStream2>>();
@@ -515,7 +524,7 @@ fn gen_events_trigger_tokens() -> TokenStream2 {
             let service = services.get(#service).unwrap();
             let service = service.downcast_ref::<std::sync::Arc<#service_ident>>().unwrap();
             let service = service.clone();
-            println!("Triggering event on_module_init for {}.", #service);
+            nidrs_macro::log!("Triggering event on_module_init for {}.", #service);
             service.#func_ident();
         }
     }).collect::<Vec<TokenStream2>>();
