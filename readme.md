@@ -16,28 +16,29 @@ Nidrs 提供了一个即插即用的应用程序架构，使开发人员和团�
 
 ## Focus
 
-- [x] 模块化封装
-  - [x] 静态模块注册
-  - [x] 可配置的模块注册
+- [x] 模块化封装 v0.0.1
+  - [x] 静态模块注册 v0.0.1
+  - [x] 可配置的模块注册 v0.0.2
 - [x] 依赖自动注入
-  - [x] service 自动注入
-  - [x] 动态 service 注入
-  - [x] service 作用域（全局）
+  - [x] service 自动注入 v0.0.1
+  - [x] 动态 service 注入 v0.0.3
+  - [x] service 作用域（全局）v0.0.1
   - [ ] service 作用域（模块）
-  - [x] service 实例域（单例）
+  - [x] service 实例域（单例）v0.0.1
   - [ ] service 实例域（请求级）
   - [ ] service 实例域（注入级）
 - [x] 分层架构
-  - [x] Controller 层
-  - [x] Service 层
+  - [x] Controller 层 v0.0.1
+  - [x] Service 层 v0.0.1
   - [ ] Model 层
 - [x] 模块生命周期钩子
-  - [x] on_module_init
+  - [x] on_module_init v0.0.2
   - [ ] on_module_destroy
   - [ ] on_application_bootstrap
   - [ ] on_application_shutdown
-- [ ] 请求响应拦截器
+- [ ] 请求响应拦截器 v0.0.4
 - [ ] 请求参数校验
+- [ ] 基于请求参数校验的 Mock 服务
 - [ ] 统一返回类型
 - [ ] 错误封装和处理
 - [ ] 自动 OpenAPI
