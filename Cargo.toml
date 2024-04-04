@@ -4,4 +4,4 @@ members = [
   "packages/nidrs",
   "packages/nidrs-macro",
   "packages/nidrs-extern"
-]
+, "example-expand"]
