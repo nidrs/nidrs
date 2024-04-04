@@ -1,8 +1,9 @@
 <div align="center">
   <p><img src="readme.assets/log2.jpg" /></p>
   <p>
-    <img alt="Discord" src="https://img.shields.io/discord/1223548737075281952?style=for-the-badge" />
-    <img src="https://img.shields.io/github/last-commit/nidrs/nidrs?style=for-the-badge" />
+    <img src="https://img.shields.io/discord/1223548737075281952?style=for-the-badge" />
+    <img src="https://img.shields.io/crates/v/nidrs?style=for-the-badge" />
+    <img src="https://img.shields.io/github/license/nidrs/nidrs?style=for-the-badge" />
 </p>
 </div>
 
