@@ -196,6 +196,6 @@ pub struct ModuleCtx{
 整个框架目前处于早期阶段，0.x.x 都处于测试版本，正式稳定版本从 1.0 开始，不过如果你只是单纯的想找一个 axum 类的高层框架，而不需要后面的功能也可以尝试一下
 最后如果有感兴趣的同学想要贡献和开发也可以加入下面的 Discord 一起来为 rust 世界添砖加瓦。
 
-[欢迎加入 Discord](https://discord.gg/gwqKpxvUxU)
+[欢迎加入 Discord](https://discord.gg/gwqKpxvUxU) ，微信群一起讨论交流
 
-MIT
+<img src="./readme.assets/image.png" alt="微信群" style="zoom: 25%;" />
