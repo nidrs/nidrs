@@ -16,7 +16,7 @@ impl AppController {
     #[get("/hello")]
     pub async fn get_hello_world(&self, State(state): State<StateCtx>, Query(q): Query<HashMap<String, String>>) -> String {
         println!("Query {:?}", q);
-        self.app_service.extract().get_hello_world()
+        self.app_service.get_hello_world()
     }
     #[post("/hello")]
     pub async fn get_hello_world2(&self, State(state): State<StateCtx>, Query(q): Query<HashMap<String, String>>, Json(j): Json<serde_json::Value>) -> String {

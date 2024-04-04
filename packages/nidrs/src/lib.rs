@@ -2,8 +2,9 @@
 
 use nidrs_extern::axum;
 use nidrs_extern::tokio;
+use once_cell::sync::OnceCell;
+use std::{any::Any, cell::{RefCell}, collections::HashMap, fmt::Debug, sync::{Arc, Mutex, MutexGuard}};
 
-use std::{any::Any, cell::RefCell, collections::HashMap, fmt::Debug, sync::{Arc, Mutex, MutexGuard}};
 pub trait Module {
     fn init(self, ctx: &ModuleCtx);
 }
@@ -63,30 +64,29 @@ pub struct StateCtx{
 
 #[derive(Clone, Debug, Default)]
 pub struct Inject<T>{
-    value: Arc<Mutex<Option<Arc<T>>>>
+    value: OnceCell<Arc<T>>
 }
 
 impl<T> Inject<T> {
     pub fn new() -> Self {
         Inject {
-            value: Arc::new(Mutex::new(None))
+            value: OnceCell::new()
         }
     }
     
     pub fn inject(&self, value: Arc<T>) {
-        self.value.lock().unwrap().replace(value);
+        self.value.set(value);
     }
     
     pub fn extract(&self) -> Arc<T> {
-        self.value.lock().unwrap().as_ref().unwrap().clone()
+        self.value.get().unwrap().clone()
     }
 }
 
 impl<T> std::ops::Deref for Inject<T> {
-    type Target = Mutex<Option<Arc<T>>>;
-
+    type Target = Arc<T>;
     fn deref(&self) -> &Self::Target {
-        &self.value
+        self.value.get().unwrap()
     }
 }
 

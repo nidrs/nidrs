@@ -269,7 +269,7 @@ mod app {
                     ::std::io::_print(
                         format_args!(
                             "Registering router \'{0} {1}\'.\n",
-                            "get".to_uppercase(),
+                            "post".to_uppercase(),
                             "/app/hello",
                         ),
                     );
@@ -281,8 +281,8 @@ mod app {
                         axum::Router::new()
                             .route(
                                 "/app/hello",
-                                axum::routing::get(|p0, p1| async move {
-                                    t_controller.get_hello_world(p0, p1).await
+                                axum::routing::post(|p0, p1, p2| async move {
+                                    t_controller.get_hello_world2(p0, p1, p2).await
                                 }),
                             ),
                     );
@@ -303,7 +303,7 @@ mod app {
                     ::std::io::_print(
                         format_args!(
                             "Registering router \'{0} {1}\'.\n",
-                            "post".to_uppercase(),
+                            "get".to_uppercase(),
                             "/app/hello",
                         ),
                     );
@@ -315,8 +315,8 @@ mod app {
                         axum::Router::new()
                             .route(
                                 "/app/hello",
-                                axum::routing::post(|p0, p1, p2| async move {
-                                    t_controller.get_hello_world2(p0, p1, p2).await
+                                axum::routing::get(|p0, p1| async move {
+                                    t_controller.get_hello_world(p0, p1).await
                                 }),
                             ),
                     );
