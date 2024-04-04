@@ -68,7 +68,7 @@ impl AppController {
     #[get("/hello")]
     pub async fn get_hello_world(&self, State(state): State<StateCtx>, Query(q): Query<HashMap<String, String>>) -> String {
         println!("Query {:?}", q);
-        self.app_service.extract().get_hello_world()
+        self.app_service.get_hello_world()
     }
 }
 
@@ -89,7 +89,7 @@ pub struct AppService{
 
 impl AppService {
     pub fn get_hello_world(&self) -> String {
-        self.user_service.extract().get_hello_world()
+        self.user_service.get_hello_world()
     }
 
     pub fn get_hello_world2(&self) -> String {
@@ -138,26 +138,26 @@ cargo run
 运行日志：
 
 ```log
-Registering module AppModule.
-Registering controller AppController.
-Registering router 'GET /app/hello'.
-Registering router 'POST /app/hello'.
-Registering service AppService.
-Registering dyn service ConfOptions.
-Registering module ConfModule.
-Registering service ConfService.
-Injecting ConfService.
-Triggering event on_module_init for ConfService.
+[nidrs] Registering module AppModule.
+[nidrs] Registering controller AppController.
+[nidrs] Registering router 'GET /app/hello'.
+[nidrs] Registering router 'POST /app/hello'.
+[nidrs] Registering service AppService.
+[nidrs] Registering dyn service ConfOptions.
+[nidrs] Registering module ConfModule.
+[nidrs] Registering service ConfService.
+[nidrs] Injecting ConfService.
+[nidrs] Triggering event on_module_init for ConfService.
 ConfService initialized with log_level: ConfOptions { log_level: "info" }
-Registering module UserModule.
-Registering controller UserController.
-Registering router 'GET /user/hello'.
-Registering service UserService.
-Injecting UserService.
-Injecting UserController.
-Injecting AppService.
-Injecting AppController.
-Listening on 0.0.0.0:3000
+[nidrs] Registering module UserModule.
+[nidrs] Registering controller UserController.
+[nidrs] Registering router 'GET /user/hello'.
+[nidrs] Registering service UserService.
+[nidrs] Injecting UserService.
+[nidrs] Injecting UserController.
+[nidrs] Injecting AppService.
+[nidrs] Injecting AppController.
+[nidrs] Listening on 0.0.0.0:3000
 ```
 
 ## Design
