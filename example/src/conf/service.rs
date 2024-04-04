@@ -14,6 +14,6 @@ impl ConfService {
   #[on_module_init()]
   pub fn on_module_init(&self){
     let options = self.options.extract();
-    println!("ConfService initialized with log_level: {:?}", options.as_ref());
+    println!("ConfService initialized with log_level: {:?}", options);
   }
 }
