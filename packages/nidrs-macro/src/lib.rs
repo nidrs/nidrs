@@ -9,7 +9,7 @@ use once_cell::sync::Lazy;
 use proc_macro::{Ident, Span, TokenStream};
 use proc_macro2::{Punct, TokenTree};
 use quote::{quote, ToTokens};
-use syn::{parse::{Parse, ParseStream}, Expr, ExprArray, ExprCall, PatPath, Token};
+use syn::{meta, parse::{Parse, ParseStream}, Expr, ExprArray, ExprCall, PatPath, Token};
 use syn::punctuated::Punctuated;
 use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatType, Type};
 use proc_macro2::TokenStream as TokenStream2;
@@ -246,14 +246,34 @@ pub fn uses(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
-    let input2 = input.clone();
-    let func = parse_macro_input!(input2 as ItemFn);
+    let args = parse_macro_input!(args as MetaArgs);
+    let func = parse_macro_input!(input as ItemFn);
     let current_service = CURRENT_CONTROLLER.lock().unwrap().clone();
     let service_name = current_service.unwrap().name.clone();
     let func_name = func.sig.ident.to_string();
     let key = service_name + ":" + &func_name;
+    let func_meta = func.sig.ident.to_string() + "_meta";
+    let func_meta_ident = syn::Ident::new(&func_meta, Span::call_site().into());
     METAS.lock().unwrap().insert(key, true);
-    return input;
+    let meta_tokens = args.kv.iter().map(|(key, value)| {
+        quote! {
+            meta.insert(#key.to_string(), #value.to_string());
+        }
+    }).collect::<Vec<TokenStream2>>();
+    let meta_tokens = TokenStream2::from(quote! {
+        meta.insert("fun_name".to_string(), #func_name.to_string());
+        #(#meta_tokens)*
+    });
+
+    return TokenStream::from(quote! {
+        #func
+
+        pub fn #func_meta_ident(&self) -> HashMap<String, String>{
+            let mut meta = HashMap::new();
+            #meta_tokens
+            meta
+        }
+    });
 }
 
 #[proc_macro]

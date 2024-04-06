@@ -21,12 +21,6 @@ impl AppController {
         self.app_service.get_hello_world()
     }
 
-    pub fn get_hello_world_meta(&self) -> HashMap<String, String>{
-        let mut meta = HashMap::new();
-        meta.insert("role".to_string(), "user".to_string());
-        meta
-    }
-
     #[post("/hello")]
     pub async fn get_hello_world2(&self, State(state): State<StateCtx>, Query(q): Query<HashMap<String, String>>, Json(j): Json<serde_json::Value>) -> String {
         println!("Query {:?}", q);

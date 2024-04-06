@@ -11,6 +11,7 @@ pub struct LogInterceptor{
 
 impl InterceptorHook for LogInterceptor {
   async fn before(&self, _ctx: &HookCtx) {
+    println!("ctx: {:?}", _ctx);
     self.log_service.log("Before");
   }
 

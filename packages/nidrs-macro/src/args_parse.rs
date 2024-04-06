@@ -17,6 +17,30 @@ impl Parse for ExprList {
   }
 }
 
+#[derive(Debug, Clone)]
+pub struct MetaArgs {
+    pub kv: HashMap<String, String>,
+}
+
+impl Parse for MetaArgs {
+  fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+      let items: Punctuated<Expr, syn::Token![,]> = Punctuated::parse_terminated(input)?;
+        let mut kv = HashMap::new();
+        items.iter().for_each(|item| {
+            if let syn::Expr::Assign(assign) = item {
+                if let syn::Expr::Path(path) = *assign.left.clone() {
+                    if let syn::Expr::Lit(lit) = *assign.right.clone() {
+                        kv.insert(path.path.segments.first().unwrap().ident.to_string(), lit.to_token_stream().to_string());
+                    }
+                }
+            }
+        });
+        Ok(MetaArgs {
+            kv,
+        })
+  }
+}
+
 
 
 #[derive(Debug, Clone)]
