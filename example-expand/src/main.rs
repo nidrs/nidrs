@@ -84,7 +84,7 @@ mod app {
                 };
                 self.app_service.get_hello_world()
             }
-            pub fn get_hello_world_meta(&self) -> HashMap<String, String> {
+            pub fn __get_hello_world_meta(&self) -> HashMap<String, String> {
                 let mut meta = HashMap::new();
                 meta.insert("fun_name".to_string(), "get_hello_world".to_string());
                 meta.insert("role".to_string(), "\"user\"".to_string());
@@ -319,7 +319,7 @@ mod app {
                             .route(
                                 "/app/hello",
                                 axum::routing::get(|req, p0, p1| async move {
-                                    let meta = t_controller.get_hello_world_meta();
+                                    let meta = t_controller.__get_hello_world_meta();
                                     let inter_ctx = nidrs::HookCtx {
                                         meta: meta,
                                         req: req,

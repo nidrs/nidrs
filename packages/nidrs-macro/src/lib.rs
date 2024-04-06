@@ -252,7 +252,7 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     let service_name = current_service.unwrap().name.clone();
     let func_name = func.sig.ident.to_string();
     let key = service_name + ":" + &func_name;
-    let func_meta = func.sig.ident.to_string() + "_meta";
+    let func_meta = "__".to_owned() + func.sig.ident.to_string().as_str() + "_meta";
     let func_meta_ident = syn::Ident::new(&func_meta, Span::call_site().into());
     METAS.lock().unwrap().insert(key, true);
     let meta_tokens = args.kv.iter().map(|(key, value)| {
@@ -418,7 +418,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
             } else {
                (TokenStream2::new(), TokenStream2::new(), TokenStream2::new())
             };
-            let meta_ident = syn::Ident::new(format!("{}_meta", route_name).as_str(), Span::call_site().into());
+            let meta_ident = syn::Ident::new(format!("__{}_meta", route_name).as_str(), Span::call_site().into());
             let meta_tokens = if let Some(_) = METAS.lock().unwrap().get(&inter_name){
                 quote! {
                     let meta = t_controller.#meta_ident();
