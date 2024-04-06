@@ -1,6 +1,6 @@
 #![allow(warnings, unused)]
 
-use nidrs_extern::axum;
+use nidrs_extern::axum::{self, async_trait, extract::{FromRequestParts, Query, State}, http::{request::Parts, HeaderMap, HeaderValue, StatusCode, Uri}, response::IntoResponse};
 use nidrs_extern::tokio;
 use once_cell::sync::OnceCell;
 use std::{any::Any, cell::{RefCell}, collections::HashMap, fmt::Debug, sync::{Arc, Mutex, MutexGuard}};
@@ -14,12 +14,53 @@ pub trait Service {
     fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>);
 }
 
+pub trait Interceptor {
+    fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>);
+}
+
+pub trait InterceptorHook {
+    async fn before(&self, ctx: &HookCtx);
+    async fn after(&self, ctx: &HookCtx);
+}
+
 pub trait Controller {
     fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>);
 }
 
+#[derive(Debug, Clone)]
+pub struct InterReq{
+    pub uri: Uri,
+    pub method: axum::http::Method,
+    pub headers: HeaderMap<HeaderValue>,
+    pub query: HashMap<String, String>,
+}
+
+#[async_trait]
+impl<S> FromRequestParts<S> for InterReq
+where
+    S: Send + Sync,
+{
+    type Rejection = (StatusCode, &'static str);
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        return  Ok(InterReq{
+            uri: parts.uri.clone(),
+            method: parts.method.clone(),
+            headers: parts.headers.clone(),
+            query: HashMap::new(),
+        });
+    }
+}
+
+
 pub struct DynamicModule {
     pub services: HashMap<String, Option<Box<dyn Any>>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct HookCtx{
+    pub meta: HashMap<String, String>,
+    pub req: InterReq,
 }
 
 pub struct NidrsFactory {
@@ -95,7 +136,8 @@ pub struct ModuleCtx{
     pub modules: Arc<Mutex<HashMap<String, Box<dyn Any>>>>,
     pub services: Arc<Mutex<HashMap<String, Box<dyn Any>>>>,
     pub controllers: Arc<Mutex<HashMap<String, Box<dyn Any>>>>,
-    pub routers: Arc<Mutex<Vec<axum::Router<StateCtx>>>>
+    pub routers: Arc<Mutex<Vec<axum::Router<StateCtx>>>>,
+    pub interceptors: Arc<Mutex<HashMap<String, Box<dyn Any>>>>,
 }
 
 impl ModuleCtx {
@@ -105,6 +147,7 @@ impl ModuleCtx {
             services: Arc::new(Mutex::new(HashMap::new())),
             controllers: Arc::new(Mutex::new(HashMap::new())),
             routers: Arc::new(Mutex::new(Vec::new())),
+            interceptors: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 }

@@ -4,6 +4,7 @@ use nidrs::StateCtx;
 mod app;
 mod conf;
 mod user;
+mod log;
 
 
 fn main() {
