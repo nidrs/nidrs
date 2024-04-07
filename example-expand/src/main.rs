@@ -323,7 +323,7 @@ mod app {
                         format_args!(
                             "Registering router \'{0} {1}\'.\n",
                             "get".to_uppercase(),
-                            "/app/hello2",
+                            "/app/hello",
                         ),
                     );
                 };
@@ -333,9 +333,9 @@ mod app {
                     .push(
                         axum::Router::new()
                             .route(
-                                "/app/hello2",
+                                "/app/hello",
                                 axum::routing::get(|req, p0| async move {
-                                    let meta = std::collections::HashMap::new();
+                                    let meta = t_controller.__get_hello_world_meta();
                                     let mut t_meta = t_controller.__meta();
                                     t_meta.extend(meta);
                                     let meta = t_meta;
@@ -344,7 +344,7 @@ mod app {
                                         req: req,
                                     };
                                     t_interceptor_0.before(&inter_ctx).await;
-                                    let r = t_controller.get_hello_world2(p0).await;
+                                    let r = t_controller.get_hello_world(p0).await;
                                     t_interceptor_0.after(&inter_ctx).await;
                                     r
                                 }),
@@ -355,6 +355,11 @@ mod app {
                     .downcast_ref::<std::sync::Arc<controller::AppController>>()
                     .unwrap();
                 let t_controller = t_controller.clone();
+                let t_interceptor_0 = interceptors.get("LogInterceptor").unwrap();
+                let t_interceptor_0 = t_interceptor_0
+                    .downcast_ref::<std::sync::Arc<LogInterceptor>>()
+                    .unwrap();
+                let t_interceptor_0 = t_interceptor_0.clone();
                 {
                     ::std::io::_print(
                         format_args!(
@@ -388,7 +393,9 @@ mod app {
                                         meta: meta,
                                         req: req,
                                     };
+                                    t_interceptor_0.before(&inter_ctx).await;
                                     let r = t_controller.post_hello_world(p0, p1).await;
+                                    t_interceptor_0.after(&inter_ctx).await;
                                     r
                                 }),
                             ),
@@ -398,6 +405,11 @@ mod app {
                     .downcast_ref::<std::sync::Arc<controller::AppController>>()
                     .unwrap();
                 let t_controller = t_controller.clone();
+                let t_interceptor_0 = interceptors.get("LogInterceptor").unwrap();
+                let t_interceptor_0 = t_interceptor_0
+                    .downcast_ref::<std::sync::Arc<LogInterceptor>>()
+                    .unwrap();
+                let t_interceptor_0 = t_interceptor_0.clone();
                 let t_interceptor_0 = interceptors.get("LogInterceptor").unwrap();
                 let t_interceptor_0 = t_interceptor_0
                     .downcast_ref::<std::sync::Arc<LogInterceptor>>()
@@ -416,7 +428,7 @@ mod app {
                         format_args!(
                             "Registering router \'{0} {1}\'.\n",
                             "get".to_uppercase(),
-                            "/app/hello",
+                            "/app/hello2",
                         ),
                     );
                 };
@@ -426,9 +438,9 @@ mod app {
                     .push(
                         axum::Router::new()
                             .route(
-                                "/app/hello",
+                                "/app/hello2",
                                 axum::routing::get(|req, p0| async move {
-                                    let meta = t_controller.__get_hello_world_meta();
+                                    let meta = std::collections::HashMap::new();
                                     let mut t_meta = t_controller.__meta();
                                     t_meta.extend(meta);
                                     let meta = t_meta;
@@ -437,7 +449,9 @@ mod app {
                                         req: req,
                                     };
                                     t_interceptor_0.before(&inter_ctx).await;
-                                    let r = t_controller.get_hello_world(p0).await;
+                                    t_interceptor_0.before(&inter_ctx).await;
+                                    let r = t_controller.get_hello_world2(p0).await;
+                                    t_interceptor_0.after(&inter_ctx).await;
                                     t_interceptor_0.after(&inter_ctx).await;
                                     r
                                 }),
@@ -1241,7 +1255,7 @@ mod log {
         impl InterceptorHook for LogInterceptor {
             async fn before(&self, _ctx: &HookCtx) {
                 {
-                    ::std::io::_print(format_args!("ctx: {0:?}\n", _ctx));
+                    ::std::io::_print(format_args!("ctx: {0:?}\n", _ctx.meta));
                 };
                 self.log_service.log("Before");
             }

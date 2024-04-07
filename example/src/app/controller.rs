@@ -17,7 +17,6 @@ pub struct AppController {
 impl AppController {
     #[get("/hello")]
     #[meta(role = "user")]
-    #[uses(LogInterceptor)]
     pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> String {
         println!("Query {:?}", q);
         self.app_service.get_hello_world()
