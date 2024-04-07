@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
-use syn::{parse::{Parse, ParseStream}, punctuated::Punctuated, Expr, Ident, Token};
+use syn::{parse::{Parse, ParseStream}, punctuated::Punctuated, Expr, Ident, ItemFn, ItemStruct, Token};
 
 
 #[derive(Debug, Clone)]
@@ -112,14 +112,14 @@ impl Parse for ModuleArgs {
 
 
 #[derive(Debug, Clone)]
-pub enum InterceptorArgsType {
-  Fn,
-  Struct,
+pub enum TokenType {
+  Fn(ItemFn),
+  Struct(ItemStruct),
 }
 #[derive(Debug, Clone)]
 pub struct InterceptorArgs {
   pub ident: Ident,
-  pub typ: InterceptorArgsType,
+  pub typ: TokenType,
 }
 
 impl Parse for InterceptorArgs {
@@ -129,13 +129,13 @@ impl Parse for InterceptorArgs {
       let fn_parse = input.parse::<syn::ItemFn>();
       if let Ok(item) = struct_parse {
           Ok(InterceptorArgs {
-              ident: item.ident,
-              typ: InterceptorArgsType::Struct,
+              ident: item.clone().ident,
+              typ: TokenType::Struct(item),
           })
       } else if let Ok(item) = fn_parse {
           Ok(InterceptorArgs {
-              ident: item.sig.ident,
-              typ: InterceptorArgsType::Fn,
+              ident: item.sig.ident.clone(),
+              typ: TokenType::Fn(item),
           })
       } else {
           Err(syn::Error::new(input.span(), "Invalid interceptor"))

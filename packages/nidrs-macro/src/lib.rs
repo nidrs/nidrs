@@ -2,7 +2,7 @@
 extern crate proc_macro;
 
 use std::{
-    any::Any, borrow::BorrowMut, collections::HashMap, sync::{Arc, Mutex}
+    any::Any, borrow::BorrowMut, collections::HashMap, os::macos::raw, sync::{Arc, Mutex}
 };
 
 use once_cell::sync::Lazy;
@@ -226,7 +226,7 @@ pub fn uses(args: TokenStream, input: TokenStream) -> TokenStream {
     let input_type = input.clone();
     let input_type = parse_macro_input!(input_type as InterceptorArgs);
     let used_ident = input_type.ident;
-    if let InterceptorArgsType::Fn = input_type.typ {
+    if let TokenType::Fn(_) = input_type.typ {
         let controller_name = CURRENT_CONTROLLER.lock().unwrap().as_ref().unwrap().name.clone();
         let hook_name = controller_name + ":" + &used_ident.to_string();
         let inter_names = args.items.iter().map(|arg| {
@@ -247,33 +247,57 @@ pub fn uses(args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(args as MetaArgs);
-    let func = parse_macro_input!(input as ItemFn);
-    let current_service = CURRENT_CONTROLLER.lock().unwrap().clone();
-    let service_name = current_service.unwrap().name.clone();
-    let func_name = func.sig.ident.to_string();
-    let key = service_name + ":" + &func_name;
-    let func_meta = "__".to_owned() + func.sig.ident.to_string().as_str() + "_meta";
-    let func_meta_ident = syn::Ident::new(&func_meta, Span::call_site().into());
-    METAS.lock().unwrap().insert(key, true);
+    let raw_input = TokenStream2::from(input.clone());
+    let func = parse_macro_input!(input as InterceptorArgs);
+    let func_ident = func.ident.clone();
+    let func_name = func.ident.to_string();
     let meta_tokens = args.kv.iter().map(|(key, value)| {
         quote! {
             meta.insert(#key.to_string(), #value.to_string());
         }
     }).collect::<Vec<TokenStream2>>();
-    let meta_tokens = TokenStream2::from(quote! {
-        meta.insert("fun_name".to_string(), #func_name.to_string());
-        #(#meta_tokens)*
-    });
+    if let TokenType::Fn(_) = func.typ {
+        let meta_tokens = TokenStream2::from(quote! {
+            meta.insert("fun_name".to_string(), #func_name.to_string());
+            #(#meta_tokens)*
+        });
+        let current_service = CURRENT_CONTROLLER.lock().unwrap().clone();
+        let service_name = current_service.unwrap().name.clone();
+        let key = service_name + ":" + &func_name;
+        METAS.lock().unwrap().insert(key, true);
 
-    return TokenStream::from(quote! {
-        #func
+        let func_meta = "__".to_owned() + func.ident.to_string().as_str() + "_meta";
+        let func_meta_ident = syn::Ident::new(&func_meta, Span::call_site().into());
+        return TokenStream::from(quote! {
+            #raw_input
 
-        pub fn #func_meta_ident(&self) -> HashMap<String, String>{
-            let mut meta = HashMap::new();
-            #meta_tokens
-            meta
-        }
-    });
+            pub fn #func_meta_ident(&self) -> HashMap<String, String>{
+                let mut meta = HashMap::new();
+                #meta_tokens
+                meta
+            }
+        });
+    }else{
+        let meta_tokens = TokenStream2::from(quote! {
+            meta.insert("struct_name".to_string(), #func_name.to_string());
+            #(#meta_tokens)*
+        });
+        let key = func_name;
+        METAS.lock().unwrap().insert(key, true);
+
+        return TokenStream::from(quote! {
+            #raw_input
+
+            impl #func_ident {
+                pub fn __meta(&self) -> HashMap<String, String>{
+                    let mut meta = HashMap::new();
+                    #meta_tokens
+                    meta
+                }
+            }
+        });
+    
+    }
 }
 
 #[proc_macro]
@@ -428,9 +452,19 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                     let meta = std::collections::HashMap::new();
                 }
             };
+            let struct_meta = if let Some(_) = METAS.lock().unwrap().get(&controller_str) {
+                quote! {
+                    let mut t_meta = t_controller.__meta();
+                    t_meta.extend(meta);
+                    let meta = t_meta;
+                }
+            } else {
+                quote! {}
+            };
             let handler = quote!{
                 |req, #func_args| async move {
                     #meta_tokens
+                    #struct_meta
 
                     let inter_ctx = nidrs::HookCtx {
                         meta: meta,

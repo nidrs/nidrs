@@ -181,6 +181,16 @@ mod tests {
         }
         println!("{:?}", module_ctx.services.lock().unwrap());
     }
+
+    #[test]
+    fn it_map(){
+        let map1 = HashMap::from([("a".to_string(), 1), ("b".to_string(), 2)]);
+        let mut map2 = HashMap::from([("a".to_string(), 2), ("b".to_string(), 2)]);
+        map2.extend(map1);
+        let map1 = map2;
+
+        println!("{:?}", map1);
+    }
 }
 
  

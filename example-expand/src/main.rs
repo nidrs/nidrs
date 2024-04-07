@@ -74,9 +74,17 @@ mod app {
             }
         }
         impl AppController {
+            pub fn __meta(&self) -> HashMap<String, String> {
+                let mut meta = HashMap::new();
+                meta.insert("struct_name".to_string(), "AppController".to_string());
+                meta.insert("role".to_string(), "\"admin\"".to_string());
+                meta.insert("auth".to_string(), "\"true\"".to_string());
+                meta
+            }
+        }
+        impl AppController {
             pub async fn get_hello_world(
                 &self,
-                State(state): State<StateCtx>,
                 Query(q): Query<HashMap<String, String>>,
             ) -> String {
                 {
@@ -92,7 +100,15 @@ mod app {
             }
             pub async fn get_hello_world2(
                 &self,
-                State(state): State<StateCtx>,
+                Query(q): Query<HashMap<String, String>>,
+            ) -> String {
+                {
+                    ::std::io::_print(format_args!("Query {0:?}\n", q));
+                };
+                self.app_service.get_hello_world()
+            }
+            pub async fn post_hello_world(
+                &self,
                 Query(q): Query<HashMap<String, String>>,
                 Json(j): Json<serde_json::Value>,
             ) -> String {
@@ -307,7 +323,7 @@ mod app {
                         format_args!(
                             "Registering router \'{0} {1}\'.\n",
                             "get".to_uppercase(),
-                            "/app/hello",
+                            "/app/hello2",
                         ),
                     );
                 };
@@ -317,15 +333,18 @@ mod app {
                     .push(
                         axum::Router::new()
                             .route(
-                                "/app/hello",
-                                axum::routing::get(|req, p0, p1| async move {
-                                    let meta = t_controller.__get_hello_world_meta();
+                                "/app/hello2",
+                                axum::routing::get(|req, p0| async move {
+                                    let meta = std::collections::HashMap::new();
+                                    let mut t_meta = t_controller.__meta();
+                                    t_meta.extend(meta);
+                                    let meta = t_meta;
                                     let inter_ctx = nidrs::HookCtx {
                                         meta: meta,
                                         req: req,
                                     };
                                     t_interceptor_0.before(&inter_ctx).await;
-                                    let r = t_controller.get_hello_world(p0, p1).await;
+                                    let r = t_controller.get_hello_world2(p0).await;
                                     t_interceptor_0.after(&inter_ctx).await;
                                     r
                                 }),
@@ -360,13 +379,66 @@ mod app {
                         axum::Router::new()
                             .route(
                                 "/app/hello",
-                                axum::routing::post(|req, p0, p1, p2| async move {
+                                axum::routing::post(|req, p0, p1| async move {
                                     let meta = std::collections::HashMap::new();
+                                    let mut t_meta = t_controller.__meta();
+                                    t_meta.extend(meta);
+                                    let meta = t_meta;
                                     let inter_ctx = nidrs::HookCtx {
                                         meta: meta,
                                         req: req,
                                     };
-                                    let r = t_controller.get_hello_world2(p0, p1, p2).await;
+                                    let r = t_controller.post_hello_world(p0, p1).await;
+                                    r
+                                }),
+                            ),
+                    );
+                let t_controller = controllers.get("AppController").unwrap();
+                let t_controller = t_controller
+                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                    .unwrap();
+                let t_controller = t_controller.clone();
+                let t_interceptor_0 = interceptors.get("LogInterceptor").unwrap();
+                let t_interceptor_0 = t_interceptor_0
+                    .downcast_ref::<std::sync::Arc<LogInterceptor>>()
+                    .unwrap();
+                let t_interceptor_0 = t_interceptor_0.clone();
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
+                };
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "Registering router \'{0} {1}\'.\n",
+                            "get".to_uppercase(),
+                            "/app/hello",
+                        ),
+                    );
+                };
+                ctx.routers
+                    .lock()
+                    .unwrap()
+                    .push(
+                        axum::Router::new()
+                            .route(
+                                "/app/hello",
+                                axum::routing::get(|req, p0| async move {
+                                    let meta = t_controller.__get_hello_world_meta();
+                                    let mut t_meta = t_controller.__meta();
+                                    t_meta.extend(meta);
+                                    let meta = t_meta;
+                                    let inter_ctx = nidrs::HookCtx {
+                                        meta: meta,
+                                        req: req,
+                                    };
+                                    t_interceptor_0.before(&inter_ctx).await;
+                                    let r = t_controller.get_hello_world(p0).await;
+                                    t_interceptor_0.after(&inter_ctx).await;
                                     r
                                 }),
                             ),
