@@ -226,18 +226,23 @@ pub fn uses(args: TokenStream, input: TokenStream) -> TokenStream {
     let input_type = input.clone();
     let input_type = parse_macro_input!(input_type as InterceptorArgs);
     let used_ident = input_type.ident;
+    let inter_names = args.items.iter().map(|arg| {
+        if let Expr::Path(path) = arg {
+            path.to_token_stream().to_string()
+        } else {
+            panic!("Invalid argument");
+        }
+    }).collect::<Vec<String>>();
     if let TokenType::Fn(_) = input_type.typ {
         let controller_name = CURRENT_CONTROLLER.lock().unwrap().as_ref().unwrap().name.clone();
         let hook_name = controller_name + ":" + &used_ident.to_string();
-        let inter_names = args.items.iter().map(|arg| {
-            if let Expr::Path(path) = arg {
-                path.to_token_stream().to_string()
-            } else {
-                panic!("Invalid argument");
-            }
-        }).collect::<Vec<String>>();
         INTERS.lock().unwrap()
             .entry(hook_name)
+            .or_insert(vec![])
+            .append(&mut inter_names.clone());
+    } else if let TokenType::Struct(_) = input_type.typ {
+        INTERS.lock().unwrap()
+            .entry(used_ident.to_string())
             .or_insert(vec![])
             .append(&mut inter_names.clone());
     }
@@ -393,55 +398,53 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                     #a, #b
                 }
             }).unwrap();
+            let noop_ids = vec![];
             let inter_name = controller_str.clone() + ":" + &route_name.to_string();
             let binding = INTERS.lock().unwrap();
-            let inter_ids = binding.get(&inter_name);
-            let (def_inter_tokens, call_inter_tokens, call_after_inter_tokens) = if let Some(inter_ids) = inter_ids {
-                // println!("{:?}", inter_ids);
-                let inter_ids = inter_ids.iter().map(|inter_id| {
-                    syn::Ident::new(inter_id, Span::call_site().into())
-                }).collect::<Vec<syn::Ident>>();
-                let mut i = 0;
-                let inter_tokens = inter_ids.iter().map(|inter_id| {
-                    let t_interceptor_ident = syn::Ident::new(format!("t_interceptor_{}", i.to_string()).as_str(), Span::call_site().into());
-                    (
-                        quote!{
-                            let #t_interceptor_ident = interceptors.get(stringify!(#inter_id)).unwrap();
-                            let #t_interceptor_ident = #t_interceptor_ident.downcast_ref::<std::sync::Arc<#inter_id>>().unwrap();
-                            let #t_interceptor_ident = #t_interceptor_ident.clone();
-                        },
-                        quote!{
-                            #t_interceptor_ident.before(&inter_ctx).await;
-                        },
-                        quote!{
-                            #t_interceptor_ident.after(&inter_ctx).await;
-                        },
-                    )
-                }).collect::<Vec<(TokenStream2, TokenStream2, TokenStream2)>>();
-                let def_inter_tokens = inter_tokens.iter().map(|(tokens, _, _)| {
-                    tokens.clone()
-                }).collect::<Vec<TokenStream2>>();
-                let def_inter_tokens = TokenStream2::from(quote! {
-                    #(#def_inter_tokens)*
-                });
-                let call_inter_tokens = inter_tokens.iter().map(|(_, tokens, _)| {
-                    tokens.clone()
-                }).collect::<Vec<TokenStream2>>();
-                let call_inter_tokens = TokenStream2::from(quote! {
-                    #(#call_inter_tokens)*
-                });
+            let struct_inter_ids = binding.get(&controller_str).unwrap_or(&noop_ids);
+            let inter_ids = binding.get(&inter_name).unwrap_or(&noop_ids);
+            let inter_ids = struct_inter_ids.iter().chain(inter_ids.iter()).collect::<Vec<&String>>();
 
-                let call_after_inter_tokens = inter_tokens.iter().map(|(_, _, tokens)| {
-                    tokens.clone()
-                }).collect::<Vec<TokenStream2>>();
-                let call_after_inter_tokens = TokenStream2::from(quote! {
-                    #(#call_after_inter_tokens)*
-                });
+            let inter_ids = inter_ids.iter().map(|inter_id| {
+                syn::Ident::new(inter_id, Span::call_site().into())
+            }).collect::<Vec<syn::Ident>>();
+            let mut i = 0;
+            let inter_tokens = inter_ids.iter().map(|inter_id| {
+                let t_interceptor_ident = syn::Ident::new(format!("t_interceptor_{}", i.to_string()).as_str(), Span::call_site().into());
+                (
+                    quote!{
+                        let #t_interceptor_ident = interceptors.get(stringify!(#inter_id)).unwrap();
+                        let #t_interceptor_ident = #t_interceptor_ident.downcast_ref::<std::sync::Arc<#inter_id>>().unwrap();
+                        let #t_interceptor_ident = #t_interceptor_ident.clone();
+                    },
+                    quote!{
+                        #t_interceptor_ident.before(&inter_ctx).await;
+                    },
+                    quote!{
+                        #t_interceptor_ident.after(&inter_ctx).await;
+                    },
+                )
+            }).collect::<Vec<(TokenStream2, TokenStream2, TokenStream2)>>();
+            let def_inter_tokens = inter_tokens.iter().map(|(tokens, _, _)| {
+                tokens.clone()
+            }).collect::<Vec<TokenStream2>>();
+            let def_inter_tokens = TokenStream2::from(quote! {
+                #(#def_inter_tokens)*
+            });
+            let call_inter_tokens = inter_tokens.iter().map(|(_, tokens, _)| {
+                tokens.clone()
+            }).collect::<Vec<TokenStream2>>();
+            let call_inter_tokens = TokenStream2::from(quote! {
+                #(#call_inter_tokens)*
+            });
 
-                (def_inter_tokens, call_inter_tokens, call_after_inter_tokens)
-            } else {
-               (TokenStream2::new(), TokenStream2::new(), TokenStream2::new())
-            };
+            let call_after_inter_tokens = inter_tokens.iter().map(|(_, _, tokens)| {
+                tokens.clone()
+            }).collect::<Vec<TokenStream2>>();
+            let call_after_inter_tokens = TokenStream2::from(quote! {
+                #(#call_after_inter_tokens)*
+            });
+
             let meta_ident = syn::Ident::new(format!("__{}_meta", route_name).as_str(), Span::call_site().into());
             let meta_tokens = if let Some(_) = METAS.lock().unwrap().get(&inter_name){
                 quote! {

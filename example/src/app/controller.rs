@@ -7,6 +7,7 @@ use nidrs_macro::{controller, get, meta, post, uses};
 use super::service::AppService;
 
 #[meta(role = "admin", auth = "true")]
+#[uses(LogInterceptor)]
 #[controller("/app")]
 #[derive(Debug, Default)]
 pub struct AppController {
