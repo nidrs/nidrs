@@ -16,13 +16,13 @@ impl AppController {
     #[get("/hello")]
     #[meta(role = "user")]
     #[uses(LogInterceptor)]
-    pub async fn get_hello_world(&self, State(state): State<StateCtx>, Query(q): Query<HashMap<String, String>>) -> String {
+    pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> String {
         println!("Query {:?}", q);
         self.app_service.get_hello_world()
     }
 
     #[post("/hello")]
-    pub async fn get_hello_world2(&self, State(state): State<StateCtx>, Query(q): Query<HashMap<String, String>>, Json(j): Json<serde_json::Value>) -> String {
+    pub async fn get_hello_world2(&self, Query(q): Query<HashMap<String, String>>, Json(j): Json<serde_json::Value>) -> String {
         println!("Query {:?}", q);
         println!("Json {:?}", j);
 
