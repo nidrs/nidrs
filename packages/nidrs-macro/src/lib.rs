@@ -464,11 +464,12 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
             } else {
                 quote! {}
             };
+            let meta_tokens = TokenStream2::from(quote! {
+                #meta_tokens
+                #struct_meta
+            });
             let handler = quote!{
                 |req, #func_args| async move {
-                    #meta_tokens
-                    #struct_meta
-
                     let inter_ctx = nidrs::HookCtx {
                         meta: meta,
                         req: req,
@@ -486,6 +487,8 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                 let t_controller = t_controller.clone();
 
                 #def_inter_tokens
+
+                #meta_tokens
 
                 nidrs_macro::log!("Registering router '{} {}'.", #method.to_uppercase(),#path);
                 ctx.routers.lock().unwrap().push(axum::Router::new().route(
