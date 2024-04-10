@@ -20,7 +20,7 @@ pub trait Interceptor {
 
 pub trait InterceptorHook {
     async fn before(&self, ctx: &HookCtx);
-    async fn after(&self, ctx: &HookCtx);
+    async fn after<T: IntoResponse>(&self, ctx: &HookCtx, r: T)->impl IntoResponse;
 }
 
 pub trait Controller {

@@ -80,8 +80,8 @@ mod app {
             pub fn __meta(&self) -> HashMap<String, String> {
                 let mut meta = HashMap::new();
                 meta.insert("struct_name".to_string(), "AppController".to_string());
-                meta.insert("role".to_string(), "\"admin\"".to_string());
                 meta.insert("auth".to_string(), "\"true\"".to_string());
+                meta.insert("role".to_string(), "\"admin\"".to_string());
                 meta
             }
         }
@@ -207,7 +207,7 @@ mod app {
     }
     pub mod dto {
         use axum::{
-            http::{header, StatusCode},
+            body::Body, http::{header, StatusCode},
             response::{IntoResponse, Response},
         };
         use serde::{Deserialize, Serialize};
@@ -495,14 +495,15 @@ mod app {
                             .unwrap();
                     }
                 };
-                Response::builder()
+                let res: Response<Body> = Response::builder()
                     .status(
                         StatusCode::from_u16(self.code as u16)
                             .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
                     )
                     .header(header::CONTENT_TYPE, "application/json")
                     .body(json_body.into())
-                    .unwrap()
+                    .unwrap();
+                res
             }
         }
     }
@@ -615,16 +616,49 @@ mod app {
                     .downcast_ref::<std::sync::Arc<controller::AppController>>()
                     .unwrap();
                 let t_controller = t_controller.clone();
-                let t_interceptor_0 = interceptors.get("LogInterceptor").unwrap();
-                let t_interceptor_0 = t_interceptor_0
-                    .downcast_ref::<std::sync::Arc<LogInterceptor>>()
+                let meta = std::collections::HashMap::new();
+                let mut t_meta = t_controller.__meta();
+                t_meta.extend(meta);
+                let meta = t_meta;
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
+                };
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "Registering router \'{0} {1}\'.\n",
+                            "post".to_uppercase(),
+                            "/app/hello",
+                        ),
+                    );
+                };
+                ctx.routers
+                    .lock()
+                    .unwrap()
+                    .push(
+                        axum::Router::new()
+                            .route(
+                                "/app/hello",
+                                axum::routing::post(|req, p0, p1| async move {
+                                    let inter_ctx = nidrs::HookCtx {
+                                        meta: meta,
+                                        req: req,
+                                    };
+                                    let r = t_controller.post_hello_world(p0, p1).await;
+                                    r
+                                }),
+                            ),
+                    );
+                let t_controller = controllers.get("AppController").unwrap();
+                let t_controller = t_controller
+                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
                     .unwrap();
-                let t_interceptor_0 = t_interceptor_0.clone();
-                let t_interceptor_0 = interceptors.get("LogInterceptor").unwrap();
-                let t_interceptor_0 = t_interceptor_0
-                    .downcast_ref::<std::sync::Arc<LogInterceptor>>()
-                    .unwrap();
-                let t_interceptor_0 = t_interceptor_0.clone();
+                let t_controller = t_controller.clone();
                 let meta = std::collections::HashMap::new();
                 let mut t_meta = t_controller.__meta();
                 t_meta.extend(meta);
@@ -658,11 +692,7 @@ mod app {
                                         meta: meta,
                                         req: req,
                                     };
-                                    t_interceptor_0.before(&inter_ctx).await;
-                                    t_interceptor_0.before(&inter_ctx).await;
                                     let r = t_controller.get_hello_world2(p0).await;
-                                    t_interceptor_0.after(&inter_ctx).await;
-                                    t_interceptor_0.after(&inter_ctx).await;
                                     r
                                 }),
                             ),
@@ -712,57 +742,7 @@ mod app {
                                     };
                                     t_interceptor_0.before(&inter_ctx).await;
                                     let r = t_controller.get_hello_world(p0).await;
-                                    t_interceptor_0.after(&inter_ctx).await;
-                                    r
-                                }),
-                            ),
-                    );
-                let t_controller = controllers.get("AppController").unwrap();
-                let t_controller = t_controller
-                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                    .unwrap();
-                let t_controller = t_controller.clone();
-                let t_interceptor_0 = interceptors.get("LogInterceptor").unwrap();
-                let t_interceptor_0 = t_interceptor_0
-                    .downcast_ref::<std::sync::Arc<LogInterceptor>>()
-                    .unwrap();
-                let t_interceptor_0 = t_interceptor_0.clone();
-                let meta = std::collections::HashMap::new();
-                let mut t_meta = t_controller.__meta();
-                t_meta.extend(meta);
-                let meta = t_meta;
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "Registering router \'{0} {1}\'.\n",
-                            "post".to_uppercase(),
-                            "/app/hello",
-                        ),
-                    );
-                };
-                ctx.routers
-                    .lock()
-                    .unwrap()
-                    .push(
-                        axum::Router::new()
-                            .route(
-                                "/app/hello",
-                                axum::routing::post(|req, p0, p1| async move {
-                                    let inter_ctx = nidrs::HookCtx {
-                                        meta: meta,
-                                        req: req,
-                                    };
-                                    t_interceptor_0.before(&inter_ctx).await;
-                                    let r = t_controller.post_hello_world(p0, p1).await;
-                                    t_interceptor_0.after(&inter_ctx).await;
+                                    let r = t_interceptor_0.after(&inter_ctx, r).await;
                                     r
                                 }),
                             ),
@@ -1519,8 +1499,11 @@ mod log {
         }
     }
     pub mod interceptor {
+        use axum::{body::Body, response::{IntoResponse, Response}};
         use nidrs::{Inject, Interceptor, HookCtx, InterceptorHook};
         use nidrs_macro::interceptor;
+        use crate::app::dto::Status;
+
         use super::service::LogService;
         pub struct LogInterceptor {
             log_service: Inject<LogService>,
@@ -1569,8 +1552,15 @@ mod log {
                 };
                 self.log_service.log("Before");
             }
-            async fn after(&self, _ctx: &HookCtx) {
-                self.log_service.log("After");
+            async fn after<T: IntoResponse>(&self, _ctx: &HookCtx, r: T) -> T {
+                // println!("ctx: {:?}", r.into_response().body_mut());
+                // let body = r.into_response().into_body();
+                // let body_bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
+                // let body_str = String::from_utf8_lossy(&body_bytes);
+                // println!("ctx: {:?}", body_str);
+                // self.log_service.log("After");
+                // format!("{{\"code\": 0,\"data\": {}}}", body_str)
+                r
             }
         }
     }

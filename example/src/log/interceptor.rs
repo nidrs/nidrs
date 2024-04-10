@@ -1,3 +1,4 @@
+use axum::response::IntoResponse;
 use nidrs::{Inject, Interceptor, HookCtx, InterceptorHook};
 use nidrs_macro::interceptor;
 
@@ -16,7 +17,8 @@ impl InterceptorHook for LogInterceptor {
     self.log_service.log("Before");
   }
 
-  async fn after(&self, _ctx: &HookCtx) {
+  async fn after<T:IntoResponse>(&self, _ctx: &HookCtx, r: T) ->T{
     self.log_service.log("After");
+    r
   }
 }

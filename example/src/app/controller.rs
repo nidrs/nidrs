@@ -7,7 +7,7 @@ use nidrs_macro::{controller, get, meta, post, uses};
 use super::{dto::{AppResult, Status}, service::AppService};
 
 #[meta(role = "admin", auth = "true")]
-#[uses(LogInterceptor)]
+// #[uses(LogInterceptor)]
 #[controller("/app")]
 #[derive(Debug, Default)]
 pub struct AppController {
@@ -17,6 +17,7 @@ pub struct AppController {
 impl AppController {
     #[get("/hello")]
     #[meta(role = "user")]
+    #[uses(LogInterceptor)]
     pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<(StatusCode, Status)> {
         println!("Query {:?}", q);
         Ok(( StatusCode::OK,
@@ -27,7 +28,6 @@ impl AppController {
     }
 
     #[get("/hello2")]
-    #[uses(LogInterceptor)]
     pub async fn get_hello_world2(&self, Query(q): Query<HashMap<String, String>>) -> String {
         println!("Query {:?}", q);
         self.app_service.get_hello_world()
