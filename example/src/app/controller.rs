@@ -1,10 +1,10 @@
 use std::{collections::HashMap, sync::Arc};
 
-use axum::{extract::{Query, State}, Json};
+use axum::{extract::{Query, State}, http::StatusCode, Json};
 use nidrs::{Inject, StateCtx};
 use nidrs_macro::{controller, get, meta, post, uses};
 
-use super::service::AppService;
+use super::{dto::{AppResult, Status}, service::AppService};
 
 #[meta(role = "admin", auth = "true")]
 #[uses(LogInterceptor)]
@@ -17,9 +17,13 @@ pub struct AppController {
 impl AppController {
     #[get("/hello")]
     #[meta(role = "user")]
-    pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> String {
+    pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<(StatusCode, Status)> {
         println!("Query {:?}", q);
-        self.app_service.get_hello_world()
+        Ok(( StatusCode::OK,
+            Status {
+            code: 201,
+            message: "Hello, World!".to_string(),
+        }))
     }
 
     #[get("/hello2")]

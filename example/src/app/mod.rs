@@ -2,6 +2,7 @@ use nidrs_macro::module;
 
 pub mod controller;
 pub mod service;
+pub mod dto;
 
 use controller::AppController;
 use service::AppService;
