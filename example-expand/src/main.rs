@@ -80,8 +80,8 @@ mod app {
             pub fn __meta(&self) -> HashMap<String, String> {
                 let mut meta = HashMap::new();
                 meta.insert("struct_name".to_string(), "AppController".to_string());
-                meta.insert("role".to_string(), "\"admin\"".to_string());
                 meta.insert("auth".to_string(), "\"true\"".to_string());
+                meta.insert("role".to_string(), "\"admin\"".to_string());
                 meta
             }
         }
@@ -632,6 +632,49 @@ mod app {
                     ::std::io::_print(
                         format_args!(
                             "Registering router \'{0} {1}\'.\n",
+                            "post".to_uppercase(),
+                            "/app/hello",
+                        ),
+                    );
+                };
+                ctx.routers
+                    .lock()
+                    .unwrap()
+                    .push(
+                        axum::Router::new()
+                            .route(
+                                "/app/hello",
+                                axum::routing::post(|req, p0, p1| async move {
+                                    let inter_ctx = nidrs::HookCtx {
+                                        meta: meta,
+                                        req: req,
+                                    };
+                                    let r = t_controller.post_hello_world(p0, p1).await;
+                                    r
+                                }),
+                            ),
+                    );
+                let t_controller = controllers.get("AppController").unwrap();
+                let t_controller = t_controller
+                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                    .unwrap();
+                let t_controller = t_controller.clone();
+                let meta = std::collections::HashMap::new();
+                let mut t_meta = t_controller.__meta();
+                t_meta.extend(meta);
+                let meta = t_meta;
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
+                };
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "Registering router \'{0} {1}\'.\n",
                             "get".to_uppercase(),
                             "/app/hello2",
                         ),
@@ -700,49 +743,6 @@ mod app {
                                     t_interceptor_0.before(&inter_ctx).await;
                                     let r = t_controller.get_hello_world(p0).await;
                                     let r = t_interceptor_0.after(&inter_ctx, r).await;
-                                    r
-                                }),
-                            ),
-                    );
-                let t_controller = controllers.get("AppController").unwrap();
-                let t_controller = t_controller
-                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                    .unwrap();
-                let t_controller = t_controller.clone();
-                let meta = std::collections::HashMap::new();
-                let mut t_meta = t_controller.__meta();
-                t_meta.extend(meta);
-                let meta = t_meta;
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "Registering router \'{0} {1}\'.\n",
-                            "post".to_uppercase(),
-                            "/app/hello",
-                        ),
-                    );
-                };
-                ctx.routers
-                    .lock()
-                    .unwrap()
-                    .push(
-                        axum::Router::new()
-                            .route(
-                                "/app/hello",
-                                axum::routing::post(|req, p0, p1| async move {
-                                    let inter_ctx = nidrs::HookCtx {
-                                        meta: meta,
-                                        req: req,
-                                    };
-                                    let r = t_controller.post_hello_world(p0, p1).await;
                                     r
                                 }),
                             ),
@@ -1548,6 +1548,7 @@ mod log {
             }
         }
         impl InterceptorHook for LogInterceptor {
+            type R = (SetHeader<'static>, String);
             async fn before(&self, _ctx: &HookCtx) {
                 {
                     ::std::io::_print(format_args!("ctx: {0:?}\n", _ctx.meta));
@@ -1568,7 +1569,7 @@ mod log {
                 };
                 self.log_service.log("After");
                 (
-                    SetHeader("content", "application/json"),
+                    SetHeader("content-type", "application/json"),
                     {
                         let res = ::alloc::fmt::format(
                             format_args!("{{\"code\": 0,\"data\": {0}}}", body_str),
@@ -1578,7 +1579,7 @@ mod log {
                 )
             }
         }
-        struct SetHeader<'a>(&'a str, &'a str);
+        pub struct SetHeader<'a>(&'a str, &'a str);
         impl<'a> IntoResponseParts for SetHeader<'a> {
             type Error = (StatusCode, String);
             fn into_response_parts(
