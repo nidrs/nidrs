@@ -421,7 +421,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                         #t_interceptor_ident.before(&inter_ctx).await;
                     },
                     quote!{
-                        #t_interceptor_ident.after(&inter_ctx).await;
+                        let r = #t_interceptor_ident.after(&inter_ctx, r).await;
                     },
                 )
             }).collect::<Vec<(TokenStream2, TokenStream2, TokenStream2)>>();

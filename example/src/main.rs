@@ -22,7 +22,7 @@ fn main() {
 pub struct AppState{}
 
 pub enum AppError {
-    
+    Unknown,
 }
 
 
@@ -30,6 +30,8 @@ impl From<std::io::Error> for AppError {
     fn from(error: std::io::Error) -> Self {
         // Convert std::io::Error to AppError here
         // Example: AppError::new(error.to_string())
-        unimplemented!()
+        // unimplemented!()
+        println!("Error: {:?}", error);
+        AppError::Unknown
     }
 }

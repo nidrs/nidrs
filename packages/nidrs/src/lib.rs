@@ -19,8 +19,10 @@ pub trait Interceptor {
 }
 
 pub trait InterceptorHook {
+    type R : IntoResponse;
+
     async fn before(&self, ctx: &HookCtx);
-    async fn after<T: IntoResponse>(&self, ctx: &HookCtx, r: T)->impl IntoResponse;
+    async fn after<T: IntoResponse>(&self, ctx: &HookCtx, r: T)-> Self::R;
 }
 
 pub trait Controller {
