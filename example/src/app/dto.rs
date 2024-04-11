@@ -1,13 +1,6 @@
 use axum::{body::Body, http::{header, StatusCode}, response::{IntoResponse, Response}};
 use serde::{Deserialize, Serialize};
 
-pub enum AppError {
-    NotFound,
-    InternalServerError,
-}
-
-pub type AppResult<T> = Result<T, ()>;
-
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Status{

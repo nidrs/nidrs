@@ -1,5 +1,6 @@
-use axum::{routing::get, Router};
+use axum::{response::IntoResponse, routing::get, Router};
 use nidrs::StateCtx;
+
 
 mod app;
 mod conf;
@@ -7,6 +8,7 @@ mod user;
 mod log;
 
 
+#[nidrs::main]
 fn main() {
     let mut app = nidrs::NidrsFactory::create(app::AppModule);
 
@@ -18,20 +20,23 @@ fn main() {
 
 
 
-#[derive(Clone, Debug, Default)]
-pub struct AppState{}
-
+#[derive(thiserror::Error, Debug)]
 pub enum AppError {
-    Unknown,
+    #[error("Environment variable not found")]
+    EnvironmentVariableNotFound(#[from] std::env::VarError),
+    #[error(transparent)]
+    IOError(#[from] std::io::Error),
 }
 
-
-impl From<std::io::Error> for AppError {
-    fn from(error: std::io::Error) -> Self {
-        // Convert std::io::Error to AppError here
-        // Example: AppError::new(error.to_string())
-        // unimplemented!()
-        println!("Error: {:?}", error);
-        AppError::Unknown
+impl IntoResponse for AppError{
+    fn into_response(self) -> axum::response::Response {
+        axum::response::Json(serde_json::json!({
+            "code": 500,
+            "message": self.to_string(),
+        }))
+        .into_response()
     }
 }
+
+pub type AppResult<T> = Result<T, AppError>;
+

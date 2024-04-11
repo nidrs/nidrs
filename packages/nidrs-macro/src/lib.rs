@@ -116,7 +116,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let events_trigger_tokens =  gen_events_trigger_tokens();
     
-
+    // println!("module {:?}", ident.to_string());
     CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta {
         name: "".to_string(),
         path: "".to_string(),
@@ -306,7 +306,8 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro]
-pub fn get_route_meta(input: TokenStream) -> TokenStream {
+pub fn throw(input: TokenStream) -> TokenStream {
+    // println!("get_route_meta {:?}", CURRENT_CONTROLLER.lock().unwrap());
     return input;
 }
 
@@ -322,6 +323,19 @@ pub fn log(input: TokenStream) -> TokenStream {
     });
 }
 
+#[proc_macro_attribute]
+pub fn main(args:TokenStream, input: TokenStream) -> TokenStream {
+
+    let func = parse_macro_input!(input as ItemFn);
+    let ident = func.sig.ident.clone();
+
+    let main_tokens = TokenStream2::from(quote! {
+        #func
+    });
+
+
+    return main_tokens.into();
+}
 
 fn route(method:&str, args: TokenStream, input: TokenStream)-> TokenStream{
     let args = parse_macro_input!(args as syn::Expr);
@@ -418,10 +432,15 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                         let #t_interceptor_ident = #t_interceptor_ident.clone();
                     },
                     quote!{
-                        #t_interceptor_ident.before(&inter_ctx).await;
+                        if let Err(e) = #t_interceptor_ident.before(&inter_ctx).await{
+                            return Err(e);
+                        };
                     },
                     quote!{
                         let r = #t_interceptor_ident.after(&inter_ctx, r).await;
+                        if let Err(e) = r{
+                            return Err(e);
+                        };
                     },
                 )
             }).collect::<Vec<(TokenStream2, TokenStream2, TokenStream2)>>();

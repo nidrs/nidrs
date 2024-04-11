@@ -1,9 +1,12 @@
 #![allow(warnings, unused)]
 
+use nidrs_extern::*;
 use nidrs_extern::axum::{self, async_trait, extract::{FromRequestParts, Query, State}, http::{request::Parts, HeaderMap, HeaderValue, StatusCode, Uri}, response::IntoResponse};
 use nidrs_extern::tokio;
 use once_cell::sync::OnceCell;
-use std::{any::Any, cell::{RefCell}, collections::HashMap, fmt::Debug, sync::{Arc, Mutex, MutexGuard}};
+use std::{any::Any, cell::RefCell, collections::HashMap, error::Error, fmt::Debug, sync::{Arc, Mutex, MutexGuard}};
+
+pub use nidrs_macro::*;
 
 pub trait Module {
     fn init(self, ctx: &ModuleCtx);
@@ -20,9 +23,10 @@ pub trait Interceptor {
 
 pub trait InterceptorHook {
     type R : IntoResponse;
+    type E;
 
-    async fn before(&self, ctx: &HookCtx);
-    async fn after<T: IntoResponse>(&self, ctx: &HookCtx, r: T)-> Self::R;
+    async fn before(&self, ctx: &HookCtx) -> Result<(), Self::E>;
+    async fn after<T: IntoResponse>(&self, ctx: &HookCtx, r:T)-> Result<Self::R, Self::E>;
 }
 
 pub trait Controller {

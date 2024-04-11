@@ -8,7 +8,7 @@
 use std::prelude::rust_2021::*;
 #[macro_use]
 extern crate std;
-use axum::{routing::get, Router};
+use axum::{response::IntoResponse, routing::get, Router};
 use nidrs::StateCtx;
 mod app {
     use nidrs_macro::module;
@@ -20,10 +20,8 @@ mod app {
         };
         use nidrs::{Inject, StateCtx};
         use nidrs_macro::{controller, get, meta, post, uses};
-        use super::{
-            dto::{AppResult, Status},
-            service::AppService,
-        };
+        use crate::AppResult;
+        use super::{dto::Status, service::AppService};
         pub struct AppController {
             app_service: Inject<AppService>,
         }
@@ -80,8 +78,8 @@ mod app {
             pub fn __meta(&self) -> HashMap<String, String> {
                 let mut meta = HashMap::new();
                 meta.insert("struct_name".to_string(), "AppController".to_string());
-                meta.insert("auth".to_string(), "\"true\"".to_string());
                 meta.insert("role".to_string(), "\"admin\"".to_string());
+                meta.insert("auth".to_string(), "\"true\"".to_string());
                 meta
             }
         }
@@ -211,11 +209,6 @@ mod app {
             response::{IntoResponse, Response},
         };
         use serde::{Deserialize, Serialize};
-        pub enum AppError {
-            NotFound,
-            InternalServerError,
-        }
-        pub type AppResult<T> = Result<T, ()>;
         pub struct Status {
             pub code: i32,
             pub message: String,
@@ -632,49 +625,6 @@ mod app {
                     ::std::io::_print(
                         format_args!(
                             "Registering router \'{0} {1}\'.\n",
-                            "post".to_uppercase(),
-                            "/app/hello",
-                        ),
-                    );
-                };
-                ctx.routers
-                    .lock()
-                    .unwrap()
-                    .push(
-                        axum::Router::new()
-                            .route(
-                                "/app/hello",
-                                axum::routing::post(|req, p0, p1| async move {
-                                    let inter_ctx = nidrs::HookCtx {
-                                        meta: meta,
-                                        req: req,
-                                    };
-                                    let r = t_controller.post_hello_world(p0, p1).await;
-                                    r
-                                }),
-                            ),
-                    );
-                let t_controller = controllers.get("AppController").unwrap();
-                let t_controller = t_controller
-                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                    .unwrap();
-                let t_controller = t_controller.clone();
-                let meta = std::collections::HashMap::new();
-                let mut t_meta = t_controller.__meta();
-                t_meta.extend(meta);
-                let meta = t_meta;
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "Registering router \'{0} {1}\'.\n",
                             "get".to_uppercase(),
                             "/app/hello2",
                         ),
@@ -740,9 +690,57 @@ mod app {
                                         meta: meta,
                                         req: req,
                                     };
-                                    t_interceptor_0.before(&inter_ctx).await;
+                                    if let Err(e) = t_interceptor_0.before(&inter_ctx).await {
+                                        return Err(e);
+                                    }
                                     let r = t_controller.get_hello_world(p0).await;
                                     let r = t_interceptor_0.after(&inter_ctx, r).await;
+                                    if let Err(e) = r {
+                                        return Err(e);
+                                    }
+                                    r
+                                }),
+                            ),
+                    );
+                let t_controller = controllers.get("AppController").unwrap();
+                let t_controller = t_controller
+                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                    .unwrap();
+                let t_controller = t_controller.clone();
+                let meta = std::collections::HashMap::new();
+                let mut t_meta = t_controller.__meta();
+                t_meta.extend(meta);
+                let meta = t_meta;
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
+                };
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "Registering router \'{0} {1}\'.\n",
+                            "post".to_uppercase(),
+                            "/app/hello",
+                        ),
+                    );
+                };
+                ctx.routers
+                    .lock()
+                    .unwrap()
+                    .push(
+                        axum::Router::new()
+                            .route(
+                                "/app/hello",
+                                axum::routing::post(|req, p0, p1| async move {
+                                    let inter_ctx = nidrs::HookCtx {
+                                        meta: meta,
+                                        req: req,
+                                    };
+                                    let r = t_controller.post_hello_world(p0, p1).await;
                                     r
                                 }),
                             ),
@@ -1506,6 +1504,7 @@ mod log {
         use axum_extra::headers::Header;
         use nidrs::{Inject, Interceptor, HookCtx, InterceptorHook};
         use nidrs_macro::interceptor;
+        use crate::AppResult;
         use super::service::LogService;
         pub struct LogInterceptor {
             log_service: Inject<LogService>,
@@ -1549,17 +1548,19 @@ mod log {
         }
         impl InterceptorHook for LogInterceptor {
             type R = (SetHeader<'static>, String);
-            async fn before(&self, _ctx: &HookCtx) {
+            type E = (StatusCode, String);
+            async fn before(&self, _ctx: &HookCtx) -> Result<(), Self::E> {
                 {
                     ::std::io::_print(format_args!("ctx: {0:?}\n", _ctx.meta));
                 };
                 self.log_service.log("Before");
+                Ok(())
             }
             async fn after<T: IntoResponse>(
                 &self,
                 _ctx: &HookCtx,
                 r: T,
-            ) -> (SetHeader<'static>, String) {
+            ) -> Result<(SetHeader<'static>, String), Self::E> {
                 self.log_service.log("After");
                 let body = r.into_response().into_body();
                 let body_bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
@@ -1568,7 +1569,7 @@ mod log {
                     ::std::io::_print(format_args!("ctx: {0:?}\n", body_str));
                 };
                 self.log_service.log("After");
-                (
+                Ok((
                     SetHeader("content-type", "application/json"),
                     {
                         let res = ::alloc::fmt::format(
@@ -1576,7 +1577,7 @@ mod log {
                         );
                         res
                     },
-                )
+                ))
             }
         }
         pub struct SetHeader<'a>(&'a str, &'a str);
@@ -1736,37 +1737,92 @@ fn main() {
     let app = app.listen::<AppError>(3000);
     let _ = tokio::runtime::Runtime::new().unwrap().block_on(app);
 }
-pub struct AppState {}
-#[automatically_derived]
-impl ::core::clone::Clone for AppState {
-    #[inline]
-    fn clone(&self) -> AppState {
-        AppState {}
+pub enum AppError {
+    EnvironmentVariableNotFound(std::env::VarError),
+    IOError(std::io::Error),
+}
+#[allow(unused_qualifications)]
+impl std::error::Error for AppError {
+    fn source(&self) -> ::core::option::Option<&(dyn std::error::Error + 'static)> {
+        use thiserror::__private::AsDynError as _;
+        #[allow(deprecated)]
+        match self {
+            AppError::EnvironmentVariableNotFound { 0: source, .. } => {
+                ::core::option::Option::Some(source.as_dyn_error())
+            }
+            AppError::IOError { 0: transparent } => {
+                std::error::Error::source(transparent.as_dyn_error())
+            }
+        }
+    }
+}
+#[allow(unused_qualifications)]
+impl ::core::fmt::Display for AppError {
+    fn fmt(&self, __formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        #[allow(unused_variables, deprecated, clippy::used_underscore_binding)]
+        match self {
+            AppError::EnvironmentVariableNotFound(_0) => {
+                __formatter.write_str("Environment variable not found")
+            }
+            AppError::IOError(_0) => ::core::fmt::Display::fmt(_0, __formatter),
+        }
+    }
+}
+#[allow(unused_qualifications)]
+impl ::core::convert::From<std::env::VarError> for AppError {
+    #[allow(deprecated)]
+    fn from(source: std::env::VarError) -> Self {
+        AppError::EnvironmentVariableNotFound {
+            0: source,
+        }
+    }
+}
+#[allow(unused_qualifications)]
+impl ::core::convert::From<std::io::Error> for AppError {
+    #[allow(deprecated)]
+    fn from(source: std::io::Error) -> Self {
+        AppError::IOError { 0: source }
     }
 }
 #[automatically_derived]
-impl ::core::fmt::Debug for AppState {
+impl ::core::fmt::Debug for AppError {
     #[inline]
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        ::core::fmt::Formatter::write_str(f, "AppState")
+        match self {
+            AppError::EnvironmentVariableNotFound(__self_0) => {
+                ::core::fmt::Formatter::debug_tuple_field1_finish(
+                    f,
+                    "EnvironmentVariableNotFound",
+                    &__self_0,
+                )
+            }
+            AppError::IOError(__self_0) => {
+                ::core::fmt::Formatter::debug_tuple_field1_finish(
+                    f,
+                    "IOError",
+                    &__self_0,
+                )
+            }
+        }
     }
 }
-#[automatically_derived]
-impl ::core::default::Default for AppState {
-    #[inline]
-    fn default() -> AppState {
-        AppState {}
+impl IntoResponse for AppError {
+    fn into_response(self) -> axum::response::Response {
+        axum::response::Json(
+                ::serde_json::Value::Object({
+                    let mut object = ::serde_json::Map::new();
+                    let _ = object
+                        .insert(("code").into(), ::serde_json::to_value(&500).unwrap());
+                    let _ = object
+                        .insert(
+                            ("message").into(),
+                            ::serde_json::to_value(&self.to_string()).unwrap(),
+                        );
+                    object
+                }),
+            )
+            .into_response()
     }
 }
-pub enum AppError {
-    Unknown,
-}
-impl From<std::io::Error> for AppError {
-    fn from(error: std::io::Error) -> Self {
-        {
-            ::std::io::_print(format_args!("Error: {0:?}\n", error));
-        };
-        AppError::Unknown
-    }
-}
+pub type AppResult<T> = Result<T, AppError>;
 extern crate alloc;

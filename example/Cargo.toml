@@ -15,3 +15,5 @@ serde = {version = "1.0.197", features = ["derive"]}
 nidrs = { path = "../packages/nidrs" }
 nidrs-macro = { path = "../packages/nidrs-macro" }
 nidrs-extern = { path = "../packages/nidrs-extern" }
+thiserror = "1.0.58"
+anyhow = "1.0.82"

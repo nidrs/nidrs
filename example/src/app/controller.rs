@@ -4,7 +4,9 @@ use axum::{extract::{Query, State}, http::StatusCode, Json};
 use nidrs::{Inject, StateCtx};
 use nidrs_macro::{controller, get, meta, post, uses};
 
-use super::{dto::{AppResult, Status}, service::AppService};
+use crate::AppResult;
+
+use super::{dto::{Status}, service::AppService};
 
 #[meta(role = "admin", auth = "true")]
 // #[uses(LogInterceptor)]
