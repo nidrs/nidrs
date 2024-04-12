@@ -21,10 +21,11 @@ impl InterceptorHook for LogInterceptor {
     println!("ctx: {:?}", _ctx.meta);
     // 获取时间搓
     self.log_service.log("Before");
-   Ok(()) 
+  //  Err((StatusCode::INTERNAL_SERVER_ERROR, "Error".to_string()))
+    Ok(())
   }
 
-  async fn after<T:IntoResponse>(&self, _ctx: &HookCtx, r: T) ->Result<(SetHeader<'static> , String), Self::E>{
+  async fn after(&self, _ctx: &HookCtx, r: impl IntoResponse) ->Result<(SetHeader<'static> , String), Self::E>{
     self.log_service.log("After");
     let body = r.into_response().into_body();
     let body_bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();

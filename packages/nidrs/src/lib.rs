@@ -21,13 +21,15 @@ pub trait Interceptor {
     fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>);
 }
 
+
 pub trait InterceptorHook {
     type R : IntoResponse;
-    type E;
+    type E : IntoResponse;
 
     async fn before(&self, ctx: &HookCtx) -> Result<(), Self::E>;
-    async fn after<T: IntoResponse>(&self, ctx: &HookCtx, r:T)-> Result<Self::R, Self::E>;
+    async fn after(&self, ctx: &HookCtx, r: impl IntoResponse)-> Result<Self::R, Self::E>;
 }
+
 
 pub trait Controller {
     fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>);

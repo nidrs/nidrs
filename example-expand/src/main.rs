@@ -11,6 +11,7 @@ extern crate std;
 use axum::{response::IntoResponse, routing::get, Router};
 use nidrs::StateCtx;
 mod app {
+    use axum::{extract::Request, http::{Response, StatusCode}, middleware::{self, Next}};
     use nidrs_macro::module;
     pub mod controller {
         use std::{collections::HashMap, sync::Arc};
@@ -78,8 +79,8 @@ mod app {
             pub fn __meta(&self) -> HashMap<String, String> {
                 let mut meta = HashMap::new();
                 meta.insert("struct_name".to_string(), "AppController".to_string());
-                meta.insert("role".to_string(), "\"admin\"".to_string());
                 meta.insert("auth".to_string(), "\"true\"".to_string());
+                meta.insert("role".to_string(), "\"admin\"".to_string());
                 meta
             }
         }
@@ -609,49 +610,6 @@ mod app {
                     .downcast_ref::<std::sync::Arc<controller::AppController>>()
                     .unwrap();
                 let t_controller = t_controller.clone();
-                let meta = std::collections::HashMap::new();
-                let mut t_meta = t_controller.__meta();
-                t_meta.extend(meta);
-                let meta = t_meta;
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "Registering router \'{0} {1}\'.\n",
-                            "get".to_uppercase(),
-                            "/app/hello2",
-                        ),
-                    );
-                };
-                ctx.routers
-                    .lock()
-                    .unwrap()
-                    .push(
-                        axum::Router::new()
-                            .route(
-                                "/app/hello2",
-                                axum::routing::get(|req, p0| async move {
-                                    let inter_ctx = nidrs::HookCtx {
-                                        meta: meta,
-                                        req: req,
-                                    };
-                                    let r = t_controller.get_hello_world2(p0).await;
-                                    r
-                                }),
-                            ),
-                    );
-                let t_controller = controllers.get("AppController").unwrap();
-                let t_controller = t_controller
-                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                    .unwrap();
-                let t_controller = t_controller.clone();
                 let t_interceptor_0 = interceptors.get("LogInterceptor").unwrap();
                 let t_interceptor_0 = t_interceptor_0
                     .downcast_ref::<std::sync::Arc<LogInterceptor>>()
@@ -700,7 +658,15 @@ mod app {
                                     }
                                     r
                                 }),
-                            ),
+                            )
+                            .route_layer(middleware::from_fn(|mut req: Request, next: Next| async {
+                                println!("Request Before: {:?}", req);
+                                let res = next.run(req).await;
+                                println!("Request After: {:?}", res);
+                                // 自定义返回
+
+                                String::new()
+                            })),
                     );
                 let t_controller = controllers.get("AppController").unwrap();
                 let t_controller = t_controller
@@ -741,6 +707,49 @@ mod app {
                                         req: req,
                                     };
                                     let r = t_controller.post_hello_world(p0, p1).await;
+                                    r
+                                }),
+                            ),
+                    );
+                let t_controller = controllers.get("AppController").unwrap();
+                let t_controller = t_controller
+                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                    .unwrap();
+                let t_controller = t_controller.clone();
+                let meta = std::collections::HashMap::new();
+                let mut t_meta = t_controller.__meta();
+                t_meta.extend(meta);
+                let meta = t_meta;
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
+                };
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "Registering router \'{0} {1}\'.\n",
+                            "get".to_uppercase(),
+                            "/app/hello2",
+                        ),
+                    );
+                };
+                ctx.routers
+                    .lock()
+                    .unwrap()
+                    .push(
+                        axum::Router::new()
+                            .route(
+                                "/app/hello2",
+                                axum::routing::get(|req, p0| async move {
+                                    let inter_ctx = nidrs::HookCtx {
+                                        meta: meta,
+                                        req: req,
+                                    };
+                                    let r = t_controller.get_hello_world2(p0).await;
                                     r
                                 }),
                             ),
@@ -1556,10 +1565,10 @@ mod log {
                 self.log_service.log("Before");
                 Ok(())
             }
-            async fn after<T: IntoResponse>(
+            async fn after(
                 &self,
                 _ctx: &HookCtx,
-                r: T,
+                r: impl IntoResponse,
             ) -> Result<(SetHeader<'static>, String), Self::E> {
                 self.log_service.log("After");
                 let body = r.into_response().into_body();
