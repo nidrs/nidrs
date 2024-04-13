@@ -1,6 +1,6 @@
 use axum::{http::{HeaderName, HeaderValue, StatusCode}, response::{IntoResponse, IntoResponseParts, Response, ResponseParts}};
 use axum_extra::headers::Header;
-use nidrs::{Inject, Interceptor, HookCtx, InterceptorHook};
+use nidrs::{Exception, HookCtx, Inject, Interceptor, InterceptorHook};
 use nidrs_macro::interceptor;
 
 use crate::AppResult;
@@ -14,10 +14,7 @@ pub struct LogInterceptor{
 }
 
 impl InterceptorHook for LogInterceptor {
-  type R = (SetHeader<'static>, String);
-  type E = (StatusCode, String);
-
-  async fn before(&self, _ctx: &HookCtx) -> Result<(), Self::E> {
+  async fn before(&self, _ctx: &HookCtx) -> Result<(), Exception> {
     println!("ctx: {:?}", _ctx.meta);
     // 获取时间搓
     self.log_service.log("Before");
@@ -25,15 +22,19 @@ impl InterceptorHook for LogInterceptor {
     Ok(())
   }
 
-  async fn after(&self, _ctx: &HookCtx, r: impl IntoResponse) ->Result<(SetHeader<'static> , String), Self::E>{
+  async fn after(&self, _ctx: &HookCtx, r: impl IntoResponse) ->Result<String, Exception>{
     self.log_service.log("After");
     let body = r.into_response().into_body();
     let body_bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
     let body_str = String::from_utf8_lossy(&body_bytes);
     println!("ctx: {:?}", body_str);
     self.log_service.log("After");
-    Ok((SetHeader("content-type", "application/json"), format!("{{\"code\": 0,\"data\": {}}}", body_str)))
+    Ok(format!("{{\"code\": 0,\"data\": {}}}", body_str))
   }  
+
+  // async fn catch(){
+
+  // }
 }
 
 

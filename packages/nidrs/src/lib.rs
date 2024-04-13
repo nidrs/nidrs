@@ -23,11 +23,12 @@ pub trait Interceptor {
 
 
 pub trait InterceptorHook {
-    type R : IntoResponse;
-    type E : IntoResponse;
-
-    async fn before(&self, ctx: &HookCtx) -> Result<(), Self::E>;
-    async fn after(&self, ctx: &HookCtx, r: impl IntoResponse)-> Result<Self::R, Self::E>;
+    async fn before(&self, ctx: &HookCtx) -> Result<(), Exception> {
+        Ok(())
+    }
+    async fn after(&self, ctx: &HookCtx, r: impl IntoResponse)-> Result<impl IntoResponse, Exception> {
+        Ok(r)
+    }
 }
 
 
@@ -162,7 +163,12 @@ impl std::fmt::Display for Exception {
     }
 }
 
-
+impl IntoResponse for Exception{
+    fn into_response(self) -> axum::response::Response {
+        axum::response::Html("Internal Server Error".to_string())
+        .into_response()
+    }
+}
 
 #[cfg(test)]
 mod tests {

@@ -34,10 +34,10 @@ pub enum AppError {
 }
 impl IntoResponse for AppError{
     fn into_response(self) -> axum::response::Response {
-        axum::response::Json(serde_json::json!({
-            "code": 500,
-            "message": self.to_string(),
-        }))
+        axum::response::Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body(format!("Error: {}", self.to_string()))
+            .unwrap()
         .into_response()
     }
 }
