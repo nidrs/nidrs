@@ -432,37 +432,67 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                         let #t_interceptor_ident = #t_interceptor_ident.clone();
                     },
                     quote!{
-                        if let Err(e) = #t_interceptor_ident.before(&inter_ctx).await{
-                            return Err(e);
-                        };
+                        let #t_interceptor_ident = #t_interceptor_ident.clone();
                     },
                     quote!{
-                        let r = #t_interceptor_ident.after(&inter_ctx, r).await;
-                        if let Err(e) = r{
-                            return Err(e);
-                        };
+                        if let Err(e) = #t_interceptor_ident.before(&mut inter_ctx).await {
+                            return Err((nidrs_extern::axum::body::Bytes::from("Error".to_string())));
+                        }
+                    },
+                    quote!{
+                        let res = #t_interceptor_ident.after(&inter_ctx, res).await;
+                        if let Err(e) = res {
+                            return Err((nidrs_extern::axum::body::Bytes::from("Error".to_string())));
+                        }
                     },
                 )
-            }).collect::<Vec<(TokenStream2, TokenStream2, TokenStream2)>>();
-            let def_inter_tokens = inter_tokens.iter().map(|(tokens, _, _)| {
+            }).collect::<Vec<(TokenStream2, TokenStream2, TokenStream2, TokenStream2)>>();
+            let def_inter_tokens = inter_tokens.iter().map(|(tokens, _,  _, _)| {
                 tokens.clone()
             }).collect::<Vec<TokenStream2>>();
             let def_inter_tokens = TokenStream2::from(quote! {
                 #(#def_inter_tokens)*
             });
-            let call_inter_tokens = inter_tokens.iter().map(|(_, tokens, _)| {
+            let def_clone_inter_tokens = inter_tokens.iter().map(|(_, tokens,  _, _)| {
                 tokens.clone()
             }).collect::<Vec<TokenStream2>>();
-            let call_inter_tokens = TokenStream2::from(quote! {
-                #(#call_inter_tokens)*
+            let def_clone_inter_tokens = TokenStream2::from(quote! {
+                #(#def_clone_inter_tokens)*
+            });
+            let call_before_inter_tokens = inter_tokens.iter().map(|(_, _, tokens, _)| {
+                tokens.clone()
+            }).collect::<Vec<TokenStream2>>();
+            let call_before_inter_tokens = TokenStream2::from(quote! {
+                #(#call_before_inter_tokens)*
             });
 
-            let call_after_inter_tokens = inter_tokens.iter().map(|(_, _, tokens)| {
+            let call_after_inter_tokens = inter_tokens.iter().map(|(_, _, _, tokens)| {
                 tokens.clone()
             }).collect::<Vec<TokenStream2>>();
             let call_after_inter_tokens = TokenStream2::from(quote! {
                 #(#call_after_inter_tokens)*
             });
+            let router_layer_tokens = if inter_ids.is_empty() { quote!() } else { quote!{
+                let route_layer_fn = move |mut request: nidrs_extern::axum::extract::Request, next: nidrs_extern::axum::middleware::Next|{
+                    let meta = meta.clone();
+                    #def_clone_inter_tokens
+                    async move{
+                        let (parts, body) = request.into_parts();
+                        let body = nidrs_extern::axum::body::to_bytes(body, usize::MAX).await.unwrap();
+                        let mut inter_ctx = nidrs::HookCtx {
+                            meta: meta,
+                            headers: parts.headers.clone(),
+                            body: body.clone(), 
+                        };
+                        let request: nidrs_extern::axum::extract::Request = nidrs_extern::axum::extract::Request::from_parts(parts, body.into());
+                        #call_before_inter_tokens
+                        let res = next.run(request).await;
+                        #call_after_inter_tokens
+                        Ok(res)
+                    }
+                };
+                router = router.route_layer(nidrs_extern::axum::middleware::from_fn(route_layer_fn));
+            }};
 
             let meta_ident = syn::Ident::new(format!("__{}_meta", route_name).as_str(), Span::call_site().into());
             let meta_tokens = if let Some(_) = METAS.lock().unwrap().get(&inter_name){
@@ -471,7 +501,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                 }
             }else{
                 quote! {
-                    let meta = std::collections::HashMap::new();
+                    let meta = std::collections::HashMap::<String, String>::new();
                 }
             };
             let struct_meta = if let Some(_) = METAS.lock().unwrap().get(&controller_str) {
@@ -488,15 +518,8 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                 #struct_meta
             });
             let handler = quote!{
-                |req, #func_args| async move {
-                    let inter_ctx = nidrs::HookCtx {
-                        meta: meta,
-                        req: req,
-                    };
-
-                    #call_inter_tokens
+                |#func_args| async move {
                     let r = t_controller.#route_name(#func_args).await;
-                    #call_after_inter_tokens
                     r
                 }
             };
@@ -510,10 +533,12 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                 #meta_tokens
 
                 nidrs_macro::log!("Registering router '{} {}'.", #method.to_uppercase(),#path);
-                ctx.routers.lock().unwrap().push(axum::Router::new().route(
+                let mut router = axum::Router::new().route(
                     #path,
                     axum::routing::#method_ident(#handler),
-                ));
+                );
+                #router_layer_tokens
+                ctx.routers.lock().unwrap().push(router);
             }
         }).collect::<Vec<TokenStream2>>();
         let router_path = TokenStream2::from(quote! {

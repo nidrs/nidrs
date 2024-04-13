@@ -20,13 +20,9 @@ impl AppController {
     #[get("/hello")]
     #[meta(role = "user")]
     #[uses(LogInterceptor)]
-    pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<(StatusCode, Status)> {
+    pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<Status> {
         println!("Query {:?}", q);
-        Ok(( StatusCode::OK,
-            Status {
-            code: 201,
-            message: "Hello, World!".to_string(),
-        }))
+        Ok(Status { db: "ok".to_string(), redis: "ok".to_string() })
     }
 
     #[get("/hello2")]

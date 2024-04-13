@@ -11,10 +11,6 @@ extern crate std;
 use axum::{response::IntoResponse, routing::get, Router};
 use nidrs::StateCtx;
 mod app {
-    use std::{collections::HashMap, sync::Arc};
-
-    use axum::{body::Bytes, extract::{FromRequest, Request}, http::{Response, StatusCode}, middleware::{self, Next}};
-    // use nidrs::MyLayer;
     use nidrs_macro::module;
     pub mod controller {
         use std::{collections::HashMap, sync::Arc};
@@ -82,8 +78,8 @@ mod app {
             pub fn __meta(&self) -> HashMap<String, String> {
                 let mut meta = HashMap::new();
                 meta.insert("struct_name".to_string(), "AppController".to_string());
-                meta.insert("auth".to_string(), "\"true\"".to_string());
                 meta.insert("role".to_string(), "\"admin\"".to_string());
+                meta.insert("auth".to_string(), "\"true\"".to_string());
                 meta
             }
         }
@@ -91,17 +87,14 @@ mod app {
             pub async fn get_hello_world(
                 &self,
                 Query(q): Query<HashMap<String, String>>,
-            ) -> AppResult<(StatusCode, Status)> {
+            ) -> AppResult<Status> {
                 {
                     ::std::io::_print(format_args!("Query {0:?}\n", q));
                 };
-                Ok((
-                    StatusCode::OK,
-                    Status {
-                        code: 201,
-                        message: "Hello, World!".to_string(),
-                    },
-                ))
+                Ok(Status {
+                    db: "ok".to_string(),
+                    redis: "ok".to_string(),
+                })
             }
             pub fn __get_hello_world_meta(&self) -> HashMap<String, String> {
                 let mut meta = HashMap::new();
@@ -214,8 +207,8 @@ mod app {
         };
         use serde::{Deserialize, Serialize};
         pub struct Status {
-            pub code: i32,
-            pub message: String,
+            pub db: String,
+            pub redis: String,
         }
         #[doc(hidden)]
         #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
@@ -238,13 +231,13 @@ mod app {
                     )?;
                     _serde::ser::SerializeStruct::serialize_field(
                         &mut __serde_state,
-                        "code",
-                        &self.code,
+                        "db",
+                        &self.db,
                     )?;
                     _serde::ser::SerializeStruct::serialize_field(
                         &mut __serde_state,
-                        "message",
-                        &self.message,
+                        "redis",
+                        &self.redis,
                     )?;
                     _serde::ser::SerializeStruct::end(__serde_state)
                 }
@@ -304,8 +297,8 @@ mod app {
                             __E: _serde::de::Error,
                         {
                             match __value {
-                                "code" => _serde::__private::Ok(__Field::__field0),
-                                "message" => _serde::__private::Ok(__Field::__field1),
+                                "db" => _serde::__private::Ok(__Field::__field0),
+                                "redis" => _serde::__private::Ok(__Field::__field1),
                                 _ => _serde::__private::Ok(__Field::__ignore),
                             }
                         }
@@ -317,8 +310,8 @@ mod app {
                             __E: _serde::de::Error,
                         {
                             match __value {
-                                b"code" => _serde::__private::Ok(__Field::__field0),
-                                b"message" => _serde::__private::Ok(__Field::__field1),
+                                b"db" => _serde::__private::Ok(__Field::__field0),
+                                b"redis" => _serde::__private::Ok(__Field::__field1),
                                 _ => _serde::__private::Ok(__Field::__ignore),
                             }
                         }
@@ -362,7 +355,7 @@ mod app {
                             __A: _serde::de::SeqAccess<'de>,
                         {
                             let __field0 = match _serde::de::SeqAccess::next_element::<
-                                i32,
+                                String,
                             >(&mut __seq)? {
                                 _serde::__private::Some(__value) => __value,
                                 _serde::__private::None => {
@@ -388,8 +381,8 @@ mod app {
                                 }
                             };
                             _serde::__private::Ok(Status {
-                                code: __field0,
-                                message: __field1,
+                                db: __field0,
+                                redis: __field1,
                             })
                         }
                         #[inline]
@@ -400,7 +393,7 @@ mod app {
                         where
                             __A: _serde::de::MapAccess<'de>,
                         {
-                            let mut __field0: _serde::__private::Option<i32> = _serde::__private::None;
+                            let mut __field0: _serde::__private::Option<String> = _serde::__private::None;
                             let mut __field1: _serde::__private::Option<String> = _serde::__private::None;
                             while let _serde::__private::Some(__key) = _serde::de::MapAccess::next_key::<
                                 __Field,
@@ -409,19 +402,17 @@ mod app {
                                     __Field::__field0 => {
                                         if _serde::__private::Option::is_some(&__field0) {
                                             return _serde::__private::Err(
-                                                <__A::Error as _serde::de::Error>::duplicate_field("code"),
+                                                <__A::Error as _serde::de::Error>::duplicate_field("db"),
                                             );
                                         }
                                         __field0 = _serde::__private::Some(
-                                            _serde::de::MapAccess::next_value::<i32>(&mut __map)?,
+                                            _serde::de::MapAccess::next_value::<String>(&mut __map)?,
                                         );
                                     }
                                     __Field::__field1 => {
                                         if _serde::__private::Option::is_some(&__field1) {
                                             return _serde::__private::Err(
-                                                <__A::Error as _serde::de::Error>::duplicate_field(
-                                                    "message",
-                                                ),
+                                                <__A::Error as _serde::de::Error>::duplicate_field("redis"),
                                             );
                                         }
                                         __field1 = _serde::__private::Some(
@@ -438,23 +429,23 @@ mod app {
                             let __field0 = match __field0 {
                                 _serde::__private::Some(__field0) => __field0,
                                 _serde::__private::None => {
-                                    _serde::__private::de::missing_field("code")?
+                                    _serde::__private::de::missing_field("db")?
                                 }
                             };
                             let __field1 = match __field1 {
                                 _serde::__private::Some(__field1) => __field1,
                                 _serde::__private::None => {
-                                    _serde::__private::de::missing_field("message")?
+                                    _serde::__private::de::missing_field("redis")?
                                 }
                             };
                             _serde::__private::Ok(Status {
-                                code: __field0,
-                                message: __field1,
+                                db: __field0,
+                                redis: __field1,
                             })
                         }
                     }
                     #[doc(hidden)]
-                    const FIELDS: &'static [&'static str] = &["code", "message"];
+                    const FIELDS: &'static [&'static str] = &["db", "redis"];
                     _serde::Deserializer::deserialize_struct(
                         __deserializer,
                         "Status",
@@ -474,10 +465,10 @@ mod app {
                 ::core::fmt::Formatter::debug_struct_field2_finish(
                     f,
                     "Status",
-                    "code",
-                    &self.code,
-                    "message",
-                    &&self.message,
+                    "db",
+                    &self.db,
+                    "redis",
+                    &&self.redis,
                 )
             }
         }
@@ -493,10 +484,6 @@ mod app {
                     }
                 };
                 let res: Response<Body> = Response::builder()
-                    .status(
-                        StatusCode::from_u16(self.code as u16)
-                            .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
-                    )
                     .header(header::CONTENT_TYPE, "application/json")
                     .body(json_body.into())
                     .unwrap();
@@ -506,7 +493,7 @@ mod app {
     }
     use controller::AppController;
     use service::AppService;
-    use crate::{log::interceptor::SetHeader, user::UserModule};
+    use crate::user::UserModule;
     use crate::log::LogModule;
     use crate::conf::ConfModule;
     use crate::conf::ConfOptions;
@@ -613,6 +600,41 @@ mod app {
                     .downcast_ref::<std::sync::Arc<controller::AppController>>()
                     .unwrap();
                 let t_controller = t_controller.clone();
+                let meta = std::collections::HashMap::<String, String>::new();
+                let mut t_meta = t_controller.__meta();
+                t_meta.extend(meta);
+                let meta = t_meta;
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
+                };
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "Registering router \'{0} {1}\'.\n",
+                            "get".to_uppercase(),
+                            "/app/hello2",
+                        ),
+                    );
+                };
+                let mut router = axum::Router::new()
+                    .route(
+                        "/app/hello2",
+                        axum::routing::get(|p0| async move {
+                            let r = t_controller.get_hello_world2(p0).await;
+                            r
+                        }),
+                    );
+                ctx.routers.lock().unwrap().push(router);
+                let t_controller = controllers.get("AppController").unwrap();
+                let t_controller = t_controller
+                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                    .unwrap();
+                let t_controller = t_controller.clone();
                 let t_interceptor_0 = interceptors.get("LogInterceptor").unwrap();
                 let t_interceptor_0 = t_interceptor_0
                     .downcast_ref::<std::sync::Arc<LogInterceptor>>()
@@ -639,67 +661,60 @@ mod app {
                         ),
                     );
                 };
-                let fun = move |mut request: Request, next: Next|{ 
+                let mut router = axum::Router::new()
+                    .route(
+                        "/app/hello",
+                        axum::routing::get(|p0| async move {
+                            let r = t_controller.get_hello_world(p0).await;
+                            r
+                        }),
+                    );
+                let route_layer_fn = move |
+                    mut request: nidrs_extern::axum::extract::Request,
+                    next: nidrs_extern::axum::middleware::Next|
+                {
+                    let meta = meta.clone();
                     let t_interceptor_0 = t_interceptor_0.clone();
-                    // let request = Arc::new(request);
-                    async move{
-                        // let t = request.map(|body| axum::body::Body::from(body));
+                    async move {
                         let (parts, body) = request.into_parts();
-                        let body = axum::body::to_bytes(body, usize::MAX).await.unwrap();
+                        let body = nidrs_extern::axum::body::to_bytes(body, usize::MAX)
+                            .await
+                            .unwrap();
                         let mut inter_ctx = nidrs::HookCtx {
-                            meta: HashMap::new(),
+                            meta: meta,
                             headers: parts.headers.clone(),
-                            body: body.clone(), 
+                            body: body.clone(),
                         };
-                        let request2: Request = Request::from_parts(parts, body.into());
-                        // println!("Request Before: {:?}", req);
-                        // read query params
-                        // t_interceptor_0.before(&inter_ctx).await;
+                        let request: nidrs_extern::axum::extract::Request = nidrs_extern::axum::extract::Request::from_parts(
+                            parts,
+                            body.into(),
+                        );
                         if let Err(e) = t_interceptor_0.before(&mut inter_ctx).await {
-                            return Err((StatusCode::INTERNAL_SERVER_ERROR, SetHeader("t", "t"), Bytes::from("Error".to_string())));
+                            return Err(
+                                (nidrs_extern::axum::body::Bytes::from("Error".to_string())),
+                            );
                         }
-                        let res = next.run(request2).await;
+                        let res = next.run(request).await;
                         let res = t_interceptor_0.after(&inter_ctx, res).await;
                         if let Err(e) = res {
-                            return Err((StatusCode::INTERNAL_SERVER_ERROR, SetHeader("t", "t"), Bytes::from("Error".to_string())));
+                            return Err(
+                                (nidrs_extern::axum::body::Bytes::from("Error".to_string())),
+                            );
                         }
                         Ok(res)
-                        // println!("Request After: {:?}", res);
-                        // String::from("Hello, World!")
                     }
                 };
-                ctx.routers
-                    .lock()
-                    .unwrap()
-                    .push(
-                        axum::Router::new()
-                            .route(
-                                "/app/hello",
-                                axum::routing::get(|p0| async move {
-                                    // let inter_ctx = nidrs::HookCtx {
-                                    //     meta: meta,
-                                    //     req: req,
-                                    // };
-                                    // if let Err(e) = t_interceptor_0.before(&inter_ctx).await {
-                                    //     return Err(e);
-                                    // }
-                                    let r = t_controller.get_hello_world(p0).await;
-                                    // let r = t_interceptor_0.after(&inter_ctx, r).await;
-                                    // if let Err(e) = r {
-                                    //     return Err(e);
-                                    // }
-                                    r
-                                }),
-                            )
-                            // .route_layer(MyLayer {})
-                            .route_layer(middleware::from_fn(fun))
+                router = router
+                    .route_layer(
+                        nidrs_extern::axum::middleware::from_fn(route_layer_fn),
                     );
+                ctx.routers.lock().unwrap().push(router);
                 let t_controller = controllers.get("AppController").unwrap();
                 let t_controller = t_controller
                     .downcast_ref::<std::sync::Arc<controller::AppController>>()
                     .unwrap();
                 let t_controller = t_controller.clone();
-                let meta = std::collections::HashMap::new();
+                let meta = std::collections::HashMap::<String, String>::new();
                 let mut t_meta = t_controller.__meta();
                 t_meta.extend(meta);
                 let meta = t_meta;
@@ -720,66 +735,15 @@ mod app {
                         ),
                     );
                 };
-                ctx.routers
-                    .lock()
-                    .unwrap()
-                    .push(
-                        axum::Router::new()
-                            .route(
-                                "/app/hello",
-                                axum::routing::post(|p0, p1| async move {
-                                    // let inter_ctx = nidrs::HookCtx {
-                                    //     meta: meta,
-                                    //     req: req,
-                                    // };
-                                    let r = t_controller.post_hello_world(p0, p1).await;
-                                    r
-                                }),
-                            ),
+                let mut router = axum::Router::new()
+                    .route(
+                        "/app/hello",
+                        axum::routing::post(|p0, p1| async move {
+                            let r = t_controller.post_hello_world(p0, p1).await;
+                            r
+                        }),
                     );
-                let t_controller = controllers.get("AppController").unwrap();
-                let t_controller = t_controller
-                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                    .unwrap();
-                let t_controller = t_controller.clone();
-                let meta = std::collections::HashMap::new();
-                let mut t_meta = t_controller.__meta();
-                t_meta.extend(meta);
-                let meta = t_meta;
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "Registering router \'{0} {1}\'.\n",
-                            "get".to_uppercase(),
-                            "/app/hello2",
-                        ),
-                    );
-                };
-                ctx.routers
-                    .lock()
-                    .unwrap()
-                    .push(
-                        axum::Router::new()
-                            .route(
-                                "/app/hello2",
-                                axum::routing::get(|p0| async move {
-                                    // let inter_ctx = nidrs::HookCtx {
-                                    //     meta: meta,
-                                    //     req: req,
-                                    // };
-                                    let r = t_controller.get_hello_world2(p0).await;
-                                    r
-                                }),
-                            ),
-                    );
+                ctx.routers.lock().unwrap().push(router);
                 {
                     ::std::io::_print(
                         format_args!(
@@ -1400,7 +1364,7 @@ mod user {
                     .downcast_ref::<std::sync::Arc<controller::UserController>>()
                     .unwrap();
                 let t_controller = t_controller.clone();
-                // let meta = std::collections::HashMap::new();
+                let meta = std::collections::HashMap::<String, String>::new();
                 {
                     ::std::io::_print(
                         format_args!(
@@ -1418,23 +1382,15 @@ mod user {
                         ),
                     );
                 };
-                ctx.routers
-                    .lock()
-                    .unwrap()
-                    .push(
-                        axum::Router::new()
-                            .route(
-                                "/user/hello",
-                                axum::routing::get(|p0| async move {
-                                    // let inter_ctx = nidrs::HookCtx {
-                                    //     meta: meta,
-                                    //     req: req,
-                                    // };
-                                    let r = t_controller.get_hello_world(p0).await;
-                                    r
-                                }),
-                            ),
+                let mut router = axum::Router::new()
+                    .route(
+                        "/user/hello",
+                        axum::routing::get(|p0| async move {
+                            let r = t_controller.get_hello_world(p0).await;
+                            r
+                        }),
                     );
+                ctx.routers.lock().unwrap().push(router);
                 {
                     ::std::io::_print(
                         format_args!(
@@ -1533,7 +1489,8 @@ mod log {
     }
     pub mod interceptor {
         use axum::{
-            extract::Request, http::{request, HeaderName, HeaderValue, StatusCode}, response::{IntoResponse, IntoResponseParts, Response, ResponseParts}
+            http::{HeaderName, HeaderValue, StatusCode},
+            response::{IntoResponse, IntoResponseParts, Response, ResponseParts},
         };
         use axum_extra::headers::Header;
         use nidrs::{Inject, Interceptor, HookCtx, InterceptorHook};
@@ -1614,7 +1571,7 @@ mod log {
                 ))
             }
         }
-        pub struct SetHeader<'a>(pub &'a str, pub &'a str);
+        pub struct SetHeader<'a>(&'a str, &'a str);
         impl<'a> IntoResponseParts for SetHeader<'a> {
             type Error = (StatusCode, String);
             fn into_response_parts(
