@@ -8,8 +8,9 @@
 use std::prelude::rust_2021::*;
 #[macro_use]
 extern crate std;
-use axum::{response::IntoResponse, routing::get, Router};
-use nidrs::StateCtx;
+use axum::{http::StatusCode, response::IntoResponse, routing::get, Form, Router};
+use nidrs::{Exception, StateCtx};
+use nidrs_extern::colored::Colorize;
 mod app {
     use nidrs_macro::module;
     pub mod controller {
@@ -18,9 +19,9 @@ mod app {
             extract::{Query, State},
             http::StatusCode, Json,
         };
-        use nidrs::{Inject, StateCtx};
+        use nidrs::{throw, Exception, Inject, StateCtx};
         use nidrs_macro::{controller, get, meta, post, uses};
-        use crate::AppResult;
+        use crate::{shared::fn_test::fn_test, AppError, AppResult};
         use super::{dto::Status, service::AppService};
         pub struct AppController {
             app_service: Inject<AppService>,
@@ -78,8 +79,8 @@ mod app {
             pub fn __meta(&self) -> HashMap<String, String> {
                 let mut meta = HashMap::new();
                 meta.insert("struct_name".to_string(), "AppController".to_string());
-                meta.insert("role".to_string(), "\"admin\"".to_string());
                 meta.insert("auth".to_string(), "\"true\"".to_string());
+                meta.insert("role".to_string(), "\"admin\"".to_string());
                 meta
             }
         }
@@ -91,6 +92,7 @@ mod app {
                 {
                     ::std::io::_print(format_args!("Query {0:?}\n", q));
                 };
+                fn_test()?;
                 Ok(Status {
                     db: "ok".to_string(),
                     redis: "ok".to_string(),
@@ -491,6 +493,12 @@ mod app {
             }
         }
     }
+    pub mod exception {
+        use nidrs::Exception;
+        pub enum AppException {
+            ServiceException,
+        }
+    }
     use controller::AppController;
     use service::AppService;
     use crate::user::UserModule;
@@ -616,16 +624,16 @@ mod app {
                     ::std::io::_print(
                         format_args!(
                             "Registering router \'{0} {1}\'.\n",
-                            "get".to_uppercase(),
-                            "/app/hello2",
+                            "post".to_uppercase(),
+                            "/app/hello",
                         ),
                     );
                 };
                 let mut router = axum::Router::new()
                     .route(
-                        "/app/hello2",
-                        axum::routing::get(|p0| async move {
-                            let r = t_controller.get_hello_world2(p0).await;
+                        "/app/hello",
+                        axum::routing::post(|p0, p1| async move {
+                            let r = t_controller.post_hello_world(p0, p1).await;
                             r
                         }),
                     );
@@ -730,16 +738,16 @@ mod app {
                     ::std::io::_print(
                         format_args!(
                             "Registering router \'{0} {1}\'.\n",
-                            "post".to_uppercase(),
-                            "/app/hello",
+                            "get".to_uppercase(),
+                            "/app/hello2",
                         ),
                     );
                 };
                 let mut router = axum::Router::new()
                     .route(
-                        "/app/hello",
-                        axum::routing::post(|p0, p1| async move {
-                            let r = t_controller.post_hello_world(p0, p1).await;
+                        "/app/hello2",
+                        axum::routing::get(|p0| async move {
+                            let r = t_controller.get_hello_world2(p0).await;
                             r
                         }),
                     );
@@ -1493,7 +1501,7 @@ mod log {
             response::{IntoResponse, IntoResponseParts, Response, ResponseParts},
         };
         use axum_extra::headers::Header;
-        use nidrs::{Inject, Interceptor, HookCtx, InterceptorHook};
+        use nidrs::{Exception, HookCtx, Inject, Interceptor, InterceptorHook};
         use nidrs_macro::interceptor;
         use crate::AppResult;
         use super::service::LogService;
@@ -1538,9 +1546,7 @@ mod log {
             }
         }
         impl InterceptorHook for LogInterceptor {
-            type R = (SetHeader<'static>, String);
-            type E = (StatusCode, String);
-            async fn before(&self, _ctx: &HookCtx) -> Result<(), Self::E> {
+            async fn before(&self, _ctx: &HookCtx) -> Result<(), Exception> {
                 {
                     ::std::io::_print(format_args!("ctx: {0:?}\n", _ctx.meta));
                 };
@@ -1551,7 +1557,7 @@ mod log {
                 &self,
                 _ctx: &HookCtx,
                 r: impl IntoResponse,
-            ) -> Result<(SetHeader<'static>, String), Self::E> {
+            ) -> Result<String, Exception> {
                 self.log_service.log("After");
                 let body = r.into_response().into_body();
                 let body_bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
@@ -1560,15 +1566,12 @@ mod log {
                     ::std::io::_print(format_args!("ctx: {0:?}\n", body_str));
                 };
                 self.log_service.log("After");
-                Ok((
-                    SetHeader("content-type", "application/json"),
-                    {
-                        let res = ::alloc::fmt::format(
-                            format_args!("{{\"code\": 0,\"data\": {0}}}", body_str),
-                        );
-                        res
-                    },
-                ))
+                Ok({
+                    let res = ::alloc::fmt::format(
+                        format_args!("{{\"code\": 0,\"data\": {0}}}", body_str),
+                    );
+                    res
+                })
             }
         }
         pub struct SetHeader<'a>(&'a str, &'a str);
@@ -1717,6 +1720,32 @@ mod log {
         }
     }
 }
+mod shared {
+    pub mod fn_test {
+        use axum::http::StatusCode;
+        use nidrs::{throw, Exception};
+        use crate::{AppError, AppResult};
+        pub fn fn_test() -> AppResult {
+            crate::__throw(
+                Exception::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    anyhow::Error::msg("Error"),
+                ),
+                &{
+                    let res = ::alloc::fmt::format(
+                        format_args!(
+                            "from {0} line {1}",
+                            "example/src/shared/fn_test.rs",
+                            7usize,
+                        ),
+                    );
+                    res
+                },
+            )?;
+            Ok(())
+        }
+    }
+}
 fn main() {
     let mut app = nidrs::NidrsFactory::create(app::AppModule);
     app
@@ -1728,9 +1757,24 @@ fn main() {
     let app = app.listen::<AppError>(3000);
     let _ = tokio::runtime::Runtime::new().unwrap().block_on(app);
 }
+pub fn __throw<E: Into<AppError>>(e: E, line: &str) -> AppResult<()> {
+    let e = e.into();
+    if let AppError::Exception(mut e) = e {
+        e.line = line.to_string();
+        {
+            ::std::io::_print(format_args!("{0}", "[nidrs] Exception ".red().bold()));
+        };
+        {
+            ::std::io::_print(format_args!("{0}\n", e.to_string().red().bold()));
+        };
+        return Err(e.into());
+    }
+    return Err(e);
+}
 pub enum AppError {
     EnvironmentVariableNotFound(std::env::VarError),
     IOError(std::io::Error),
+    Exception(Exception),
 }
 #[allow(unused_qualifications)]
 impl std::error::Error for AppError {
@@ -1742,6 +1786,9 @@ impl std::error::Error for AppError {
                 ::core::option::Option::Some(source.as_dyn_error())
             }
             AppError::IOError { 0: transparent } => {
+                std::error::Error::source(transparent.as_dyn_error())
+            }
+            AppError::Exception { 0: transparent } => {
                 std::error::Error::source(transparent.as_dyn_error())
             }
         }
@@ -1756,6 +1803,7 @@ impl ::core::fmt::Display for AppError {
                 __formatter.write_str("Environment variable not found")
             }
             AppError::IOError(_0) => ::core::fmt::Display::fmt(_0, __formatter),
+            AppError::Exception(_0) => ::core::fmt::Display::fmt(_0, __formatter),
         }
     }
 }
@@ -1773,6 +1821,13 @@ impl ::core::convert::From<std::io::Error> for AppError {
     #[allow(deprecated)]
     fn from(source: std::io::Error) -> Self {
         AppError::IOError { 0: source }
+    }
+}
+#[allow(unused_qualifications)]
+impl ::core::convert::From<Exception> for AppError {
+    #[allow(deprecated)]
+    fn from(source: Exception) -> Self {
+        AppError::Exception { 0: source }
     }
 }
 #[automatically_derived]
@@ -1794,26 +1849,29 @@ impl ::core::fmt::Debug for AppError {
                     &__self_0,
                 )
             }
+            AppError::Exception(__self_0) => {
+                ::core::fmt::Formatter::debug_tuple_field1_finish(
+                    f,
+                    "Exception",
+                    &__self_0,
+                )
+            }
         }
     }
 }
 impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
-        axum::response::Json(
-                ::serde_json::Value::Object({
-                    let mut object = ::serde_json::Map::new();
-                    let _ = object
-                        .insert(("code").into(), ::serde_json::to_value(&500).unwrap());
-                    let _ = object
-                        .insert(
-                            ("message").into(),
-                            ::serde_json::to_value(&self.to_string()).unwrap(),
-                        );
-                    object
-                }),
-            )
+        axum::response::Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body({
+                let res = ::alloc::fmt::format(
+                    format_args!("Error: {0}", self.to_string()),
+                );
+                res
+            })
+            .unwrap()
             .into_response()
     }
 }
-pub type AppResult<T> = Result<T, AppError>;
+pub type AppResult<T = ()> = Result<T, AppError>;
 extern crate alloc;
