@@ -1,11 +1,13 @@
-use axum::{response::IntoResponse, routing::get, Router};
-use nidrs::StateCtx;
+use axum::{http::StatusCode, response::IntoResponse, routing::get, Form, Router};
+use nidrs::{Exception, StateCtx};
+use nidrs_extern::colored::Colorize;
 
 
 mod app;
 mod conf;
 mod user;
 mod log;
+mod shared;
 
 
 #[nidrs::main]
@@ -26,8 +28,10 @@ pub enum AppError {
     EnvironmentVariableNotFound(#[from] std::env::VarError),
     #[error(transparent)]
     IOError(#[from] std::io::Error),
-}
 
+    #[error(transparent)]
+    Exception(#[from] Exception),
+}
 impl IntoResponse for AppError{
     fn into_response(self) -> axum::response::Response {
         axum::response::Json(serde_json::json!({
@@ -38,5 +42,4 @@ impl IntoResponse for AppError{
     }
 }
 
-pub type AppResult<T> = Result<T, AppError>;
-
+pub type AppResult<T = ()> = Result<T, AppError>;

@@ -35,31 +35,6 @@ pub trait Controller {
     fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>);
 }
 
-#[derive(Debug, Clone)]
-pub struct InterReq{
-    pub uri: Uri,
-    pub method: axum::http::Method,
-    pub headers: HeaderMap<HeaderValue>,
-    pub query: HashMap<String, String>,
-}
-
-#[async_trait]
-impl<S> FromRequestParts<S> for InterReq
-where
-    S: Send + Sync,
-{
-    type Rejection = (StatusCode, &'static str);
-
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        return  Ok(InterReq{
-            uri: parts.uri.clone(),
-            method: parts.method.clone(),
-            headers: parts.headers.clone(),
-            query: HashMap::new(),
-        });
-    }
-}
-
 
 pub struct DynamicModule {
     pub services: HashMap<String, Option<Box<dyn Any>>>,
@@ -164,56 +139,29 @@ impl ModuleCtx {
     }
 }
 
+#[derive(thiserror::Error, Debug)]
+pub struct Exception {
+    pub status: StatusCode,
+    pub error: anyhow::Error,
+    pub line: String,
+}
 
+impl Exception {
+    pub fn new(status: StatusCode, error: anyhow::Error) -> Self {
+        Exception {
+            status,
+            error,
+            line: String::new(),
+        }
+    }
+}
 
+impl std::fmt::Display for Exception {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "HTTP Exception: status={}, error={}\n   {}", self.status, self.error, self.line)
+    }
+}
 
-
-// #[derive(Clone)]
-// pub struct MyLayer {
-//     interceptor: Arc<Box<dyn InterceptorHook<anyhow::Result<()>, anyhow::Error>>>,
-// }
-
-// impl<S> Layer<S> for MyLayer {
-//     type Service = MyService<S>;
-
-//     fn layer(&self, inner: S) -> Self::Service {
-//         MyService {
-//             inner,
-//             interceptor: self.interceptor.clone(),
-//         }
-//     }
-// }
-
-// #[derive(Clone)]
-// pub struct MyService<S> {
-//     inner: S,
-//     interceptor: Arc<dyn InterceptorHook>,
-// }
-
-// impl<S, B> tower::Service<Request<B>> for MyService<S>
-// where
-//     S: tower::Service<Request<B>>,
-// {
-//     type Response = S::Response;
-//     type Error = S::Error;
-//     type Future = S::Future;
-
-//     fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
-//         self.inner.poll_ready(cx)
-//     }
-
-//     fn call(&mut self, req: Request<B>) -> Self::Future {
-//         // Do something with `self.state`.
-//         //
-//         // See `axum::RequestExt` for how to run extractors directly from
-//         // a `Request`.
-//         self.interceptor.before(&HookCtx{
-//             meta: HashMap::new(),
-//             request: req,
-//         }).await;
-//         self.inner.call(req)
-//     }
-// }
 
 
 #[cfg(test)]

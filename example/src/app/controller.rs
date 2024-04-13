@@ -1,10 +1,10 @@
 use std::{collections::HashMap, sync::Arc};
 
 use axum::{extract::{Query, State}, http::StatusCode, Json};
-use nidrs::{Inject, StateCtx};
+use nidrs::{throw, Exception, Inject, StateCtx};
 use nidrs_macro::{controller, get, meta, post, uses};
 
-use crate::AppResult;
+use crate::{shared::fn_test::fn_test, AppError, AppResult};
 
 use super::{dto::{Status}, service::AppService};
 
@@ -22,6 +22,7 @@ impl AppController {
     #[uses(LogInterceptor)]
     pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<Status> {
         println!("Query {:?}", q);
+        fn_test()?;
         Ok(Status { db: "ok".to_string(), redis: "ok".to_string() })
     }
 

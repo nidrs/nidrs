@@ -616,6 +616,9 @@ dependencies = [
  "axum",
  "axum-extra",
  "colored",
+ "serde",
+ "serde_json",
+ "thiserror",
  "tokio",
  "tower",
 ]

@@ -1,4 +1,5 @@
 #![allow(warnings, unused)]
+#![feature(proc_macro_span)]
 extern crate proc_macro;
 
 use std::{
@@ -307,8 +308,25 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro]
 pub fn throw(input: TokenStream) -> TokenStream {
-    // println!("get_route_meta {:?}", CURRENT_CONTROLLER.lock().unwrap());
-    return input;
+    let input = TokenStream2::from(input);
+    let call_site = Span::call_site();
+    let binding = call_site.source_file().path();
+    let call_site_str = binding.to_string_lossy();
+    let call_site_line = call_site.start().line();
+
+    // let binding = ROUTES.lock().unwrap();
+    // let current_controller = CURRENT_CONTROLLER.lock().unwrap();
+    // let struct_name =  current_controller.as_ref().unwrap().name.clone();
+    // let method_name = binding.get(&struct_name).unwrap().keys().last().unwrap();
+
+    // 构建返回的 TokenStream
+    let expanded = quote! {
+        // println!("Macro called from method: {}.{}", stringify!(#struct_name), stringify!(#method_name));
+        // println!("Macro called from: {} line {}", #call_site_str, #call_site_line);
+        crate::__throw(#input, &format!("from {} line {}", #call_site_str, #call_site_line))?;
+    };
+
+    expanded.into()
 }
 
 #[proc_macro]
@@ -331,6 +349,18 @@ pub fn main(args:TokenStream, input: TokenStream) -> TokenStream {
 
     let main_tokens = TokenStream2::from(quote! {
         #func
+
+        pub fn __throw<E: Into<AppError>>(e: E, line: &str)->AppResult<()>{
+            let e = e.into();
+            if let AppError::Exception(mut e) = e {
+                e.line = line.to_string();
+                print!("{}", "[nidrs] Exception ".red().bold());
+                println!("{}", e.to_string().red().bold());
+                return Err(e.into());
+            }
+            return Err(e);
+        }
+        
     });
 
 
