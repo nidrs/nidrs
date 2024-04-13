@@ -1,10 +1,10 @@
 #![allow(warnings, unused)]
 
-use nidrs_extern::*;
+use nidrs_extern::{anyhow::anyhow, axum::{body::{Body, Bytes}, extract::Request}, tower::Layer, *};
 use nidrs_extern::axum::{self, async_trait, extract::{FromRequestParts, Query, State}, http::{request::Parts, HeaderMap, HeaderValue, StatusCode, Uri}, response::IntoResponse};
 use nidrs_extern::tokio;
 use once_cell::sync::OnceCell;
-use std::{any::Any, cell::RefCell, collections::HashMap, error::Error, fmt::Debug, sync::{Arc, Mutex, MutexGuard}};
+use std::{any::Any, cell::RefCell, collections::HashMap, error::Error, fmt::Debug, sync::{Arc, Mutex, MutexGuard}, task::{Context, Poll}};
 
 pub use nidrs_macro::*;
 
@@ -65,10 +65,14 @@ pub struct DynamicModule {
     pub services: HashMap<String, Option<Box<dyn Any>>>,
 }
 
-#[derive(Debug, Clone)]
+
+#[derive(Debug)]
 pub struct HookCtx{
     pub meta: HashMap<String, String>,
-    pub req: InterReq,
+    pub headers: HeaderMap<HeaderValue>,
+    pub body: Bytes,
+    // pub request: &'a Request
+    // pub request: Request<T>,
 }
 
 pub struct NidrsFactory {
@@ -159,6 +163,57 @@ impl ModuleCtx {
         }
     }
 }
+
+
+
+
+
+// #[derive(Clone)]
+// pub struct MyLayer {
+//     interceptor: Arc<Box<dyn InterceptorHook<anyhow::Result<()>, anyhow::Error>>>,
+// }
+
+// impl<S> Layer<S> for MyLayer {
+//     type Service = MyService<S>;
+
+//     fn layer(&self, inner: S) -> Self::Service {
+//         MyService {
+//             inner,
+//             interceptor: self.interceptor.clone(),
+//         }
+//     }
+// }
+
+// #[derive(Clone)]
+// pub struct MyService<S> {
+//     inner: S,
+//     interceptor: Arc<dyn InterceptorHook>,
+// }
+
+// impl<S, B> tower::Service<Request<B>> for MyService<S>
+// where
+//     S: tower::Service<Request<B>>,
+// {
+//     type Response = S::Response;
+//     type Error = S::Error;
+//     type Future = S::Future;
+
+//     fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+//         self.inner.poll_ready(cx)
+//     }
+
+//     fn call(&mut self, req: Request<B>) -> Self::Future {
+//         // Do something with `self.state`.
+//         //
+//         // See `axum::RequestExt` for how to run extractors directly from
+//         // a `Request`.
+//         self.interceptor.before(&HookCtx{
+//             meta: HashMap::new(),
+//             request: req,
+//         }).await;
+//         self.inner.call(req)
+//     }
+// }
 
 
 #[cfg(test)]

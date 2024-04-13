@@ -11,7 +11,10 @@ extern crate std;
 use axum::{response::IntoResponse, routing::get, Router};
 use nidrs::StateCtx;
 mod app {
-    use axum::{extract::Request, http::{Response, StatusCode}, middleware::{self, Next}};
+    use std::{collections::HashMap, sync::Arc};
+
+    use axum::{body::Bytes, extract::{FromRequest, Request}, http::{Response, StatusCode}, middleware::{self, Next}};
+    // use nidrs::MyLayer;
     use nidrs_macro::module;
     pub mod controller {
         use std::{collections::HashMap, sync::Arc};
@@ -503,7 +506,7 @@ mod app {
     }
     use controller::AppController;
     use service::AppService;
-    use crate::user::UserModule;
+    use crate::{log::interceptor::SetHeader, user::UserModule};
     use crate::log::LogModule;
     use crate::conf::ConfModule;
     use crate::conf::ConfOptions;
@@ -636,6 +639,35 @@ mod app {
                         ),
                     );
                 };
+                let fun = move |mut request: Request, next: Next|{ 
+                    let t_interceptor_0 = t_interceptor_0.clone();
+                    // let request = Arc::new(request);
+                    async move{
+                        // let t = request.map(|body| axum::body::Body::from(body));
+                        let (parts, body) = request.into_parts();
+                        let body = axum::body::to_bytes(body, usize::MAX).await.unwrap();
+                        let mut inter_ctx = nidrs::HookCtx {
+                            meta: HashMap::new(),
+                            headers: parts.headers.clone(),
+                            body: body.clone(), 
+                        };
+                        let request2: Request = Request::from_parts(parts, body.into());
+                        // println!("Request Before: {:?}", req);
+                        // read query params
+                        // t_interceptor_0.before(&inter_ctx).await;
+                        if let Err(e) = t_interceptor_0.before(&mut inter_ctx).await {
+                            return Err((StatusCode::INTERNAL_SERVER_ERROR, SetHeader("t", "t"), Bytes::from("Error".to_string())));
+                        }
+                        let res = next.run(request2).await;
+                        let res = t_interceptor_0.after(&inter_ctx, res).await;
+                        if let Err(e) = res {
+                            return Err((StatusCode::INTERNAL_SERVER_ERROR, SetHeader("t", "t"), Bytes::from("Error".to_string())));
+                        }
+                        Ok(res)
+                        // println!("Request After: {:?}", res);
+                        // String::from("Hello, World!")
+                    }
+                };
                 ctx.routers
                     .lock()
                     .unwrap()
@@ -643,30 +675,24 @@ mod app {
                         axum::Router::new()
                             .route(
                                 "/app/hello",
-                                axum::routing::get(|req, p0| async move {
-                                    let inter_ctx = nidrs::HookCtx {
-                                        meta: meta,
-                                        req: req,
-                                    };
-                                    if let Err(e) = t_interceptor_0.before(&inter_ctx).await {
-                                        return Err(e);
-                                    }
+                                axum::routing::get(|p0| async move {
+                                    // let inter_ctx = nidrs::HookCtx {
+                                    //     meta: meta,
+                                    //     req: req,
+                                    // };
+                                    // if let Err(e) = t_interceptor_0.before(&inter_ctx).await {
+                                    //     return Err(e);
+                                    // }
                                     let r = t_controller.get_hello_world(p0).await;
-                                    let r = t_interceptor_0.after(&inter_ctx, r).await;
-                                    if let Err(e) = r {
-                                        return Err(e);
-                                    }
+                                    // let r = t_interceptor_0.after(&inter_ctx, r).await;
+                                    // if let Err(e) = r {
+                                    //     return Err(e);
+                                    // }
                                     r
                                 }),
                             )
-                            .route_layer(middleware::from_fn(|mut req: Request, next: Next| async {
-                                println!("Request Before: {:?}", req);
-                                let res = next.run(req).await;
-                                println!("Request After: {:?}", res);
-                                // 自定义返回
-
-                                String::new()
-                            })),
+                            // .route_layer(MyLayer {})
+                            .route_layer(middleware::from_fn(fun))
                     );
                 let t_controller = controllers.get("AppController").unwrap();
                 let t_controller = t_controller
@@ -701,11 +727,11 @@ mod app {
                         axum::Router::new()
                             .route(
                                 "/app/hello",
-                                axum::routing::post(|req, p0, p1| async move {
-                                    let inter_ctx = nidrs::HookCtx {
-                                        meta: meta,
-                                        req: req,
-                                    };
+                                axum::routing::post(|p0, p1| async move {
+                                    // let inter_ctx = nidrs::HookCtx {
+                                    //     meta: meta,
+                                    //     req: req,
+                                    // };
                                     let r = t_controller.post_hello_world(p0, p1).await;
                                     r
                                 }),
@@ -744,11 +770,11 @@ mod app {
                         axum::Router::new()
                             .route(
                                 "/app/hello2",
-                                axum::routing::get(|req, p0| async move {
-                                    let inter_ctx = nidrs::HookCtx {
-                                        meta: meta,
-                                        req: req,
-                                    };
+                                axum::routing::get(|p0| async move {
+                                    // let inter_ctx = nidrs::HookCtx {
+                                    //     meta: meta,
+                                    //     req: req,
+                                    // };
                                     let r = t_controller.get_hello_world2(p0).await;
                                     r
                                 }),
@@ -1374,7 +1400,7 @@ mod user {
                     .downcast_ref::<std::sync::Arc<controller::UserController>>()
                     .unwrap();
                 let t_controller = t_controller.clone();
-                let meta = std::collections::HashMap::new();
+                // let meta = std::collections::HashMap::new();
                 {
                     ::std::io::_print(
                         format_args!(
@@ -1399,11 +1425,11 @@ mod user {
                         axum::Router::new()
                             .route(
                                 "/user/hello",
-                                axum::routing::get(|req, p0| async move {
-                                    let inter_ctx = nidrs::HookCtx {
-                                        meta: meta,
-                                        req: req,
-                                    };
+                                axum::routing::get(|p0| async move {
+                                    // let inter_ctx = nidrs::HookCtx {
+                                    //     meta: meta,
+                                    //     req: req,
+                                    // };
                                     let r = t_controller.get_hello_world(p0).await;
                                     r
                                 }),
@@ -1507,8 +1533,7 @@ mod log {
     }
     pub mod interceptor {
         use axum::{
-            http::{HeaderName, HeaderValue, StatusCode},
-            response::{IntoResponse, IntoResponseParts, Response, ResponseParts},
+            extract::Request, http::{request, HeaderName, HeaderValue, StatusCode}, response::{IntoResponse, IntoResponseParts, Response, ResponseParts}
         };
         use axum_extra::headers::Header;
         use nidrs::{Inject, Interceptor, HookCtx, InterceptorHook};
@@ -1589,7 +1614,7 @@ mod log {
                 ))
             }
         }
-        pub struct SetHeader<'a>(&'a str, &'a str);
+        pub struct SetHeader<'a>(pub &'a str, pub &'a str);
         impl<'a> IntoResponseParts for SetHeader<'a> {
             type Error = (StatusCode, String);
             fn into_response_parts(
