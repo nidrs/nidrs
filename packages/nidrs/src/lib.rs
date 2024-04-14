@@ -8,6 +8,28 @@ use std::{any::Any, cell::RefCell, collections::HashMap, error::Error, fmt::Debu
 
 pub use nidrs_macro::*;
 
+#[derive(thiserror::Error, Debug)]
+pub enum AppError {
+    #[error("Environment variable not found")]
+    EnvironmentVariableNotFound(#[from] std::env::VarError),
+    #[error(transparent)]
+    IOError(#[from] std::io::Error),
+
+    #[error(transparent)]
+    Exception(#[from] Exception),
+}
+impl IntoResponse for AppError{
+    fn into_response(self) -> axum::response::Response {
+        axum::response::Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body(format!("Error: {}", self.to_string()))
+            .unwrap()
+        .into_response()
+    }
+}
+
+pub type AppResult<T = ()> = Result<T, AppError>;
+
 pub trait Module {
     fn init(self, ctx: &ModuleCtx);
 }
@@ -22,15 +44,25 @@ pub trait Interceptor {
 }
 
 
-pub trait InterceptorHook {
-    async fn before(&self, ctx: &HookCtx) -> Result<(), Exception> {
-        Ok(())
-    }
-    async fn after(&self, ctx: &HookCtx, r: impl IntoResponse)-> Result<impl IntoResponse, Exception> {
-        Ok(r)
-    }
-}
+// pub trait InterceptorHook {
+//     async fn before(&self, ctx: &HookCtx) -> Result<(), Exception> {
+//         Ok(())
+//     }
+//     async fn after(&self, ctx: &HookCtx, r: impl IntoResponse)-> Result<impl IntoResponse, Exception> {
+//         Ok(r)
+//     }
+// }
 
+pub trait InterceptorHook {
+    type P;
+    type R;
+
+    async fn interceptor<P, F, H>(&self, ctx: HookCtx, handler: H) -> AppResult<Self::R>
+    where
+        P: Into<Self::P>,
+        F: std::future::Future<Output = AppResult<P>> + Send + 'static,
+        H: FnOnce(HookCtx) -> F;
+}
 
 pub trait Controller {
     fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>);
@@ -45,8 +77,8 @@ pub struct DynamicModule {
 #[derive(Debug)]
 pub struct HookCtx{
     pub meta: HashMap<String, String>,
-    pub headers: HeaderMap<HeaderValue>,
-    pub body: Bytes,
+    // pub headers: HeaderMap<HeaderValue>,
+    // pub body: Bytes,
     // pub request: &'a Request
     // pub request: Request<T>,
 }

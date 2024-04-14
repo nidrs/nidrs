@@ -22,7 +22,7 @@ impl AppController {
     #[uses(LogInterceptor)]
     pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<Status> {
         println!("Query {:?}", q);
-        fn_test()?;
+        // fn_test()?;
         Ok(Status { db: "ok".to_string(), redis: "ok".to_string() })
     }
 

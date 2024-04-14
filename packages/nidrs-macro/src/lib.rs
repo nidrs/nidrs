@@ -454,26 +454,47 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
             }).collect::<Vec<syn::Ident>>();
             let mut i = 0;
             let inter_tokens = inter_ids.iter().map(|inter_id| {
+                let prev_t_interceptor_ident = syn::Ident::new(format!("t_interceptor_{}", i.to_string()).as_str(), Span::call_site().into());
+                let prev_t_inter_fn_indent = syn::Ident::new(format!("t_inter_fn_{}", i.to_string()).as_str(), Span::call_site().into());
+                i += 1;
                 let t_interceptor_ident = syn::Ident::new(format!("t_interceptor_{}", i.to_string()).as_str(), Span::call_site().into());
+                let t_inter_fn_indent = syn::Ident::new(format!("t_inter_fn_{}", i.to_string()).as_str(), Span::call_site().into());
+
+                let mut tokens: Vec<TokenStream2> = vec![];
+                if i == 1 {
+                    tokens.push(quote!{
+                        let #prev_t_inter_fn_indent = |ctx| async move {
+                            t_controller.#route_name(#func_args).await
+                        };
+                    });
+                }
+                if i == inter_ids.len() {
+                    tokens.push(quote!{
+                        #prev_t_interceptor_ident.interceptor(ctx, #prev_t_inter_fn_indent).await
+                    });
+                } else {
+                    tokens.push(quote!{
+                        let #t_inter_fn_indent = |ctx| async move {
+                            #prev_t_interceptor_ident.interceptor(ctx, #prev_t_inter_fn_indent).await
+                        };
+                    });
+                }
+                
                 (
                     quote!{
-                        let #t_interceptor_ident = interceptors.get(stringify!(#inter_id)).unwrap();
-                        let #t_interceptor_ident = #t_interceptor_ident.downcast_ref::<std::sync::Arc<#inter_id>>().unwrap();
-                        let #t_interceptor_ident = #t_interceptor_ident.clone();
+                        let #prev_t_interceptor_ident = interceptors.get(stringify!(#inter_id)).unwrap();
+                        let #prev_t_interceptor_ident = #prev_t_interceptor_ident.downcast_ref::<std::sync::Arc<#inter_id>>().unwrap();
+                        let #prev_t_interceptor_ident = #prev_t_interceptor_ident.clone();
                     },
                     quote!{
-                        let #t_interceptor_ident = #t_interceptor_ident.clone();
+                        let ctx = HookCtx {
+                            meta: meta.clone(),
+                        };
+                        #(#tokens)*
                     },
                     quote!{
-                        if let Err(e) = #t_interceptor_ident.before(&mut inter_ctx).await {
-                            return Err((nidrs_extern::axum::body::Bytes::from("Error".to_string())));
-                        }
                     },
                     quote!{
-                        let res = #t_interceptor_ident.after(&inter_ctx, res).await;
-                        if let Err(e) = res {
-                            return Err((nidrs_extern::axum::body::Bytes::from("Error".to_string())));
-                        }
                     },
                 )
             }).collect::<Vec<(TokenStream2, TokenStream2, TokenStream2, TokenStream2)>>();
@@ -489,41 +510,19 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
             let def_clone_inter_tokens = TokenStream2::from(quote! {
                 #(#def_clone_inter_tokens)*
             });
-            let call_before_inter_tokens = inter_tokens.iter().map(|(_, _, tokens, _)| {
-                tokens.clone()
-            }).collect::<Vec<TokenStream2>>();
-            let call_before_inter_tokens = TokenStream2::from(quote! {
-                #(#call_before_inter_tokens)*
-            });
+            // let call_before_inter_tokens = inter_tokens.iter().map(|(_, _, tokens, _)| {
+            //     tokens.clone()
+            // }).collect::<Vec<TokenStream2>>();
+            // let call_before_inter_tokens = TokenStream2::from(quote! {
+            //     #(#call_before_inter_tokens)*
+            // });
 
-            let call_after_inter_tokens = inter_tokens.iter().map(|(_, _, _, tokens)| {
-                tokens.clone()
-            }).collect::<Vec<TokenStream2>>();
-            let call_after_inter_tokens = TokenStream2::from(quote! {
-                #(#call_after_inter_tokens)*
-            });
-            let router_layer_tokens = if inter_ids.is_empty() { quote!() } else { quote!{
-                let route_layer_fn = move |mut request: nidrs_extern::axum::extract::Request, next: nidrs_extern::axum::middleware::Next|{
-                    let meta = meta.clone();
-                    #def_clone_inter_tokens
-                    async move{
-                        let (parts, body) = request.into_parts();
-                        let body = nidrs_extern::axum::body::to_bytes(body, usize::MAX).await.unwrap();
-                        let mut inter_ctx = nidrs::HookCtx {
-                            meta: meta,
-                            headers: parts.headers.clone(),
-                            body: body.clone(), 
-                        };
-                        let request: nidrs_extern::axum::extract::Request = nidrs_extern::axum::extract::Request::from_parts(parts, body.into());
-                        #call_before_inter_tokens
-                        let res = next.run(request).await;
-                        #call_after_inter_tokens
-                        Ok(res)
-                    }
-                };
-                router = router.route_layer(nidrs_extern::axum::middleware::from_fn(route_layer_fn));
-            }};
-
+            // let call_after_inter_tokens = inter_tokens.iter().map(|(_, _, _, tokens)| {
+            //     tokens.clone()
+            // }).collect::<Vec<TokenStream2>>();
+            // let call_after_inter_tokens = TokenStream2::from(quote! {
+            //     #(#call_after_inter_tokens)*
+            // });
             let meta_ident = syn::Ident::new(format!("__{}_meta", route_name).as_str(), Span::call_site().into());
             let meta_tokens = if let Some(_) = METAS.lock().unwrap().get(&inter_name){
                 quote! {
@@ -547,10 +546,17 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                 #meta_tokens
                 #struct_meta
             });
-            let handler = quote!{
-                |#func_args| async move {
-                    let r = t_controller.#route_name(#func_args).await;
-                    r
+            let handler = if inter_ids.is_empty() {
+                quote!{
+                    |#func_args| async move {
+                        t_controller.#route_name(#func_args).await
+                    }
+                }
+            } else {
+                quote!{
+                    |#func_args| async move {
+                        #def_clone_inter_tokens
+                    }
                 }
             };
             quote! {
@@ -563,11 +569,10 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                 #meta_tokens
 
                 nidrs_macro::log!("Registering router '{} {}'.", #method.to_uppercase(),#path);
-                let mut router = axum::Router::new().route(
+                let router = axum::Router::new().route(
                     #path,
                     axum::routing::#method_ident(#handler),
                 );
-                #router_layer_tokens
                 ctx.routers.lock().unwrap().push(router);
             }
         }).collect::<Vec<TokenStream2>>();
