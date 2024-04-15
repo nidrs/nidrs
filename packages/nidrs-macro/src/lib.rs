@@ -323,7 +323,7 @@ pub fn throw(input: TokenStream) -> TokenStream {
     let expanded = quote! {
         // println!("Macro called from method: {}.{}", stringify!(#struct_name), stringify!(#method_name));
         // println!("Macro called from: {} line {}", #call_site_str, #call_site_line);
-        crate::__throw(#input, &format!("from {} line {}", #call_site_str, #call_site_line))?;
+        nidrs::__throw(#input, &format!("from {} line {}", #call_site_str, #call_site_line))?;
     };
 
     expanded.into()
@@ -348,19 +348,7 @@ pub fn main(args:TokenStream, input: TokenStream) -> TokenStream {
     let ident = func.sig.ident.clone();
 
     let main_tokens = TokenStream2::from(quote! {
-        #func
-
-        pub fn __throw<E: Into<AppError>>(e: E, line: &str)->AppResult<()>{
-            let e = e.into();
-            if let AppError::Exception(mut e) = e {
-                e.line = line.to_string();
-                print!("{}", "[nidrs] Exception ".red().bold());
-                println!("{}", e.to_string().red().bold());
-                return Err(e.into());
-            }
-            return Err(e);
-        }
-        
+        #func        
     });
 
 

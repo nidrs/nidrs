@@ -1,6 +1,6 @@
 #![allow(warnings, unused)]
 
-use nidrs_extern::{anyhow::anyhow, axum::{body::{Body, Bytes}, extract::Request, response::Response}, tower::Layer, *};
+use nidrs_extern::{anyhow::anyhow, axum::{body::{Body, Bytes}, extract::Request, response::Response}, colored::Colorize, tower::Layer, *};
 use nidrs_extern::axum::{self, async_trait, extract::{FromRequestParts, Query, State}, http::{request::Parts, HeaderMap, HeaderValue, StatusCode, Uri}, response::IntoResponse};
 use nidrs_extern::tokio;
 use once_cell::sync::OnceCell;
@@ -33,6 +33,17 @@ impl IntoResponse for AppError{
 }
 
 pub type AppResult<T = ()> = Result<T, AppError>;
+
+pub fn __throw<E: Into<AppError>>(e: E, line: &str)->AppResult<()>{
+    let e = e.into();
+    if let AppError::Exception(mut e) = e {
+        e.line = line.to_string();
+        print!("{}", "[nidrs] Exception ".red().bold());
+        println!("{}", e.to_string().red().bold());
+        return Err(e.into());
+    }
+    return Err(e);
+}
 
 pub trait Module {
     fn init(self, ctx: &ModuleCtx);
