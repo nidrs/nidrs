@@ -1,6 +1,8 @@
 use axum::{body::Body, http::{header, StatusCode}, response::{IntoResponse, Response}};
 use serde::{Deserialize, Serialize};
 
+use crate::log::interceptor::AnyResponse;
+
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Status{
@@ -28,4 +30,14 @@ impl IntoResponse for Status {
 
         res
     }
+}
+
+impl Into<AnyResponse> for Status {
+    fn into(self) -> AnyResponse {
+        let t = serde_json::to_string(&self);
+        AnyResponse {
+            body: t.map_err(|e| e.into()),
+        }
+    }
+    
 }

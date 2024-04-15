@@ -207,6 +207,7 @@ mod app {
             response::{IntoResponse, Response},
         };
         use serde::{Deserialize, Serialize};
+        use crate::log::interceptor::AnyResponse;
         pub struct Status {
             pub db: String,
             pub redis: String,
@@ -491,6 +492,14 @@ mod app {
                 res
             }
         }
+        impl Into<AnyResponse> for Status {
+            fn into(self) -> AnyResponse {
+                let t = serde_json::to_string(&self);
+                AnyResponse {
+                    body: t.map_err(|e| e.into()),
+                }
+            }
+        }
     }
     pub mod exception {
         use nidrs::Exception;
@@ -607,6 +616,49 @@ mod app {
                     .downcast_ref::<std::sync::Arc<controller::AppController>>()
                     .unwrap();
                 let t_controller = t_controller.clone();
+                let t_interceptor_0 = interceptors.get("LogInterceptor").unwrap();
+                let t_interceptor_0 = t_interceptor_0
+                    .downcast_ref::<std::sync::Arc<LogInterceptor>>()
+                    .unwrap();
+                let t_interceptor_0 = t_interceptor_0.clone();
+                let meta = t_controller.__get_hello_world_meta();
+                let mut t_meta = t_controller.__meta();
+                t_meta.extend(meta);
+                let meta = t_meta;
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
+                };
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "Registering router \'{0} {1}\'.\n",
+                            "get".to_uppercase(),
+                            "/app/hello",
+                        ),
+                    );
+                };
+                let router = axum::Router::new()
+                    .route(
+                        "/app/hello",
+                        axum::routing::get(|p0| async move {
+                            let ctx = HookCtx { meta: meta.clone() };
+                            let t_inter_fn_0 = |ctx| async move {
+                                t_controller.get_hello_world(p0).await
+                            };
+                            t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
+                        }),
+                    );
+                ctx.routers.lock().unwrap().push(router);
+                let t_controller = controllers.get("AppController").unwrap();
+                let t_controller = t_controller
+                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                    .unwrap();
+                let t_controller = t_controller.clone();
                 let meta = std::collections::HashMap::<String, String>::new();
                 let mut t_meta = t_controller.__meta();
                 t_meta.extend(meta);
@@ -667,49 +719,6 @@ mod app {
                         "/app/hello",
                         axum::routing::post(|p0, p1| async move {
                             t_controller.post_hello_world(p0, p1).await
-                        }),
-                    );
-                ctx.routers.lock().unwrap().push(router);
-                let t_controller = controllers.get("AppController").unwrap();
-                let t_controller = t_controller
-                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                    .unwrap();
-                let t_controller = t_controller.clone();
-                let t_interceptor_0 = interceptors.get("LogInterceptor").unwrap();
-                let t_interceptor_0 = t_interceptor_0
-                    .downcast_ref::<std::sync::Arc<LogInterceptor>>()
-                    .unwrap();
-                let t_interceptor_0 = t_interceptor_0.clone();
-                let meta = t_controller.__get_hello_world_meta();
-                let mut t_meta = t_controller.__meta();
-                t_meta.extend(meta);
-                let meta = t_meta;
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "Registering router \'{0} {1}\'.\n",
-                            "get".to_uppercase(),
-                            "/app/hello",
-                        ),
-                    );
-                };
-                let router = axum::Router::new()
-                    .route(
-                        "/app/hello",
-                        axum::routing::get(|p0| async move {
-                            let ctx = HookCtx { meta: meta.clone() };
-                            let t_inter_fn_0 = |ctx| async move {
-                                t_controller.get_hello_world(p0).await
-                            };
-                            t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
                         }),
                     );
                 ctx.routers.lock().unwrap().push(router);
@@ -1459,6 +1468,7 @@ mod log {
         use axum::{
             body::Body, http::{HeaderName, HeaderValue, StatusCode},
             response::{IntoResponse, IntoResponseParts, Response, ResponseParts},
+            Json,
         };
         use axum_extra::headers::Header;
         use nidrs::{Exception, HookCtx, Inject, Interceptor, InterceptorHook};
@@ -1505,9 +1515,25 @@ mod log {
                 self.log_service.inject(service.clone());
             }
         }
+        pub struct AnyResponse {
+            pub body: Result<String, anyhow::Error>,
+        }
+        impl IntoResponse for AnyResponse {
+            fn into_response(self) -> Response {
+                let body = match self.body {
+                    Ok(b) => b,
+                    Err(e) => e.to_string(),
+                };
+                Response::builder()
+                    .status(StatusCode::OK)
+                    .header("Content-Type", "application/json")
+                    .body(Body::from(body))
+                    .unwrap()
+            }
+        }
         impl InterceptorHook for LogInterceptor {
-            type P = Status;
-            type R = String;
+            type P = AnyResponse;
+            type R = AnyResponse;
             async fn interceptor<P, F, H>(
                 &self,
                 ctx: HookCtx,
@@ -1522,8 +1548,9 @@ mod log {
                     ::std::io::_print(format_args!("ctx: {0:?}\n", ctx.meta));
                 };
                 self.log_service.log("Before");
-                let r = handler(ctx).await;
-                Ok(String::from("Hello, World!"))
+                let r: AppResult<AnyResponse> = handler(ctx).await.map(|r| r.into());
+                self.log_service.log("After");
+                r
             }
         }
     }

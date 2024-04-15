@@ -1,4 +1,4 @@
-use axum::{body::Body, http::{HeaderName, HeaderValue, StatusCode}, response::{IntoResponse, IntoResponseParts, Response, ResponseParts}};
+use axum::{body::Body, http::{HeaderName, HeaderValue, StatusCode}, response::{IntoResponse, IntoResponseParts, Response, ResponseParts}, Json};
 use axum_extra::headers::Header;
 use nidrs::{Exception, HookCtx, Inject, Interceptor, InterceptorHook};
 use nidrs_macro::interceptor;
@@ -39,25 +39,43 @@ pub struct LogInterceptor{
 //   // }
 // }
 
-impl InterceptorHook for LogInterceptor {
-    type P = Status;
+pub struct AnyResponse{
+  pub body: Result<String, anyhow::Error>,
+}
 
-    type R = String;
+impl IntoResponse for AnyResponse {
+    fn into_response(self) -> Response {
+        let body = match self.body {
+            Ok(b) => b,
+            Err(e) => e.to_string(),
+        };
+
+        Response::builder()
+            .status(StatusCode::OK)
+            .header("Content-Type", "application/json")
+            .body(Body::from(body))
+            .unwrap()
+    }
+}
+
+impl InterceptorHook for LogInterceptor {
+    type P = AnyResponse;
+    type R = AnyResponse;
 
     async fn interceptor<P, F, H>(&self, ctx: HookCtx, handler: H) -> AppResult<Self::R>
     where
-        P: Into<Self::P>,
-        F: std::future::Future<Output = AppResult<P>> + Send + 'static,
-        H: FnOnce(HookCtx) -> F {
+      P: Into<Self::P>,
+      F: std::future::Future<Output = AppResult<P>> + Send + 'static,
+      H: FnOnce(HookCtx) -> F,
+    {
         println!("ctx: {:?}", ctx.meta);
-        // 获取时间搓
         self.log_service.log("Before");
-        //  Err((StatusCode::INTERNAL_SERVER_ERROR, "Error".to_string()))
-        let r = handler(ctx).await;
+        let r: AppResult<AnyResponse> = handler(ctx).await.map(|r| r.into());
 
         self.log_service.log("After");
         
-        Ok(String::from("Hello, World!"))
+        // Ok(Response::builder().body(r.unwrap().body.unwrap()).unwrap())
+        r
     }
 }
 
