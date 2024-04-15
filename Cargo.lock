@@ -605,6 +605,8 @@ version = "0.0.3"
 dependencies = [
  "nidrs-extern",
  "nidrs-macro",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

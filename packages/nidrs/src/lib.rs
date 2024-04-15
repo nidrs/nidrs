@@ -5,6 +5,7 @@ use nidrs_extern::axum::{self, async_trait, extract::{FromRequestParts, Query, S
 use nidrs_extern::tokio;
 use once_cell::sync::OnceCell;
 use std::{any::Any, cell::RefCell, collections::HashMap, error::Error, fmt::Debug, sync::{Arc, Mutex, MutexGuard}, task::{Context, Poll}};
+use serde::{Deserialize, Serialize};
 
 pub use nidrs_macro::*;
 
@@ -47,29 +48,33 @@ pub trait Interceptor {
 }
 
 
-// pub trait InterceptorHook {
-//     async fn before(&self, ctx: &HookCtx) -> Result<(), Exception> {
-//         Ok(())
-//     }
-//     async fn after(&self, ctx: &HookCtx, r: impl IntoResponse)-> Result<impl IntoResponse, Exception> {
-//         Ok(r)
-//     }
-// }
-
-pub trait InterceptorHook {
-    type P;
+/// P 和 R 是可以配置的
+pub trait InterceptorHook<P>: Sized {
     type R;
 
-    async fn interceptor<P, F, H>(&self, ctx: HookCtx, handler: H) -> AppResult<Self::R>
+    async fn interceptor<F, H>(&self, ctx: HookCtx, handler: H) -> AppResult<Self::R>
     where
-        P: Into<Self::P>,
+        // P: Into<Self::P>,
+        // P: IntoAnyResponse,
         F: std::future::Future<Output = AppResult<P>> + Send + 'static,
         H: FnOnce(HookCtx) -> F;
 }
 
 
-pub struct AnyResponse{
+#[derive(Debug)]
+pub struct AnyResponse<T = ()>{
     pub body: Result<Bytes, AppError>,
+    marker: std::marker::PhantomData<T>,
+}
+
+impl Serialize for AnyResponse {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.body.as_ref().map(|b| b.as_ref()).unwrap().serialize(serializer)
+    }
+    
 }
 
 impl IntoResponse for AnyResponse {
@@ -87,12 +92,16 @@ impl IntoResponse for AnyResponse {
     }
 }
 
-impl AnyResponse {
-    pub fn from_serializable<T: serde::Serialize>(s: T) -> Result<Self, AppError> {
-        serde_json::to_vec(&s)
-            .map(Bytes::from)
-            .map(|body| AnyResponse { body: Ok(body) })
-            .map_err(Into::into)
+pub trait IntoAnyResponse: Sized + serde::Serialize {
+    fn from_serializable<T: serde::Serialize>(s: T) -> AnyResponse<Self>;
+}
+
+impl<T: serde::Serialize> IntoAnyResponse for T {
+    fn from_serializable<P: serde::Serialize>(s: P) -> AnyResponse<Self> {
+        AnyResponse {
+            body: serde_json::to_vec(&s).map(Bytes::from).map_err(|e| e.into()),
+            marker: std::marker::PhantomData,
+        }
     }
 }
 

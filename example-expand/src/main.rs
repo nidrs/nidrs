@@ -475,11 +475,6 @@ mod app {
                 )
             }
         }
-        impl Into<AnyResponse> for Status {
-            fn into(self) -> AnyResponse {
-                AnyResponse::from_serializable(self).unwrap()
-            }
-        }
         impl IntoResponse for Status {
             fn into_response(self) -> Response {
                 let json_body = match serde_json::to_string(&self) {
@@ -630,16 +625,16 @@ mod app {
                     ::std::io::_print(
                         format_args!(
                             "Registering router \'{0} {1}\'.\n",
-                            "post".to_uppercase(),
-                            "/app/hello",
+                            "get".to_uppercase(),
+                            "/app/hello2",
                         ),
                     );
                 };
                 let router = axum::Router::new()
                     .route(
-                        "/app/hello",
-                        axum::routing::post(|p0, p1| async move {
-                            t_controller.post_hello_world(p0, p1).await
+                        "/app/hello2",
+                        axum::routing::get(|p0| async move {
+                            t_controller.get_hello_world2(p0).await
                         }),
                     );
                 ctx.routers.lock().unwrap().push(router);
@@ -707,16 +702,16 @@ mod app {
                     ::std::io::_print(
                         format_args!(
                             "Registering router \'{0} {1}\'.\n",
-                            "get".to_uppercase(),
-                            "/app/hello2",
+                            "post".to_uppercase(),
+                            "/app/hello",
                         ),
                     );
                 };
                 let router = axum::Router::new()
                     .route(
-                        "/app/hello2",
-                        axum::routing::get(|p0| async move {
-                            t_controller.get_hello_world2(p0).await
+                        "/app/hello",
+                        axum::routing::post(|p0, p1| async move {
+                            t_controller.post_hello_world(p0, p1).await
                         }),
                     );
                 ctx.routers.lock().unwrap().push(router);
@@ -1471,6 +1466,7 @@ mod log {
         use axum_extra::headers::Header;
         use nidrs::{
             AnyResponse, Exception, HookCtx, Inject, Interceptor, InterceptorHook,
+            IntoAnyResponse,
         };
         use nidrs_macro::interceptor;
         use crate::{app::dto::Status, AppError, AppResult};
@@ -1515,24 +1511,24 @@ mod log {
                 self.log_service.inject(service.clone());
             }
         }
-        impl InterceptorHook for LogInterceptor {
-            type P = AnyResponse;
+        impl<P: IntoAnyResponse> InterceptorHook<P> for LogInterceptor {
             type R = AnyResponse;
-            async fn interceptor<P, F, H>(
+            async fn interceptor<F, H>(
                 &self,
                 ctx: HookCtx,
                 handler: H,
             ) -> AppResult<Self::R>
             where
-                P: Into<Self::P>,
                 F: std::future::Future<Output = AppResult<P>> + Send + 'static,
                 H: FnOnce(HookCtx) -> F,
             {
                 {
-                    ::std::io::_print(format_args!("ctx: {0:?}\n", ctx.meta));
+                    ::std::io::_print(format_args!("ctx: {0:?}\n", ctx));
                 };
                 self.log_service.log("Before");
-                let r: AppResult<AnyResponse> = handler(ctx).await.map(|r| r.into());
+                let r: AppResult<AnyResponse> = handler(ctx)
+                    .await
+                    .map(|r| IntoAnyResponse::from_serializable(r));
                 self.log_service.log("After");
                 r
             }

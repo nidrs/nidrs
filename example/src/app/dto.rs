@@ -10,14 +10,6 @@ pub struct Status{
 }
 
 
-impl Into<AnyResponse> for Status {
-    fn into(self) -> AnyResponse {
-        AnyResponse::from_serializable(self).unwrap()
-    }
-    
-}
-
-// impl IntoResponse
 impl IntoResponse for Status {
     fn into_response(self) -> Response {
         let json_body = match serde_json::to_string(&self) {
