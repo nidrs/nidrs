@@ -1,6 +1,6 @@
 use axum::{body::Body, http::{HeaderName, HeaderValue, StatusCode}, response::{IntoResponse, IntoResponseParts, Response, ResponseParts}, Json};
 use axum_extra::headers::Header;
-use nidrs::{Exception, HookCtx, Inject, Interceptor, InterceptorHook};
+use nidrs::{AnyResponse, Exception, HookCtx, Inject, Interceptor, InterceptorHook};
 use nidrs_macro::interceptor;
 
 use crate::{app::dto::Status, AppError, AppResult};
@@ -38,25 +38,6 @@ pub struct LogInterceptor{
 
 //   // }
 // }
-
-pub struct AnyResponse{
-  pub body: Result<String, anyhow::Error>,
-}
-
-impl IntoResponse for AnyResponse {
-    fn into_response(self) -> Response {
-        let body = match self.body {
-            Ok(b) => b,
-            Err(e) => e.to_string(),
-        };
-
-        Response::builder()
-            .status(StatusCode::OK)
-            .header("Content-Type", "application/json")
-            .body(Body::from(body))
-            .unwrap()
-    }
-}
 
 impl InterceptorHook for LogInterceptor {
     type P = AnyResponse;

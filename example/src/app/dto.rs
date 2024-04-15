@@ -1,7 +1,6 @@
-use axum::{body::Body, http::{header, StatusCode}, response::{IntoResponse, Response}};
+use axum::{body::{Body, Bytes}, http::{header, StatusCode}, response::{IntoResponse, Response}};
+use nidrs::AnyResponse;
 use serde::{Deserialize, Serialize};
-
-use crate::log::interceptor::AnyResponse;
 
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -34,9 +33,9 @@ impl IntoResponse for Status {
 
 impl Into<AnyResponse> for Status {
     fn into(self) -> AnyResponse {
-        let t = serde_json::to_string(&self);
+        let t = serde_json::to_vec(&self).map_err(|e| e.into());
         AnyResponse {
-            body: t.map_err(|e| e.into()),
+            body: t.map(|b| Bytes::from(b))
         }
     }
     

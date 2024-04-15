@@ -1,6 +1,6 @@
 #![allow(warnings, unused)]
 
-use nidrs_extern::{anyhow::anyhow, axum::{body::{Body, Bytes}, extract::Request}, tower::Layer, *};
+use nidrs_extern::{anyhow::anyhow, axum::{body::{Body, Bytes}, extract::Request, response::Response}, tower::Layer, *};
 use nidrs_extern::axum::{self, async_trait, extract::{FromRequestParts, Query, State}, http::{request::Parts, HeaderMap, HeaderValue, StatusCode, Uri}, response::IntoResponse};
 use nidrs_extern::tokio;
 use once_cell::sync::OnceCell;
@@ -14,6 +14,9 @@ pub enum AppError {
     EnvironmentVariableNotFound(#[from] std::env::VarError),
     #[error(transparent)]
     IOError(#[from] std::io::Error),
+    
+    #[error(transparent)]
+    SerdeError(#[from] serde_json::Error),
 
     #[error(transparent)]
     Exception(#[from] Exception),
@@ -63,6 +66,27 @@ pub trait InterceptorHook {
         F: std::future::Future<Output = AppResult<P>> + Send + 'static,
         H: FnOnce(HookCtx) -> F;
 }
+
+
+pub struct AnyResponse{
+    pub body: Result<Bytes, AppError>,
+}
+
+impl IntoResponse for AnyResponse {
+    fn into_response(self) -> Response {
+        let body = match self.body {
+            Ok(b) => b,
+            Err(e) => Bytes::from(e.to_string()),
+        };
+
+        Response::builder()
+            .status(StatusCode::OK)
+            .header("Content-Type", "application/json")
+            .body(Body::from(body))
+            .unwrap()
+    }
+}
+
 
 pub trait Controller {
     fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>);
