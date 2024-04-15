@@ -87,6 +87,15 @@ impl IntoResponse for AnyResponse {
     }
 }
 
+impl AnyResponse {
+    pub fn from_serializable<T: serde::Serialize>(s: T) -> Result<Self, AppError> {
+        serde_json::to_vec(&s)
+            .map(Bytes::from)
+            .map(|body| AnyResponse { body: Ok(body) })
+            .map_err(Into::into)
+    }
+}
+
 
 pub trait Controller {
     fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>);

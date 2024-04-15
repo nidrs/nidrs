@@ -203,11 +203,12 @@ mod app {
     }
     pub mod dto {
         use axum::{
-            body::Body, http::{header, StatusCode},
+            body::{Body, Bytes},
+            http::{header, StatusCode},
             response::{IntoResponse, Response},
         };
+        use nidrs::AnyResponse;
         use serde::{Deserialize, Serialize};
-        use crate::log::interceptor::AnyResponse;
         pub struct Status {
             pub db: String,
             pub redis: String,
@@ -474,6 +475,11 @@ mod app {
                 )
             }
         }
+        impl Into<AnyResponse> for Status {
+            fn into(self) -> AnyResponse {
+                AnyResponse::from_serializable(self).unwrap()
+            }
+        }
         impl IntoResponse for Status {
             fn into_response(self) -> Response {
                 let json_body = match serde_json::to_string(&self) {
@@ -490,14 +496,6 @@ mod app {
                     .body(json_body.into())
                     .unwrap();
                 res
-            }
-        }
-        impl Into<AnyResponse> for Status {
-            fn into(self) -> AnyResponse {
-                let t = serde_json::to_string(&self);
-                AnyResponse {
-                    body: t.map_err(|e| e.into()),
-                }
             }
         }
     }
@@ -616,6 +614,40 @@ mod app {
                     .downcast_ref::<std::sync::Arc<controller::AppController>>()
                     .unwrap();
                 let t_controller = t_controller.clone();
+                let meta = std::collections::HashMap::<String, String>::new();
+                let mut t_meta = t_controller.__meta();
+                t_meta.extend(meta);
+                let meta = t_meta;
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
+                };
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "Registering router \'{0} {1}\'.\n",
+                            "post".to_uppercase(),
+                            "/app/hello",
+                        ),
+                    );
+                };
+                let router = axum::Router::new()
+                    .route(
+                        "/app/hello",
+                        axum::routing::post(|p0, p1| async move {
+                            t_controller.post_hello_world(p0, p1).await
+                        }),
+                    );
+                ctx.routers.lock().unwrap().push(router);
+                let t_controller = controllers.get("AppController").unwrap();
+                let t_controller = t_controller
+                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                    .unwrap();
+                let t_controller = t_controller.clone();
                 let t_interceptor_0 = interceptors.get("LogInterceptor").unwrap();
                 let t_interceptor_0 = t_interceptor_0
                     .downcast_ref::<std::sync::Arc<LogInterceptor>>()
@@ -685,40 +717,6 @@ mod app {
                         "/app/hello2",
                         axum::routing::get(|p0| async move {
                             t_controller.get_hello_world2(p0).await
-                        }),
-                    );
-                ctx.routers.lock().unwrap().push(router);
-                let t_controller = controllers.get("AppController").unwrap();
-                let t_controller = t_controller
-                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                    .unwrap();
-                let t_controller = t_controller.clone();
-                let meta = std::collections::HashMap::<String, String>::new();
-                let mut t_meta = t_controller.__meta();
-                t_meta.extend(meta);
-                let meta = t_meta;
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "Registering router \'{0} {1}\'.\n",
-                            "post".to_uppercase(),
-                            "/app/hello",
-                        ),
-                    );
-                };
-                let router = axum::Router::new()
-                    .route(
-                        "/app/hello",
-                        axum::routing::post(|p0, p1| async move {
-                            t_controller.post_hello_world(p0, p1).await
                         }),
                     );
                 ctx.routers.lock().unwrap().push(router);
@@ -1471,7 +1469,9 @@ mod log {
             Json,
         };
         use axum_extra::headers::Header;
-        use nidrs::{Exception, HookCtx, Inject, Interceptor, InterceptorHook};
+        use nidrs::{
+            AnyResponse, Exception, HookCtx, Inject, Interceptor, InterceptorHook,
+        };
         use nidrs_macro::interceptor;
         use crate::{app::dto::Status, AppError, AppResult};
         use super::service::LogService;
@@ -1513,22 +1513,6 @@ mod log {
                     .downcast_ref::<std::sync::Arc<LogService>>()
                     .unwrap();
                 self.log_service.inject(service.clone());
-            }
-        }
-        pub struct AnyResponse {
-            pub body: Result<String, anyhow::Error>,
-        }
-        impl IntoResponse for AnyResponse {
-            fn into_response(self) -> Response {
-                let body = match self.body {
-                    Ok(b) => b,
-                    Err(e) => e.to_string(),
-                };
-                Response::builder()
-                    .status(StatusCode::OK)
-                    .header("Content-Type", "application/json")
-                    .body(Body::from(body))
-                    .unwrap()
             }
         }
         impl InterceptorHook for LogInterceptor {

@@ -9,6 +9,14 @@ pub struct Status{
     pub redis: String,
 }
 
+
+impl Into<AnyResponse> for Status {
+    fn into(self) -> AnyResponse {
+        AnyResponse::from_serializable(self).unwrap()
+    }
+    
+}
+
 // impl IntoResponse
 impl IntoResponse for Status {
     fn into_response(self) -> Response {
@@ -29,14 +37,4 @@ impl IntoResponse for Status {
 
         res
     }
-}
-
-impl Into<AnyResponse> for Status {
-    fn into(self) -> AnyResponse {
-        let t = serde_json::to_vec(&self).map_err(|e| e.into());
-        AnyResponse {
-            body: t.map(|b| Bytes::from(b))
-        }
-    }
-    
 }
