@@ -26,7 +26,7 @@ impl AppController {
         Ok(Status { db: "ok".to_string(), redis: "ok".to_string() })
     }
 
-    #[uses(LogInterceptor)]
+    // #[uses(LogInterceptor)]
     #[get("/hello2")]
     pub async fn get_hello_world2(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<String> {
         println!("Query {:?}", q);

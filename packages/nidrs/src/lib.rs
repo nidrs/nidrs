@@ -130,6 +130,7 @@ pub struct DynamicModule {
 #[derive(Debug)]
 pub struct HookCtx{
     pub meta: HashMap<String, String>,
+    pub parts: axum::http::request::Parts,
     // pub headers: HeaderMap<HeaderValue>,
     // pub body: Bytes,
     // pub request: &'a Request

@@ -477,6 +477,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                     quote!{
                         let ctx = HookCtx {
                             meta: meta.clone(),
+                            parts,
                         };
                         #(#tokens)*
                     },
@@ -542,7 +543,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                 }
             } else {
                 quote!{
-                    |#func_args| async move {
+                    |parts, #func_args| async move {
                         #def_clone_inter_tokens
                     }
                 }

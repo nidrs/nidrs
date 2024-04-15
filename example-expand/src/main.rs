@@ -106,11 +106,11 @@ mod app {
             pub async fn get_hello_world2(
                 &self,
                 Query(q): Query<HashMap<String, String>>,
-            ) -> String {
+            ) -> AppResult<String> {
                 {
                     ::std::io::_print(format_args!("Query {0:?}\n", q));
                 };
-                self.app_service.get_hello_world()
+                Ok(self.app_service.get_hello_world())
             }
             pub async fn post_hello_world(
                 &self,
@@ -625,6 +625,40 @@ mod app {
                     ::std::io::_print(
                         format_args!(
                             "Registering router \'{0} {1}\'.\n",
+                            "post".to_uppercase(),
+                            "/app/hello",
+                        ),
+                    );
+                };
+                let router = axum::Router::new()
+                    .route(
+                        "/app/hello",
+                        axum::routing::post(|p0, p1| async move {
+                            t_controller.post_hello_world(p0, p1).await
+                        }),
+                    );
+                ctx.routers.lock().unwrap().push(router);
+                let t_controller = controllers.get("AppController").unwrap();
+                let t_controller = t_controller
+                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                    .unwrap();
+                let t_controller = t_controller.clone();
+                let meta = std::collections::HashMap::<String, String>::new();
+                let mut t_meta = t_controller.__meta();
+                t_meta.extend(meta);
+                let meta = t_meta;
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
+                };
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "Registering router \'{0} {1}\'.\n",
                             "get".to_uppercase(),
                             "/app/hello2",
                         ),
@@ -672,46 +706,15 @@ mod app {
                 let router = axum::Router::new()
                     .route(
                         "/app/hello",
-                        axum::routing::get(|p0| async move {
-                            let ctx = HookCtx { meta: meta.clone() };
+                        axum::routing::get(|parts, p0| async move {
+                            let ctx = HookCtx {
+                                meta: meta.clone(),
+                                parts,
+                            };
                             let t_inter_fn_0 = |ctx| async move {
                                 t_controller.get_hello_world(p0).await
                             };
                             t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
-                        }),
-                    );
-                ctx.routers.lock().unwrap().push(router);
-                let t_controller = controllers.get("AppController").unwrap();
-                let t_controller = t_controller
-                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                    .unwrap();
-                let t_controller = t_controller.clone();
-                let meta = std::collections::HashMap::<String, String>::new();
-                let mut t_meta = t_controller.__meta();
-                t_meta.extend(meta);
-                let meta = t_meta;
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "Registering router \'{0} {1}\'.\n",
-                            "post".to_uppercase(),
-                            "/app/hello",
-                        ),
-                    );
-                };
-                let router = axum::Router::new()
-                    .route(
-                        "/app/hello",
-                        axum::routing::post(|p0, p1| async move {
-                            t_controller.post_hello_world(p0, p1).await
                         }),
                     );
                 ctx.routers.lock().unwrap().push(router);
@@ -1643,7 +1646,7 @@ mod shared {
         use nidrs::{throw, Exception};
         use crate::{AppError, AppResult};
         pub fn fn_test() -> AppResult {
-            crate::__throw(
+            nidrs::__throw(
                 Exception::new(
                     StatusCode::INTERNAL_SERVER_ERROR,
                     anyhow::Error::msg("Error"),
@@ -1675,19 +1678,5 @@ fn main() {
         );
     let app = app.listen::<AppError>(3000);
     let _ = tokio::runtime::Runtime::new().unwrap().block_on(app);
-}
-pub fn __throw<E: Into<AppError>>(e: E, line: &str) -> AppResult<()> {
-    let e = e.into();
-    if let AppError::Exception(mut e) = e {
-        e.line = line.to_string();
-        {
-            ::std::io::_print(format_args!("{0}", "[nidrs] Exception ".red().bold()));
-        };
-        {
-            ::std::io::_print(format_args!("{0}\n", e.to_string().red().bold()));
-        };
-        return Err(e.into());
-    }
-    return Err(e);
 }
 extern crate alloc;
