@@ -5,7 +5,7 @@ use quote::ToTokens;
 use syn::{parse::{Parse, ParseStream}, punctuated::Punctuated, Expr, Ident, ItemFn, ItemStruct, Token};
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ExprList {
   pub items: Punctuated<Expr, syn::Token![,]>,
 }
@@ -17,7 +17,7 @@ impl Parse for ExprList {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct MetaArgs {
     pub kv: HashMap<String, String>,
 }
