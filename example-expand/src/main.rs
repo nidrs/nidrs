@@ -1496,7 +1496,7 @@ mod log {
         use axum_extra::headers::Header;
         use nidrs::{
             AnyBody, Exception, InterCtx, Inject, InterceptorService, Interceptor,
-            IntoAnyResponse, StateCtx,
+            IntoAnyBody, StateCtx,
         };
         use nidrs_macro::interceptor;
         use serde::{de::DeserializeOwned, Serialize, Serializer};
@@ -1542,7 +1542,7 @@ mod log {
                 self.log_service.inject(service.clone());
             }
         }
-        impl<B: FromRequest<StateCtx> + Debug, P: IntoAnyResponse> Interceptor<B, P>
+        impl<B: FromRequest<StateCtx> + Debug, P: IntoAnyBody> Interceptor<B, P>
         for LogInterceptor {
             type R = AnyBody;
             async fn interceptor<F, H>(
@@ -1560,7 +1560,7 @@ mod log {
                 self.log_service.log("Before");
                 let r: AppResult<AnyBody> = handler(ctx)
                     .await
-                    .map(|r| IntoAnyResponse::from_serializable(r));
+                    .map(|r| IntoAnyBody::from_serializable(r));
                 self.log_service.log("After");
                 r
             }

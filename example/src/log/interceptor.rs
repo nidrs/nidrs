@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use axum::{body::Body, extract::FromRequest, http::{HeaderName, HeaderValue, StatusCode}, response::{IntoResponse, IntoResponseParts, Response, ResponseParts}, Json};
 use axum_extra::headers::Header;
-use nidrs::{AnyBody, Exception, InterCtx, Inject, InterceptorService, Interceptor, IntoAnyResponse, StateCtx};
+use nidrs::{AnyBody, Exception, InterCtx, Inject, InterceptorService, Interceptor, IntoAnyBody, StateCtx};
 use nidrs_macro::interceptor;
 use serde::{de::DeserializeOwned, Serialize, Serializer};
 
@@ -16,7 +16,7 @@ pub struct LogInterceptor{
   log_service: Inject<LogService>
 }
 
-impl <B: FromRequest<StateCtx> + Debug, P:IntoAnyResponse> Interceptor<B, P> for LogInterceptor {
+impl <B: FromRequest<StateCtx> + Debug, P:IntoAnyBody> Interceptor<B, P> for LogInterceptor {
     type R = AnyBody;
 
     async fn interceptor<F, H>(&self, ctx: InterCtx<B>, handler: H) -> AppResult<Self::R>
@@ -26,7 +26,7 @@ impl <B: FromRequest<StateCtx> + Debug, P:IntoAnyResponse> Interceptor<B, P> for
     {
         println!("ctx: {:?}", ctx);
         self.log_service.log("Before");
-        let r: AppResult<AnyBody> = handler(ctx).await.map(|r|IntoAnyResponse::from_serializable(r));
+        let r: AppResult<AnyBody> = handler(ctx).await.map(|r|IntoAnyBody::from_serializable(r));
 
         self.log_service.log("After");
         
