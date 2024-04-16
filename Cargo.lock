@@ -601,7 +601,7 @@ dependencies = [
 
 [[package]]
 name = "nidrs"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "nidrs-extern",
  "nidrs-macro",
@@ -611,7 +611,7 @@ dependencies = [
 
 [[package]]
 name = "nidrs-extern"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "anyhow",
  "axum",
@@ -627,7 +627,7 @@ dependencies = [
 
 [[package]]
 name = "nidrs-macro"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "once_cell",
  "proc-macro2",
