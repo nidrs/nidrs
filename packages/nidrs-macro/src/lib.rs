@@ -30,8 +30,8 @@ struct RouteMeta {
     method: String,
     path: String,
     name: String,
-    // handler: String,
     func_args: Vec<String>,
+    is_body: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -374,6 +374,7 @@ fn route(method:&str, args: TokenStream, input: TokenStream)-> TokenStream{
     let vis = func.vis.clone();
     let ident = func.sig.ident.clone();
     let mut pindex = 0;
+    let mut is_body = false;
     let func_args = func
         .sig
         .inputs
@@ -381,7 +382,10 @@ fn route(method:&str, args: TokenStream, input: TokenStream)-> TokenStream{
         .map(|arg| match arg {
             FnArg::Typed(PatType { pat, ty, .. }) => {
                 // let pat = pat.to_token_stream();
-                // let ty = ty.to_token_stream();
+                let ty = ty.to_token_stream();
+                if ty.to_string().contains("Json") {
+                    is_body = true;
+                }
                 let pat = format!("p{}", pindex);
                 let pat_indent = syn::Ident::new(&pat, Span::call_site().into());
                 pindex += 1;
@@ -397,6 +401,7 @@ fn route(method:&str, args: TokenStream, input: TokenStream)-> TokenStream{
         path: path,
         name: name.clone(),
         func_args,
+        is_body,
     };
 
     let mut binding = ROUTES.lock().unwrap();
@@ -423,13 +428,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
             let path = controller_path.clone() + &route.path.clone();
             let route_name = syn::Ident::new(&route.name, Span::call_site().into());
             // println!("route {} {:?}", route_name.to_string(), route.func_args);
-            let func_args = route.func_args.clone().iter().map(|arg| {
-                syn::Ident::new(&arg, Span::call_site().into()).to_token_stream()
-            }).reduce(|a, b| {
-                quote! {
-                    #a, #b
-                }
-            }).unwrap();
+            let func_args = str_args_to_indent(route.func_args.clone());
             let noop_ids = vec![];
             let inter_name = controller_str.clone() + ":" + &route_name.to_string();
             let binding = INTERS.lock().unwrap();
@@ -437,6 +436,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
             let inter_ids = binding.get(&inter_name).unwrap_or(&noop_ids);
             let inter_ids = struct_inter_ids.iter().chain(inter_ids.iter()).collect::<Vec<&String>>();
 
+            // interceptor handle
             let inter_ids = inter_ids.iter().map(|inter_id| {
                 syn::Ident::new(inter_id, Span::call_site().into())
             }).collect::<Vec<syn::Ident>>();
@@ -450,8 +450,20 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
 
                 let mut tokens: Vec<TokenStream2> = vec![];
                 if i == 1 {
+                    let mut t_vec = route.func_args.clone();
+                    let body_tokens = if route.is_body {
+                        t_vec.pop();
+                        t_vec.push("t_body".to_string());
+                        quote!{
+                            let t_body = ctx.body;
+                        }
+                    } else {
+                        quote!{}
+                    };
+                    let func_args = str_args_to_indent(t_vec);
                     tokens.push(quote!{
-                        let #prev_t_inter_fn_indent = |ctx| async move {
+                        let #prev_t_inter_fn_indent = |ctx: HookCtx<_>| async move {
+                            #body_tokens
                             t_controller.#route_name(#func_args).await
                         };
                     });
@@ -462,7 +474,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                     });
                 } else {
                     tokens.push(quote!{
-                        let #t_inter_fn_indent = |ctx| async move {
+                        let #t_inter_fn_indent = |ctx: HookCtx<_>| async move {
                             #prev_t_interceptor_ident.interceptor(ctx, #prev_t_inter_fn_indent).await
                         };
                     });
@@ -475,10 +487,6 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                         let #prev_t_interceptor_ident = #prev_t_interceptor_ident.clone();
                     },
                     quote!{
-                        let ctx = HookCtx {
-                            meta: meta.clone(),
-                            parts,
-                        };
                         #(#tokens)*
                     },
                     quote!{
@@ -496,22 +504,27 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
             let def_clone_inter_tokens = inter_tokens.iter().map(|(_, tokens,  _, _)| {
                 tokens.clone()
             }).collect::<Vec<TokenStream2>>();
+            let ctx_body_tokens = if route.is_body {
+                let last_arg_indent =  syn::Ident::new(route.func_args.last().unwrap().as_str(), Span::call_site().into());
+                quote! {
+                    let t_body = #last_arg_indent;
+                }
+            } else {
+                quote! {
+                    let t_body = nidrs_extern::axum::body::Body::empty();
+                }
+            };
             let def_clone_inter_tokens = TokenStream2::from(quote! {
+                #ctx_body_tokens
+                let ctx = HookCtx {
+                    meta: meta.clone(),
+                    parts,
+                    body: t_body,
+                };
                 #(#def_clone_inter_tokens)*
             });
-            // let call_before_inter_tokens = inter_tokens.iter().map(|(_, _, tokens, _)| {
-            //     tokens.clone()
-            // }).collect::<Vec<TokenStream2>>();
-            // let call_before_inter_tokens = TokenStream2::from(quote! {
-            //     #(#call_before_inter_tokens)*
-            // });
 
-            // let call_after_inter_tokens = inter_tokens.iter().map(|(_, _, _, tokens)| {
-            //     tokens.clone()
-            // }).collect::<Vec<TokenStream2>>();
-            // let call_after_inter_tokens = TokenStream2::from(quote! {
-            //     #(#call_after_inter_tokens)*
-            // });
+            // meta handle
             let meta_ident = syn::Ident::new(format!("__{}_meta", route_name).as_str(), Span::call_site().into());
             let meta_tokens = if let Some(_) = METAS.lock().unwrap().get(&inter_name){
                 quote! {
@@ -746,4 +759,17 @@ fn gen_events_trigger_tokens() -> TokenStream2 {
         #(#events_trigger_tokens)*
     });
     return events_trigger_tokens;
+}
+
+fn str_args_to_indent(args: Vec<String>) -> TokenStream2 {
+    let args = args.iter().map(|arg| {
+        let arg_ident = syn::Ident::new(arg, Span::call_site().into());
+        quote! {
+            #arg_ident
+        }
+    }).collect::<Vec<TokenStream2>>();
+    let args = TokenStream2::from(quote! {
+        #(#args),*
+    });
+    return args;
 }

@@ -1,7 +1,10 @@
-use axum::{body::Body, http::{HeaderName, HeaderValue, StatusCode}, response::{IntoResponse, IntoResponseParts, Response, ResponseParts}, Json};
+use std::fmt::Debug;
+
+use axum::{body::Body, extract::FromRequest, http::{HeaderName, HeaderValue, StatusCode}, response::{IntoResponse, IntoResponseParts, Response, ResponseParts}, Json};
 use axum_extra::headers::Header;
-use nidrs::{AnyResponse, Exception, HookCtx, Inject, Interceptor, InterceptorHook, IntoAnyResponse};
+use nidrs::{AnyResponse, Exception, HookCtx, Inject, Interceptor, InterceptorHook, IntoAnyResponse, StateCtx};
 use nidrs_macro::interceptor;
+use serde::{de::DeserializeOwned, Serialize, Serializer};
 
 use crate::{app::dto::Status, AppError, AppResult};
 
@@ -13,13 +16,13 @@ pub struct LogInterceptor{
   log_service: Inject<LogService>
 }
 
-impl <P:IntoAnyResponse> InterceptorHook<P> for LogInterceptor {
+impl <B: FromRequest<StateCtx> + Debug, P:IntoAnyResponse> InterceptorHook<B, P> for LogInterceptor {
     type R = AnyResponse;
 
-    async fn interceptor<F, H>(&self, ctx: HookCtx, handler: H) -> AppResult<Self::R>
+    async fn interceptor<F, H>(&self, ctx: HookCtx<B>, handler: H) -> AppResult<Self::R>
     where
       F: std::future::Future<Output = AppResult<P>> + Send + 'static,
-      H: FnOnce(HookCtx) -> F,
+      H: FnOnce(HookCtx<B>) -> F,
     {
         println!("ctx: {:?}", ctx);
         self.log_service.log("Before");

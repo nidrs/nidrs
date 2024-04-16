@@ -5,7 +5,7 @@ use nidrs_extern::axum::{self, async_trait, extract::{FromRequestParts, Query, S
 use nidrs_extern::tokio;
 use once_cell::sync::OnceCell;
 use std::{any::Any, cell::RefCell, collections::HashMap, error::Error, fmt::Debug, sync::{Arc, Mutex, MutexGuard}, task::{Context, Poll}};
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize, Serializer};
 
 pub use nidrs_macro::*;
 
@@ -60,15 +60,15 @@ pub trait Interceptor {
 
 
 /// P 和 R 是可以配置的
-pub trait InterceptorHook<P>: Sized {
+pub trait InterceptorHook<B: axum::extract::FromRequest<StateCtx>, P>: Sized {
     type R;
 
-    async fn interceptor<F, H>(&self, ctx: HookCtx, handler: H) -> AppResult<Self::R>
+    async fn interceptor<F, H>(&self, ctx: HookCtx<B>, handler: H) -> AppResult<Self::R>
     where
         // P: Into<Self::P>,
         // P: IntoAnyResponse,
         F: std::future::Future<Output = AppResult<P>> + Send + 'static,
-        H: FnOnce(HookCtx) -> F;
+        H: FnOnce(HookCtx<B>) -> F;
 }
 
 
@@ -128,9 +128,10 @@ pub struct DynamicModule {
 
 
 #[derive(Debug)]
-pub struct HookCtx{
+pub struct HookCtx<B: axum::extract::FromRequest<StateCtx>>{
     pub meta: HashMap<String, String>,
     pub parts: axum::http::request::Parts,
+    pub body: B,
     // pub headers: HeaderMap<HeaderValue>,
     // pub body: Bytes,
     // pub request: &'a Request

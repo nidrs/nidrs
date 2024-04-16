@@ -79,8 +79,8 @@ mod app {
             pub fn __meta(&self) -> HashMap<String, String> {
                 let mut meta = HashMap::new();
                 meta.insert("struct_name".to_string(), "AppController".to_string());
-                meta.insert("role".to_string(), "\"admin\"".to_string());
                 meta.insert("auth".to_string(), "\"true\"".to_string());
+                meta.insert("role".to_string(), "\"admin\"".to_string());
                 meta
             }
         }
@@ -116,14 +116,14 @@ mod app {
                 &self,
                 Query(q): Query<HashMap<String, String>>,
                 Json(j): Json<serde_json::Value>,
-            ) -> String {
+            ) -> AppResult<String> {
                 {
                     ::std::io::_print(format_args!("Query {0:?}\n", q));
                 };
                 {
                     ::std::io::_print(format_args!("Json {0:?}\n", j));
                 };
-                "Hello, World2!".to_string()
+                Ok("Hello, World2!".to_string())
             }
         }
     }
@@ -609,6 +609,16 @@ mod app {
                     .downcast_ref::<std::sync::Arc<controller::AppController>>()
                     .unwrap();
                 let t_controller = t_controller.clone();
+                let t_interceptor_0 = interceptors.get("LogInterceptor").unwrap();
+                let t_interceptor_0 = t_interceptor_0
+                    .downcast_ref::<std::sync::Arc<LogInterceptor>>()
+                    .unwrap();
+                let t_interceptor_0 = t_interceptor_0.clone();
+                let t_interceptor_1 = interceptors.get("LogInterceptor").unwrap();
+                let t_interceptor_1 = t_interceptor_1
+                    .downcast_ref::<std::sync::Arc<LogInterceptor>>()
+                    .unwrap();
+                let t_interceptor_1 = t_interceptor_1.clone();
                 let meta = std::collections::HashMap::<String, String>::new();
                 let mut t_meta = t_controller.__meta();
                 t_meta.extend(meta);
@@ -633,42 +643,21 @@ mod app {
                 let router = axum::Router::new()
                     .route(
                         "/app/hello",
-                        axum::routing::post(|p0, p1| async move {
-                            t_controller.post_hello_world(p0, p1).await
-                        }),
-                    );
-                ctx.routers.lock().unwrap().push(router);
-                let t_controller = controllers.get("AppController").unwrap();
-                let t_controller = t_controller
-                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                    .unwrap();
-                let t_controller = t_controller.clone();
-                let meta = std::collections::HashMap::<String, String>::new();
-                let mut t_meta = t_controller.__meta();
-                t_meta.extend(meta);
-                let meta = t_meta;
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "Registering router \'{0} {1}\'.\n",
-                            "get".to_uppercase(),
-                            "/app/hello2",
-                        ),
-                    );
-                };
-                let router = axum::Router::new()
-                    .route(
-                        "/app/hello2",
-                        axum::routing::get(|p0| async move {
-                            t_controller.get_hello_world2(p0).await
+                        axum::routing::post(|parts, p0, p1| async move {
+                            let t_body = p1;
+                            let ctx = HookCtx {
+                                meta: meta.clone(),
+                                parts,
+                                body: t_body,
+                            };
+                            let t_inter_fn_0 = |ctx: HookCtx<_>| async move {
+                                let t_body = ctx.body;
+                                t_controller.post_hello_world(p0, t_body).await
+                            };
+                            let t_inter_fn_1 = |ctx: HookCtx<_>| async move {
+                                t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
+                            };
+                            t_interceptor_1.interceptor(ctx, t_inter_fn_1).await
                         }),
                     );
                 ctx.routers.lock().unwrap().push(router);
@@ -707,14 +696,50 @@ mod app {
                     .route(
                         "/app/hello",
                         axum::routing::get(|parts, p0| async move {
+                            let t_body = nidrs_extern::axum::body::Body::empty();
                             let ctx = HookCtx {
                                 meta: meta.clone(),
                                 parts,
+                                body: t_body,
                             };
-                            let t_inter_fn_0 = |ctx| async move {
+                            let t_inter_fn_0 = |ctx: HookCtx<_>| async move {
                                 t_controller.get_hello_world(p0).await
                             };
                             t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
+                        }),
+                    );
+                ctx.routers.lock().unwrap().push(router);
+                let t_controller = controllers.get("AppController").unwrap();
+                let t_controller = t_controller
+                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                    .unwrap();
+                let t_controller = t_controller.clone();
+                let meta = std::collections::HashMap::<String, String>::new();
+                let mut t_meta = t_controller.__meta();
+                t_meta.extend(meta);
+                let meta = t_meta;
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
+                };
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "Registering router \'{0} {1}\'.\n",
+                            "get".to_uppercase(),
+                            "/app/hello2",
+                        ),
+                    );
+                };
+                let router = axum::Router::new()
+                    .route(
+                        "/app/hello2",
+                        axum::routing::get(|p0| async move {
+                            t_controller.get_hello_world2(p0).await
                         }),
                     );
                 ctx.routers.lock().unwrap().push(router);
@@ -1461,17 +1486,20 @@ mod log {
         }
     }
     pub mod interceptor {
+        use std::fmt::Debug;
         use axum::{
-            body::Body, http::{HeaderName, HeaderValue, StatusCode},
+            body::Body, extract::FromRequest,
+            http::{HeaderName, HeaderValue, StatusCode},
             response::{IntoResponse, IntoResponseParts, Response, ResponseParts},
             Json,
         };
         use axum_extra::headers::Header;
         use nidrs::{
             AnyResponse, Exception, HookCtx, Inject, Interceptor, InterceptorHook,
-            IntoAnyResponse,
+            IntoAnyResponse, StateCtx,
         };
         use nidrs_macro::interceptor;
+        use serde::{de::DeserializeOwned, Serialize, Serializer};
         use crate::{app::dto::Status, AppError, AppResult};
         use super::service::LogService;
         pub struct LogInterceptor {
@@ -1514,16 +1542,17 @@ mod log {
                 self.log_service.inject(service.clone());
             }
         }
-        impl<P: IntoAnyResponse> InterceptorHook<P> for LogInterceptor {
+        impl<B: FromRequest<StateCtx> + Debug, P: IntoAnyResponse> InterceptorHook<B, P>
+        for LogInterceptor {
             type R = AnyResponse;
             async fn interceptor<F, H>(
                 &self,
-                ctx: HookCtx,
+                ctx: HookCtx<B>,
                 handler: H,
             ) -> AppResult<Self::R>
             where
                 F: std::future::Future<Output = AppResult<P>> + Send + 'static,
-                H: FnOnce(HookCtx) -> F,
+                H: FnOnce(HookCtx<B>) -> F,
             {
                 {
                     ::std::io::_print(format_args!("ctx: {0:?}\n", ctx));

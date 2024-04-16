@@ -32,12 +32,14 @@ impl AppController {
         println!("Query {:?}", q);
         Ok(self.app_service.get_hello_world())
     }
-
+    
+    #[uses(LogInterceptor)]
+    #[uses(LogInterceptor)]
     #[post("/hello")]
-    pub async fn post_hello_world(&self, Query(q): Query<HashMap<String, String>>, Json(j): Json<serde_json::Value>) -> String {
+    pub async fn post_hello_world(&self, Query(q): Query<HashMap<String, String>>, Json(j): Json<serde_json::Value>) -> AppResult<String> {
         println!("Query {:?}", q);
         println!("Json {:?}", j);
 
-        "Hello, World2!".to_string()
+        Ok("Hello, World2!".to_string())
     }
 }
