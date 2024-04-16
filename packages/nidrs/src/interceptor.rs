@@ -1,6 +1,6 @@
 use nidrs_extern::axum::{body::{Body, Bytes}, response::Response};
 use nidrs_extern::axum::{self, http::StatusCode, response::IntoResponse};
-use std::{collections::HashMap, fmt::Debug};
+use std::{collections::HashMap, fmt::Debug, future::Future};
 use serde::Serialize;
 
 use crate::{AppError, AppResult, ModuleCtx, StateCtx};
@@ -13,7 +13,7 @@ pub trait InterceptorService {
 pub trait Interceptor<B: axum::extract::FromRequest<StateCtx>, P>: Sized {
   type R;
 
-  async fn interceptor<F, H>(&self, ctx: InterCtx<B>, handler: H) -> AppResult<Self::R>
+  fn interceptor<F, H>(&self, ctx: InterCtx<B>, handler: H) -> impl Future<Output = AppResult<Self::R>>
   where
       F: std::future::Future<Output = AppResult<P>> + Send + 'static,
       H: FnOnce(InterCtx<B>) -> F;

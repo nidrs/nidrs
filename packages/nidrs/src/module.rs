@@ -1,7 +1,6 @@
 use nidrs_extern::axum;
 use nidrs_extern::tokio;
 use std::{any::Any, collections::HashMap};
-use crate::{ControllerService, InterceptorService, Service};
 
 pub trait Module {
   fn init(self, ctx: ModuleCtx)->ModuleCtx;
