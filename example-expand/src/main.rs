@@ -48,13 +48,9 @@ mod app {
             }
         }
         impl nidrs::ControllerService for AppController {
-            fn inject(
-                &self,
-                services: &std::sync::MutexGuard<
-                    std::collections::HashMap<String, Box<dyn std::any::Any>>,
-                >,
-            ) {
-                let service = services
+            fn inject(&self, ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
+                let service = ctx
+                    .services
                     .get("AppService")
                     .expect(
                         {
@@ -73,14 +69,15 @@ mod app {
                     .downcast_ref::<std::sync::Arc<AppService>>()
                     .unwrap();
                 self.app_service.inject(service.clone());
+                ctx
             }
         }
         impl AppController {
             pub fn __meta(&self) -> HashMap<String, String> {
                 let mut meta = HashMap::new();
                 meta.insert("struct_name".to_string(), "AppController".to_string());
-                meta.insert("auth".to_string(), "\"true\"".to_string());
                 meta.insert("role".to_string(), "\"admin\"".to_string());
+                meta.insert("auth".to_string(), "\"true\"".to_string());
                 meta
             }
         }
@@ -165,13 +162,9 @@ mod app {
             }
         }
         impl nidrs::Service for AppService {
-            fn inject(
-                &self,
-                services: &std::sync::MutexGuard<
-                    std::collections::HashMap<String, Box<dyn std::any::Any>>,
-                >,
-            ) {
-                let service = services
+            fn inject(&self, ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
+                let service = ctx
+                    .services
                     .get("UserService")
                     .expect(
                         {
@@ -190,6 +183,7 @@ mod app {
                     .downcast_ref::<std::sync::Arc<UserService>>()
                     .unwrap();
                 self.user_service.inject(service.clone());
+                ctx
             }
         }
         impl AppService {
@@ -530,17 +524,15 @@ mod app {
         }
     }
     impl nidrs::Module for AppModule {
-        fn init(self, ctx: &nidrs::ModuleCtx) {
+        fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
             use nidrs::{
-                Service, ControllerService, InterceptorService, InterCtx, Interceptor, ModuleCtx,
-                StateCtx,
+                Service, ControllerService, InterceptorService, InterCtx, Interceptor,
+                ModuleCtx, StateCtx,
             };
-            if ctx.modules.lock().unwrap().contains_key("AppModule") {
-                return;
+            if ctx.modules.contains_key("AppModule") {
+                return ctx;
             }
             ctx.modules
-                .lock()
-                .unwrap()
                 .insert(
                     "AppModule".to_string(),
                     Box::new(self) as Box<dyn std::any::Any>,
@@ -559,218 +551,207 @@ mod app {
                 );
             };
             {
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!("Registering interceptor {0}.\n", "LogInterceptor"),
-                    );
-                };
-                ctx.interceptors
-                    .lock()
-                    .unwrap()
-                    .insert(
-                        "LogInterceptor".to_string(),
-                        Box::new(std::sync::Arc::new(LogInterceptor::default()))
-                            as Box<dyn std::any::Any>,
-                    );
-                ctx.controllers
-                    .lock()
-                    .unwrap()
-                    .insert(
-                        "AppController".to_string(),
-                        Box::new(
-                            std::sync::Arc::new(controller::AppController::default()),
-                        ),
-                    );
-                let controllers = ctx.controllers.lock().unwrap();
-                let interceptors = ctx.interceptors.lock().unwrap();
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!("Registering controller {0}.\n", "AppController"),
-                    );
-                };
-                let t_controller = controllers.get("AppController").unwrap();
-                let t_controller = t_controller
-                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                    .unwrap();
-                let t_controller = t_controller.clone();
-                let t_interceptor_0 = interceptors.get("LogInterceptor").unwrap();
-                let t_interceptor_0 = t_interceptor_0
-                    .downcast_ref::<std::sync::Arc<LogInterceptor>>()
-                    .unwrap();
-                let t_interceptor_0 = t_interceptor_0.clone();
-                let t_interceptor_1 = interceptors.get("LogInterceptor").unwrap();
-                let t_interceptor_1 = t_interceptor_1
-                    .downcast_ref::<std::sync::Arc<LogInterceptor>>()
-                    .unwrap();
-                let t_interceptor_1 = t_interceptor_1.clone();
-                let meta = std::collections::HashMap::<String, String>::new();
-                let mut t_meta = t_controller.__meta();
-                t_meta.extend(meta);
-                let meta = t_meta;
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "Registering router \'{0} {1}\'.\n",
-                            "post".to_uppercase(),
-                            "/app/hello",
-                        ),
-                    );
-                };
-                let router = axum::Router::new()
-                    .route(
-                        "/app/hello",
-                        axum::routing::post(|parts, p0, p1| async move {
-                            let t_body = p1;
-                            let ctx = InterCtx {
-                                meta: meta.clone(),
-                                parts,
-                                body: t_body,
-                            };
-                            let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
-                                let t_body = ctx.body;
-                                t_controller.post_hello_world(p0, t_body).await
-                            };
-                            let t_inter_fn_1 = |ctx: InterCtx<_>| async move {
-                                t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
-                            };
-                            t_interceptor_1.interceptor(ctx, t_inter_fn_1).await
-                        }),
-                    );
-                ctx.routers.lock().unwrap().push(router);
-                let t_controller = controllers.get("AppController").unwrap();
-                let t_controller = t_controller
-                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                    .unwrap();
-                let t_controller = t_controller.clone();
-                let t_interceptor_0 = interceptors.get("LogInterceptor").unwrap();
-                let t_interceptor_0 = t_interceptor_0
-                    .downcast_ref::<std::sync::Arc<LogInterceptor>>()
-                    .unwrap();
-                let t_interceptor_0 = t_interceptor_0.clone();
-                let meta = t_controller.__get_hello_world_meta();
-                let mut t_meta = t_controller.__meta();
-                t_meta.extend(meta);
-                let meta = t_meta;
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "Registering router \'{0} {1}\'.\n",
-                            "get".to_uppercase(),
-                            "/app/hello",
-                        ),
-                    );
-                };
-                let router = axum::Router::new()
-                    .route(
-                        "/app/hello",
-                        axum::routing::get(|parts, p0| async move {
-                            let t_body = nidrs_extern::axum::body::Body::empty();
-                            let ctx = InterCtx {
-                                meta: meta.clone(),
-                                parts,
-                                body: t_body,
-                            };
-                            let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
-                                t_controller.get_hello_world(p0).await
-                            };
-                            t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
-                        }),
-                    );
-                ctx.routers.lock().unwrap().push(router);
-                let t_controller = controllers.get("AppController").unwrap();
-                let t_controller = t_controller
-                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                    .unwrap();
-                let t_controller = t_controller.clone();
-                let meta = std::collections::HashMap::<String, String>::new();
-                let mut t_meta = t_controller.__meta();
-                t_meta.extend(meta);
-                let meta = t_meta;
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "Registering router \'{0} {1}\'.\n",
-                            "get".to_uppercase(),
-                            "/app/hello2",
-                        ),
-                    );
-                };
-                let router = axum::Router::new()
-                    .route(
-                        "/app/hello2",
-                        axum::routing::get(|p0| async move {
-                            t_controller.get_hello_world2(p0).await
-                        }),
-                    );
-                ctx.routers.lock().unwrap().push(router);
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!("Registering service {0}.\n", "AppService"),
-                    );
-                };
-                ctx.services
-                    .lock()
-                    .unwrap()
-                    .insert(
-                        "AppService".to_string(),
-                        Box::new(std::sync::Arc::new(AppService::default()))
-                            as Box<dyn std::any::Any>,
-                    );
-            }
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
             {
-                let dyn_module = ConfModule::for_root(ConfOptions {
-                    log_level: "info".to_string(),
-                });
-                let mut dyn_module_services = dyn_module.services;
-                for (k, v) in dyn_module_services.iter_mut() {
+                ::std::io::_print(
+                    format_args!("Registering interceptor {0}.\n", "LogInterceptor"),
+                );
+            };
+            ctx.interceptors
+                .insert(
+                    "LogInterceptor".to_string(),
+                    Box::new(std::sync::Arc::new(LogInterceptor::default()))
+                        as Box<dyn std::any::Any>,
+                );
+            ctx.controllers
+                .insert(
+                    "AppController".to_string(),
+                    Box::new(std::sync::Arc::new(controller::AppController::default())),
+                );
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!("Registering controller {0}.\n", "AppController"),
+                );
+            };
+            let t_controller = ctx.controllers.get("AppController").unwrap();
+            let t_controller = t_controller
+                .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                .unwrap();
+            let t_controller = t_controller.clone();
+            let meta = std::collections::HashMap::<String, String>::new();
+            let mut t_meta = t_controller.__meta();
+            t_meta.extend(meta);
+            let meta = t_meta;
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "Registering router \'{0} {1}\'.\n",
+                        "get".to_uppercase(),
+                        "/app/hello2",
+                    ),
+                );
+            };
+            let router = axum::Router::new()
+                .route(
+                    "/app/hello2",
+                    axum::routing::get(|p0| async move {
+                        t_controller.get_hello_world2(p0).await
+                    }),
+                );
+            ctx.routers.push(router);
+            let t_controller = ctx.controllers.get("AppController").unwrap();
+            let t_controller = t_controller
+                .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                .unwrap();
+            let t_controller = t_controller.clone();
+            let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
+            let t_interceptor_0 = t_interceptor_0
+                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
+                .unwrap();
+            let t_interceptor_0 = t_interceptor_0.clone();
+            let meta = t_controller.__get_hello_world_meta();
+            let mut t_meta = t_controller.__meta();
+            t_meta.extend(meta);
+            let meta = t_meta;
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "Registering router \'{0} {1}\'.\n",
+                        "get".to_uppercase(),
+                        "/app/hello",
+                    ),
+                );
+            };
+            let router = axum::Router::new()
+                .route(
+                    "/app/hello",
+                    axum::routing::get(|parts, p0| async move {
+                        let t_body = nidrs_extern::axum::body::Body::empty();
+                        let ctx = InterCtx {
+                            meta: meta.clone(),
+                            parts,
+                            body: t_body,
+                        };
+                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
+                            t_controller.get_hello_world(p0).await
+                        };
+                        t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
+                    }),
+                );
+            ctx.routers.push(router);
+            let t_controller = ctx.controllers.get("AppController").unwrap();
+            let t_controller = t_controller
+                .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                .unwrap();
+            let t_controller = t_controller.clone();
+            let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
+            let t_interceptor_0 = t_interceptor_0
+                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
+                .unwrap();
+            let t_interceptor_0 = t_interceptor_0.clone();
+            let t_interceptor_1 = ctx.interceptors.get("LogInterceptor").unwrap();
+            let t_interceptor_1 = t_interceptor_1
+                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
+                .unwrap();
+            let t_interceptor_1 = t_interceptor_1.clone();
+            let meta = std::collections::HashMap::<String, String>::new();
+            let mut t_meta = t_controller.__meta();
+            t_meta.extend(meta);
+            let meta = t_meta;
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "Registering router \'{0} {1}\'.\n",
+                        "post".to_uppercase(),
+                        "/app/hello",
+                    ),
+                );
+            };
+            let router = axum::Router::new()
+                .route(
+                    "/app/hello",
+                    axum::routing::post(|parts, p0, p1| async move {
+                        let t_body = p1;
+                        let ctx = InterCtx {
+                            meta: meta.clone(),
+                            parts,
+                            body: t_body,
+                        };
+                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
+                            let t_body = ctx.body;
+                            t_controller.post_hello_world(p0, t_body).await
+                        };
+                        let t_inter_fn_1 = |ctx: InterCtx<_>| async move {
+                            t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
+                        };
+                        t_interceptor_1.interceptor(ctx, t_inter_fn_1).await
+                    }),
+                );
+            ctx.routers.push(router);
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!("Registering service {0}.\n", "AppService"),
+                );
+            };
+            ctx.services
+                .insert(
+                    "AppService".to_string(),
+                    Box::new(std::sync::Arc::new(AppService::default()))
+                        as Box<dyn std::any::Any>,
+                );
+            let dyn_module = ConfModule::for_root(ConfOptions {
+                log_level: "info".to_string(),
+            });
+            let mut dyn_module_services = dyn_module.services;
+            dyn_module_services
+                .drain()
+                .for_each(|(k, v)| {
                     {
                         ::std::io::_print(
                             format_args!(
@@ -784,67 +765,57 @@ mod app {
                             format_args!("Registering dyn service {0}.\n", k),
                         );
                     };
-                    ctx.services.lock().unwrap().insert(k.clone(), v.take().unwrap());
-                }
-                ConfModule::default().init(ctx);
-                LogModule::default().init(ctx);
-                UserModule::default().init(ctx);
-            }
+                    ctx.services.insert(k.to_string(), v);
+                });
+            let ctx = ConfModule::default().init(ctx);
+            let ctx = LogModule::default().init(ctx);
+            let ctx = UserModule::default().init(ctx);
+            let t = ctx.services.get("AppService").unwrap();
+            let t = t.downcast_ref::<std::sync::Arc<AppService>>().unwrap();
+            let t = t.clone();
             {
-                let services = ctx.services.lock().unwrap();
-                let controllers = ctx.controllers.lock().unwrap();
-                let interceptors = ctx.interceptors.lock().unwrap();
-                let t = services.get("AppService").unwrap();
-                let t = t.downcast_ref::<std::sync::Arc<AppService>>().unwrap();
-                let t = t.clone();
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(format_args!("Injecting {0}.\n", "AppService"));
-                };
-                t.inject(&services);
-                let t = controllers.get("AppController").unwrap();
-                let t = t.downcast_ref::<std::sync::Arc<AppController>>().unwrap();
-                let t = t.clone();
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(format_args!("Injecting {0}.\n", "AppController"));
-                };
-                t.inject(&services);
-                let t = interceptors.get("LogInterceptor").unwrap();
-                let t = t.downcast_ref::<std::sync::Arc<LogInterceptor>>().unwrap();
-                let t = t.clone();
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!("Injecting {0}.\n", "LogInterceptor"),
-                    );
-                };
-                t.inject(&services);
-            }
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
             {
-                let services = ctx.services.lock().unwrap();
-            }
+                ::std::io::_print(format_args!("Injecting {0}.\n", "AppService"));
+            };
+            let ctx = t.inject(ctx);
+            let t = ctx.controllers.get("AppController").unwrap();
+            let t = t.downcast_ref::<std::sync::Arc<AppController>>().unwrap();
+            let t = t.clone();
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(format_args!("Injecting {0}.\n", "AppController"));
+            };
+            let ctx = t.inject(ctx);
+            let t = ctx.interceptors.get("LogInterceptor").unwrap();
+            let t = t.downcast_ref::<std::sync::Arc<LogInterceptor>>().unwrap();
+            let t = t.clone();
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(format_args!("Injecting {0}.\n", "LogInterceptor"));
+            };
+            let ctx = t.inject(ctx);
+            ctx
         }
     }
 }
@@ -892,13 +863,9 @@ mod conf {
             }
         }
         impl nidrs::Service for ConfService {
-            fn inject(
-                &self,
-                services: &std::sync::MutexGuard<
-                    std::collections::HashMap<String, Box<dyn std::any::Any>>,
-                >,
-            ) {
-                let service = services
+            fn inject(&self, ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
+                let service = ctx
+                    .services
                     .get("ConfOptions")
                     .expect(
                         {
@@ -917,6 +884,7 @@ mod conf {
                     .downcast_ref::<std::sync::Arc<ConfOptions>>()
                     .unwrap();
                 self.options.inject(service.clone());
+                ctx
             }
         }
         impl ConfService {
@@ -969,12 +937,9 @@ mod conf {
             }
         }
         impl nidrs::Service for ConfOptions {
-            fn inject(
-                &self,
-                services: &std::sync::MutexGuard<
-                    std::collections::HashMap<String, Box<dyn std::any::Any>>,
-                >,
-            ) {}
+            fn inject(&self, ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
+                ctx
+            }
         }
     }
     use std::{any::Any, collections::HashMap, sync::Arc};
@@ -1005,17 +970,15 @@ mod conf {
         }
     }
     impl nidrs::Module for ConfModule {
-        fn init(self, ctx: &nidrs::ModuleCtx) {
+        fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
             use nidrs::{
-                Service, ControllerService, InterceptorService, InterCtx, Interceptor, ModuleCtx,
-                StateCtx,
+                Service, ControllerService, InterceptorService, InterCtx, Interceptor,
+                ModuleCtx, StateCtx,
             };
-            if ctx.modules.lock().unwrap().contains_key("ConfModule") {
-                return;
+            if ctx.modules.contains_key("ConfModule") {
+                return ctx;
             }
             ctx.modules
-                .lock()
-                .unwrap()
                 .insert(
                     "ConfModule".to_string(),
                     Box::new(self) as Box<dyn std::any::Any>,
@@ -1034,74 +997,60 @@ mod conf {
                 );
             };
             {
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!("Registering service {0}.\n", "ConfService"),
-                    );
-                };
-                ctx.services
-                    .lock()
-                    .unwrap()
-                    .insert(
-                        "ConfService".to_string(),
-                        Box::new(std::sync::Arc::new(ConfService::default()))
-                            as Box<dyn std::any::Any>,
-                    );
-            }
-            {}
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
             {
-                let services = ctx.services.lock().unwrap();
-                let controllers = ctx.controllers.lock().unwrap();
-                let interceptors = ctx.interceptors.lock().unwrap();
-                let t = services.get("ConfService").unwrap();
-                let t = t.downcast_ref::<std::sync::Arc<ConfService>>().unwrap();
-                let t = t.clone();
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(format_args!("Injecting {0}.\n", "ConfService"));
-                };
-                t.inject(&services);
-            }
+                ::std::io::_print(
+                    format_args!("Registering service {0}.\n", "ConfService"),
+                );
+            };
+            ctx.services
+                .insert(
+                    "ConfService".to_string(),
+                    Box::new(std::sync::Arc::new(ConfService::default()))
+                        as Box<dyn std::any::Any>,
+                );
+            let t = ctx.services.get("ConfService").unwrap();
+            let t = t.downcast_ref::<std::sync::Arc<ConfService>>().unwrap();
+            let t = t.clone();
             {
-                let services = ctx.services.lock().unwrap();
-                let service = services.get("ConfService").unwrap();
-                let service = service
-                    .downcast_ref::<std::sync::Arc<ConfService>>()
-                    .unwrap();
-                let service = service.clone();
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "Triggering event on_module_init for {0}.\n",
-                            "ConfService",
-                        ),
-                    );
-                };
-                service.on_module_init();
-            }
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(format_args!("Injecting {0}.\n", "ConfService"));
+            };
+            let ctx = t.inject(ctx);
+            let service = ctx.services.get("ConfService").unwrap();
+            let service = service.downcast_ref::<std::sync::Arc<ConfService>>().unwrap();
+            let service = service.clone();
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "Triggering event on_module_init for {0}.\n",
+                        "ConfService",
+                    ),
+                );
+            };
+            service.on_module_init();
+            ctx
         }
     }
     impl ConfModule {
@@ -1109,8 +1058,8 @@ mod conf {
             DynamicModule {
                 services: HashMap::from([
                     (
-                        "ConfOptions".to_string(),
-                        Some(Box::new(Arc::new(options)) as Box<dyn Any + 'static>),
+                        "ConfOptions",
+                        Box::new(Arc::new(options)) as Box<dyn Any + 'static>,
                     ),
                 ]),
             }
@@ -1163,13 +1112,9 @@ mod user {
             }
         }
         impl nidrs::Service for UserService {
-            fn inject(
-                &self,
-                services: &std::sync::MutexGuard<
-                    std::collections::HashMap<String, Box<dyn std::any::Any>>,
-                >,
-            ) {
-                let service = services
+            fn inject(&self, ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
+                let service = ctx
+                    .services
                     .get("AppService")
                     .expect(
                         {
@@ -1188,6 +1133,7 @@ mod user {
                     .downcast_ref::<std::sync::Arc<AppService>>()
                     .unwrap();
                 self.app_service.inject(service.clone());
+                ctx
             }
         }
         impl UserService {
@@ -1240,13 +1186,9 @@ mod user {
             }
         }
         impl nidrs::ControllerService for UserController {
-            fn inject(
-                &self,
-                services: &std::sync::MutexGuard<
-                    std::collections::HashMap<String, Box<dyn std::any::Any>>,
-                >,
-            ) {
-                let service = services
+            fn inject(&self, ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
+                let service = ctx
+                    .services
                     .get("UserService")
                     .expect(
                         {
@@ -1265,6 +1207,7 @@ mod user {
                     .downcast_ref::<std::sync::Arc<UserService>>()
                     .unwrap();
                 self.user_service.inject(service.clone());
+                ctx
             }
         }
         impl UserController {
@@ -1305,17 +1248,15 @@ mod user {
         }
     }
     impl nidrs::Module for UserModule {
-        fn init(self, ctx: &nidrs::ModuleCtx) {
+        fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
             use nidrs::{
-                Service, ControllerService, InterceptorService, InterCtx, Interceptor, ModuleCtx,
-                StateCtx,
+                Service, ControllerService, InterceptorService, InterCtx, Interceptor,
+                ModuleCtx, StateCtx,
             };
-            if ctx.modules.lock().unwrap().contains_key("UserModule") {
-                return;
+            if ctx.modules.contains_key("UserModule") {
+                return ctx;
             }
             ctx.modules
-                .lock()
-                .unwrap()
                 .insert(
                     "UserModule".to_string(),
                     Box::new(self) as Box<dyn std::any::Any>,
@@ -1333,127 +1274,106 @@ mod user {
                     format_args!("Registering module {0}.\n", "UserModule"),
                 );
             };
+            ctx.controllers
+                .insert(
+                    "UserController".to_string(),
+                    Box::new(std::sync::Arc::new(controller::UserController::default())),
+                );
             {
-                ctx.controllers
-                    .lock()
-                    .unwrap()
-                    .insert(
-                        "UserController".to_string(),
-                        Box::new(
-                            std::sync::Arc::new(controller::UserController::default()),
-                        ),
-                    );
-                let controllers = ctx.controllers.lock().unwrap();
-                let interceptors = ctx.interceptors.lock().unwrap();
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!("Registering controller {0}.\n", "UserController"),
-                    );
-                };
-                let t_controller = controllers.get("UserController").unwrap();
-                let t_controller = t_controller
-                    .downcast_ref::<std::sync::Arc<controller::UserController>>()
-                    .unwrap();
-                let t_controller = t_controller.clone();
-                let meta = std::collections::HashMap::<String, String>::new();
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "Registering router \'{0} {1}\'.\n",
-                            "get".to_uppercase(),
-                            "/user/hello",
-                        ),
-                    );
-                };
-                let router = axum::Router::new()
-                    .route(
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!("Registering controller {0}.\n", "UserController"),
+                );
+            };
+            let t_controller = ctx.controllers.get("UserController").unwrap();
+            let t_controller = t_controller
+                .downcast_ref::<std::sync::Arc<controller::UserController>>()
+                .unwrap();
+            let t_controller = t_controller.clone();
+            let meta = std::collections::HashMap::<String, String>::new();
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "Registering router \'{0} {1}\'.\n",
+                        "get".to_uppercase(),
                         "/user/hello",
-                        axum::routing::get(|p0| async move {
-                            t_controller.get_hello_world(p0).await
-                        }),
-                    );
-                ctx.routers.lock().unwrap().push(router);
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!("Registering service {0}.\n", "UserService"),
-                    );
-                };
-                ctx.services
-                    .lock()
-                    .unwrap()
-                    .insert(
-                        "UserService".to_string(),
-                        Box::new(std::sync::Arc::new(UserService::default()))
-                            as Box<dyn std::any::Any>,
-                    );
-            }
+                    ),
+                );
+            };
+            let router = axum::Router::new()
+                .route(
+                    "/user/hello",
+                    axum::routing::get(|p0| async move {
+                        t_controller.get_hello_world(p0).await
+                    }),
+                );
+            ctx.routers.push(router);
             {
-                AppModule::default().init(ctx);
-            }
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
             {
-                let services = ctx.services.lock().unwrap();
-                let controllers = ctx.controllers.lock().unwrap();
-                let interceptors = ctx.interceptors.lock().unwrap();
-                let t = services.get("UserService").unwrap();
-                let t = t.downcast_ref::<std::sync::Arc<UserService>>().unwrap();
-                let t = t.clone();
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(format_args!("Injecting {0}.\n", "UserService"));
-                };
-                t.inject(&services);
-                let t = controllers.get("UserController").unwrap();
-                let t = t.downcast_ref::<std::sync::Arc<UserController>>().unwrap();
-                let t = t.clone();
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!("Injecting {0}.\n", "UserController"),
-                    );
-                };
-                t.inject(&services);
-            }
+                ::std::io::_print(
+                    format_args!("Registering service {0}.\n", "UserService"),
+                );
+            };
+            ctx.services
+                .insert(
+                    "UserService".to_string(),
+                    Box::new(std::sync::Arc::new(UserService::default()))
+                        as Box<dyn std::any::Any>,
+                );
+            let ctx = AppModule::default().init(ctx);
+            let t = ctx.services.get("UserService").unwrap();
+            let t = t.downcast_ref::<std::sync::Arc<UserService>>().unwrap();
+            let t = t.clone();
             {
-                let services = ctx.services.lock().unwrap();
-            }
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(format_args!("Injecting {0}.\n", "UserService"));
+            };
+            let ctx = t.inject(ctx);
+            let t = ctx.controllers.get("UserController").unwrap();
+            let t = t.downcast_ref::<std::sync::Arc<UserController>>().unwrap();
+            let t = t.clone();
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(format_args!("Injecting {0}.\n", "UserController"));
+            };
+            let ctx = t.inject(ctx);
+            ctx
         }
     }
 }
@@ -1470,12 +1390,9 @@ mod log {
             }
         }
         impl nidrs::Service for LogService {
-            fn inject(
-                &self,
-                services: &std::sync::MutexGuard<
-                    std::collections::HashMap<String, Box<dyn std::any::Any>>,
-                >,
-            ) {}
+            fn inject(&self, ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
+                ctx
+            }
         }
         impl LogService {
             pub fn log(&self, msg: &str) {
@@ -1515,13 +1432,9 @@ mod log {
             }
         }
         impl nidrs::InterceptorService for LogInterceptor {
-            fn inject(
-                &self,
-                services: &std::sync::MutexGuard<
-                    std::collections::HashMap<String, Box<dyn std::any::Any>>,
-                >,
-            ) {
-                let service = services
+            fn inject(&self, ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
+                let service = ctx
+                    .services
                     .get("LogService")
                     .expect(
                         {
@@ -1540,6 +1453,7 @@ mod log {
                     .downcast_ref::<std::sync::Arc<LogService>>()
                     .unwrap();
                 self.log_service.inject(service.clone());
+                ctx
             }
         }
         impl<B: FromRequest<StateCtx> + Debug, P: IntoAnyBody> Interceptor<B, P>
@@ -1591,17 +1505,15 @@ mod log {
         }
     }
     impl nidrs::Module for LogModule {
-        fn init(self, ctx: &nidrs::ModuleCtx) {
+        fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
             use nidrs::{
-                Service, ControllerService, InterceptorService, InterCtx, Interceptor, ModuleCtx,
-                StateCtx,
+                Service, ControllerService, InterceptorService, InterCtx, Interceptor,
+                ModuleCtx, StateCtx,
             };
-            if ctx.modules.lock().unwrap().contains_key("LogModule") {
-                return;
+            if ctx.modules.contains_key("LogModule") {
+                return ctx;
             }
             ctx.modules
-                .lock()
-                .unwrap()
                 .insert(
                     "LogModule".to_string(),
                     Box::new(self) as Box<dyn std::any::Any>,
@@ -1620,52 +1532,40 @@ mod log {
                 );
             };
             {
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!("Registering service {0}.\n", "LogService"),
-                    );
-                };
-                ctx.services
-                    .lock()
-                    .unwrap()
-                    .insert(
-                        "LogService".to_string(),
-                        Box::new(std::sync::Arc::new(LogService::default()))
-                            as Box<dyn std::any::Any>,
-                    );
-            }
-            {}
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
             {
-                let services = ctx.services.lock().unwrap();
-                let controllers = ctx.controllers.lock().unwrap();
-                let interceptors = ctx.interceptors.lock().unwrap();
-                let t = services.get("LogService").unwrap();
-                let t = t.downcast_ref::<std::sync::Arc<LogService>>().unwrap();
-                let t = t.clone();
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(format_args!("Injecting {0}.\n", "LogService"));
-                };
-                t.inject(&services);
-            }
+                ::std::io::_print(
+                    format_args!("Registering service {0}.\n", "LogService"),
+                );
+            };
+            ctx.services
+                .insert(
+                    "LogService".to_string(),
+                    Box::new(std::sync::Arc::new(LogService::default()))
+                        as Box<dyn std::any::Any>,
+                );
+            let t = ctx.services.get("LogService").unwrap();
+            let t = t.downcast_ref::<std::sync::Arc<LogService>>().unwrap();
+            let t = t.clone();
             {
-                let services = ctx.services.lock().unwrap();
-            }
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(format_args!("Injecting {0}.\n", "LogService"));
+            };
+            let ctx = t.inject(ctx);
+            ctx
         }
     }
 }

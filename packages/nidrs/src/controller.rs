@@ -1,7 +1,6 @@
-use nidrs_extern::{*};
-use std::{any::Any, collections::HashMap, sync::MutexGuard};
+use crate::ModuleCtx;
 
 pub trait ControllerService {
-  fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>);
+  fn inject(&self, ctx: ModuleCtx) -> ModuleCtx;
 }
 

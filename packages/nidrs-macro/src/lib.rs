@@ -132,40 +132,36 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
         #func
         
         impl nidrs::Module for #ident {
-            fn init(self, ctx: &nidrs::ModuleCtx){
+            fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx{
                 use nidrs::{Service, ControllerService, InterceptorService, InterCtx, Interceptor, ModuleCtx, StateCtx};
-                if ctx.modules.lock().unwrap().contains_key(stringify!(#ident)) {
-                    return;
+                if ctx.modules.contains_key(stringify!(#ident)) {
+                    return ctx;
                 }
-                ctx.modules.lock().unwrap().insert(stringify!(#ident).to_string(), Box::new(self) as Box<dyn std::any::Any>);
+                ctx.modules.insert(stringify!(#ident).to_string(), Box::new(self) as Box<dyn std::any::Any>);
                 nidrs_macro::log!("Registering module {}.", stringify!(#ident));
-                {
+                // {
                     #interceptor_register_tokens
 
                     #controller_register_tokens
     
                     #service_register_tokens
-                }
-                {
+                // }
+                // {
                     #imports_register_tokens
-                }
-                {
-                    let services = ctx.services.lock().unwrap();
-                    let controllers = ctx.controllers.lock().unwrap();
-                    let interceptors = ctx.interceptors.lock().unwrap();
-
+                // }
+                // {
                     #services_dep_inject_tokens
     
                     #controller_dep_inject_tokens
 
                     #interceptor_dep_inject_tokens
-                }
+                // }
 
-                {
-                    let services = ctx.services.lock().unwrap();
-
+                // {
                     #events_trigger_tokens
-                }
+                // }
+
+                ctx
             }
         }
     });
@@ -482,7 +478,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                 
                 (
                     quote!{
-                        let #prev_t_interceptor_ident = interceptors.get(stringify!(#inter_id)).unwrap();
+                        let #prev_t_interceptor_ident = ctx.interceptors.get(stringify!(#inter_id)).unwrap();
                         let #prev_t_interceptor_ident = #prev_t_interceptor_ident.downcast_ref::<std::sync::Arc<#inter_id>>().unwrap();
                         let #prev_t_interceptor_ident = #prev_t_interceptor_ident.clone();
                     },
@@ -562,7 +558,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                 }
             };
             quote! {
-                let t_controller = controllers.get(#controller_str).unwrap();
+                let t_controller = ctx.controllers.get(#controller_str).unwrap();
                 let t_controller = t_controller.downcast_ref::<std::sync::Arc<controller::#controller_ident>>().unwrap();
                 let t_controller = t_controller.clone();
 
@@ -575,7 +571,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                     #path,
                     axum::routing::#method_ident(#handler),
                 );
-                ctx.routers.lock().unwrap().push(router);
+                ctx.routers.push(router);
             }
         }).collect::<Vec<TokenStream2>>();
         let router_path = TokenStream2::from(quote! {
@@ -586,9 +582,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
         });
         
         quote! {
-            ctx.controllers.lock().unwrap().insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(controller::#controller_ident::default())));
-            let controllers = ctx.controllers.lock().unwrap();
-            let interceptors = ctx.interceptors.lock().unwrap();
+            ctx.controllers.insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(controller::#controller_ident::default())));
             
             #router_path
         }
@@ -606,7 +600,7 @@ fn gen_service_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
         
         quote! {
             nidrs_macro::log!("Registering service {}.", #controller_str);
-            ctx.services.lock().unwrap().insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(#controller_ident::default())) as Box<dyn std::any::Any>);
+            ctx.services.insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(#controller_ident::default())) as Box<dyn std::any::Any>);
         }
     }).collect::<Vec<TokenStream2>>();
     let controller_tokens = TokenStream2::from(quote! {
@@ -622,7 +616,7 @@ fn gen_interceptor_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 
         
         quote! {
             nidrs_macro::log!("Registering interceptor {}.", #controller_str);
-            ctx.interceptors.lock().unwrap().insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(#controller_ident::default())) as Box<dyn std::any::Any>);
+            ctx.interceptors.insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(#controller_ident::default())) as Box<dyn std::any::Any>);
         }
     }).collect::<Vec<TokenStream2>>();
     let controller_tokens = TokenStream2::from(quote! {
@@ -642,18 +636,18 @@ fn gen_imports_register_tokens(imports: Vec<TokenStream2>) -> TokenStream2 {
                 quote! {
                     let dyn_module = #import_call;
                     let mut dyn_module_services = dyn_module.services;
-                    for (k, v) in dyn_module_services.iter_mut() {
+                    dyn_module_services.drain().for_each(|(k, v)| {
                         nidrs_macro::log!("Registering dyn service {}.", k);
-                        ctx.services.lock().unwrap().insert(k.clone(), v.take().unwrap());
-                    }
-                    #module_ident::default().init(ctx);
+                        ctx.services.insert(k.to_string(), v);
+                    });
+                    let ctx = #module_ident::default().init(ctx);
                 }
             }else {
                 panic!("Invalid import.")
             }
         } else {
             quote! {
-                #import_tokens::default().init(ctx);
+                let ctx = #import_tokens::default().init(ctx);
             }
         }
     }).collect::<Vec<TokenStream2>>();
@@ -672,11 +666,11 @@ fn gen_dep_inject_tokens(con: &str, services: Vec<TokenStream2>) -> TokenStream2
         let controller_ident = tokens;
         
         quote! {
-            let t = #con_ident.get(#controller_str).unwrap();
+            let t = ctx.#con_ident.get(#controller_str).unwrap();
             let t = t.downcast_ref::<std::sync::Arc<#controller_ident>>().unwrap();
             let t = t.clone();
             nidrs_macro::log!("Injecting {}.", #controller_str);
-            t.inject(&services);
+            let ctx = t.inject(ctx);
         }
     }).collect::<Vec<TokenStream2>>();
     let controller_tokens = TokenStream2::from(quote! {
@@ -705,7 +699,7 @@ fn gen_service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStre
                             let injected_type = ty.to_token_stream();
                             let injected_type_str = injected_type.to_string();
                             quote! {
-                                let service = services.get(#injected_type_str).expect(format!("[{}] Service {} not register.", #ident_str, #injected_type_str).as_str());
+                                let service = ctx.services.get(#injected_type_str).expect(format!("[{}] Service {} not register.", #ident_str, #injected_type_str).as_str());
                                 let service = service.downcast_ref::<std::sync::Arc<#injected_type>>().unwrap();
                                 self.#field_ident.inject(service.clone());
                             }
@@ -728,8 +722,9 @@ fn gen_service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStre
 
     let inject_tokens = TokenStream2::from(quote! {
         impl nidrs::#service_type for #ident {
-            fn inject(&self, services: &std::sync::MutexGuard<std::collections::HashMap<String, Box<dyn std::any::Any>>>) {
+            fn inject(&self, ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx{
                 #(#fields)*
+                ctx
             }
         }
     });
@@ -748,7 +743,7 @@ fn gen_events_trigger_tokens() -> TokenStream2 {
         let service_ident = syn::Ident::new(service, Span::call_site().into());
         let func_ident = syn::Ident::new(func, Span::call_site().into());
         quote! {
-            let service = services.get(#service).unwrap();
+            let service = ctx.services.get(#service).unwrap();
             let service = service.downcast_ref::<std::sync::Arc<#service_ident>>().unwrap();
             let service = service.clone();
             nidrs_macro::log!("Triggering event on_module_init for {}.", #service);

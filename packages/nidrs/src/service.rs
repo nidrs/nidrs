@@ -1,9 +1,11 @@
 use nidrs_extern::once_cell;
 use once_cell::sync::OnceCell;
-use std::{any::Any, collections::HashMap, fmt::Debug, sync::{Arc, MutexGuard}};
+use std::sync::Arc;
+
+use crate::ModuleCtx;
 
 pub trait Service {
-  fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>);
+    fn inject(&self, ctx: ModuleCtx) -> ModuleCtx;
 }
 
 #[derive(Clone, Debug, Default)]

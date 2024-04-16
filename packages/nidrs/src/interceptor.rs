@@ -1,12 +1,12 @@
 use nidrs_extern::axum::{body::{Body, Bytes}, response::Response};
 use nidrs_extern::axum::{self, http::StatusCode, response::IntoResponse};
-use std::{any::Any, collections::HashMap, fmt::Debug, sync::MutexGuard};
+use std::{collections::HashMap, fmt::Debug};
 use serde::Serialize;
 
-use crate::{AppError, AppResult, StateCtx};
+use crate::{AppError, AppResult, ModuleCtx, StateCtx};
 
 pub trait InterceptorService {
-  fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>);
+  fn inject(&self, ctx: ModuleCtx) -> ModuleCtx;
 }
 
 /// P 和 R 是可以配置的
