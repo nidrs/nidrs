@@ -90,7 +90,7 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
     });
     ROUTES.lock().unwrap().insert(ident.to_string(), HashMap::new());
 
-    let inject_tokens = gen_service_inject_tokens("Controller", &func);
+    let inject_tokens = gen_service_inject_tokens("ControllerService", &func);
 
     TokenStream::from(quote! {
         #func
@@ -133,7 +133,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
         
         impl nidrs::Module for #ident {
             fn init(self, ctx: &nidrs::ModuleCtx){
-                use nidrs::{Service, Controller, Interceptor, HookCtx, InterceptorHook, ModuleCtx, StateCtx};
+                use nidrs::{Service, ControllerService, InterceptorService, InterCtx, Interceptor, ModuleCtx, StateCtx};
                 if ctx.modules.lock().unwrap().contains_key(stringify!(#ident)) {
                     return;
                 }
@@ -195,7 +195,7 @@ pub fn interceptor(args: TokenStream, input: TokenStream) -> TokenStream {
         name: func.ident.to_string(),
     });
 
-    let inject_tokens = gen_service_inject_tokens("Interceptor", &func);
+    let inject_tokens = gen_service_inject_tokens("InterceptorService", &func);
 
     return TokenStream::from(quote! {
         #func
@@ -462,7 +462,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                     };
                     let func_args = str_args_to_indent(t_vec);
                     tokens.push(quote!{
-                        let #prev_t_inter_fn_indent = |ctx: HookCtx<_>| async move {
+                        let #prev_t_inter_fn_indent = |ctx: InterCtx<_>| async move {
                             #body_tokens
                             t_controller.#route_name(#func_args).await
                         };
@@ -474,7 +474,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                     });
                 } else {
                     tokens.push(quote!{
-                        let #t_inter_fn_indent = |ctx: HookCtx<_>| async move {
+                        let #t_inter_fn_indent = |ctx: InterCtx<_>| async move {
                             #prev_t_interceptor_ident.interceptor(ctx, #prev_t_inter_fn_indent).await
                         };
                     });
@@ -516,7 +516,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
             };
             let def_clone_inter_tokens = TokenStream2::from(quote! {
                 #ctx_body_tokens
-                let ctx = HookCtx {
+                let ctx = InterCtx {
                     meta: meta.clone(),
                     parts,
                     body: t_body,

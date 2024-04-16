@@ -22,6 +22,7 @@ pub enum AppError {
     #[error(transparent)]
     Exception(#[from] Exception),
 }
+
 impl IntoResponse for AppError{
     fn into_response(self) -> axum::response::Response {
         axum::response::Response::builder()
@@ -54,31 +55,31 @@ pub trait Service {
     fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>);
 }
 
-pub trait Interceptor {
+pub trait InterceptorService {
     fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>);
 }
 
 
 /// P 和 R 是可以配置的
-pub trait InterceptorHook<B: axum::extract::FromRequest<StateCtx>, P>: Sized {
+pub trait Interceptor<B: axum::extract::FromRequest<StateCtx>, P>: Sized {
     type R;
 
-    async fn interceptor<F, H>(&self, ctx: HookCtx<B>, handler: H) -> AppResult<Self::R>
+    async fn interceptor<F, H>(&self, ctx: InterCtx<B>, handler: H) -> AppResult<Self::R>
     where
         // P: Into<Self::P>,
         // P: IntoAnyResponse,
         F: std::future::Future<Output = AppResult<P>> + Send + 'static,
-        H: FnOnce(HookCtx<B>) -> F;
+        H: FnOnce(InterCtx<B>) -> F;
 }
 
 
 #[derive(Debug)]
-pub struct AnyResponse<T = ()>{
+pub struct AnyBody<T = ()>{
     pub body: Result<Bytes, AppError>,
     marker: std::marker::PhantomData<T>,
 }
 
-impl Serialize for AnyResponse {
+impl Serialize for AnyBody {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -88,7 +89,7 @@ impl Serialize for AnyResponse {
     
 }
 
-impl IntoResponse for AnyResponse {
+impl IntoResponse for AnyBody {
     fn into_response(self) -> Response {
         let body = match self.body {
             Ok(b) => b,
@@ -104,12 +105,12 @@ impl IntoResponse for AnyResponse {
 }
 
 pub trait IntoAnyResponse: Sized + serde::Serialize {
-    fn from_serializable<T: serde::Serialize>(s: T) -> AnyResponse<Self>;
+    fn from_serializable<T: serde::Serialize>(s: T) -> AnyBody<Self>;
 }
 
 impl<T: serde::Serialize> IntoAnyResponse for T {
-    fn from_serializable<P: serde::Serialize>(s: P) -> AnyResponse<Self> {
-        AnyResponse {
+    fn from_serializable<P: serde::Serialize>(s: P) -> AnyBody<Self> {
+        AnyBody {
             body: serde_json::to_vec(&s).map(Bytes::from).map_err(|e| e.into()),
             marker: std::marker::PhantomData,
         }
@@ -117,7 +118,7 @@ impl<T: serde::Serialize> IntoAnyResponse for T {
 }
 
 
-pub trait Controller {
+pub trait ControllerService {
     fn inject(&self, services: &MutexGuard<HashMap<String, Box<dyn Any>>>);
 }
 
@@ -128,14 +129,10 @@ pub struct DynamicModule {
 
 
 #[derive(Debug)]
-pub struct HookCtx<B: axum::extract::FromRequest<StateCtx>>{
+pub struct InterCtx<B: axum::extract::FromRequest<StateCtx>>{
     pub meta: HashMap<String, String>,
     pub parts: axum::http::request::Parts,
     pub body: B,
-    // pub headers: HeaderMap<HeaderValue>,
-    // pub body: Bytes,
-    // pub request: &'a Request
-    // pub request: Request<T>,
 }
 
 pub struct NidrsFactory {

@@ -47,7 +47,7 @@ mod app {
                 }
             }
         }
-        impl nidrs::Controller for AppController {
+        impl nidrs::ControllerService for AppController {
             fn inject(
                 &self,
                 services: &std::sync::MutexGuard<
@@ -207,7 +207,7 @@ mod app {
             http::{header, StatusCode},
             response::{IntoResponse, Response},
         };
-        use nidrs::AnyResponse;
+        use nidrs::AnyBody;
         use serde::{Deserialize, Serialize};
         pub struct Status {
             pub db: String,
@@ -532,7 +532,7 @@ mod app {
     impl nidrs::Module for AppModule {
         fn init(self, ctx: &nidrs::ModuleCtx) {
             use nidrs::{
-                Service, Controller, Interceptor, HookCtx, InterceptorHook, ModuleCtx,
+                Service, ControllerService, InterceptorService, InterCtx, Interceptor, ModuleCtx,
                 StateCtx,
             };
             if ctx.modules.lock().unwrap().contains_key("AppModule") {
@@ -645,16 +645,16 @@ mod app {
                         "/app/hello",
                         axum::routing::post(|parts, p0, p1| async move {
                             let t_body = p1;
-                            let ctx = HookCtx {
+                            let ctx = InterCtx {
                                 meta: meta.clone(),
                                 parts,
                                 body: t_body,
                             };
-                            let t_inter_fn_0 = |ctx: HookCtx<_>| async move {
+                            let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
                                 let t_body = ctx.body;
                                 t_controller.post_hello_world(p0, t_body).await
                             };
-                            let t_inter_fn_1 = |ctx: HookCtx<_>| async move {
+                            let t_inter_fn_1 = |ctx: InterCtx<_>| async move {
                                 t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
                             };
                             t_interceptor_1.interceptor(ctx, t_inter_fn_1).await
@@ -697,12 +697,12 @@ mod app {
                         "/app/hello",
                         axum::routing::get(|parts, p0| async move {
                             let t_body = nidrs_extern::axum::body::Body::empty();
-                            let ctx = HookCtx {
+                            let ctx = InterCtx {
                                 meta: meta.clone(),
                                 parts,
                                 body: t_body,
                             };
-                            let t_inter_fn_0 = |ctx: HookCtx<_>| async move {
+                            let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
                                 t_controller.get_hello_world(p0).await
                             };
                             t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
@@ -1007,7 +1007,7 @@ mod conf {
     impl nidrs::Module for ConfModule {
         fn init(self, ctx: &nidrs::ModuleCtx) {
             use nidrs::{
-                Service, Controller, Interceptor, HookCtx, InterceptorHook, ModuleCtx,
+                Service, ControllerService, InterceptorService, InterCtx, Interceptor, ModuleCtx,
                 StateCtx,
             };
             if ctx.modules.lock().unwrap().contains_key("ConfModule") {
@@ -1239,7 +1239,7 @@ mod user {
                 }
             }
         }
-        impl nidrs::Controller for UserController {
+        impl nidrs::ControllerService for UserController {
             fn inject(
                 &self,
                 services: &std::sync::MutexGuard<
@@ -1307,7 +1307,7 @@ mod user {
     impl nidrs::Module for UserModule {
         fn init(self, ctx: &nidrs::ModuleCtx) {
             use nidrs::{
-                Service, Controller, Interceptor, HookCtx, InterceptorHook, ModuleCtx,
+                Service, ControllerService, InterceptorService, InterCtx, Interceptor, ModuleCtx,
                 StateCtx,
             };
             if ctx.modules.lock().unwrap().contains_key("UserModule") {
@@ -1495,7 +1495,7 @@ mod log {
         };
         use axum_extra::headers::Header;
         use nidrs::{
-            AnyResponse, Exception, HookCtx, Inject, Interceptor, InterceptorHook,
+            AnyBody, Exception, InterCtx, Inject, InterceptorService, Interceptor,
             IntoAnyResponse, StateCtx,
         };
         use nidrs_macro::interceptor;
@@ -1514,7 +1514,7 @@ mod log {
                 }
             }
         }
-        impl nidrs::Interceptor for LogInterceptor {
+        impl nidrs::InterceptorService for LogInterceptor {
             fn inject(
                 &self,
                 services: &std::sync::MutexGuard<
@@ -1542,23 +1542,23 @@ mod log {
                 self.log_service.inject(service.clone());
             }
         }
-        impl<B: FromRequest<StateCtx> + Debug, P: IntoAnyResponse> InterceptorHook<B, P>
+        impl<B: FromRequest<StateCtx> + Debug, P: IntoAnyResponse> Interceptor<B, P>
         for LogInterceptor {
-            type R = AnyResponse;
+            type R = AnyBody;
             async fn interceptor<F, H>(
                 &self,
-                ctx: HookCtx<B>,
+                ctx: InterCtx<B>,
                 handler: H,
             ) -> AppResult<Self::R>
             where
                 F: std::future::Future<Output = AppResult<P>> + Send + 'static,
-                H: FnOnce(HookCtx<B>) -> F,
+                H: FnOnce(InterCtx<B>) -> F,
             {
                 {
                     ::std::io::_print(format_args!("ctx: {0:?}\n", ctx));
                 };
                 self.log_service.log("Before");
-                let r: AppResult<AnyResponse> = handler(ctx)
+                let r: AppResult<AnyBody> = handler(ctx)
                     .await
                     .map(|r| IntoAnyResponse::from_serializable(r));
                 self.log_service.log("After");
@@ -1593,7 +1593,7 @@ mod log {
     impl nidrs::Module for LogModule {
         fn init(self, ctx: &nidrs::ModuleCtx) {
             use nidrs::{
-                Service, Controller, Interceptor, HookCtx, InterceptorHook, ModuleCtx,
+                Service, ControllerService, InterceptorService, InterCtx, Interceptor, ModuleCtx,
                 StateCtx,
             };
             if ctx.modules.lock().unwrap().contains_key("LogModule") {
