@@ -111,12 +111,12 @@ impl Parse for ModuleArgs {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum TokenType {
   Fn(ItemFn),
   Struct(ItemStruct),
 }
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct InterceptorArgs {
   pub ident: Ident,
   pub typ: TokenType,
