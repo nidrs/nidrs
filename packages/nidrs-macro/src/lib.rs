@@ -3,8 +3,18 @@
 extern crate proc_macro;
 
 use std::{
-    any::Any, borrow::BorrowMut, collections::HashMap, os::macos::raw, sync::{Arc, Mutex}
+    any::Any, borrow::BorrowMut, collections::HashMap, sync::{Arc, Mutex}
 };
+
+#[cfg(target_os = "windows")]
+use std::os::windows::raw;
+#[cfg(target_os = "unix")]
+use std::os::unix::raw;
+#[cfg(target_os = "linux")]
+use std::os::linux::raw;
+#[cfg(target_os = "macos")]
+use std::os::macos::raw;
+
 
 use once_cell::sync::Lazy;
 use proc_macro::{Ident, Span, TokenStream};
