@@ -1,5 +1,5 @@
 use nidrs_extern::{colored::Colorize, *};
-use nidrs_extern::axum::{self, http::StatusCode, response::IntoResponse};
+use nidrs_extern::axum::{http::StatusCode, response::IntoResponse};
 
 pub type AppResult<T = ()> = Result<T, AppError>;
 
