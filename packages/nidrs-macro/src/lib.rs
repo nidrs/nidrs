@@ -3,7 +3,7 @@
 extern crate proc_macro;
 
 use std::{
-    any::Any, borrow::BorrowMut, collections::HashMap, os::macos::raw, sync::{Arc, Mutex}
+    any::Any, borrow::BorrowMut, collections::HashMap, sync::{Arc, Mutex}
 };
 
 use once_cell::sync::Lazy;
