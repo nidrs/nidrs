@@ -3,10 +3,11 @@ use nidrs_extern::axum::{self, http::StatusCode, response::IntoResponse};
 use std::{collections::HashMap, fmt::Debug, future::Future};
 use serde::Serialize;
 
-use crate::{AppError, AppResult, ModuleCtx, StateCtx};
+use crate::{AppError, AppResult, ModuleCtx, ServiceProperty, StateCtx};
 
 pub trait InterceptorService {
   fn inject(&self, ctx: ModuleCtx) -> ModuleCtx;
+  fn property() -> ServiceProperty;
 }
 
 /// P 和 R 是可以配置的

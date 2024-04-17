@@ -726,6 +726,12 @@ fn gen_service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStre
                 #(#fields)*
                 ctx
             }
+
+            fn property() -> nidrs::ServiceProperty{
+                nidrs::ServiceProperty{
+                    name: stringify!(#ident),
+                }
+            }
         }
     });
 

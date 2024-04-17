@@ -71,6 +71,11 @@ mod app {
                 self.app_service.inject(service.clone());
                 ctx
             }
+            fn property() -> nidrs::ServiceProperty {
+                nidrs::ServiceProperty {
+                    name: "AppController",
+                }
+            }
         }
         impl AppController {
             pub fn __meta(&self) -> HashMap<String, String> {
@@ -184,6 +189,11 @@ mod app {
                     .unwrap();
                 self.user_service.inject(service.clone());
                 ctx
+            }
+            fn property() -> nidrs::ServiceProperty {
+                nidrs::ServiceProperty {
+                    name: "AppService",
+                }
             }
         }
         impl AppService {
@@ -592,40 +602,6 @@ mod app {
                 .downcast_ref::<std::sync::Arc<controller::AppController>>()
                 .unwrap();
             let t_controller = t_controller.clone();
-            let meta = std::collections::HashMap::<String, String>::new();
-            let mut t_meta = t_controller.__meta();
-            t_meta.extend(meta);
-            let meta = t_meta;
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "{0} ",
-                        nidrs_extern::colored::Colorize::green("[nidrs]"),
-                    ),
-                );
-            };
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "Registering router \'{0} {1}\'.\n",
-                        "get".to_uppercase(),
-                        "/app/hello2",
-                    ),
-                );
-            };
-            let router = axum::Router::new()
-                .route(
-                    "/app/hello2",
-                    axum::routing::get(|p0| async move {
-                        t_controller.get_hello_world2(p0).await
-                    }),
-                );
-            ctx.routers.push(router);
-            let t_controller = ctx.controllers.get("AppController").unwrap();
-            let t_controller = t_controller
-                .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                .unwrap();
-            let t_controller = t_controller.clone();
             let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
             let t_interceptor_0 = t_interceptor_0
                 .downcast_ref::<std::sync::Arc<LogInterceptor>>()
@@ -666,6 +642,40 @@ mod app {
                             t_controller.get_hello_world(p0).await
                         };
                         t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
+                    }),
+                );
+            ctx.routers.push(router);
+            let t_controller = ctx.controllers.get("AppController").unwrap();
+            let t_controller = t_controller
+                .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                .unwrap();
+            let t_controller = t_controller.clone();
+            let meta = std::collections::HashMap::<String, String>::new();
+            let mut t_meta = t_controller.__meta();
+            t_meta.extend(meta);
+            let meta = t_meta;
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "Registering router \'{0} {1}\'.\n",
+                        "get".to_uppercase(),
+                        "/app/hello2",
+                    ),
+                );
+            };
+            let router = axum::Router::new()
+                .route(
+                    "/app/hello2",
+                    axum::routing::get(|p0| async move {
+                        t_controller.get_hello_world2(p0).await
                     }),
                 );
             ctx.routers.push(router);
@@ -886,6 +896,11 @@ mod conf {
                 self.options.inject(service.clone());
                 ctx
             }
+            fn property() -> nidrs::ServiceProperty {
+                nidrs::ServiceProperty {
+                    name: "ConfService",
+                }
+            }
         }
         impl ConfService {
             pub fn on_module_init(&self) {
@@ -939,6 +954,11 @@ mod conf {
         impl nidrs::Service for ConfOptions {
             fn inject(&self, ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
                 ctx
+            }
+            fn property() -> nidrs::ServiceProperty {
+                nidrs::ServiceProperty {
+                    name: "ConfOptions",
+                }
             }
         }
     }
@@ -1056,14 +1076,12 @@ mod conf {
     impl ConfModule {
         pub fn for_root(options: ConfOptions) -> DynamicModule {
             DynamicModule {
-                services: HashMap::from([
-                    (
-                        "ConfOptions",
-                        Box::new(Arc::new(options)) as Box<dyn Any + 'static>,
-                    ),
-                ]),
+                services: HashMap::from([provider(options)]),
             }
         }
+    }
+    fn provider<T: Service + 'static>(service: T) -> (&'static str, Box<dyn Any>) {
+        (T::property().name, Box::new(Arc::new(service)) as Box<dyn Any>)
     }
 }
 mod user {
@@ -1134,6 +1152,11 @@ mod user {
                     .unwrap();
                 self.app_service.inject(service.clone());
                 ctx
+            }
+            fn property() -> nidrs::ServiceProperty {
+                nidrs::ServiceProperty {
+                    name: "UserService",
+                }
             }
         }
         impl UserService {
@@ -1208,6 +1231,11 @@ mod user {
                     .unwrap();
                 self.user_service.inject(service.clone());
                 ctx
+            }
+            fn property() -> nidrs::ServiceProperty {
+                nidrs::ServiceProperty {
+                    name: "UserController",
+                }
             }
         }
         impl UserController {
@@ -1393,6 +1421,11 @@ mod log {
             fn inject(&self, ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
                 ctx
             }
+            fn property() -> nidrs::ServiceProperty {
+                nidrs::ServiceProperty {
+                    name: "LogService",
+                }
+            }
         }
         impl LogService {
             pub fn log(&self, msg: &str) {
@@ -1454,6 +1487,11 @@ mod log {
                     .unwrap();
                 self.log_service.inject(service.clone());
                 ctx
+            }
+            fn property() -> nidrs::ServiceProperty {
+                nidrs::ServiceProperty {
+                    name: "LogInterceptor",
+                }
             }
         }
         impl<B: FromRequest<StateCtx> + Debug, P: IntoAnyBody> Interceptor<B, P>

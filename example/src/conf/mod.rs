@@ -3,7 +3,7 @@ pub mod options;
 
 use std::{any::Any, collections::HashMap, sync::Arc};
 
-use nidrs::{DynamicModule, Service};
+use nidrs::{provider, DynamicModule, Service};
 use nidrs_macro::module;
 
 use service::ConfService;
@@ -20,7 +20,7 @@ impl ConfModule {
   pub fn for_root(options: ConfOptions) -> DynamicModule {
     DynamicModule{
       services: HashMap::from([
-        ("ConfOptions", Box::new(Arc::new(options)) as Box<dyn Any + 'static>)
+        provider(options),
       ])
     }
   }
