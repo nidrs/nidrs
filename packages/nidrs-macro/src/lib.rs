@@ -10,7 +10,7 @@ use once_cell::sync::Lazy;
 use proc_macro::{Ident, Span, TokenStream};
 use proc_macro2::{Punct, TokenTree};
 use quote::{quote, ToTokens};
-use syn::{meta, parse::{Parse, ParseStream}, Expr, ExprArray, ExprCall, PatPath, Token};
+use syn::{meta, parse::{Parse, ParseStream}, Expr, ExprArray, ExprCall, PatPath, Stmt, Token};
 use syn::punctuated::Punctuated;
 use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatType, Type};
 use proc_macro2::TokenStream as TokenStream2;
@@ -26,7 +26,7 @@ static INTERS: Lazy<Mutex<HashMap<String, Vec<String>>>> = Lazy::new(||Mutex::ne
 static METAS: Lazy<Mutex<HashMap<String, bool>>> = Lazy::new(||Mutex::new(HashMap::new())); // HashMap<ServiceName, Vec<InterName>>
 static MERGE_MACRO: Lazy<Mutex<Vec<String>>> = Lazy::new(||Mutex::new(vec![]));
 static MERGE_COUNT: Lazy<Mutex<HashMap<String, u32>>> = Lazy::new(||Mutex::new(HashMap::new())); // HashMap<ServiceName, Vec<InterName>>
-static MERGE_TOKEN_MAP: Lazy<Mutex<HashMap<String, String>>> = Lazy::new(||Mutex::new(HashMap::new())); // HashMap<ServiceName, Vec<InterName>>
+static MERGE_TOKEN_MAP: Lazy<Mutex<HashMap<String, Vec<String>>>> = Lazy::new(||Mutex::new(HashMap::new())); // HashMap<ServiceName, Vec<InterName>>
 
 
 #[derive(Debug, Clone)]
@@ -122,7 +122,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let events_trigger_tokens =  gen_events_trigger_tokens();
     
-    println!("module {:?}", ident.to_string());
+    // println!("module {:?}", ident.to_string());
     CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta {
         name: "".to_string(),
         path: "".to_string(),
@@ -131,6 +131,9 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     EVENTS.lock().unwrap().clear();
     INTERS.lock().unwrap().clear();
     METAS.lock().unwrap().clear();
+    MERGE_MACRO.lock().unwrap().clear();
+    MERGE_COUNT.lock().unwrap().clear();
+    MERGE_TOKEN_MAP.lock().unwrap().clear();
 
 
     return TokenStream::from(quote! {
@@ -254,22 +257,45 @@ pub fn uses(args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn merge_fun(args: TokenStream, input: TokenStream) -> TokenStream {
     let mut func = parse_macro_input!(input as ItemFn);
-    println!("merge_fun {}", func.block.to_token_stream().to_string());
-    // func.block.stmts.iter().for_each(|stmt| {
-    //     println!("stmt {:?}", stmt.to_token_stream().to_string());
-    // });
-    // func.block.stmts.clear();
-    
-    // MERGE_COUNT.lock().unwrap()
+
     let key = CURRENT_CONTROLLER.lock().unwrap().as_ref().unwrap().name.clone() + ":" + &func.sig.ident.to_string();
-    println!("merge_fun {:?}", MERGE_COUNT.lock().unwrap().get(key.as_str()));
-    MERGE_TOKEN_MAP.lock().unwrap().insert(func.sig.ident.to_string(), func.block.to_token_stream().to_string());
+    // println!("// merge_fun {} {:?}",key, MERGE_COUNT.lock().unwrap().get(key.as_str()));
+    MERGE_TOKEN_MAP.lock().unwrap().entry(key.clone()).or_insert(vec![]).push(func.block.to_token_stream().to_string());
 
+    let binding = MERGE_TOKEN_MAP.lock().unwrap();
+    let current_token = binding.get(key.as_str()).unwrap();
 
-    return TokenStream::from(quote! {
-        #func
-    });
+    let is_last = *MERGE_COUNT.lock().unwrap().get(key.as_str()).unwrap() == current_token.len() as u32;
+
+    if is_last {
+        let tokens = current_token.iter().map(|tokens| {
+            let tokens = TokenStream2::from_str(tokens.as_str()).unwrap();
+            quote! {
+                let b = #tokens;
+                t.extend(b);
+            }
+        }).collect::<Vec<TokenStream2>>();
+
+        let tokens = TokenStream2::from(quote! {
+            {
+                let mut t = std::collections::HashMap::<String, String>::new();
+                #(#tokens)*
+                t
+            }
+        });
+        
+        let stmts = vec![syn::parse2(tokens).unwrap()];
+        
+        func.block.stmts = stmts;
+        
+        return TokenStream::from(quote! {
+            #func
+        });
+    } else {
+        return TokenStream::from(quote! {});
+    }
 }
+
 #[proc_macro_attribute]
 pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(args as MetaArgs);
@@ -289,13 +315,14 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
         });
         let current_service = CURRENT_CONTROLLER.lock().unwrap().clone();
         let service_name = current_service.unwrap().name.clone();
-        let key = service_name + ":" + &func_name;
+        let key = service_name.clone() + ":" + &func_name;
         METAS.lock().unwrap().insert(key.clone(), true);
-        MERGE_COUNT.lock().unwrap().entry(key.clone()).or_insert(0);
-        MERGE_COUNT.lock().unwrap().entry(key.clone()).and_modify(|v| *v += 1);
-
-
+        
+        
         let func_meta = "__".to_owned() + func.ident.to_string().as_str() + "_meta";
+        let meta_key =  service_name.clone() + ":" + &func_meta;
+        MERGE_COUNT.lock().unwrap().entry(meta_key.clone()).or_insert(0);
+        MERGE_COUNT.lock().unwrap().entry(meta_key.clone()).and_modify(|v| *v += 1);
         let func_meta_ident = syn::Ident::new(&func_meta, Span::call_site().into());
         return TokenStream::from(quote! {
             #raw_input

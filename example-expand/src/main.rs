@@ -3,22 +3,6 @@
 #![feature(alloc)]
 #![feature(fmt_helpers_for_derive)]
 #![allow(warnings, unused)]
-merge_fun {
-    let mut meta = HashMap :: new();
-    meta.insert("fun_name".to_string(), "get_hello_world".to_string());
-    meta.insert("role2".to_string(), "\"user\"".to_string()); meta
-}
-merge_fun None
-merge_fun {
-    let mut meta = HashMap :: new();
-    meta.insert("fun_name".to_string(), "get_hello_world".to_string());
-    meta.insert("role".to_string(), "\"user\"".to_string()); meta
-}
-merge_fun None
-module "AppModule"
-module "ConfModule"
-module "UserModule"
-module "LogModule"
 #![feature(prelude_import)]
 #[prelude_import]
 use std::prelude::rust_2021::*;
@@ -121,16 +105,30 @@ mod app {
                 })
             }
             pub fn __get_hello_world_meta(&self) -> HashMap<String, String> {
-                let mut meta = HashMap::new();
-                meta.insert("fun_name".to_string(), "get_hello_world".to_string());
-                meta.insert("role2".to_string(), "\"user\"".to_string());
-                meta
-            }
-            pub fn __get_hello_world_meta(&self) -> HashMap<String, String> {
-                let mut meta = HashMap::new();
-                meta.insert("fun_name".to_string(), "get_hello_world".to_string());
-                meta.insert("role".to_string(), "\"user\"".to_string());
-                meta
+                {
+                    let mut t = std::collections::HashMap::<String, String>::new();
+                    let b = {
+                        let mut meta = HashMap::new();
+                        meta.insert(
+                            "fun_name".to_string(),
+                            "get_hello_world".to_string(),
+                        );
+                        meta.insert("role2".to_string(), "\"user\"".to_string());
+                        meta
+                    };
+                    t.extend(b);
+                    let b = {
+                        let mut meta = HashMap::new();
+                        meta.insert(
+                            "fun_name".to_string(),
+                            "get_hello_world".to_string(),
+                        );
+                        meta.insert("role".to_string(), "\"user\"".to_string());
+                        meta
+                    };
+                    t.extend(b);
+                    t
+                }
             }
             pub async fn get_hello_world2(
                 &self,
@@ -629,40 +627,6 @@ mod app {
                 .downcast_ref::<std::sync::Arc<controller::AppController>>()
                 .unwrap();
             let t_controller = t_controller.clone();
-            let meta = std::collections::HashMap::<String, String>::new();
-            let mut t_meta = t_controller.__meta();
-            t_meta.extend(meta);
-            let meta = t_meta;
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "{0} ",
-                        nidrs_extern::colored::Colorize::green("[nidrs]"),
-                    ),
-                );
-            };
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "Registering router \'{0} {1}\'.\n",
-                        "get".to_uppercase(),
-                        "/app/hello2",
-                    ),
-                );
-            };
-            let router = axum::Router::new()
-                .route(
-                    "/app/hello2",
-                    axum::routing::get(|p0| async move {
-                        t_controller.get_hello_world2(p0).await
-                    }),
-                );
-            ctx.routers.push(router);
-            let t_controller = ctx.controllers.get("AppController").unwrap();
-            let t_controller = t_controller
-                .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                .unwrap();
-            let t_controller = t_controller.clone();
             let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
             let t_interceptor_0 = t_interceptor_0
                 .downcast_ref::<std::sync::Arc<LogInterceptor>>()
@@ -703,6 +667,40 @@ mod app {
                             t_controller.get_hello_world(p0).await
                         };
                         t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
+                    }),
+                );
+            ctx.routers.push(router);
+            let t_controller = ctx.controllers.get("AppController").unwrap();
+            let t_controller = t_controller
+                .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                .unwrap();
+            let t_controller = t_controller.clone();
+            let meta = std::collections::HashMap::<String, String>::new();
+            let mut t_meta = t_controller.__meta();
+            t_meta.extend(meta);
+            let meta = t_meta;
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "Registering router \'{0} {1}\'.\n",
+                        "get".to_uppercase(),
+                        "/app/hello2",
+                    ),
+                );
+            };
+            let router = axum::Router::new()
+                .route(
+                    "/app/hello2",
+                    axum::routing::get(|p0| async move {
+                        t_controller.get_hello_world2(p0).await
                     }),
                 );
             ctx.routers.push(router);
