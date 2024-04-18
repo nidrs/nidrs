@@ -2,6 +2,8 @@ use nidrs_extern::axum;
 use nidrs_extern::tokio;
 use std::{any::Any, collections::HashMap};
 
+use crate::AppResult;
+
 pub trait Module {
   fn init(self, ctx: ModuleCtx)->ModuleCtx;
 }
@@ -33,12 +35,10 @@ impl NidrsFactory {
       }
   }
 
-  pub async fn listen<E>(self, port: u32) -> Result<(), E>
-  where
-      E: std::convert::From<std::io::Error>,
+  pub async fn listen(self, port: u32) -> AppResult<()>
   {
-      let tcp = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await.map_err(E::from)?;
-      let addr = tcp.local_addr().map_err(E::from)?;
+      let tcp = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
+      let addr = tcp.local_addr()?;
       nidrs_macro::log!("Listening on {}", addr);
       
       axum::serve(tcp, self.router.with_state(StateCtx{})).await?;

@@ -16,9 +16,9 @@ pub use nidrs::AppError;
 fn main() {
     let mut app = nidrs::NidrsFactory::create(app::AppModule);
 
-    app.router = app.router.merge(Router::<StateCtx>::new().route("/api", get(|| async { "Hello, World!" })));
+    // app.router = Router::<StateCtx>::new().nest("/api", app.router);
     
-    let app = app.listen::<AppError>(3000);
+    let app = app.listen(3000);
     let _ = tokio::runtime::Runtime::new().unwrap().block_on(app);
 }
 
