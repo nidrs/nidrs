@@ -20,6 +20,7 @@ pub struct AppController {
 
 impl AppController {
     #[meta(role = "user")]
+    #[meta(role2 = "user")]
     #[uses(LogInterceptor)]
     // #[version("v1")]
     #[get("/hello")]
