@@ -33,6 +33,7 @@ impl DynamicModule {
 
 pub struct NidrsFactory {
   pub router: axum::Router<StateCtx>,
+  pub default_prefix: &'static str,
 }
 
 impl NidrsFactory {
@@ -51,7 +52,13 @@ impl NidrsFactory {
       }
       NidrsFactory {
           router: router.merge(sub_router),
+          default_prefix: "",
       }
+  }
+
+  pub fn default_prefix(mut self, prefix: &'static str) -> Self {
+    self.default_prefix = prefix;
+    self
   }
 
   pub fn listen(self, port: u32) {

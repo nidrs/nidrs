@@ -1,15 +1,17 @@
 use std::{collections::HashMap, sync::Arc};
 
-use axum::{extract::{Query, State}, http::StatusCode, Json};
-use nidrs::{throw, Exception, Inject, StateCtx};
+use axum::{extract::{Query, State}, http::{version, StatusCode}, Json};
+use nidrs::{throw, version, Exception, Inject, StateCtx};
 use nidrs_macro::{controller, get, meta, post, uses};
 
 use crate::{shared::fn_test::fn_test, AppError, AppResult};
 
 use super::{dto::{Status}, service::AppService};
 
-#[meta(role = "admin", auth = "true")]
 // #[uses(LogInterceptor)]
+#[version("v1")]
+#[meta(role = "admin", auth = "true")]
+#[meta(test = "true")]
 #[controller("/app")]
 #[derive(Debug, Default)]
 pub struct AppController {
@@ -17,9 +19,10 @@ pub struct AppController {
 }
 
 impl AppController {
-    #[get("/hello")]
     #[meta(role = "user")]
     #[uses(LogInterceptor)]
+    // #[version("v1")]
+    #[get("/hello")]
     pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<Status> {
         println!("Query {:?}", q);
         // fn_test()?;

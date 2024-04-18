@@ -8,7 +8,9 @@
 use std::prelude::rust_2021::*;
 #[macro_use]
 extern crate std;
-use axum::{http::StatusCode, response::IntoResponse, routing::get, Form, Router};
+use axum::{
+    extract::path, http::StatusCode, response::IntoResponse, routing::get, Form, Router,
+};
 use nidrs::{Exception, StateCtx};
 use nidrs_extern::colored::Colorize;
 mod app {
@@ -17,9 +19,10 @@ mod app {
         use std::{collections::HashMap, sync::Arc};
         use axum::{
             extract::{Query, State},
-            http::StatusCode, Json,
+            http::{version, StatusCode},
+            Json,
         };
-        use nidrs::{throw, Exception, Inject, StateCtx};
+        use nidrs::{throw, version, Exception, Inject, StateCtx};
         use nidrs_macro::{controller, get, meta, post, uses};
         use crate::{shared::fn_test::fn_test, AppError, AppResult};
         use super::{dto::Status, service::AppService};
@@ -81,8 +84,10 @@ mod app {
             pub fn __meta(&self) -> HashMap<String, String> {
                 let mut meta = HashMap::new();
                 meta.insert("struct_name".to_string(), "AppController".to_string());
-                meta.insert("auth".to_string(), "\"true\"".to_string());
+                meta.insert("test".to_string(), "\"true\"".to_string());
+                meta.insert("version".to_string(), "\"v1\"".to_string());
                 meta.insert("role".to_string(), "\"admin\"".to_string());
+                meta.insert("auth".to_string(), "\"true\"".to_string());
                 meta
             }
         }
@@ -607,63 +612,6 @@ mod app {
                 .downcast_ref::<std::sync::Arc<LogInterceptor>>()
                 .unwrap();
             let t_interceptor_0 = t_interceptor_0.clone();
-            let t_interceptor_1 = ctx.interceptors.get("LogInterceptor").unwrap();
-            let t_interceptor_1 = t_interceptor_1
-                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
-                .unwrap();
-            let t_interceptor_1 = t_interceptor_1.clone();
-            let meta = std::collections::HashMap::<String, String>::new();
-            let mut t_meta = t_controller.__meta();
-            t_meta.extend(meta);
-            let meta = t_meta;
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "{0} ",
-                        nidrs_extern::colored::Colorize::green("[nidrs]"),
-                    ),
-                );
-            };
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "Registering router \'{0} {1}\'.\n",
-                        "post".to_uppercase(),
-                        "/app/hello",
-                    ),
-                );
-            };
-            let router = axum::Router::new()
-                .route(
-                    "/app/hello",
-                    axum::routing::post(|parts, p0, p1| async move {
-                        let t_body = p1;
-                        let ctx = InterCtx {
-                            meta: meta.clone(),
-                            parts,
-                            body: t_body,
-                        };
-                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
-                            let t_body = ctx.body;
-                            t_controller.post_hello_world(p0, t_body).await
-                        };
-                        let t_inter_fn_1 = |ctx: InterCtx<_>| async move {
-                            t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
-                        };
-                        t_interceptor_1.interceptor(ctx, t_inter_fn_1).await
-                    }),
-                );
-            ctx.routers.push(router);
-            let t_controller = ctx.controllers.get("AppController").unwrap();
-            let t_controller = t_controller
-                .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                .unwrap();
-            let t_controller = t_controller.clone();
-            let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
-            let t_interceptor_0 = t_interceptor_0
-                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
-                .unwrap();
-            let t_interceptor_0 = t_interceptor_0.clone();
             let meta = t_controller.__get_hello_world_meta();
             let mut t_meta = t_controller.__meta();
             t_meta.extend(meta);
@@ -733,6 +681,63 @@ mod app {
                     "/app/hello2",
                     axum::routing::get(|p0| async move {
                         t_controller.get_hello_world2(p0).await
+                    }),
+                );
+            ctx.routers.push(router);
+            let t_controller = ctx.controllers.get("AppController").unwrap();
+            let t_controller = t_controller
+                .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                .unwrap();
+            let t_controller = t_controller.clone();
+            let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
+            let t_interceptor_0 = t_interceptor_0
+                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
+                .unwrap();
+            let t_interceptor_0 = t_interceptor_0.clone();
+            let t_interceptor_1 = ctx.interceptors.get("LogInterceptor").unwrap();
+            let t_interceptor_1 = t_interceptor_1
+                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
+                .unwrap();
+            let t_interceptor_1 = t_interceptor_1.clone();
+            let meta = std::collections::HashMap::<String, String>::new();
+            let mut t_meta = t_controller.__meta();
+            t_meta.extend(meta);
+            let meta = t_meta;
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "Registering router \'{0} {1}\'.\n",
+                        "post".to_uppercase(),
+                        "/app/hello",
+                    ),
+                );
+            };
+            let router = axum::Router::new()
+                .route(
+                    "/app/hello",
+                    axum::routing::post(|parts, p0, p1| async move {
+                        let t_body = p1;
+                        let ctx = InterCtx {
+                            meta: meta.clone(),
+                            parts,
+                            body: t_body,
+                        };
+                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
+                            let t_body = ctx.body;
+                            t_controller.post_hello_world(p0, t_body).await
+                        };
+                        let t_inter_fn_1 = |ctx: InterCtx<_>| async move {
+                            t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
+                        };
+                        t_interceptor_1.interceptor(ctx, t_inter_fn_1).await
                     }),
                 );
             ctx.routers.push(router);
@@ -1075,9 +1080,7 @@ mod conf {
     }
     impl ConfModule {
         pub fn for_root(options: ConfOptions) -> DynamicModule {
-            DynamicModule {
-                services: HashMap::from([provider(options)]),
-            }
+            DynamicModule::new().provider(options)
         }
     }
 }
@@ -1633,7 +1636,28 @@ mod shared {
 pub use nidrs::AppResult;
 pub use nidrs::AppError;
 fn main() {
-    let mut app = nidrs::NidrsFactory::create(app::AppModule);
+    let app = nidrs::NidrsFactory::create(app::AppModule);
+    let app = app.default_prefix("/api/{version}");
+    let a1 = 123;
     app.listen(3000);
+}
+fn f(path: &str) {
+    let ctx: Ctx = Ctx { a1: 12 };
+    {
+        ::std::io::_print(
+            format_args!(
+                "{0}\n",
+                {
+                    let res = ::alloc::fmt::format(
+                        format_args!("{0} {1}", ctx.a1, ctx.a1),
+                    );
+                    res
+                },
+            ),
+        );
+    };
+}
+struct Ctx {
+    a1: i32,
 }
 extern crate alloc;

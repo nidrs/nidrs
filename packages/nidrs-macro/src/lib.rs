@@ -3,7 +3,7 @@
 extern crate proc_macro;
 
 use std::{
-    any::Any, borrow::BorrowMut, collections::HashMap, sync::{Arc, Mutex}
+    any::Any, borrow::BorrowMut, cell::RefCell, collections::HashMap, str::FromStr, sync::{Arc, Mutex}
 };
 
 use once_cell::sync::Lazy;
@@ -24,6 +24,8 @@ static CURRENT_SERVICE: Mutex<Option<ServiceMeta>> = Mutex::new(None);
 static EVENTS: Lazy<Mutex<HashMap<String, Vec<(String, String)>>>> = Lazy::new(||Mutex::new(HashMap::new())); // HashMap<EventName, Vec<(ServiceName,FName)>>
 static INTERS: Lazy<Mutex<HashMap<String, Vec<String>>>> = Lazy::new(||Mutex::new(HashMap::new())); // HashMap<ServiceName, Vec<InterName>>
 static METAS: Lazy<Mutex<HashMap<String, bool>>> = Lazy::new(||Mutex::new(HashMap::new())); // HashMap<ServiceName, Vec<InterName>>
+static MERGE_MACRO: Lazy<Mutex<Vec<String>>> = Lazy::new(||Mutex::new(vec![]));
+
 
 #[derive(Debug, Clone)]
 struct RouteMeta {
@@ -79,11 +81,12 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
         // throw error
         panic!("Invalid argument");
     };
-
+    
     let func = parse_macro_input!(input as ItemStruct);
-
+    
     let ident = func.ident.clone();
-
+    
+    // println!("controller {} {:?}", ident.to_string(), func.attrs);
     CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta {
         name: ident.to_string(),
         path: path,
@@ -258,7 +261,7 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
             meta.insert(#key.to_string(), #value.to_string());
         }
     }).collect::<Vec<TokenStream2>>();
-    if let TokenType::Fn(_) = func.typ {
+    if let TokenType::Fn(s) = func.typ {
         let meta_tokens = TokenStream2::from(quote! {
             meta.insert("fun_name".to_string(), #func_name.to_string());
             #(#meta_tokens)*
@@ -279,27 +282,57 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
                 meta
             }
         });
-    }else{
-        let meta_tokens = TokenStream2::from(quote! {
-            meta.insert("struct_name".to_string(), #func_name.to_string());
-            #(#meta_tokens)*
-        });
-        let key = func_name;
-        METAS.lock().unwrap().insert(key, true);
-
-        return TokenStream::from(quote! {
-            #raw_input
-
-            impl #func_ident {
-                pub fn __meta(&self) -> HashMap<String, String>{
-                    let mut meta = HashMap::new();
-                    #meta_tokens
-                    meta
+    }else if let TokenType::Struct(s) = func.typ{
+        let is_last_meta = is_last_meta(s.clone()); 
+        if is_last_meta {
+            let meta_tokens = TokenStream2::from(quote! {
+                meta.insert("struct_name".to_string(), #func_name.to_string());
+                #(#meta_tokens)*
+            });
+            METAS.lock().unwrap().insert(func_name, true);
+            let prev_meta_tokens = MERGE_MACRO.lock().unwrap().drain(..).map(
+                |tokens| {
+                    let tokens = TokenStream2::from_str(tokens.as_str()).unwrap();
+                    quote! {
+                        #tokens
+                    }
                 }
-            }
-        });
-    
+            ).collect::<Vec<TokenStream2>>();
+            // println!("// struct meta {} {:?}", s.ident.to_string(), MERGE_MACRO.lock().unwrap().len());
+            return TokenStream::from(quote! {
+                #raw_input
+                impl #func_ident {
+                    pub fn __meta(&self) -> HashMap<String, String>{
+                        let mut meta = HashMap::new();
+                        #meta_tokens
+                        #(#prev_meta_tokens)*
+                        meta
+                    }
+                }
+            });
+        }else{
+            let meta_tokens = TokenStream2::from(quote! {
+                #(#meta_tokens)*
+            });
+            MERGE_MACRO.lock().unwrap().push(meta_tokens.to_string());
+            return TokenStream::from(quote! {
+                #raw_input
+            });
+        }
+    } else {
+        panic!("Invalid meta type.");
     }
+}
+
+fn is_last_meta(s: ItemStruct)->bool{
+    !s.attrs.iter().any(|attr| {
+        if let syn::Meta::List(name_value) = attr.meta.to_owned() {
+            if name_value.path.is_ident("meta") {
+                return true;
+            }
+        }
+        return false;
+    })
 }
 
 #[proc_macro]
@@ -334,6 +367,30 @@ pub fn log(input: TokenStream) -> TokenStream {
     return TokenStream::from(quote::quote! {
         print!("{} ", nidrs_extern::colored::Colorize::green("[nidrs]"));
         println!(#(#input_tokens)*);
+    });
+}
+
+/// auto add a meta #[meta(version = String)]
+#[proc_macro_attribute]
+pub fn version(args: TokenStream, input: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(args as ExprList);
+    let raw_input = TokenStream2::from(input.clone());
+
+    let version = args.items.iter().map(|arg| {
+        if let Expr::Lit(lit) = arg {
+            if let syn::Lit::Str(str) = lit.to_owned().lit {
+                str.value().trim().to_string()
+            } else {
+                panic!("Invalid argument")
+            }
+        } else {
+            panic!("Invalid argument")
+        }
+    }).collect::<Vec<String>>().first().unwrap().clone();
+
+    return TokenStream::from(quote! {
+        #[meta(version = #version)]
+        #raw_input
     });
 }
 
