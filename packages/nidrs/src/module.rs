@@ -35,14 +35,18 @@ impl NidrsFactory {
       }
   }
 
-  pub async fn listen(self, port: u32) -> AppResult<()>
-  {
+  pub fn listen(self, port: u32) {
+    let server = || async {
       let tcp = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
       let addr = tcp.local_addr()?;
       nidrs_macro::log!("Listening on {}", addr);
       
       axum::serve(tcp, self.router.with_state(StateCtx{})).await?;
-      Ok(())
+
+      AppResult::Ok(())
+    };
+    
+    let _ = tokio::runtime::Runtime::new().unwrap().block_on(server());
   }
 }
 

@@ -18,8 +18,7 @@ fn main() {
 
     // app.router = Router::<StateCtx>::new().nest("/api", app.router);
     
-    let app = app.listen(3000);
-    let _ = tokio::runtime::Runtime::new().unwrap().block_on(app);
+    app.listen(3000);
 }
 
 
