@@ -2,7 +2,7 @@ use nidrs_extern::axum;
 use nidrs_extern::tokio;
 use std::{any::Any, collections::HashMap};
 
-use crate::AppResult;
+use crate::{provider, AppResult, Service};
 
 pub trait Module {
   fn init(self, ctx: ModuleCtx)->ModuleCtx;
@@ -10,6 +10,25 @@ pub trait Module {
 
 pub struct DynamicModule {
   pub services: HashMap<&'static str, Box<dyn Any>>,
+}
+
+impl DynamicModule {
+  pub fn new() -> Self {
+    DynamicModule {
+        services: HashMap::new(),
+    }
+  }
+
+  pub fn service(mut self, service: (&'static str, Box<dyn Any>)) -> Self {
+    self.services.insert(service.0, service.1);
+    self
+  }
+
+  pub fn provider<T:Service + 'static>(mut self, service:T) -> Self {
+    let (name, service) = provider(service);
+    self.services.insert(name, service);
+    self
+  }
 }
 
 pub struct NidrsFactory {

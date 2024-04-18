@@ -18,10 +18,7 @@ pub struct ConfModule;
 
 impl ConfModule {
   pub fn for_root(options: ConfOptions) -> DynamicModule {
-    DynamicModule{
-      services: HashMap::from([
-        provider(options),
-      ])
-    }
+    DynamicModule::new()
+      .provider(options)
   }
 }
