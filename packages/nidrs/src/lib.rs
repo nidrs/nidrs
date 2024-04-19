@@ -14,3 +14,6 @@ pub use controller::*;
 
 pub mod module;
 pub use module::*;
+
+pub mod meta;
+pub use meta::*;
