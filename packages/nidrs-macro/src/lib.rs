@@ -594,9 +594,11 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
 
                 #meta_tokens
 
-                nidrs_macro::log!("Registering router '{} {}'.", #method.to_uppercase(),#path);
+                let version = *meta.get::<&str>("version").unwrap_or(&ctx.default_version);
+                let path = nidrs::template_format(&format!("{}{}", ctx.default_prefix, #path), [("version", version)]);
+                nidrs_macro::log!("Registering router '{} {}'.", #method.to_uppercase(), path);
                 let router = axum::Router::new().route(
-                    #path,
+                    &path,
                     axum::routing::#method_ident(#handler),
                 );
                 ctx.routers.push(router);

@@ -3,14 +3,6 @@
 #![feature(alloc)]
 #![feature(fmt_helpers_for_derive)]
 #![allow(warnings, unused)]
-#![feature(rustc_attrs)]
-// meta version "v1" Expr::Lit { attrs: [], lit: Lit::Str { token: "v1" } }
-// meta auth "true" Expr::Lit { attrs: [], lit: Lit::Str { token: "true" } }
-// meta role "admin" Expr::Lit { attrs: [], lit: Lit::Str { token: "admin" } }
-// meta test true Expr::Lit { attrs: [], lit: Lit::Bool { value: true } }
-// meta arr ["user"] Expr::Array { attrs: [], bracket_token: Bracket, elems: [Expr::Lit { attrs: [], lit: Lit::Str { token: "user" } }] }
-// meta arr2 vec! ["user"] Expr::Macro { attrs: [], mac: Macro { path: Path { leading_colon: None, segments: [PathSegment { ident: Ident { ident: "vec", span: #41 bytes(1976..2004) }, arguments: PathArguments::None }] }, bang_token: Not, delimiter: MacroDelimiter::Bracket(Bracket), tokens: TokenStream [Literal { kind: Str, symbol: "user", suffix: None, span: #41 bytes(1976..2004) }] } }
-// meta version "v2" Expr::Lit { attrs: [], lit: Lit::Str { token: "v2" } }
 #![feature(prelude_import)]
 #[prelude_import]
 use std::prelude::rust_2021::*;
@@ -117,10 +109,6 @@ mod app {
             pub fn __meta_get_hello_world(&self) -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
                 meta.set("arr".to_string(), Vec::from(["user"]));
-                meta.set(
-                    "arr2".to_string(),
-                    <[_]>::into_vec(#[rustc_box] ::alloc::boxed::Box::new(["user"])),
-                );
                 meta.set("version".to_string(), "v2");
                 meta
             }
@@ -646,6 +634,17 @@ mod app {
             let t_meta = t_controller.__meta_get_hello_world();
             meta.merge(t_meta);
             let meta = std::sync::Arc::new(meta);
+            let version = *meta.get::<&str>("version").unwrap_or(&ctx.default_version);
+            println!("{:?}", ctx.default_prefix);
+            let path = nidrs::template_format(
+                &{
+                    let res = ::alloc::fmt::format(
+                        format_args!("{0}{1}", ctx.default_prefix, "/app/hello"),
+                    );
+                    res
+                },
+                [("version", version)],
+            );
             {
                 ::std::io::_print(
                     format_args!(
@@ -659,13 +658,13 @@ mod app {
                     format_args!(
                         "Registering router \'{0} {1}\'.\n",
                         "get".to_uppercase(),
-                        "/app/hello",
+                        path,
                     ),
                 );
             };
             let router = axum::Router::new()
                 .route(
-                    "/app/hello",
+                    &path,
                     axum::routing::get(|parts, p0| async move {
                         let t_body = nidrs_extern::axum::body::Body::empty();
                         let mut t_meta = nidrs::Meta::new();
@@ -696,6 +695,16 @@ mod app {
             let t_meta = t_controller.__meta_get_hello_world2();
             meta.merge(t_meta);
             let meta = std::sync::Arc::new(meta);
+            let version = *meta.get::<&str>("version").unwrap_or(&ctx.default_version);
+            let path = nidrs::template_format(
+                &{
+                    let res = ::alloc::fmt::format(
+                        format_args!("{0}{1}", ctx.default_prefix, "/app/hello2"),
+                    );
+                    res
+                },
+                [("version", version)],
+            );
             {
                 ::std::io::_print(
                     format_args!(
@@ -709,13 +718,13 @@ mod app {
                     format_args!(
                         "Registering router \'{0} {1}\'.\n",
                         "get".to_uppercase(),
-                        "/app/hello2",
+                        path,
                     ),
                 );
             };
             let router = axum::Router::new()
                 .route(
-                    "/app/hello2",
+                    &path,
                     axum::routing::get(|parts, p0| async move {
                         let t_body = nidrs_extern::axum::body::Body::empty();
                         let mut t_meta = nidrs::Meta::new();
@@ -746,6 +755,16 @@ mod app {
             let t_meta = t_controller.__meta_post_hello_world();
             meta.merge(t_meta);
             let meta = std::sync::Arc::new(meta);
+            let version = *meta.get::<&str>("version").unwrap_or(&ctx.default_version);
+            let path = nidrs::template_format(
+                &{
+                    let res = ::alloc::fmt::format(
+                        format_args!("{0}{1}", ctx.default_prefix, "/app/hello"),
+                    );
+                    res
+                },
+                [("version", version)],
+            );
             {
                 ::std::io::_print(
                     format_args!(
@@ -759,13 +778,13 @@ mod app {
                     format_args!(
                         "Registering router \'{0} {1}\'.\n",
                         "post".to_uppercase(),
-                        "/app/hello",
+                        path,
                     ),
                 );
             };
             let router = axum::Router::new()
                 .route(
-                    "/app/hello",
+                    &path,
                     axum::routing::post(|parts, p0, p1| async move {
                         let t_body = p1;
                         let mut t_meta = nidrs::Meta::new();
@@ -1408,6 +1427,16 @@ mod user {
             let t_meta = t_controller.__meta_get_hello_world();
             meta.merge(t_meta);
             let meta = std::sync::Arc::new(meta);
+            let version = *meta.get::<&str>("version").unwrap_or(&ctx.default_version);
+            let path = nidrs::template_format(
+                &{
+                    let res = ::alloc::fmt::format(
+                        format_args!("{0}{1}", ctx.default_prefix, "/user/hello"),
+                    );
+                    res
+                },
+                [("version", version)],
+            );
             {
                 ::std::io::_print(
                     format_args!(
@@ -1421,13 +1450,13 @@ mod user {
                     format_args!(
                         "Registering router \'{0} {1}\'.\n",
                         "get".to_uppercase(),
-                        "/user/hello",
+                        path,
                     ),
                 );
             };
             let router = axum::Router::new()
                 .route(
-                    "/user/hello",
+                    &path,
                     axum::routing::get(|p0| async move {
                         t_controller.get_hello_world(p0).await
                     }),
@@ -1739,7 +1768,6 @@ pub use nidrs::AppError;
 fn main() {
     let app = nidrs::NidrsFactory::create(app::AppModule);
     let app = app.default_prefix("/api/{version}");
-    let a1 = 123;
     app.listen(3000);
 }
 fn f(path: &str) {

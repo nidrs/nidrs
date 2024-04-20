@@ -31,28 +31,20 @@ impl DynamicModule {
   }
 }
 
-pub struct NidrsFactory {
-  pub router: axum::Router<StateCtx>,
+pub struct NidrsFactory<T: Module> {
+  pub default_version: &'static str,
   pub default_prefix: &'static str,
+  pub module: T,
 }
 
-impl NidrsFactory {
-  pub fn create<T: Module>(
+impl <T: Module>NidrsFactory<T> {
+  pub fn create(
       module: T,
   ) -> Self {
-      let router = axum::Router::new().route("/", axum::routing::get(|| async move {
-          "Hello, Nidrs!"
-      }));
-      let module_ctx = ModuleCtx::new();
-      let module_ctx = module.init(module_ctx);
-      let routers = module_ctx.routers;
-      let mut sub_router = axum::Router::new();
-      for router in routers.iter() {
-          sub_router = sub_router.merge(router.clone());
-      }
       NidrsFactory {
-          router: router.merge(sub_router),
-          default_prefix: "",
+        module: module,
+        default_prefix: "",
+        default_version: "v1",
       }
   }
 
@@ -62,12 +54,27 @@ impl NidrsFactory {
   }
 
   pub fn listen(self, port: u32) {
+    let router = axum::Router::new().route("/", axum::routing::get(|| async move {
+      "Hello, Nidrs!"
+    }));
+    let mut module_ctx = ModuleCtx::new();
+    module_ctx.default_prefix = self.default_prefix;
+    module_ctx.default_version = self.default_version;
+    let module_ctx = self.module.init(module_ctx);
+    let routers = module_ctx.routers;
+    let mut sub_router = axum::Router::new();
+    for router in routers.iter() {
+        sub_router = sub_router.merge(router.clone());
+    }
+    let router = router.merge(sub_router);
+
+    // listen...
     let server = || async {
       let tcp = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
       let addr = tcp.local_addr()?;
       nidrs_macro::log!("Listening on {}", addr);
       
-      axum::serve(tcp, self.router.with_state(StateCtx{})).await?;
+      axum::serve(tcp, router.with_state(StateCtx{})).await?;
 
       AppResult::Ok(())
     };
@@ -81,6 +88,8 @@ pub struct StateCtx{
 }
 
 pub struct ModuleCtx{
+  pub default_version: &'static str,
+  pub default_prefix: &'static str,
   pub modules:HashMap<String, Box<dyn Any>>,
   pub services: HashMap<String, Box<dyn Any>>,
   pub controllers: HashMap<String, Box<dyn Any>>,
@@ -91,6 +100,8 @@ pub struct ModuleCtx{
 impl ModuleCtx {
   pub fn new() -> Self {
       ModuleCtx {
+          default_version: "v1",
+          default_prefix: "",
           modules: HashMap::new(),
           services: HashMap::new(),
           controllers: HashMap::new(),
