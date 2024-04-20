@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use axum::{extract::{Query, State}, Json};
 use nidrs::{Inject, StateCtx};
-use nidrs_macro::{controller, get, post};
+use nidrs_macro::{controller, get, post, meta};
 
 use super::service::UserService;
 
