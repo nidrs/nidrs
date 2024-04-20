@@ -29,9 +29,11 @@ impl Parse for MetaArgs {
         items.iter().for_each(|item| {
             if let syn::Expr::Assign(assign) = item {
                 if let syn::Expr::Path(path) = *assign.left.clone() {
-                    if let syn::Expr::Lit(lit) = *assign.right.clone() {
-                        kv.insert(path.path.segments.first().unwrap().ident.to_string(), lit.to_token_stream().to_string());
-                    }
+                    let k = path.path.segments.first().unwrap().ident.to_string();
+                    let v = assign.right.clone().to_token_stream().to_string();
+                    kv.insert(k, v);
+                    // if let syn::Expr::Lit(lit) = *assign.right.clone() {
+                    // }
                 }
             }
         });

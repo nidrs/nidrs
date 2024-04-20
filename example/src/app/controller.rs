@@ -11,7 +11,7 @@ use super::{dto::{Status}, service::AppService};
 // #[uses(LogInterceptor)]
 #[version("v1")]
 #[meta(role = "admin", auth = "true")]
-#[meta(test = "true")]
+#[meta(test = true)]
 #[controller("/app")]
 #[derive(Debug, Default)]
 pub struct AppController {
@@ -19,10 +19,9 @@ pub struct AppController {
 }
 
 impl AppController {
-    #[meta(role = "user")]
-    #[meta(role2 = "user")]
+    #[meta(arr = ["user", "333"])]
     #[uses(LogInterceptor)]
-    // #[version("v1")]
+    #[version("v2")]
     #[get("/hello")]
     pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<Status> {
         println!("Query {:?}", q);
@@ -30,14 +29,13 @@ impl AppController {
         Ok(Status { db: "ok".to_string(), redis: "ok".to_string() })
     }
 
-    // #[uses(LogInterceptor)]
+    #[uses(LogInterceptor)]
     #[get("/hello2")]
     pub async fn get_hello_world2(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<String> {
         println!("Query {:?}", q);
         Ok(self.app_service.get_hello_world())
     }
     
-    #[uses(LogInterceptor)]
     #[uses(LogInterceptor)]
     #[post("/hello")]
     pub async fn post_hello_world(&self, Query(q): Query<HashMap<String, String>>, Json(j): Json<serde_json::Value>) -> AppResult<String> {

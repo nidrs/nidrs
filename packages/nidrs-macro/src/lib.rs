@@ -10,7 +10,7 @@ use once_cell::sync::Lazy;
 use proc_macro::{Ident, Span, TokenStream};
 use proc_macro2::{Punct, TokenTree};
 use quote::{quote, ToTokens};
-use syn::{meta, parse::{Parse, ParseStream}, Expr, ExprArray, ExprCall, PatPath, Stmt, Token};
+use syn::{meta, parse::{Parse, ParseStream}, parse_str, Expr, ExprArray, ExprCall, PatPath, Stmt, Token};
 use syn::punctuated::Punctuated;
 use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatType, Type};
 use proc_macro2::TokenStream as TokenStream2;
@@ -255,8 +255,14 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     let func_ident = func.ident.clone();
     let func_name = func.ident.to_string();
     let meta_tokens = args.kv.iter().map(|(key, value)| {
+        // value parse expr
+        let exp = parse_str::<Expr>(&value).unwrap();
+        println!("// meta {} {} {:?}", key, value, exp);
+
+        let v = exp;
+
         quote! {
-            meta.set(#key.to_string(), #value.to_string());
+            meta.set(#key.to_string(), #v);
         }
     }).collect::<Vec<TokenStream2>>();
     let meta_tokens = TokenStream2::from(quote! {
