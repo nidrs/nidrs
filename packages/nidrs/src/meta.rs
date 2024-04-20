@@ -117,6 +117,35 @@ impl Meta {
     self.extend = Some(meta);
     self
   }
+
+  pub fn iter(&self) -> std::collections::hash_map::Iter<String, Box<dyn Any + Send + Sync>> {
+    self.map.iter()
+  }
+
+  pub fn item_mut(&mut self) -> std::collections::hash_map::IterMut<String, Box<dyn Any + Send + Sync>> {
+    self.map.iter_mut()
+  }
+
+  pub fn keys(&self) -> Vec<String>{
+    let mut keys = self.map.keys().collect::<HashSet<&String>>();
+    if let Some(p) = &self.extend {
+      let keys2 = p.map.keys().collect::<HashSet<&String>>();
+      keys.extend(keys2);
+    }
+    keys.iter().map(|k| k.to_string()).collect()
+  }
+
+  pub fn len(&self) -> usize {
+    self.map.len()
+  }
+
+  pub fn is_empty(&self) -> bool {
+    self.map.is_empty()
+  }
+
+  pub fn clear(&mut self) {
+    self.map.clear();
+  }
 }
 
 pub fn type_key<T: 'static>() -> String {
