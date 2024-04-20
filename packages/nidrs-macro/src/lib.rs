@@ -272,13 +272,13 @@ pub fn merge_fun(args: TokenStream, input: TokenStream) -> TokenStream {
             let tokens = TokenStream2::from_str(tokens.as_str()).unwrap();
             quote! {
                 let b = #tokens;
-                t.extend(b);
+                t.merge(b);
             }
         }).collect::<Vec<TokenStream2>>();
 
         let tokens = TokenStream2::from(quote! {
             {
-                let mut t = std::collections::HashMap::<String, String>::new();
+                let mut t = nidrs::Meta::new();
                 #(#tokens)*
                 t
             }
@@ -305,12 +305,12 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     let func_name = func.ident.to_string();
     let meta_tokens = args.kv.iter().map(|(key, value)| {
         quote! {
-            meta.insert(#key.to_string(), #value.to_string());
+            meta.set(#key.to_string(), #value.to_string());
         }
     }).collect::<Vec<TokenStream2>>();
     if let TokenType::Fn(s) = func.typ {
         let meta_tokens = TokenStream2::from(quote! {
-            meta.insert("fun_name".to_string(), #func_name.to_string());
+            // meta.insert("fun_name".to_string(), #func_name.to_string());
             #(#meta_tokens)*
         });
         let current_service = CURRENT_CONTROLLER.lock().unwrap().clone();
@@ -328,8 +328,8 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
             #raw_input
             
             #[nidrs::merge_fun()]
-            pub fn #func_meta_ident(&self) -> HashMap<String, String>{
-                let mut meta = HashMap::new();
+            pub fn #func_meta_ident(&self) -> nidrs::Meta{
+                let mut meta = nidrs::Meta::new();
                 #meta_tokens
                 meta
             }
@@ -338,7 +338,7 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
         let is_last_meta = is_last_meta(s.clone()); 
         if is_last_meta {
             let meta_tokens = TokenStream2::from(quote! {
-                meta.insert("struct_name".to_string(), #func_name.to_string());
+                // meta.insert("struct_name".to_string(), #func_name.to_string());
                 #(#meta_tokens)*
             });
             METAS.lock().unwrap().insert(func_name, true);
@@ -354,8 +354,8 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
             return TokenStream::from(quote! {
                 #raw_input
                 impl #func_ident {
-                    pub fn __meta(&self) -> HashMap<String, String>{
-                        let mut meta = HashMap::new();
+                    pub fn __meta(&self) -> nidrs::Meta{
+                        let mut meta = nidrs::Meta::new();
                         #meta_tokens
                         #(#prev_meta_tokens)*
                         meta
@@ -621,8 +621,10 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
             };
             let def_clone_inter_tokens = TokenStream2::from(quote! {
                 #ctx_body_tokens
+                let mut t_meta = nidrs::Meta::new();
+                t_meta.extend(meta);
                 let ctx = InterCtx {
-                    meta: meta.clone(),
+                    meta: t_meta,
                     parts,
                     body: t_body,
                 };
@@ -630,28 +632,28 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
             });
 
             // meta handle
-            let meta_ident = syn::Ident::new(format!("__meta_{}", route_name).as_str(), Span::call_site().into());
-            let meta_tokens = if let Some(_) = METAS.lock().unwrap().get(&inter_name){
+            let method_meta = syn::Ident::new(format!("__meta_{}", route_name).as_str(), Span::call_site().into());
+            let method_meta_tokens = if let Some(_) = METAS.lock().unwrap().get(&inter_name){
                 quote! {
-                    let meta = t_controller.#meta_ident();
+                    let t_meta = t_controller.#method_meta();
+                    meta.merge(t_meta);
                 }
             }else{
-                quote! {
-                    let meta = std::collections::HashMap::<String, String>::new();
-                }
+                quote! { }
             };
-            let struct_meta = if let Some(_) = METAS.lock().unwrap().get(&controller_str) {
+            let struct_meta_tokens = if let Some(_) = METAS.lock().unwrap().get(&controller_str) {
                 quote! {
-                    let mut t_meta = t_controller.__meta();
-                    t_meta.extend(meta);
-                    let meta = t_meta;
+                    let mut meta = t_controller.__meta();
                 }
             } else {
-                quote! {}
+                quote! {
+                    let mut meta = nidrs::Meta::new();
+                }
             };
             let meta_tokens = TokenStream2::from(quote! {
-                #meta_tokens
-                #struct_meta
+                #struct_meta_tokens
+                #method_meta_tokens
+                let meta = std::sync::Arc::new(meta);
             });
             let handler = if inter_ids.is_empty() {
                 quote!{

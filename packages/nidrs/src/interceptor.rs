@@ -3,7 +3,7 @@ use nidrs_extern::axum::{self, http::StatusCode, response::IntoResponse};
 use std::{collections::HashMap, fmt::Debug, future::Future};
 use serde::Serialize;
 
-use crate::{AppError, AppResult, ModuleCtx, ServiceProperty, StateCtx};
+use crate::{AppError, AppResult, Meta, ModuleCtx, ServiceProperty, StateCtx};
 
 pub trait InterceptorService {
   fn inject(&self, ctx: ModuleCtx) -> ModuleCtx;
@@ -67,7 +67,7 @@ impl<T: serde::Serialize> IntoAnyBody for T {
 
 #[derive(Debug)]
 pub struct InterCtx<B: axum::extract::FromRequest<StateCtx>>{
-    pub meta: HashMap<String, String>,
+    pub meta: Meta,
     pub parts: axum::http::request::Parts,
     pub body: B,
 }

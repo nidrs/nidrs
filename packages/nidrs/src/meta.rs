@@ -1,17 +1,30 @@
-use std::{any::{Any, TypeId}, collections::HashMap};
+use std::{any::{Any, TypeId}, collections::{HashMap, HashSet}, fmt::Debug, sync::Arc};
 
 use crate::{AppError, AppResult};
 
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct Meta{
-  map: HashMap<String, Box<dyn Any + Send + Sync>>
+  map: HashMap<String, Box<dyn Any + Send + Sync>>,
+  extend: Option<Arc<Meta>>,
+}
+
+impl Debug for Meta {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    let mut keys = self.map.keys().collect::<HashSet<&String>>();
+    if let Some(p) = &self.extend {
+      let keys2 = p.map.keys().collect::<HashSet<&String>>();
+      keys.extend(keys2);
+    }
+    f.debug_struct("Meta").field("keys", &keys).finish()
+  }
 }
 
 impl Meta {
   pub fn new() -> Self {
     Meta {
         map: HashMap::new(),
+        extend: None,
     }
   }
 
@@ -23,6 +36,7 @@ impl Meta {
   pub fn with_capacity(capacity: usize) -> Self {
       Meta {
           map: HashMap::with_capacity(capacity),
+          extend: None,
       }
   }
 
@@ -37,9 +51,18 @@ impl Meta {
 
   pub fn get<V: Any + Send + Sync>(&self, key: &str) -> AppResult<&V> {
     let t = self.map.get(key).and_then(|v| v.downcast_ref::<V>());
-    match t {
+    let r = match t {
       Some(v) => Ok(v),
       None => Err(AppError::MetaNotFoundError(key.to_string())),
+    };
+    match r {
+      Ok(v) => Ok(v),
+      Err(_) => {
+        match &self.extend {
+          Some(p) => p.get::<V>(key),
+          None => Err(AppError::MetaNotFoundError(key.to_string())),
+        }
+      }
     }
   }
 
@@ -87,6 +110,11 @@ impl Meta {
     for (k, v) in meta.map {
       self.map.insert(k, v);
     }
+    self
+  }
+
+  pub fn extend(&mut self, meta: Arc<Meta>) -> &mut Self {
+    self.extend = Some(meta);
     self
   }
 }
@@ -200,6 +228,37 @@ mod tests {
     assert_eq!(*meta1.get::<Vec<&str>>("f").unwrap(), vec!["2", "3", "4"]);
     assert_eq!(*meta1.get::<Vec<f64>>("g").unwrap(), vec![2.0, 3.0, 4.0]);
     assert_eq!(*meta1.get::<Vec<String>>("h").unwrap(), vec!["2".to_string(), "3".to_string(), "4".to_string()]);
+    assert_eq!(*meta1.get::<Vec<Vec<i32>>>("i").unwrap(), vec![vec![2, 3], vec![4, 5]]);
+    assert_eq!(*meta1.get::<Vec<Vec<&str>>>("j").unwrap(), vec![vec!["2", "3"], vec !["4", "5"]]);
+  }
+
+  #[test]
+  fn test_meta_extend() {
+    let mut meta1 = Meta::new();
+    meta1.set("a", 1);
+    meta1.set("b", "2");
+    meta1.set("c", 3.0);
+    meta1.set("d", "4".to_string());
+    meta1.set("e", vec![1, 2, 3]);
+    meta1.set("f", vec!["1", "2", "3"]);
+    meta1.set("g", vec![1.0, 2.0, 3.0]);
+
+    let mut meta2 = Meta::new();
+    meta2.set("e", vec![2, 3, 4]);
+    meta2.set("i", vec![vec![2, 3], vec![4, 5]]);
+    meta2.set("j", vec![vec!["2", "3"], vec !["4", "5"]]);
+
+    let arc_meta2 = Arc::new(meta2);
+
+    meta1.extend(arc_meta2);
+
+    assert_eq!(*meta1.get::<i32>("a").unwrap(), 1);
+    assert_eq!(*meta1.get::<&str>("b").unwrap(), "2");
+    assert_eq!(*meta1.get::<f64>("c").unwrap(), 3.0);
+    assert_eq!(*meta1.get::<String>("d").unwrap(), "4".to_string());
+    assert_eq!(*meta1.get::<Vec<i32>>("e").unwrap(), vec![1, 2, 3]);
+    assert_eq!(*meta1.get::<Vec<&str>>("f").unwrap(), vec!["1", "2", "3"]);
+    assert_eq!(*meta1.get::<Vec<f64>>("g").unwrap(), vec![1.0, 2.0, 3.0]);
     assert_eq!(*meta1.get::<Vec<Vec<i32>>>("i").unwrap(), vec![vec![2, 3], vec![4, 5]]);
     assert_eq!(*meta1.get::<Vec<Vec<&str>>>("j").unwrap(), vec![vec!["2", "3"], vec !["4", "5"]]);
   }
