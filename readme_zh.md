@@ -4,55 +4,52 @@
     <img src="https://img.shields.io/discord/1223548737075281952?style=for-the-badge" />
     <img src="https://img.shields.io/crates/v/nidrs?style=for-the-badge" />
     <img src="https://img.shields.io/github/license/nidrs/nidrs?style=for-the-badge" />
-  </p>
-  <p>
-    <a href="https://github.com/nidrs/nidrs/blob/main/readme_zh.md">中文文档</a>
-  </p>
+</p>
 </div>
 
 # Nidrs
 
-Tributing the NestJS framework, Nidrs is a Rust-based enterprise-level modular development framework that draws inspiration from NestJS ideology while being developed and designed on Axum.
+致敬 Nestjs 框架，Nidrs 是参考 Nestjs 思想的 Rust 企业级模块化开发框架，同时基于 Axum 进行开发和设计。
 
-Nidrs provides a plug-and-play application architecture enabling developers and teams to effortlessly create highly testable, scalable, loosely coupled, and maintainable applications.
+Nidrs 提供了一个即插即用的应用程序架构，使开发人员和团队能够轻松创建高度可测试、可扩展、松散耦合且易于维护的应用程序。
 
-> NestJS is a framework for building efficient, scalable Node.js server-side applications. It uses progressive JavaScript, is built with and fully supports TypeScript (but still allows developers to write code in pure JavaScript), and combines elements of OOP (Object Oriented Programming), FP (Functional Programming), and FRP (Functional Reactive Programming).
+> Nestjs 是一个用于构建高效，可扩展的 Node.js 服务器端应用程序的框架。它使用渐进式 JavaScript，内置并完全支持 TypeScript（但仍然允许开发人员使用纯 JavaScript 编写代码）并结合了 OOP（面向对象编程），FP（函数式编程）和 FRP（函数式响应编程）的元素。
 
 ## Focus
 
-- [x] Modular encapsulation v0.0.1
-  - [x] Static module registration v0.0.1
-  - [x] Configurable module registration v0.0.2
-- [x] Dependency auto-injection
-  - [x] Service auto-injection v0.0.1
-  - [x] Dynamic service injection v0.0.3
-  - [x] Service scope (global) v0.0.1
-  - [ ] Service scope (module)
-  - [x] Service instance scope (singleton) v0.0.1
-  - [ ] Service instance scope (request-level)
-  - [ ] Service instance scope (injection-level)
-- [x] Layered architecture
-  - [x] Controller layer v0.0.1
-  - [x] Service layer v0.0.1
-  - [ ] Model layer
-- [x] Module lifecycle hooks
+- [x] 模块化封装 v0.0.1
+  - [x] 静态模块注册 v0.0.1
+  - [x] 可配置的模块注册 v0.0.2
+- [x] 依赖自动注入
+  - [x] service 自动注入 v0.0.1
+  - [x] 动态 service 注入 v0.0.3
+  - [x] service 作用域（全局）v0.0.1
+  - [ ] service 作用域（模块）
+  - [x] service 实例域（单例）v0.0.1
+  - [ ] service 实例域（请求级）
+  - [ ] service 实例域（注入级）
+- [x] 分层架构
+  - [x] Controller 层 v0.0.1
+  - [x] Service 层 v0.0.1
+  - [ ] Model 层
+- [x] 模块生命周期钩子
   - [x] on_module_init v0.0.2
   - [ ] on_module_destroy
   - [ ] on_application_bootstrap
   - [ ] on_application_shutdown
-- [x] Request-response interceptors v0.0.4
-- [ ] Request parameter validation
-- [ ] Mock service based on request parameter validation
-- [x] Unified return type v0.0.4
-- [x] Error encapsulation and handling v0.0.4
-- [ ] Uniformly adding route prefixes
+- [x] 请求响应拦截器 v0.0.4
+- [ ] 请求参数校验
+- [ ] 基于请求参数校验的 Mock 服务
+- [x] 统一返回类型 v0.0.4
+- [x] 错误封装和处理 v0.0.4
+- [ ] 统一添加路由前缀
   - [ ] default_prefix
-- [ ] Interface versioning
+- [ ] 接口版本控制
   - [ ] default_version
-- [ ] Automatic OpenAPI
-- [ ] Module testing
-- [ ] CLI commands
-- [ ] Comprehensive documentation and examples
+- [ ] 自动 OpenAPI
+- [ ] 模块测试
+- [ ] CLI 命令
+- [ ] 完整的文档和例子
 
 ## Example
 
@@ -192,7 +189,7 @@ fn main() {
 
 ```
 
-Run Example:
+运行例子：
 
 ```shell
 git clone https://github.com/nidrs/nidrs.git
@@ -200,7 +197,7 @@ cd nidrs/example
 cargo run
 ```
 
-Launch Log:
+运行日志：
 
 ```log
 [nidrs] Registering module AppModule.
@@ -231,10 +228,44 @@ ConfService initialized with log_level: ConfOptions { log_level: "info" }
 [nidrs] Listening on 0.0.0.0:3000
 ```
 
+## Design
+
+整个框架的目标是提高模块复用和极致的开发便携。
+
+框架整体是通过宏来自动收集依赖关系，并且生成服务注册、依赖注入、路由注册的相关代码。
+
+框架初始化大概可以分为两大阶段：
+
+    1. 模块注册
+       1. 路由注册
+       2. 服务注册
+       3. 模块注册
+    2. 依赖注入
+
+框架在初始化的时候会创建一个核心的对象：
+
+```rs
+#[derive(Debug, Clone)]
+pub struct ModuleCtx{
+    pub services: Arc<Mutex<HashMap<String, Box<dyn Any>>>>,
+    pub controllers: Arc<Mutex<HashMap<String, Box<dyn Any>>>>,
+    pub routers: Arc<Mutex<Vec<axum::Router<StateCtx>>>>
+}
+```
+
+而服务整个注册的行为就是给 `ctx.services.insert("AppService", AppService)` 插入创建的实例。
+
+而依赖注入会将标记为 `Inject` 的属性找出来，从 `ctx.services` map 上获取实例化后的 service 赋值给对应的属性，所以目前所有的服务都是单例。
+
+具体想看宏生成的代码可以执行 `cd nidrs/example && cargo expand` 即可。
+
 ## About
 
-The entire framework is currently in its early stages, with versions in the 0.x.x range being in testing. The stable version starts from 1.0. However, if you're simply looking for a high-level framework similar to Axum without needing the additional features mentioned later on, you can still give it a try.
+整个框架目前处于早期阶段，0.x.x 都处于测试版本，正式稳定版本从 1.0 开始，不过如果你只是单纯的想找一个 axum 类的高层框架，而不需要后面的功能也可以尝试一下
+最后如果有感兴趣的同学想要贡献和开发也可以加入下面的 Discord 一起来为 rust 世界添砖加瓦。
 
-Finally, if there are any interested individuals who wish to contribute and develop, they are welcome to join the Discord server below to contribute to the Rust community.
+[欢迎加入 Discord](https://discord.gg/gwqKpxvUxU) ，微信群一起讨论交流
 
-[Discord Server Link](https://discord.gg/gwqKpxvUxU)
+<p>
+<img src="./readme.assets/image.png" alt="微信群" style="width: 200px" />
+</p>
