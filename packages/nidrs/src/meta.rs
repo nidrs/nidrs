@@ -16,7 +16,7 @@ impl Debug for Meta {
       let keys2 = p.map.keys().collect::<HashSet<&String>>();
       keys.extend(keys2);
     }
-    f.debug_struct("Meta").field("keys", &keys).finish()
+    f.debug_struct("Meta").field("keys", &keys.iter()).finish()
   }
 }
 
