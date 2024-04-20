@@ -3,11 +3,13 @@
 #![feature(alloc)]
 #![feature(fmt_helpers_for_derive)]
 #![allow(warnings, unused)]
+#![feature(rustc_attrs)]
 // meta version "v1" Expr::Lit { attrs: [], lit: Lit::Str { token: "v1" } }
 // meta auth "true" Expr::Lit { attrs: [], lit: Lit::Str { token: "true" } }
 // meta role "admin" Expr::Lit { attrs: [], lit: Lit::Str { token: "admin" } }
 // meta test true Expr::Lit { attrs: [], lit: Lit::Bool { value: true } }
 // meta arr ["user"] Expr::Array { attrs: [], bracket_token: Bracket, elems: [Expr::Lit { attrs: [], lit: Lit::Str { token: "user" } }] }
+// meta arr2 vec! ["user"] Expr::Macro { attrs: [], mac: Macro { path: Path { leading_colon: None, segments: [PathSegment { ident: Ident { ident: "vec", span: #41 bytes(1976..2004) }, arguments: PathArguments::None }] }, bang_token: Not, delimiter: MacroDelimiter::Bracket(Bracket), tokens: TokenStream [Literal { kind: Str, symbol: "user", suffix: None, span: #41 bytes(1976..2004) }] } }
 // meta version "v2" Expr::Lit { attrs: [], lit: Lit::Str { token: "v2" } }
 #![feature(prelude_import)]
 #[prelude_import]
@@ -114,7 +116,11 @@ mod app {
             }
             pub fn __meta_get_hello_world(&self) -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
-                meta.set("arr".to_string(), ["user"]);
+                meta.set("arr".to_string(), Vec::from(["user"]));
+                meta.set(
+                    "arr2".to_string(),
+                    <[_]>::into_vec(#[rustc_box] ::alloc::boxed::Box::new(["user"])),
+                );
                 meta.set("version".to_string(), "v2");
                 meta
             }
@@ -637,56 +643,6 @@ mod app {
                 .unwrap();
             let t_interceptor_0 = t_interceptor_0.clone();
             let mut meta = nidrs::get_meta(t_controller.clone());
-            let t_meta = t_controller.__meta_get_hello_world2();
-            meta.merge(t_meta);
-            let meta = std::sync::Arc::new(meta);
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "{0} ",
-                        nidrs_extern::colored::Colorize::green("[nidrs]"),
-                    ),
-                );
-            };
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "Registering router \'{0} {1}\'.\n",
-                        "get".to_uppercase(),
-                        "/app/hello2",
-                    ),
-                );
-            };
-            let router = axum::Router::new()
-                .route(
-                    "/app/hello2",
-                    axum::routing::get(|parts, p0| async move {
-                        let t_body = nidrs_extern::axum::body::Body::empty();
-                        let mut t_meta = nidrs::Meta::new();
-                        t_meta.extend(meta);
-                        let ctx = InterCtx {
-                            meta: t_meta,
-                            parts,
-                            body: t_body,
-                        };
-                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
-                            t_controller.get_hello_world2(p0).await
-                        };
-                        t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
-                    }),
-                );
-            ctx.routers.push(router);
-            let t_controller = ctx.controllers.get("AppController").unwrap();
-            let t_controller = t_controller
-                .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                .unwrap();
-            let t_controller = t_controller.clone();
-            let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
-            let t_interceptor_0 = t_interceptor_0
-                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
-                .unwrap();
-            let t_interceptor_0 = t_interceptor_0.clone();
-            let mut meta = nidrs::get_meta(t_controller.clone());
             let t_meta = t_controller.__meta_get_hello_world();
             meta.merge(t_meta);
             let meta = std::sync::Arc::new(meta);
@@ -721,6 +677,56 @@ mod app {
                         };
                         let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
                             t_controller.get_hello_world(p0).await
+                        };
+                        t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
+                    }),
+                );
+            ctx.routers.push(router);
+            let t_controller = ctx.controllers.get("AppController").unwrap();
+            let t_controller = t_controller
+                .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                .unwrap();
+            let t_controller = t_controller.clone();
+            let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
+            let t_interceptor_0 = t_interceptor_0
+                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
+                .unwrap();
+            let t_interceptor_0 = t_interceptor_0.clone();
+            let mut meta = nidrs::get_meta(t_controller.clone());
+            let t_meta = t_controller.__meta_get_hello_world2();
+            meta.merge(t_meta);
+            let meta = std::sync::Arc::new(meta);
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "Registering router \'{0} {1}\'.\n",
+                        "get".to_uppercase(),
+                        "/app/hello2",
+                    ),
+                );
+            };
+            let router = axum::Router::new()
+                .route(
+                    "/app/hello2",
+                    axum::routing::get(|parts, p0| async move {
+                        let t_body = nidrs_extern::axum::body::Body::empty();
+                        let mut t_meta = nidrs::Meta::new();
+                        t_meta.extend(meta);
+                        let ctx = InterCtx {
+                            meta: t_meta,
+                            parts,
+                            body: t_body,
+                        };
+                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
+                            t_controller.get_hello_world2(p0).await
                         };
                         t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
                     }),
@@ -1601,7 +1607,7 @@ mod log {
             {
                 {
                     ::std::io::_print(
-                        format_args!("ctx: {0:?}\n", ctx.meta.get::<[&str; 1]>("arr")?),
+                        format_args!("ctx: {0:?}\n", ctx.meta.get::<Vec<&str>>("arr")?),
                     );
                 };
                 self.log_service.log("Before");

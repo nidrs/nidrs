@@ -19,7 +19,7 @@ pub struct AppController {
 }
 
 impl AppController {
-    #[meta(arr = ["user", "333"])]
+    #[meta(arr = ["user"])]
     #[uses(LogInterceptor)]
     #[version("v2")]
     #[get("/hello")]

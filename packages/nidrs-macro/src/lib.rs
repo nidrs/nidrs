@@ -259,7 +259,20 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
         let exp = parse_str::<Expr>(&value).unwrap();
         println!("// meta {} {} {:?}", key, value, exp);
 
-        let v = exp;
+        let v = match exp {
+            Expr::Array(arr) => {
+                // arr to vec
+                let arr = arr.elems.iter().map(|elem| {
+                    elem.to_owned()
+                }).collect::<Vec<Expr>>();
+                quote! {
+                    Vec::from([#(#arr),*])
+                }
+            }
+            _ => {exp.to_token_stream()}
+        };
+
+
 
         quote! {
             meta.set(#key.to_string(), #v);
