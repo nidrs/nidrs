@@ -42,6 +42,10 @@ Nidrs 提供了一个即插即用的应用程序架构，使开发人员和团�
 - [ ] 基于请求参数校验的 Mock 服务
 - [x] 统一返回类型 v0.0.4
 - [x] 错误封装和处理 v0.0.4
+- [ ] 统一添加路由前缀
+  - [ ] default_prefix
+- [ ] 接口版本控制
+  - [ ] default_version
 - [ ] 自动 OpenAPI
 - [ ] 模块测试
 - [ ] CLI 命令
@@ -54,12 +58,18 @@ Nidrs 提供了一个即插即用的应用程序架构，使开发人员和团�
 ```rs
 use std::{collections::HashMap, sync::Arc};
 
-use axum::{extract::{Query, State}, Json};
-use nidrs::{Inject, StateCtx};
-use nidrs_macro::{controller, get, post};
+use axum::{extract::{Query, State}, http::{version, StatusCode}, Json};
+use nidrs::{throw, version, Exception, Inject, StateCtx};
+use nidrs_macro::{controller, get, meta, post, uses};
 
-use super::service::AppService;
+use crate::{shared::fn_test::fn_test, AppError, AppResult};
 
+use super::{dto::{Status}, service::AppService};
+
+// #[uses(LogInterceptor)]
+#[version("v1")]
+#[meta(role = "admin", auth = "true")]
+#[meta(test = true)]
 #[controller("/app")]
 #[derive(Debug, Default)]
 pub struct AppController {
@@ -67,10 +77,30 @@ pub struct AppController {
 }
 
 impl AppController {
+    #[meta(arr = ["user"])]
+    #[uses(LogInterceptor)]
+    #[version("v2")]
     #[get("/hello")]
-    pub async fn get_hello_world(&self, State(state): State<StateCtx>, Query(q): Query<HashMap<String, String>>) -> String {
+    pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<Status> {
         println!("Query {:?}", q);
-        self.app_service.get_hello_world()
+        // fn_test()?;
+        Ok(Status { db: "ok".to_string(), redis: "ok".to_string() })
+    }
+
+    #[uses(LogInterceptor)]
+    #[get("/hello2")]
+    pub async fn get_hello_world2(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<String> {
+        println!("Query {:?}", q);
+        Ok(self.app_service.get_hello_world())
+    }
+    
+    #[uses(LogInterceptor)]
+    #[post("/hello")]
+    pub async fn post_hello_world(&self, Query(q): Query<HashMap<String, String>>, Json(j): Json<serde_json::Value>) -> AppResult<String> {
+        println!("Query {:?}", q);
+        println!("Json {:?}", j);
+
+        Ok("Hello, World2!".to_string())
     }
 }
 
@@ -91,7 +121,7 @@ pub struct AppService{
 
 impl AppService {
     pub fn get_hello_world(&self) -> String {
-        self.user_service.get_hello_world()
+        self.user_service.extract().get_hello_world()
     }
 
     pub fn get_hello_world2(&self) -> String {
@@ -107,25 +137,55 @@ use nidrs_macro::module;
 
 pub mod controller;
 pub mod service;
+pub mod dto;
+pub mod exception;
 
 use controller::AppController;
 use service::AppService;
 use crate::user::UserModule;
+use crate::log::LogModule;
 use crate::conf::ConfModule;
 use crate::conf::ConfOptions;
+use crate::log::interceptor::LogInterceptor;
 
 #[module({
     imports = [
         ConfModule::for_root(ConfOptions{
             log_level: "info".to_string(),
         }),
+        LogModule,
         UserModule,
     ];
+    interceptors = [LogInterceptor];
     controllers = [AppController];
     services = [AppService];
 })]
 #[derive(Clone, Debug, Default)]
 pub struct AppModule;
+
+```
+
+### example/src/main.rs
+
+```rs
+mod app;
+mod conf;
+mod user;
+mod log;
+mod shared;
+
+pub use nidrs::AppResult;
+pub use nidrs::AppError;
+
+#[nidrs::main]
+fn main() {
+    let app = nidrs::NidrsFactory::create(app::AppModule);
+
+    let app = app.default_prefix("/api/{version}");
+    let app = app.default_version("v1");
+
+    app.listen(3000);
+}
 
 ```
 
@@ -141,9 +201,11 @@ cargo run
 
 ```log
 [nidrs] Registering module AppModule.
+[nidrs] Registering interceptor LogInterceptor.
 [nidrs] Registering controller AppController.
-[nidrs] Registering router 'GET /app/hello'.
-[nidrs] Registering router 'POST /app/hello'.
+[nidrs] Registering router 'GET /api/v1/app/hello2'.
+[nidrs] Registering router 'POST /api/v1/app/hello'.
+[nidrs] Registering router 'GET /api/v2/app/hello'.
 [nidrs] Registering service AppService.
 [nidrs] Registering dyn service ConfOptions.
 [nidrs] Registering module ConfModule.
@@ -151,14 +213,18 @@ cargo run
 [nidrs] Injecting ConfService.
 [nidrs] Triggering event on_module_init for ConfService.
 ConfService initialized with log_level: ConfOptions { log_level: "info" }
+[nidrs] Registering module LogModule.
+[nidrs] Registering service LogService.
+[nidrs] Injecting LogService.
 [nidrs] Registering module UserModule.
 [nidrs] Registering controller UserController.
-[nidrs] Registering router 'GET /user/hello'.
+[nidrs] Registering router 'GET /api/v1/user/hello'.
 [nidrs] Registering service UserService.
 [nidrs] Injecting UserService.
 [nidrs] Injecting UserController.
 [nidrs] Injecting AppService.
 [nidrs] Injecting AppController.
+[nidrs] Injecting LogInterceptor.
 [nidrs] Listening on 0.0.0.0:3000
 ```
 
@@ -200,4 +266,6 @@ pub struct ModuleCtx{
 
 [欢迎加入 Discord](https://discord.gg/gwqKpxvUxU) ，微信群一起讨论交流
 
-<img src="./readme.assets/image.png" alt="微信群" style="zoom: 25%;" />
+<p>
+<img src="./readme.assets/image.png" alt="微信群" style="width: 200px" />
+</p>
