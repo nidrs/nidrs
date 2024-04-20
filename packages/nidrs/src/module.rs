@@ -53,6 +53,11 @@ impl <T: Module>NidrsFactory<T> {
     self
   }
 
+  pub fn default_version(mut self, v: &'static str) -> Self {
+    self.default_version = v;
+    self
+  }
+
   pub fn listen(self, port: u32) {
     let router = axum::Router::new().route("/", axum::routing::get(|| async move {
       "Hello, Nidrs!"

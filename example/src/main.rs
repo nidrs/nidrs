@@ -17,7 +17,7 @@ fn main() {
     let app = nidrs::NidrsFactory::create(app::AppModule);
 
     let app = app.default_prefix("/api/{version}");
-    // app.default_version(1);
+    let app = app.default_version("v1");
 
     app.listen(3000);
 }
