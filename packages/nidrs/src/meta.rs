@@ -123,6 +123,14 @@ pub fn type_key<T: 'static>() -> String {
   format!("{:?}", TypeId::of::<T>())
 }
 
+pub trait ImplMeta {
+  fn __meta() -> Meta;
+}
+
+pub fn get_meta<T: ImplMeta>(_t: Arc<T>)->Meta {
+  T::__meta()
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

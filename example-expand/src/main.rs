@@ -3,14 +3,6 @@
 #![feature(alloc)]
 #![feature(fmt_helpers_for_derive)]
 #![allow(warnings, unused)]
-// service_inject_tokens false
-// service_inject_tokens true
-// service_inject_tokens true
-// service_inject_tokens true
-// service_inject_tokens true
-// service_inject_tokens false
-// service_inject_tokens true
-// service_inject_tokens false
 #![feature(prelude_import)]
 #[prelude_import]
 use std::prelude::rust_2021::*;
@@ -89,13 +81,15 @@ mod app {
                 }
             }
         }
-        impl AppController {
-            pub fn __meta(&self) -> nidrs::Meta {
+        impl nidrs::ImplMeta for AppController {
+            fn __meta() -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
-                meta.set("test".to_string(), "\"true\"".to_string());
                 meta.set("version".to_string(), "\"v1\"".to_string());
-                meta.set("auth".to_string(), "\"true\"".to_string());
                 meta.set("role".to_string(), "\"admin\"".to_string());
+                meta.set("auth".to_string(), "\"true\"".to_string());
+                meta.set("test".to_string(), "\"true\"".to_string());
+                meta.set("service_name".to_string(), "AppController".to_string());
+                meta.set("service_type".to_string(), "ControllerService".to_string());
                 meta
             }
         }
@@ -113,22 +107,10 @@ mod app {
                 })
             }
             pub fn __meta_get_hello_world(&self) -> nidrs::Meta {
-                {
-                    let mut t = nidrs::Meta::new();
-                    let b = {
-                        let mut meta = nidrs::Meta::new();
-                        meta.set("role2".to_string(), "\"user\"".to_string());
-                        meta
-                    };
-                    t.merge(b);
-                    let b = {
-                        let mut meta = nidrs::Meta::new();
-                        meta.set("role".to_string(), "\"user\"".to_string());
-                        meta
-                    };
-                    t.merge(b);
-                    t
-                }
+                let mut meta = nidrs::Meta::new();
+                meta.set("role".to_string(), "\"user\"".to_string());
+                meta.set("role2".to_string(), "\"user\"".to_string());
+                meta
             }
             pub async fn get_hello_world2(
                 &self,
@@ -138,6 +120,10 @@ mod app {
                     ::std::io::_print(format_args!("Query {0:?}\n", q));
                 };
                 Ok(self.app_service.get_hello_world())
+            }
+            pub fn __meta_get_hello_world2(&self) -> nidrs::Meta {
+                let mut meta = nidrs::Meta::new();
+                meta
             }
             pub async fn post_hello_world(
                 &self,
@@ -151,6 +137,10 @@ mod app {
                     ::std::io::_print(format_args!("Json {0:?}\n", j));
                 };
                 Ok("Hello, World2!".to_string())
+            }
+            pub fn __meta_post_hello_world(&self) -> nidrs::Meta {
+                let mut meta = nidrs::Meta::new();
+                meta
             }
         }
     }
@@ -219,6 +209,14 @@ mod app {
                 nidrs::ServiceProperty {
                     name: "AppService",
                 }
+            }
+        }
+        impl nidrs::ImplMeta for AppService {
+            fn __meta() -> nidrs::Meta {
+                let mut meta = nidrs::Meta::new();
+                meta.set("service_name".to_string(), "AppService".to_string());
+                meta.set("service_type".to_string(), "Service".to_string());
+                meta
             }
         }
         impl AppService {
@@ -562,7 +560,7 @@ mod app {
         fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
             use nidrs::{
                 Service, ControllerService, InterceptorService, InterCtx, Interceptor,
-                ModuleCtx, StateCtx,
+                ModuleCtx, StateCtx, ImplMeta,
             };
             if ctx.modules.contains_key("AppModule") {
                 return ctx;
@@ -632,7 +630,7 @@ mod app {
                 .downcast_ref::<std::sync::Arc<LogInterceptor>>()
                 .unwrap();
             let t_interceptor_0 = t_interceptor_0.clone();
-            let mut meta = t_controller.__meta();
+            let mut meta = nidrs::get_meta(t_controller.clone());
             let t_meta = t_controller.__meta_get_hello_world();
             meta.merge(t_meta);
             let meta = std::sync::Arc::new(meta);
@@ -677,38 +675,6 @@ mod app {
                 .downcast_ref::<std::sync::Arc<controller::AppController>>()
                 .unwrap();
             let t_controller = t_controller.clone();
-            let mut meta = t_controller.__meta();
-            let meta = std::sync::Arc::new(meta);
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "{0} ",
-                        nidrs_extern::colored::Colorize::green("[nidrs]"),
-                    ),
-                );
-            };
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "Registering router \'{0} {1}\'.\n",
-                        "get".to_uppercase(),
-                        "/app/hello2",
-                    ),
-                );
-            };
-            let router = axum::Router::new()
-                .route(
-                    "/app/hello2",
-                    axum::routing::get(|p0| async move {
-                        t_controller.get_hello_world2(p0).await
-                    }),
-                );
-            ctx.routers.push(router);
-            let t_controller = ctx.controllers.get("AppController").unwrap();
-            let t_controller = t_controller
-                .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                .unwrap();
-            let t_controller = t_controller.clone();
             let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
             let t_interceptor_0 = t_interceptor_0
                 .downcast_ref::<std::sync::Arc<LogInterceptor>>()
@@ -719,7 +685,9 @@ mod app {
                 .downcast_ref::<std::sync::Arc<LogInterceptor>>()
                 .unwrap();
             let t_interceptor_1 = t_interceptor_1.clone();
-            let mut meta = t_controller.__meta();
+            let mut meta = nidrs::get_meta(t_controller.clone());
+            let t_meta = t_controller.__meta_post_hello_world();
+            meta.merge(t_meta);
             let meta = std::sync::Arc::new(meta);
             {
                 ::std::io::_print(
@@ -758,6 +726,40 @@ mod app {
                             t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
                         };
                         t_interceptor_1.interceptor(ctx, t_inter_fn_1).await
+                    }),
+                );
+            ctx.routers.push(router);
+            let t_controller = ctx.controllers.get("AppController").unwrap();
+            let t_controller = t_controller
+                .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                .unwrap();
+            let t_controller = t_controller.clone();
+            let mut meta = nidrs::get_meta(t_controller.clone());
+            let t_meta = t_controller.__meta_get_hello_world2();
+            meta.merge(t_meta);
+            let meta = std::sync::Arc::new(meta);
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "Registering router \'{0} {1}\'.\n",
+                        "get".to_uppercase(),
+                        "/app/hello2",
+                    ),
+                );
+            };
+            let router = axum::Router::new()
+                .route(
+                    "/app/hello2",
+                    axum::routing::get(|p0| async move {
+                        t_controller.get_hello_world2(p0).await
                     }),
                 );
             ctx.routers.push(router);
@@ -927,6 +929,14 @@ mod conf {
                 }
             }
         }
+        impl nidrs::ImplMeta for ConfService {
+            fn __meta() -> nidrs::Meta {
+                let mut meta = nidrs::Meta::new();
+                meta.set("service_name".to_string(), "ConfService".to_string());
+                meta.set("service_type".to_string(), "Service".to_string());
+                meta
+            }
+        }
         impl ConfService {
             pub fn on_module_init(&self) {
                 let options = self.options.extract();
@@ -986,6 +996,14 @@ mod conf {
                 }
             }
         }
+        impl nidrs::ImplMeta for ConfOptions {
+            fn __meta() -> nidrs::Meta {
+                let mut meta = nidrs::Meta::new();
+                meta.set("service_name".to_string(), "ConfOptions".to_string());
+                meta.set("service_type".to_string(), "Service".to_string());
+                meta
+            }
+        }
     }
     use std::{any::Any, collections::HashMap, sync::Arc};
     use nidrs::{provider, DynamicModule, Service};
@@ -1018,7 +1036,7 @@ mod conf {
         fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
             use nidrs::{
                 Service, ControllerService, InterceptorService, InterCtx, Interceptor,
-                ModuleCtx, StateCtx,
+                ModuleCtx, StateCtx, ImplMeta,
             };
             if ctx.modules.contains_key("ConfModule") {
                 return ctx;
@@ -1179,6 +1197,14 @@ mod user {
                 }
             }
         }
+        impl nidrs::ImplMeta for UserService {
+            fn __meta() -> nidrs::Meta {
+                let mut meta = nidrs::Meta::new();
+                meta.set("service_name".to_string(), "UserService".to_string());
+                meta.set("service_type".to_string(), "Service".to_string());
+                meta
+            }
+        }
         impl UserService {
             pub fn get_hello_world(&self) -> String {
                 self.app_service.extract().get_hello_world2()
@@ -1259,6 +1285,14 @@ mod user {
                 }
             }
         }
+        impl nidrs::ImplMeta for UserController {
+            fn __meta() -> nidrs::Meta {
+                let mut meta = nidrs::Meta::new();
+                meta.set("service_name".to_string(), "UserController".to_string());
+                meta.set("service_type".to_string(), "ControllerService".to_string());
+                meta
+            }
+        }
         impl UserController {
             pub async fn get_hello_world(
                 &self,
@@ -1268,6 +1302,10 @@ mod user {
                     ::std::io::_print(format_args!("Query {0:?}\n", q));
                 };
                 self.user_service.extract().get_hello_world2()
+            }
+            pub fn __meta_get_hello_world(&self) -> nidrs::Meta {
+                let mut meta = nidrs::Meta::new();
+                meta
             }
         }
     }
@@ -1300,7 +1338,7 @@ mod user {
         fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
             use nidrs::{
                 Service, ControllerService, InterceptorService, InterCtx, Interceptor,
-                ModuleCtx, StateCtx,
+                ModuleCtx, StateCtx, ImplMeta,
             };
             if ctx.modules.contains_key("UserModule") {
                 return ctx;
@@ -1346,7 +1384,9 @@ mod user {
                 .downcast_ref::<std::sync::Arc<controller::UserController>>()
                 .unwrap();
             let t_controller = t_controller.clone();
-            let mut meta = nidrs::Meta::new();
+            let mut meta = nidrs::get_meta(t_controller.clone());
+            let t_meta = t_controller.__meta_get_hello_world();
+            meta.merge(t_meta);
             let meta = std::sync::Arc::new(meta);
             {
                 ::std::io::_print(
@@ -1449,6 +1489,14 @@ mod log {
                 }
             }
         }
+        impl nidrs::ImplMeta for LogService {
+            fn __meta() -> nidrs::Meta {
+                let mut meta = nidrs::Meta::new();
+                meta.set("service_name".to_string(), "LogService".to_string());
+                meta.set("service_type".to_string(), "Service".to_string());
+                meta
+            }
+        }
         impl LogService {
             pub fn log(&self, msg: &str) {
                 {
@@ -1517,6 +1565,14 @@ mod log {
                 }
             }
         }
+        impl nidrs::ImplMeta for LogInterceptor {
+            fn __meta() -> nidrs::Meta {
+                let mut meta = nidrs::Meta::new();
+                meta.set("service_name".to_string(), "LogInterceptor".to_string());
+                meta.set("service_type".to_string(), "InterceptorService".to_string());
+                meta
+            }
+        }
         impl<B: FromRequest<StateCtx> + Debug, P: IntoAnyBody> Interceptor<B, P>
         for LogInterceptor {
             type R = AnyBody;
@@ -1571,7 +1627,7 @@ mod log {
         fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
             use nidrs::{
                 Service, ControllerService, InterceptorService, InterCtx, Interceptor,
-                ModuleCtx, StateCtx,
+                ModuleCtx, StateCtx, ImplMeta,
             };
             if ctx.modules.contains_key("LogModule") {
                 return ctx;
