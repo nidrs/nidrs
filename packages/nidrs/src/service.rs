@@ -2,7 +2,7 @@ use nidrs_extern::once_cell;
 use once_cell::sync::OnceCell;
 use std::{any::Any, sync::Arc};
 
-use crate::ModuleCtx;
+use crate::{Meta, ModuleCtx};
 
 pub trait Service {
     fn inject(&self, ctx: ModuleCtx) -> ModuleCtx;

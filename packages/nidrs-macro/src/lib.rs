@@ -791,6 +791,7 @@ fn gen_dep_inject_tokens(con: &str, services: Vec<TokenStream2>) -> TokenStream2
 }
 
 fn gen_service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStream2{
+    let is_service = "Service".contains(service_type);
     let service_type = syn::Ident::new(service_type, Span::call_site().into());
     let ident = func.ident.clone();
     let ident_str = ident.to_string();
@@ -830,9 +831,15 @@ fn gen_service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStre
     } else {
         vec![]
     };
+    println!("// service_inject_tokens {}", is_service);
+    let middle_tokens = if is_service { quote! {} } else { quote! {
+        impl nidrs::#service_type for #ident {
+        }
+    } };
 
     let inject_tokens = TokenStream2::from(quote! {
-        impl nidrs::#service_type for #ident {
+        #middle_tokens
+        impl nidrs::Service for #ident {
             fn inject(&self, ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx{
                 #(#fields)*
                 ctx

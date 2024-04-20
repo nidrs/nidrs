@@ -1,6 +1,3 @@
-use crate::{ModuleCtx, ServiceProperty};
+use crate::{Meta, ModuleCtx, Service, ServiceProperty};
 
-pub trait ControllerService {
-  fn inject(&self, ctx: ModuleCtx) -> ModuleCtx;
-  fn property() -> ServiceProperty;
-}
+pub trait ControllerService: Service {}

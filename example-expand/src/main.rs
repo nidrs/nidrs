@@ -3,6 +3,14 @@
 #![feature(alloc)]
 #![feature(fmt_helpers_for_derive)]
 #![allow(warnings, unused)]
+// service_inject_tokens false
+// service_inject_tokens true
+// service_inject_tokens true
+// service_inject_tokens true
+// service_inject_tokens true
+// service_inject_tokens false
+// service_inject_tokens true
+// service_inject_tokens false
 #![feature(prelude_import)]
 #[prelude_import]
 use std::prelude::rust_2021::*;
@@ -50,7 +58,8 @@ mod app {
                 }
             }
         }
-        impl nidrs::ControllerService for AppController {
+        impl nidrs::ControllerService for AppController {}
+        impl nidrs::Service for AppController {
             fn inject(&self, ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
                 let service = ctx
                     .services
@@ -618,6 +627,56 @@ mod app {
                 .downcast_ref::<std::sync::Arc<controller::AppController>>()
                 .unwrap();
             let t_controller = t_controller.clone();
+            let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
+            let t_interceptor_0 = t_interceptor_0
+                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
+                .unwrap();
+            let t_interceptor_0 = t_interceptor_0.clone();
+            let mut meta = t_controller.__meta();
+            let t_meta = t_controller.__meta_get_hello_world();
+            meta.merge(t_meta);
+            let meta = std::sync::Arc::new(meta);
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "Registering router \'{0} {1}\'.\n",
+                        "get".to_uppercase(),
+                        "/app/hello",
+                    ),
+                );
+            };
+            let router = axum::Router::new()
+                .route(
+                    "/app/hello",
+                    axum::routing::get(|parts, p0| async move {
+                        let t_body = nidrs_extern::axum::body::Body::empty();
+                        let mut t_meta = nidrs::Meta::new();
+                        t_meta.extend(meta);
+                        let ctx = InterCtx {
+                            meta: t_meta,
+                            parts,
+                            body: t_body,
+                        };
+                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
+                            t_controller.get_hello_world(p0).await
+                        };
+                        t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
+                    }),
+                );
+            ctx.routers.push(router);
+            let t_controller = ctx.controllers.get("AppController").unwrap();
+            let t_controller = t_controller
+                .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                .unwrap();
+            let t_controller = t_controller.clone();
             let mut meta = t_controller.__meta();
             let meta = std::sync::Arc::new(meta);
             {
@@ -699,56 +758,6 @@ mod app {
                             t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
                         };
                         t_interceptor_1.interceptor(ctx, t_inter_fn_1).await
-                    }),
-                );
-            ctx.routers.push(router);
-            let t_controller = ctx.controllers.get("AppController").unwrap();
-            let t_controller = t_controller
-                .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                .unwrap();
-            let t_controller = t_controller.clone();
-            let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
-            let t_interceptor_0 = t_interceptor_0
-                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
-                .unwrap();
-            let t_interceptor_0 = t_interceptor_0.clone();
-            let mut meta = t_controller.__meta();
-            let t_meta = t_controller.__meta_get_hello_world();
-            meta.merge(t_meta);
-            let meta = std::sync::Arc::new(meta);
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "{0} ",
-                        nidrs_extern::colored::Colorize::green("[nidrs]"),
-                    ),
-                );
-            };
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "Registering router \'{0} {1}\'.\n",
-                        "get".to_uppercase(),
-                        "/app/hello",
-                    ),
-                );
-            };
-            let router = axum::Router::new()
-                .route(
-                    "/app/hello",
-                    axum::routing::get(|parts, p0| async move {
-                        let t_body = nidrs_extern::axum::body::Body::empty();
-                        let mut t_meta = nidrs::Meta::new();
-                        t_meta.extend(meta);
-                        let ctx = InterCtx {
-                            meta: t_meta,
-                            parts,
-                            body: t_body,
-                        };
-                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
-                            t_controller.get_hello_world(p0).await
-                        };
-                        t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
                     }),
                 );
             ctx.routers.push(router);
@@ -1193,7 +1202,7 @@ mod user {
             Json,
         };
         use nidrs::{Inject, StateCtx};
-        use nidrs_macro::{controller, get, post};
+        use nidrs_macro::{controller, get, post, meta};
         use super::service::UserService;
         pub struct UserController {
             user_service: Inject<UserService>,
@@ -1219,7 +1228,8 @@ mod user {
                 }
             }
         }
-        impl nidrs::ControllerService for UserController {
+        impl nidrs::ControllerService for UserController {}
+        impl nidrs::Service for UserController {
             fn inject(&self, ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
                 let service = ctx
                     .services
@@ -1476,7 +1486,8 @@ mod log {
                 }
             }
         }
-        impl nidrs::InterceptorService for LogInterceptor {
+        impl nidrs::InterceptorService for LogInterceptor {}
+        impl nidrs::Service for LogInterceptor {
             fn inject(&self, ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
                 let service = ctx
                     .services
@@ -1519,7 +1530,9 @@ mod log {
                 H: FnOnce(InterCtx<B>) -> F,
             {
                 {
-                    ::std::io::_print(format_args!("ctx: {0:?}\n", ctx));
+                    ::std::io::_print(
+                        format_args!("ctx: {0:?}\n", ctx.meta.get::<String>("role")?),
+                    );
                 };
                 self.log_service.log("Before");
                 let r: AppResult<AnyBody> = handler(ctx)

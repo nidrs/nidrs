@@ -1,14 +1,11 @@
 use nidrs_extern::axum::{body::{Body, Bytes}, response::Response};
 use nidrs_extern::axum::{self, http::StatusCode, response::IntoResponse};
-use std::{collections::HashMap, fmt::Debug, future::Future};
+use std::{fmt::Debug, future::Future};
 use serde::Serialize;
 
-use crate::{AppError, AppResult, Meta, ModuleCtx, ServiceProperty, StateCtx};
+use crate::{AppError, AppResult, Meta, Service, StateCtx};
 
-pub trait InterceptorService {
-  fn inject(&self, ctx: ModuleCtx) -> ModuleCtx;
-  fn property() -> ServiceProperty;
-}
+pub trait InterceptorService: Service{}
 
 /// P 和 R 是可以配置的
 pub trait Interceptor<B: axum::extract::FromRequest<StateCtx>, P>: Sized {
