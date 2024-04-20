@@ -319,7 +319,7 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
         METAS.lock().unwrap().insert(key.clone(), true);
         
         
-        let func_meta = "__".to_owned() + func.ident.to_string().as_str() + "_meta";
+        let func_meta = "__meta_".to_owned() + func.ident.to_string().as_str();
         let meta_key =  service_name.clone() + ":" + &func_meta;
         MERGE_COUNT.lock().unwrap().entry(meta_key.clone()).or_insert(0);
         MERGE_COUNT.lock().unwrap().entry(meta_key.clone()).and_modify(|v| *v += 1);
@@ -630,7 +630,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
             });
 
             // meta handle
-            let meta_ident = syn::Ident::new(format!("__{}_meta", route_name).as_str(), Span::call_site().into());
+            let meta_ident = syn::Ident::new(format!("__meta_{}", route_name).as_str(), Span::call_site().into());
             let meta_tokens = if let Some(_) = METAS.lock().unwrap().get(&inter_name){
                 quote! {
                     let meta = t_controller.#meta_ident();
