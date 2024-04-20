@@ -257,7 +257,7 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     let meta_tokens = args.kv.iter().map(|(key, value)| {
         // value parse expr
         let exp = parse_str::<Expr>(&value).unwrap();
-        println!("// meta {} {} {:?}", key, value, exp);
+        // println!("// meta {} {} {:?}", key, value, exp);
 
         let v = match exp {
             Expr::Array(arr) => {
