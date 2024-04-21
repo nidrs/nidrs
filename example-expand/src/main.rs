@@ -75,9 +75,10 @@ mod app {
             fn __meta() -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
                 meta.set("version".to_string(), "v1");
-                meta.set("role".to_string(), "admin");
                 meta.set("auth".to_string(), "true");
+                meta.set("role".to_string(), "admin");
                 meta.set("test".to_string(), true);
+                meta.set("disable_default_prefix".to_string(), true);
                 meta.set("service_name".to_string(), "AppController");
                 meta.set("service_type".to_string(), "ControllerService");
                 meta
@@ -616,84 +617,32 @@ mod app {
                 .unwrap();
             let t_interceptor_0 = t_interceptor_0.clone();
             let mut meta = nidrs::get_meta(t_controller.clone());
-            let t_meta = t_controller.__meta_post_hello_world();
-            meta.merge(t_meta);
-            let meta = std::sync::Arc::new(meta);
-            let version = *meta
-                .get::<&str>("version")
-                .unwrap_or(&ctx.defaults.default_version);
-            let path = nidrs::template_format(
-                &{
-                    let res = ::alloc::fmt::format(
-                        format_args!("{0}{1}", ctx.defaults.default_prefix, "/app/hello"),
-                    );
-                    res
-                },
-                [("version", version)],
-            );
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "{0} ",
-                        nidrs_extern::colored::Colorize::green("[nidrs]"),
-                    ),
-                );
-            };
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "Registering router \'{0} {1}\'.\n",
-                        "post".to_uppercase(),
-                        path,
-                    ),
-                );
-            };
-            let router = axum::Router::new()
-                .route(
-                    &path,
-                    axum::routing::post(|parts, p0, p1| async move {
-                        let t_body = p1;
-                        let mut t_meta = nidrs::Meta::new();
-                        t_meta.extend(meta);
-                        let ctx = InterCtx {
-                            meta: t_meta,
-                            parts,
-                            body: t_body,
-                        };
-                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
-                            let t_body = ctx.body;
-                            t_controller.post_hello_world(p0, t_body).await
-                        };
-                        t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
-                    }),
-                );
-            ctx.routers.push(router);
-            let t_controller = ctx.controllers.get("AppController").unwrap();
-            let t_controller = t_controller
-                .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                .unwrap();
-            let t_controller = t_controller.clone();
-            let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
-            let t_interceptor_0 = t_interceptor_0
-                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
-                .unwrap();
-            let t_interceptor_0 = t_interceptor_0.clone();
-            let mut meta = nidrs::get_meta(t_controller.clone());
             let t_meta = t_controller.__meta_get_hello_world();
             meta.merge(t_meta);
             let meta = std::sync::Arc::new(meta);
             let version = *meta
                 .get::<&str>("version")
                 .unwrap_or(&ctx.defaults.default_version);
-            let path = nidrs::template_format(
-                &{
-                    let res = ::alloc::fmt::format(
-                        format_args!("{0}{1}", ctx.defaults.default_prefix, "/app/hello"),
-                    );
-                    res
-                },
-                [("version", version)],
-            );
+            let disable_default_prefix = *meta
+                .get::<bool>("disable_default_prefix")
+                .unwrap_or(&false);
+            let path = if disable_default_prefix {
+                "/app/hello".to_string()
+            } else {
+                nidrs::template_format(
+                    &{
+                        let res = ::alloc::fmt::format(
+                            format_args!(
+                                "{0}{1}",
+                                ctx.defaults.default_prefix,
+                                "/app/hello",
+                            ),
+                        );
+                        res
+                    },
+                    [("version", version)],
+                )
+            };
             {
                 ::std::io::_print(
                     format_args!(
@@ -747,19 +696,26 @@ mod app {
             let version = *meta
                 .get::<&str>("version")
                 .unwrap_or(&ctx.defaults.default_version);
-            let path = nidrs::template_format(
-                &{
-                    let res = ::alloc::fmt::format(
-                        format_args!(
-                            "{0}{1}",
-                            ctx.defaults.default_prefix,
-                            "/app/hello2",
-                        ),
-                    );
-                    res
-                },
-                [("version", version)],
-            );
+            let disable_default_prefix = *meta
+                .get::<bool>("disable_default_prefix")
+                .unwrap_or(&false);
+            let path = if disable_default_prefix {
+                "/app/hello2".to_string()
+            } else {
+                nidrs::template_format(
+                    &{
+                        let res = ::alloc::fmt::format(
+                            format_args!(
+                                "{0}{1}",
+                                ctx.defaults.default_prefix,
+                                "/app/hello2",
+                            ),
+                        );
+                        res
+                    },
+                    [("version", version)],
+                )
+            };
             {
                 ::std::io::_print(
                     format_args!(
@@ -791,6 +747,80 @@ mod app {
                         };
                         let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
                             t_controller.get_hello_world2(p0).await
+                        };
+                        t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
+                    }),
+                );
+            ctx.routers.push(router);
+            let t_controller = ctx.controllers.get("AppController").unwrap();
+            let t_controller = t_controller
+                .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                .unwrap();
+            let t_controller = t_controller.clone();
+            let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
+            let t_interceptor_0 = t_interceptor_0
+                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
+                .unwrap();
+            let t_interceptor_0 = t_interceptor_0.clone();
+            let mut meta = nidrs::get_meta(t_controller.clone());
+            let t_meta = t_controller.__meta_post_hello_world();
+            meta.merge(t_meta);
+            let meta = std::sync::Arc::new(meta);
+            let version = *meta
+                .get::<&str>("version")
+                .unwrap_or(&ctx.defaults.default_version);
+            let disable_default_prefix = *meta
+                .get::<bool>("disable_default_prefix")
+                .unwrap_or(&false);
+            let path = if disable_default_prefix {
+                "/app/hello".to_string()
+            } else {
+                nidrs::template_format(
+                    &{
+                        let res = ::alloc::fmt::format(
+                            format_args!(
+                                "{0}{1}",
+                                ctx.defaults.default_prefix,
+                                "/app/hello",
+                            ),
+                        );
+                        res
+                    },
+                    [("version", version)],
+                )
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "Registering router \'{0} {1}\'.\n",
+                        "post".to_uppercase(),
+                        path,
+                    ),
+                );
+            };
+            let router = axum::Router::new()
+                .route(
+                    &path,
+                    axum::routing::post(|parts, p0, p1| async move {
+                        let t_body = p1;
+                        let mut t_meta = nidrs::Meta::new();
+                        t_meta.extend(meta);
+                        let ctx = InterCtx {
+                            meta: t_meta,
+                            parts,
+                            body: t_body,
+                        };
+                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
+                            let t_body = ctx.body;
+                            t_controller.post_hello_world(p0, t_body).await
                         };
                         t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
                     }),
@@ -1404,19 +1434,26 @@ mod user {
             let version = *meta
                 .get::<&str>("version")
                 .unwrap_or(&ctx.defaults.default_version);
-            let path = nidrs::template_format(
-                &{
-                    let res = ::alloc::fmt::format(
-                        format_args!(
-                            "{0}{1}",
-                            ctx.defaults.default_prefix,
-                            "/user/hello",
-                        ),
-                    );
-                    res
-                },
-                [("version", version)],
-            );
+            let disable_default_prefix = *meta
+                .get::<bool>("disable_default_prefix")
+                .unwrap_or(&false);
+            let path = if disable_default_prefix {
+                "/user/hello".to_string()
+            } else {
+                nidrs::template_format(
+                    &{
+                        let res = ::alloc::fmt::format(
+                            format_args!(
+                                "{0}{1}",
+                                ctx.defaults.default_prefix,
+                                "/user/hello",
+                            ),
+                        );
+                        res
+                    },
+                    [("version", version)],
+                )
+            };
             {
                 ::std::io::_print(
                     format_args!(
@@ -1606,7 +1643,10 @@ mod log {
             {
                 {
                     ::std::io::_print(
-                        format_args!("ctx: {0:?}\n", ctx.meta.get::<Vec<&str>>("arr")?),
+                        format_args!(
+                            "ctx: {0:?}\n",
+                            ctx.meta.get::<bool>("disable_default_prefix"),
+                        ),
                     );
                 };
                 self.log_service.log("Before");

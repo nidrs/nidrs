@@ -12,6 +12,7 @@ use super::{dto::{Status}, service::AppService};
 #[version("v1")]
 #[meta(role = "admin", auth = "true")]
 #[meta(test = true)]
+#[meta(disable_default_prefix)]
 #[controller("/app")]
 #[derive(Debug, Default)]
 pub struct AppController {

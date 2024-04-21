@@ -24,7 +24,7 @@ impl <B: FromRequest<StateCtx> + Debug, P:IntoAnyBody> Interceptor<B, P> for Log
       F: std::future::Future<Output = AppResult<P>> + Send + 'static,
       H: FnOnce(InterCtx<B>) -> F,
     {
-        println!("ctx: {:?}", ctx.meta.get::<Vec<&str>>("arr")?);
+        println!("ctx: {:?}", ctx.meta.get::<bool>("disable_default_prefix"));
         self.log_service.log("Before");
         let r: AppResult<AnyBody> = handler(ctx).await.map(|r|IntoAnyBody::from_serializable(r));
 

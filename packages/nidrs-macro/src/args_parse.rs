@@ -32,9 +32,11 @@ impl Parse for MetaArgs {
                     let k = path.path.segments.first().unwrap().ident.to_string();
                     let v = assign.right.clone().to_token_stream().to_string();
                     kv.insert(k, v);
-                    // if let syn::Expr::Lit(lit) = *assign.right.clone() {
-                    // }
                 }
+            } else if let syn::Expr::Path(path) = item {
+                kv.insert(path.path.segments.first().unwrap().ident.to_string(), "true".to_string());
+            } else {
+                panic!("Invalid argument");
             }
         });
         Ok(MetaArgs {

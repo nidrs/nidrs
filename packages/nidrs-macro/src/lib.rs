@@ -595,7 +595,8 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                 #meta_tokens
 
                 let version = *meta.get::<&str>("version").unwrap_or(&ctx.defaults.default_version);
-                let path = nidrs::template_format(&format!("{}{}", ctx.defaults.default_prefix, #path), [("version", version)]);
+                let disable_default_prefix = *meta.get::<bool>("disable_default_prefix").unwrap_or(&false);
+                let path = if disable_default_prefix { #path.to_string() } else { nidrs::template_format(&format!("{}{}", ctx.defaults.default_prefix, #path), [("version", version)]) };
                 nidrs_macro::log!("Registering router '{} {}'.", #method.to_uppercase(), path);
                 let router = axum::Router::new().route(
                     &path,
@@ -789,7 +790,7 @@ fn gen_meta_tokens() -> TokenStream2 {
             }
         }
     ).collect::<Vec<TokenStream2>>();
-    let prev_meta_tokens = TokenStream2::from(quote! {
+    let prev_meta_tokens: TokenStream2 = TokenStream2::from(quote! {
         #(#prev_meta_tokens)*
     });
     prev_meta_tokens
