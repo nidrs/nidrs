@@ -1,10 +1,11 @@
-<div align="center">
-  <p><img src="readme.assets/log2.jpg" /></p>
+<div align="center" style="background: #f6cf46">
+  <p><img src="readme_zh.assets/image-20240421150233596.png" /></p>
   <p>
     <img src="https://img.shields.io/discord/1223548737075281952?style=for-the-badge" />
     <img src="https://img.shields.io/crates/v/nidrs?style=for-the-badge" />
     <img src="https://img.shields.io/github/license/nidrs/nidrs?style=for-the-badge" />
-</p>
+  </p>
+  <div style="height: 20px"></div>
 </div>
 
 # Nidrs
@@ -42,11 +43,13 @@ Nidrs 提供了一个即插即用的应用程序架构，使开发人员和团�
 - [ ] 基于请求参数校验的 Mock 服务
 - [x] 统一返回类型 v0.0.4
 - [x] 错误封装和处理 v0.0.4
-- [ ] 统一添加路由前缀
+- [ ] 统一添加路由前缀 v0.0.5
   - [ ] default_prefix
-- [ ] 接口版本控制
+- [ ] 接口版本控制 v0.0.5
   - [ ] default_version
-- [ ] 自动 OpenAPI
+  - [ ] #[version("v1")]
+- [ ] 自动 OpenAPI 文档
+- [ ] API 调用接口生成
 - [ ] 模块测试
 - [ ] CLI 命令
 - [ ] 完整的文档和例子
@@ -93,7 +96,7 @@ impl AppController {
         println!("Query {:?}", q);
         Ok(self.app_service.get_hello_world())
     }
-    
+
     #[uses(LogInterceptor)]
     #[post("/hello")]
     pub async fn post_hello_world(&self, Query(q): Query<HashMap<String, String>>, Json(j): Json<serde_json::Value>) -> AppResult<String> {
