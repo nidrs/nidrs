@@ -763,20 +763,14 @@ fn gen_service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStre
                 #(#fields)*
                 ctx
             }
-
-            fn property() -> nidrs::ServiceProperty{
-                nidrs::ServiceProperty{
-                    name: stringify!(#ident),
-                }
-            }
         }
 
         impl nidrs::ImplMeta for #ident{
             fn __meta() -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
                 #prev_meta_tokens
-                meta.set("service_name".to_string(), stringify!(#ident).to_string());
-                meta.set("service_type".to_string(), stringify!(#service_type).to_string());
+                meta.set("service_name".to_string(), stringify!(#ident));
+                meta.set("service_type".to_string(), stringify!(#service_type));
                 meta
             }
         }

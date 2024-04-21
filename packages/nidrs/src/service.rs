@@ -2,17 +2,12 @@ use nidrs_extern::once_cell;
 use once_cell::sync::OnceCell;
 use std::{any::Any, sync::Arc};
 
-use crate::{Meta, ModuleCtx};
+use crate::{ImplMeta, ModuleCtx};
 
-pub trait Service {
+pub trait Service: ImplMeta {
     fn inject(&self, ctx: ModuleCtx) -> ModuleCtx;
-    fn property() -> ServiceProperty;
 }
 
-
-pub struct ServiceProperty{
-    pub name: &'static str,
-  }
 
 #[derive(Clone, Debug, Default)]
 pub struct Inject<T>{
@@ -44,5 +39,6 @@ impl<T> std::ops::Deref for Inject<T> {
 
 
 pub fn provider<T:Service + 'static>(service: T) -> (&'static str, Box<dyn Any>){
-    (T::property().name, Box::new(Arc::new(service)) as Box<dyn Any>)
+    let name = *T::__meta().get::<&str>("service_name").unwrap();
+    (name, Box::new(Arc::new(service)) as Box<dyn Any>)
 }

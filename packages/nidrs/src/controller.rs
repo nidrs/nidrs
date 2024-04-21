@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use crate::{Meta, ModuleCtx, Service, ServiceProperty};
+use crate::Service;
 
 pub trait ControllerService: Service {}
 
