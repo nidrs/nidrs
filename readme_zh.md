@@ -35,19 +35,20 @@ Nidrs 提供了一个即插即用的应用程序架构，使开发人员和团�
   - [ ] Model 层
 - [x] 模块生命周期钩子
   - [x] on_module_init v0.0.2
-  - [ ] on_module_destroy
-  - [ ] on_application_bootstrap
-  - [ ] on_application_shutdown
+  - [x] on_module_destroy v0.0.5
+  - [ ] on_application_bootstrap (待定)
+  - [ ] on_application_shutdown (待定)
 - [x] 请求响应拦截器 v0.0.4
 - [ ] 请求参数校验
 - [ ] 基于请求参数校验的 Mock 服务
 - [x] 统一返回类型 v0.0.4
 - [x] 错误封装和处理 v0.0.4
-- [ ] 统一添加路由前缀 v0.0.5
-  - [ ] default_prefix
-- [ ] 接口版本控制 v0.0.5
-  - [ ] default_version
-  - [ ] #[version("v1")]
+- [x] 统一添加路由前缀 v0.0.5
+  - [x] default_prefix
+  - [x] #[meta(disable_default_prefix)]
+- [x] 接口版本控制 v0.0.5
+  - [x] default_version
+  - [x] #[version("v1")]
 - [ ] 自动 OpenAPI 文档
 - [ ] API 调用接口生成
 - [ ] 模块测试

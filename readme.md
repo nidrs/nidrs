@@ -23,7 +23,7 @@ Nidrs provides a plug-and-play application architecture enabling developers and 
 - [x] Modular encapsulation v0.0.1
   - [x] Static module registration v0.0.1
   - [x] Configurable module registration v0.0.2
-- [x] Dependency auto-injection
+- [x] Automatic dependency injection
   - [x] Service auto-injection v0.0.1
   - [x] Dynamic service injection v0.0.3
   - [x] Service scope (global) v0.0.1
@@ -37,19 +37,22 @@ Nidrs provides a plug-and-play application architecture enabling developers and 
   - [ ] Model layer
 - [x] Module lifecycle hooks
   - [x] on_module_init v0.0.2
-  - [ ] on_module_destroy
-  - [ ] on_application_bootstrap
-  - [ ] on_application_shutdown
+  - [x] on_module_destroy v0.0.5
+  - [ ] on_application_bootstrap (tentative)
+  - [ ] on_application_shutdown (tentative)
 - [x] Request-response interceptors v0.0.4
 - [ ] Request parameter validation
 - [ ] Mock service based on request parameter validation
 - [x] Unified return type v0.0.4
 - [x] Error encapsulation and handling v0.0.4
-- [ ] Uniformly adding route prefixes
-  - [ ] default_prefix
-- [ ] Interface versioning
-  - [ ] default_version
-- [ ] Automatic OpenAPI
+- [x] Uniformly adding route prefixes v0.0.5
+  - [x] default_prefix
+  - [x] #[meta(disable_default_prefix)]
+- [x] Interface versioning v0.0.5
+  - [x] default_version
+  - [x] #[version("v1")]
+- [ ] Automatic OpenAPI documentation
+- [ ] API invocation interface generation
 - [ ] Module testing
 - [ ] CLI commands
 - [ ] Comprehensive documentation and examples
