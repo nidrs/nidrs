@@ -1,11 +1,11 @@
 use nidrs_macro::module;
 
-pub mod service;
 pub mod controller;
+pub mod service;
 
-use service::UserService;
-use controller::UserController;
 use crate::app::AppModule;
+use controller::UserController;
+use service::UserService;
 
 #[module({
   imports = [AppModule];

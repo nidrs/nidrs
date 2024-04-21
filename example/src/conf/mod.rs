@@ -1,13 +1,13 @@
-pub mod service;
 pub mod options;
+pub mod service;
 
 use std::{any::Any, collections::HashMap, sync::Arc};
 
 use nidrs::{provider, DynamicModule, Service};
 use nidrs_macro::module;
 
-use service::ConfService;
 pub use options::ConfOptions;
+use service::ConfService;
 
 #[module({
   services = [ConfService];
@@ -17,8 +17,7 @@ pub use options::ConfOptions;
 pub struct ConfModule;
 
 impl ConfModule {
-  pub fn for_root(options: ConfOptions) -> DynamicModule {
-    DynamicModule::new()
-      .provider(options)
-  }
+    pub fn for_root(options: ConfOptions) -> DynamicModule {
+        DynamicModule::new().provider(options)
+    }
 }

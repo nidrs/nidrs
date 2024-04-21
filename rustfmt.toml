@@ -1,0 +1,5 @@
+max_width = 150
+tab_spaces = 4
+edition = "2021"
+use_small_heuristics = "Max"
+newline_style = "Auto"

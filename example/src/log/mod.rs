@@ -1,10 +1,10 @@
 use nidrs_macro::module;
 
-pub mod service;
 pub mod interceptor;
+pub mod service;
 
-use service::LogService;
 use interceptor::LogInterceptor;
+use service::LogService;
 
 #[module({
   services = [LogService];

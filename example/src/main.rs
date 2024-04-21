@@ -1,11 +1,11 @@
 mod app;
 mod conf;
-mod user;
 mod log;
 mod shared;
+mod user;
 
-pub use nidrs::AppResult;
 pub use nidrs::AppError;
+pub use nidrs::AppResult;
 
 #[nidrs::main]
 fn main() {

@@ -1,17 +1,17 @@
 use nidrs_macro::module;
 
 pub mod controller;
-pub mod service;
 pub mod dto;
 pub mod exception;
+pub mod service;
 
-use controller::AppController;
-use service::AppService;
-use crate::user::UserModule;
-use crate::log::LogModule;
 use crate::conf::ConfModule;
 use crate::conf::ConfOptions;
 use crate::log::interceptor::LogInterceptor;
+use crate::log::LogModule;
+use crate::user::UserModule;
+use controller::AppController;
+use service::AppService;
 
 #[module({
     imports = [

@@ -1,8 +1,14 @@
 use std::fmt::Debug;
 
-use axum::{body::Body, extract::FromRequest, http::{HeaderName, HeaderValue, StatusCode}, response::{IntoResponse, IntoResponseParts, Response, ResponseParts}, Json};
+use axum::{
+    body::Body,
+    extract::FromRequest,
+    http::{HeaderName, HeaderValue, StatusCode},
+    response::{IntoResponse, IntoResponseParts, Response, ResponseParts},
+    Json,
+};
 use axum_extra::headers::Header;
-use nidrs::{AnyBody, Exception, InterCtx, Inject, InterceptorService, Interceptor, IntoAnyBody, StateCtx};
+use nidrs::{AnyBody, Exception, Inject, InterCtx, Interceptor, InterceptorService, IntoAnyBody, StateCtx};
 use nidrs_macro::interceptor;
 use serde::{de::DeserializeOwned, Serialize, Serializer};
 
@@ -12,21 +18,21 @@ use super::service::LogService;
 
 #[interceptor()]
 #[derive(Default)]
-pub struct LogInterceptor{
-  log_service: Inject<LogService>
+pub struct LogInterceptor {
+    log_service: Inject<LogService>,
 }
 
-impl <B: FromRequest<StateCtx> + Debug, P:IntoAnyBody> Interceptor<B, P> for LogInterceptor {
+impl<B: FromRequest<StateCtx> + Debug, P: IntoAnyBody> Interceptor<B, P> for LogInterceptor {
     type R = AnyBody;
 
     async fn interceptor<F, H>(&self, ctx: InterCtx<B>, handler: H) -> AppResult<Self::R>
     where
-      F: std::future::Future<Output = AppResult<P>> + Send + 'static,
-      H: FnOnce(InterCtx<B>) -> F,
+        F: std::future::Future<Output = AppResult<P>> + Send + 'static,
+        H: FnOnce(InterCtx<B>) -> F,
     {
         println!("ctx: {:?}", ctx.meta.get::<bool>("disable_default_prefix"));
         self.log_service.log("Before");
-        let r: AppResult<AnyBody> = handler(ctx).await.map(|r|IntoAnyBody::from_serializable(r));
+        let r: AppResult<AnyBody> = handler(ctx).await.map(|r| IntoAnyBody::from_serializable(r));
 
         self.log_service.log("After");
 

@@ -1,12 +1,16 @@
 use std::{collections::HashMap, sync::Arc};
 
-use axum::{extract::{Query, State}, http::{version, StatusCode}, Json};
+use axum::{
+    extract::{Query, State},
+    http::{version, StatusCode},
+    Json,
+};
 use nidrs::{throw, version, Exception, Inject, Meta, StateCtx};
 use nidrs_macro::{controller, get, meta, post, uses};
 
 use crate::{shared::fn_test::fn_test, AppError, AppResult};
 
-use super::{dto::{Status}, service::AppService};
+use super::{dto::Status, service::AppService};
 
 // #[uses(LogInterceptor)]
 #[version("v1")]
@@ -37,7 +41,7 @@ impl AppController {
         println!("Query {:?}", q);
         Ok(self.app_service.get_hello_world())
     }
-    
+
     #[uses(LogInterceptor)]
     #[post("/hello")]
     pub async fn post_hello_world(&self, Query(q): Query<HashMap<String, String>>, Json(j): Json<serde_json::Value>) -> AppResult<String> {
