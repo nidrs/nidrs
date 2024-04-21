@@ -1,11 +1,8 @@
 use std::collections::HashMap;
 
-use axum::{
-    extract::{Query, State},
-    Json,
-};
-use nidrs::{Inject, StateCtx};
-use nidrs_macro::{controller, get, meta, post};
+use axum::extract::Query;
+use nidrs::Inject;
+use nidrs_macro::{controller, get};
 
 use super::service::UserService;
 

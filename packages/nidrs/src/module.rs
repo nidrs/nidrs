@@ -1,8 +1,8 @@
 use nidrs_extern::tokio;
 use nidrs_extern::{axum, tokio::signal};
-use std::{any::Any, collections::HashMap, process::exit};
+use std::{any::Any, collections::HashMap};
 
-use crate::{provider, AppResult, ImplMeta, Meta, Service};
+use crate::{provider, AppResult, Service};
 
 pub trait Module {
     fn init(self, ctx: ModuleCtx) -> ModuleCtx;
@@ -12,6 +12,12 @@ pub trait Module {
 
 pub struct DynamicModule {
     pub services: HashMap<&'static str, Box<dyn Any>>,
+}
+
+impl Default for DynamicModule {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl DynamicModule {
@@ -33,7 +39,7 @@ impl DynamicModule {
 
 impl Module for DynamicModule {
     fn init(self, ctx: ModuleCtx) -> ModuleCtx {
-        return ctx;
+        ctx
     }
 
     fn destroy(&self, ctx: &ModuleCtx) {}
@@ -52,7 +58,7 @@ pub struct NidrsFactory<T: Module> {
 
 impl<T: Module> NidrsFactory<T> {
     pub fn create(module: T) -> Self {
-        NidrsFactory { module: module, defaults: ModuleDefaults { default_version: "v1", default_prefix: "" } }
+        NidrsFactory { module, defaults: ModuleDefaults { default_version: "v1", default_prefix: "" } }
     }
 
     pub fn default_prefix(mut self, prefix: &'static str) -> Self {
@@ -126,7 +132,7 @@ pub struct ModuleCtx {
 impl ModuleCtx {
     pub fn new(defaults: ModuleDefaults) -> Self {
         ModuleCtx {
-            defaults: defaults,
+            defaults,
             modules: HashMap::new(),
             services: HashMap::new(),
             controllers: HashMap::new(),

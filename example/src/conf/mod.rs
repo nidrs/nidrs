@@ -1,9 +1,7 @@
 pub mod options;
 pub mod service;
 
-use std::{any::Any, collections::HashMap, sync::Arc};
-
-use nidrs::{provider, DynamicModule, Service};
+use nidrs::{DynamicModule, Service};
 use nidrs_macro::module;
 
 pub use options::ConfOptions;

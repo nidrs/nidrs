@@ -18,8 +18,11 @@ script = """#!/bin/sh
 set -e
 cog verify --file $1
 cog check
-cargo fmt -v --all --check
-cargo clippy
+"""
+[git_hooks.pre-commit]
+script = """#!/bin/sh
+cargo clippy --fix --allow-dirty --allow-staged && cargo fmt -v --all
+git add .
 """
 
 [commit_types]

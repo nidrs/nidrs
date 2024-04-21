@@ -1,14 +1,10 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
-use axum::{
-    extract::{Query, State},
-    http::{version, StatusCode},
-    Json,
-};
-use nidrs::{throw, version, Exception, Inject, Meta, StateCtx};
+use axum::{extract::Query, Json};
+use nidrs::{version, Inject, Meta};
 use nidrs_macro::{controller, get, meta, post, uses};
 
-use crate::{shared::fn_test::fn_test, AppError, AppResult};
+use crate::AppResult;
 
 use super::{dto::Status, service::AppService};
 

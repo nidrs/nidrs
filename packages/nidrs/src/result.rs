@@ -22,11 +22,7 @@ pub enum AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
-        axum::response::Response::builder()
-            .status(StatusCode::INTERNAL_SERVER_ERROR)
-            .body(format!("Error: {}", self.to_string()))
-            .unwrap()
-            .into_response()
+        axum::response::Response::builder().status(StatusCode::INTERNAL_SERVER_ERROR).body(format!("Error: {}", self)).unwrap().into_response()
     }
 }
 
@@ -38,7 +34,7 @@ pub fn __throw<E: Into<AppError>>(e: E, line: &str) -> AppResult<()> {
         println!("{}", e.to_string().red().bold());
         return Err(e.into());
     }
-    return Err(e);
+    Err(e)
 }
 
 #[derive(thiserror::Error, Debug)]

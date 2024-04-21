@@ -1,6 +1,6 @@
 use crate::user::service::UserService;
 use nidrs::Inject;
-use nidrs_macro::{injectable, on_module_init};
+use nidrs_macro::injectable;
 
 #[injectable()]
 #[derive(Clone, Debug, Default)]

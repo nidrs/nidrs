@@ -1,18 +1,10 @@
 use std::fmt::Debug;
 
-use axum::{
-    body::Body,
-    extract::FromRequest,
-    http::{HeaderName, HeaderValue, StatusCode},
-    response::{IntoResponse, IntoResponseParts, Response, ResponseParts},
-    Json,
-};
-use axum_extra::headers::Header;
-use nidrs::{AnyBody, Exception, Inject, InterCtx, Interceptor, InterceptorService, IntoAnyBody, StateCtx};
+use axum::extract::FromRequest;
+use nidrs::{AnyBody, Inject, InterCtx, Interceptor, IntoAnyBody, StateCtx};
 use nidrs_macro::interceptor;
-use serde::{de::DeserializeOwned, Serialize, Serializer};
 
-use crate::{app::dto::Status, AppError, AppResult};
+use crate::AppResult;
 
 use super::service::LogService;
 
