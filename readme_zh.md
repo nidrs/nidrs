@@ -259,6 +259,12 @@ pub struct ModuleCtx{
 
 具体想看宏生成的代码可以执行 `cd nidrs/example && cargo expand` 即可。
 
+## Sponsor
+
+开源不易，赞助亦不易，都需要勇气，我相信爱出者爱返，愿你的好运从这份奉献开始运转～
+
+[前往【爱发电】赞助](https://afdian.net/a/nidrs)
+
 ## About
 
 整个框架目前处于早期阶段，0.x.x 都处于测试版本，正式稳定版本从 1.0 开始，不过如果你只是单纯的想找一个 axum 类的高层框架，而不需要后面的功能也可以尝试一下

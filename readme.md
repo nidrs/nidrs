@@ -231,6 +231,12 @@ ConfService initialized with log_level: ConfOptions { log_level: "info" }
 [nidrs] Listening on 0.0.0.0:3000
 ```
 
+## Sponsor
+
+Open source is not easy, and sponsorship is also not easy. Both require courage. I believe that those who give love will receive love in return. May your good fortune start from this contribution~
+
+[Go to Sponsor on [AfDian]](https://afdian.net/a/nidrs)
+
 ## About
 
 The entire framework is currently in its early stages, with versions in the 0.x.x range being in testing. The stable version starts from 1.0. However, if you're simply looking for a high-level framework similar to Axum without needing the additional features mentioned later on, you can still give it a try.
