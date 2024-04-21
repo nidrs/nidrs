@@ -31,9 +31,14 @@ impl DynamicModule {
   }
 }
 
-pub struct NidrsFactory<T: Module> {
+#[derive(Debug, Clone)]
+pub struct ModuleDefaults{
   pub default_version: &'static str,
   pub default_prefix: &'static str,
+}
+
+pub struct NidrsFactory<T: Module> {
+  pub defaults: ModuleDefaults,
   pub module: T,
 }
 
@@ -43,18 +48,20 @@ impl <T: Module>NidrsFactory<T> {
   ) -> Self {
       NidrsFactory {
         module: module,
-        default_prefix: "",
-        default_version: "v1",
+        defaults: ModuleDefaults{
+          default_version: "v1",
+          default_prefix: "",
+        }
       }
   }
 
   pub fn default_prefix(mut self, prefix: &'static str) -> Self {
-    self.default_prefix = prefix;
+    self.defaults.default_prefix = prefix;
     self
   }
 
   pub fn default_version(mut self, v: &'static str) -> Self {
-    self.default_version = v;
+    self.defaults.default_version = v;
     self
   }
 
@@ -62,9 +69,7 @@ impl <T: Module>NidrsFactory<T> {
     let router = axum::Router::new().route("/", axum::routing::get(|| async move {
       "Hello, Nidrs!"
     }));
-    let mut module_ctx = ModuleCtx::new();
-    module_ctx.default_prefix = self.default_prefix;
-    module_ctx.default_version = self.default_version;
+    let module_ctx = ModuleCtx::new(self.defaults);
     let module_ctx = self.module.init(module_ctx);
     let routers = module_ctx.routers;
     let mut sub_router = axum::Router::new();
@@ -93,8 +98,7 @@ pub struct StateCtx{
 }
 
 pub struct ModuleCtx{
-  pub default_version: &'static str,
-  pub default_prefix: &'static str,
+  pub defaults: ModuleDefaults,
   pub modules:HashMap<String, Box<dyn Any>>,
   pub services: HashMap<String, Box<dyn Any>>,
   pub controllers: HashMap<String, Box<dyn Any>>,
@@ -103,10 +107,9 @@ pub struct ModuleCtx{
 }
 
 impl ModuleCtx {
-  pub fn new() -> Self {
+  pub fn new(defaults:ModuleDefaults) -> Self {
       ModuleCtx {
-          default_version: "v1",
-          default_prefix: "",
+          defaults: defaults,
           modules: HashMap::new(),
           services: HashMap::new(),
           controllers: HashMap::new(),

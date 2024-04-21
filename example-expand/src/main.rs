@@ -619,11 +619,13 @@ mod app {
             let t_meta = t_controller.__meta_post_hello_world();
             meta.merge(t_meta);
             let meta = std::sync::Arc::new(meta);
-            let version = *meta.get::<&str>("version").unwrap_or(&ctx.default_version);
+            let version = *meta
+                .get::<&str>("version")
+                .unwrap_or(&ctx.defaults.default_version);
             let path = nidrs::template_format(
                 &{
                     let res = ::alloc::fmt::format(
-                        format_args!("{0}{1}", ctx.default_prefix, "/app/hello"),
+                        format_args!("{0}{1}", ctx.defaults.default_prefix, "/app/hello"),
                     );
                     res
                 },
@@ -680,11 +682,13 @@ mod app {
             let t_meta = t_controller.__meta_get_hello_world();
             meta.merge(t_meta);
             let meta = std::sync::Arc::new(meta);
-            let version = *meta.get::<&str>("version").unwrap_or(&ctx.default_version);
+            let version = *meta
+                .get::<&str>("version")
+                .unwrap_or(&ctx.defaults.default_version);
             let path = nidrs::template_format(
                 &{
                     let res = ::alloc::fmt::format(
-                        format_args!("{0}{1}", ctx.default_prefix, "/app/hello"),
+                        format_args!("{0}{1}", ctx.defaults.default_prefix, "/app/hello"),
                     );
                     res
                 },
@@ -740,11 +744,17 @@ mod app {
             let t_meta = t_controller.__meta_get_hello_world2();
             meta.merge(t_meta);
             let meta = std::sync::Arc::new(meta);
-            let version = *meta.get::<&str>("version").unwrap_or(&ctx.default_version);
+            let version = *meta
+                .get::<&str>("version")
+                .unwrap_or(&ctx.defaults.default_version);
             let path = nidrs::template_format(
                 &{
                     let res = ::alloc::fmt::format(
-                        format_args!("{0}{1}", ctx.default_prefix, "/app/hello2"),
+                        format_args!(
+                            "{0}{1}",
+                            ctx.defaults.default_prefix,
+                            "/app/hello2",
+                        ),
                     );
                     res
                 },
@@ -1391,11 +1401,17 @@ mod user {
             let t_meta = t_controller.__meta_get_hello_world();
             meta.merge(t_meta);
             let meta = std::sync::Arc::new(meta);
-            let version = *meta.get::<&str>("version").unwrap_or(&ctx.default_version);
+            let version = *meta
+                .get::<&str>("version")
+                .unwrap_or(&ctx.defaults.default_version);
             let path = nidrs::template_format(
                 &{
                     let res = ::alloc::fmt::format(
-                        format_args!("{0}{1}", ctx.default_prefix, "/user/hello"),
+                        format_args!(
+                            "{0}{1}",
+                            ctx.defaults.default_prefix,
+                            "/user/hello",
+                        ),
                     );
                     res
                 },
