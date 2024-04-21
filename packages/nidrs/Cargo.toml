@@ -1,6 +1,6 @@
 [package]
 name = "nidrs"
-version = "0.0.4"
+version = "0.0.5"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
 description = "Nidrs is a web framework based on axum and tokio."
 edition = "2021"
@@ -16,8 +16,8 @@ repository = "https://github.com/nidrs/nidrs.git"
 license = "MIT"
 
 [dependencies]
-nidrs-extern = { path = "../nidrs-extern", version = "0.0.4"}
-nidrs-macro = { path = "../nidrs-macro", version = "0.0.4"}
+nidrs-extern = { path = "../nidrs-extern", version = "0.0.5"}
+nidrs-macro = { path = "../nidrs-macro", version = "0.0.5"}
 
 serde_json = "1.0.115"
 serde = {version = "1.0.197", features = ["derive"]}
