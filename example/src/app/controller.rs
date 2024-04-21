@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use axum::{extract::{Query, State}, http::{version, StatusCode}, Json};
-use nidrs::{throw, version, Exception, Inject, StateCtx};
+use nidrs::{throw, version, Exception, Inject, Meta, StateCtx};
 use nidrs_macro::{controller, get, meta, post, uses};
 
 use crate::{shared::fn_test::fn_test, AppError, AppResult};
@@ -24,8 +24,9 @@ impl AppController {
     #[uses(LogInterceptor)]
     #[version("v2")]
     #[get("/hello")]
-    pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<Status> {
+    pub async fn get_hello_world(&self, meta: Meta, Query(q): Query<HashMap<String, String>>) -> AppResult<Status> {
         println!("Query {:?}", q);
+        println!("Meta {:?}", meta.get::<&str>("role"));
         // fn_test()?;
         Ok(Status { db: "ok".to_string(), redis: "ok".to_string() })
     }

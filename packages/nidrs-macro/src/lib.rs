@@ -33,6 +33,7 @@ struct RouteMeta {
     name: String,
     func_args: Vec<String>,
     is_body: bool,
+    is_meta: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -441,6 +442,8 @@ fn route(method:&str, args: TokenStream, input: TokenStream)-> TokenStream{
     let ident = func.sig.ident.clone();
     let mut pindex = 0;
     let mut is_body = false;
+    let mut is_meta = false;
+    
     let func_args = func
         .sig
         .inputs
@@ -451,6 +454,8 @@ fn route(method:&str, args: TokenStream, input: TokenStream)-> TokenStream{
                 let ty = ty.to_token_stream();
                 if ty.to_string().contains("Json") {
                     is_body = true;
+                }else if ty.to_string().contains("Meta") {
+                    is_meta = true;
                 }
                 let pat = format!("p{}", pindex);
                 let pat_indent = syn::Ident::new(&pat, Span::call_site().into());
@@ -468,6 +473,7 @@ fn route(method:&str, args: TokenStream, input: TokenStream)-> TokenStream{
         name: name.clone(),
         func_args,
         is_body,
+        is_meta,
     };
 
     let mut binding = ROUTES.lock().unwrap();
@@ -535,10 +541,18 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                     } else {
                         quote!{}
                     };
+                    let meta_tokens = if route.is_meta {
+                        quote!{
+                            let p0 = ctx.meta;
+                        }
+                    } else {
+                        quote!{}
+                    };
                     let func_args = str_args_to_indent(t_vec);
                     tokens.push(quote!{
                         let #prev_t_inter_fn_indent = |ctx: InterCtx<_>| async move {
                             #body_tokens
+                            #meta_tokens
                             t_controller.#route_name(#func_args).await
                         };
                     });
@@ -591,8 +605,6 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
             };
             let def_clone_inter_tokens = TokenStream2::from(quote! {
                 #ctx_body_tokens
-                let mut t_meta = nidrs::Meta::new();
-                t_meta.extend(meta);
                 let ctx = InterCtx {
                     meta: t_meta,
                     parts,
@@ -616,14 +628,36 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                 let meta = std::sync::Arc::new(meta);
             });
             let handler = if inter_ids.is_empty() {
+                let mut def_func_args = route.func_args.clone();
+                let meta_tokens = if route.is_meta {
+                    // 移除第一个
+                    def_func_args.remove(0);
+                    quote! {
+                        let p0 = t_meta;
+                    }
+                }else {
+                    quote!{}
+                };
+                let def_func_args = str_args_to_indent(def_func_args);
                 quote!{
-                    |#func_args| async move {
+                    |#def_func_args| async move {
+                        let mut t_meta = nidrs::Meta::new();
+                        t_meta.extend(meta);
+                        #meta_tokens
                         t_controller.#route_name(#func_args).await
                     }
                 }
             } else {
+                let mut def_func_args = route.func_args.clone();
+                if route.is_meta {
+                    // 移除第一个
+                    def_func_args.remove(0);
+                }
+                let def_func_args = str_args_to_indent(def_func_args);
                 quote!{
-                    |parts, #func_args| async move {
+                    |parts, #def_func_args| async move {
+                        let mut t_meta = nidrs::Meta::new();
+                        t_meta.extend(meta);
                         #def_clone_inter_tokens
                     }
                 }
