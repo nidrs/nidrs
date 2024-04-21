@@ -117,7 +117,8 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     let controller_dep_inject_tokens = gen_dep_inject_tokens("controllers", args.controllers.clone());
     let interceptor_dep_inject_tokens = gen_dep_inject_tokens("interceptors", args.interceptors.clone());
 
-    let events_trigger_tokens =  gen_events_trigger_tokens();
+    let trigger_on_module_init_tokens =  gen_events_trigger_tokens("on_module_init");
+    let trigger_on_module_destroy_tokens =  gen_events_trigger_tokens("on_module_destroy");
     
     // println!("module {:?}", ident.to_string());
     CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta {
@@ -138,7 +139,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
                 if ctx.modules.contains_key(stringify!(#ident)) {
                     return ctx;
                 }
-                ctx.modules.insert(stringify!(#ident).to_string(), Box::new(self) as Box<dyn std::any::Any>);
+                ctx.modules.insert(stringify!(#ident).to_string(), Box::new(self));
                 nidrs_macro::log!("Registering module {}.", stringify!(#ident));
                 // {
                     #interceptor_register_tokens
@@ -159,10 +160,23 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
                 // }
 
                 // {
-                    #events_trigger_tokens
+                    #trigger_on_module_init_tokens
                 // }
 
                 ctx
+            }
+            
+            fn destroy(&self, ctx: &nidrs::ModuleCtx){
+                #trigger_on_module_destroy_tokens
+                nidrs::log!("Destroying module {}.", stringify!(#ident));
+            }
+        }
+
+        impl nidrs::ImplMeta for #ident{
+            fn __meta() -> nidrs::Meta {
+                let mut meta = nidrs::Meta::new();
+                meta.set("module_name".to_string(), stringify!(#ident));
+                meta
             }
         }
     });
@@ -210,6 +224,23 @@ pub fn on_module_init(args: TokenStream, input: TokenStream) -> TokenStream {
 
     EVENTS.lock().unwrap()
         .entry("on_module_init".to_string())
+        .or_insert(vec![])
+        .push((current_service.unwrap().name, ident.to_string()));
+
+    return TokenStream::from(quote! {
+        #func
+    });
+}
+
+#[proc_macro_attribute]
+pub fn on_module_destroy(args: TokenStream, input: TokenStream) -> TokenStream {
+    let func = parse_macro_input!(input as ItemFn);
+    
+    let ident = func.sig.ident.clone();
+    let current_service = CURRENT_SERVICE.lock().unwrap().clone();
+
+    EVENTS.lock().unwrap()
+        .entry("on_module_destroy".to_string())
         .or_insert(vec![])
         .push((current_service.unwrap().name, ident.to_string()));
 
@@ -337,6 +368,18 @@ pub fn log(input: TokenStream) -> TokenStream {
     return TokenStream::from(quote::quote! {
         print!("{} ", nidrs_extern::colored::Colorize::green("[nidrs]"));
         println!(#(#input_tokens)*);
+    });
+}
+
+#[proc_macro]
+pub fn elog(input: TokenStream) -> TokenStream {
+    let input = TokenStream2::from(input);
+    
+    let input_tokens = input.into_iter().collect::<Vec<_>>();
+    
+    return TokenStream::from(quote::quote! {
+        eprint!("{} ", nidrs_extern::colored::Colorize::red("[nidrs]"));
+        eprintln!(#(#input_tokens)*);
     });
 }
 
@@ -796,20 +839,21 @@ fn gen_meta_tokens() -> TokenStream2 {
     prev_meta_tokens
 }
 
-fn gen_events_trigger_tokens() -> TokenStream2 {
+fn gen_events_trigger_tokens(event_name: &str) -> TokenStream2 {
+    // let event_name_ident = syn::Ident::new(event_name, Span::call_site().into());
     let binding = EVENTS.lock().unwrap();
-    let on_module_init = binding.get("on_module_init");
-    if let None = on_module_init {
+    let on_module_event = binding.get(event_name);
+    if let None = on_module_event {
         return TokenStream2::new();
     }
-    let events_trigger_tokens = on_module_init.unwrap().iter().map(|(service, func)| {
+    let events_trigger_tokens = on_module_event.unwrap().iter().map(|(service, func)| {
         let service_ident = syn::Ident::new(service, Span::call_site().into());
         let func_ident = syn::Ident::new(func, Span::call_site().into());
         quote! {
             let service = ctx.services.get(#service).unwrap();
             let service = service.downcast_ref::<std::sync::Arc<#service_ident>>().unwrap();
             let service = service.clone();
-            nidrs_macro::log!("Triggering event on_module_init for {}.", #service);
+            nidrs_macro::log!("Triggering event {} for {}.", #event_name, #service);
             service.#func_ident();
         }
     }).collect::<Vec<TokenStream2>>();

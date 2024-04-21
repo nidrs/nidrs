@@ -75,8 +75,8 @@ mod app {
             fn __meta() -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
                 meta.set("version".to_string(), "v1");
-                meta.set("auth".to_string(), "true");
                 meta.set("role".to_string(), "admin");
+                meta.set("auth".to_string(), "true");
                 meta.set("test".to_string(), true);
                 meta.set("disable_default_prefix".to_string(), true);
                 meta.set("service_name".to_string(), "AppController");
@@ -91,6 +91,9 @@ mod app {
             ) -> AppResult<Status> {
                 {
                     ::std::io::_print(format_args!("Query {0:?}\n", q));
+                };
+                {
+                    ::core::panicking::panic_fmt(format_args!("Error"));
                 };
                 Ok(Status {
                     db: "ok".to_string(),
@@ -551,11 +554,7 @@ mod app {
             if ctx.modules.contains_key("AppModule") {
                 return ctx;
             }
-            ctx.modules
-                .insert(
-                    "AppModule".to_string(),
-                    Box::new(self) as Box<dyn std::any::Any>,
-                );
+            ctx.modules.insert("AppModule".to_string(), Box::new(self));
             {
                 ::std::io::_print(
                     format_args!(
@@ -606,79 +605,6 @@ mod app {
                     format_args!("Registering controller {0}.\n", "AppController"),
                 );
             };
-            let t_controller = ctx.controllers.get("AppController").unwrap();
-            let t_controller = t_controller
-                .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                .unwrap();
-            let t_controller = t_controller.clone();
-            let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
-            let t_interceptor_0 = t_interceptor_0
-                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
-                .unwrap();
-            let t_interceptor_0 = t_interceptor_0.clone();
-            let mut meta = nidrs::get_meta(t_controller.clone());
-            let t_meta = t_controller.__meta_get_hello_world();
-            meta.merge(t_meta);
-            let meta = std::sync::Arc::new(meta);
-            let version = *meta
-                .get::<&str>("version")
-                .unwrap_or(&ctx.defaults.default_version);
-            let disable_default_prefix = *meta
-                .get::<bool>("disable_default_prefix")
-                .unwrap_or(&false);
-            let path = if disable_default_prefix {
-                "/app/hello".to_string()
-            } else {
-                nidrs::template_format(
-                    &{
-                        let res = ::alloc::fmt::format(
-                            format_args!(
-                                "{0}{1}",
-                                ctx.defaults.default_prefix,
-                                "/app/hello",
-                            ),
-                        );
-                        res
-                    },
-                    [("version", version)],
-                )
-            };
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "{0} ",
-                        nidrs_extern::colored::Colorize::green("[nidrs]"),
-                    ),
-                );
-            };
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "Registering router \'{0} {1}\'.\n",
-                        "get".to_uppercase(),
-                        path,
-                    ),
-                );
-            };
-            let router = axum::Router::new()
-                .route(
-                    &path,
-                    axum::routing::get(|parts, p0| async move {
-                        let t_body = nidrs_extern::axum::body::Body::empty();
-                        let mut t_meta = nidrs::Meta::new();
-                        t_meta.extend(meta);
-                        let ctx = InterCtx {
-                            meta: t_meta,
-                            parts,
-                            body: t_body,
-                        };
-                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
-                            t_controller.get_hello_world(p0).await
-                        };
-                        t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
-                    }),
-                );
-            ctx.routers.push(router);
             let t_controller = ctx.controllers.get("AppController").unwrap();
             let t_controller = t_controller
                 .downcast_ref::<std::sync::Arc<controller::AppController>>()
@@ -747,6 +673,79 @@ mod app {
                         };
                         let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
                             t_controller.get_hello_world2(p0).await
+                        };
+                        t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
+                    }),
+                );
+            ctx.routers.push(router);
+            let t_controller = ctx.controllers.get("AppController").unwrap();
+            let t_controller = t_controller
+                .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                .unwrap();
+            let t_controller = t_controller.clone();
+            let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
+            let t_interceptor_0 = t_interceptor_0
+                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
+                .unwrap();
+            let t_interceptor_0 = t_interceptor_0.clone();
+            let mut meta = nidrs::get_meta(t_controller.clone());
+            let t_meta = t_controller.__meta_get_hello_world();
+            meta.merge(t_meta);
+            let meta = std::sync::Arc::new(meta);
+            let version = *meta
+                .get::<&str>("version")
+                .unwrap_or(&ctx.defaults.default_version);
+            let disable_default_prefix = *meta
+                .get::<bool>("disable_default_prefix")
+                .unwrap_or(&false);
+            let path = if disable_default_prefix {
+                "/app/hello".to_string()
+            } else {
+                nidrs::template_format(
+                    &{
+                        let res = ::alloc::fmt::format(
+                            format_args!(
+                                "{0}{1}",
+                                ctx.defaults.default_prefix,
+                                "/app/hello",
+                            ),
+                        );
+                        res
+                    },
+                    [("version", version)],
+                )
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "Registering router \'{0} {1}\'.\n",
+                        "get".to_uppercase(),
+                        path,
+                    ),
+                );
+            };
+            let router = axum::Router::new()
+                .route(
+                    &path,
+                    axum::routing::get(|parts, p0| async move {
+                        let t_body = nidrs_extern::axum::body::Body::empty();
+                        let mut t_meta = nidrs::Meta::new();
+                        t_meta.extend(meta);
+                        let ctx = InterCtx {
+                            meta: t_meta,
+                            parts,
+                            body: t_body,
+                        };
+                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
+                            t_controller.get_hello_world(p0).await
                         };
                         t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
                     }),
@@ -917,11 +916,31 @@ mod app {
             let ctx = t.inject(ctx);
             ctx
         }
+        fn destroy(&self, ctx: &nidrs::ModuleCtx) {
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(format_args!("Destroying module {0}.\n", "AppModule"));
+            };
+        }
+    }
+    impl nidrs::ImplMeta for AppModule {
+        fn __meta() -> nidrs::Meta {
+            let mut meta = nidrs::Meta::new();
+            meta.set("module_name".to_string(), "AppModule");
+            meta
+        }
     }
 }
 mod conf {
     pub mod service {
-        use nidrs::Inject;
+        use nidrs::{on_module_destroy, Inject};
         use nidrs_macro::{injectable, on_module_init};
         use super::options::ConfOptions;
         pub struct ConfService {
@@ -1005,6 +1024,11 @@ mod conf {
                             options,
                         ),
                     );
+                };
+            }
+            pub fn on_module_destroy(&self) {
+                {
+                    ::std::io::_print(format_args!("ConfService destroyed\n"));
                 };
             }
         }
@@ -1094,11 +1118,7 @@ mod conf {
             if ctx.modules.contains_key("ConfModule") {
                 return ctx;
             }
-            ctx.modules
-                .insert(
-                    "ConfModule".to_string(),
-                    Box::new(self) as Box<dyn std::any::Any>,
-                );
+            ctx.modules.insert("ConfModule".to_string(), Box::new(self));
             {
                 ::std::io::_print(
                     format_args!(
@@ -1160,13 +1180,57 @@ mod conf {
             {
                 ::std::io::_print(
                     format_args!(
-                        "Triggering event on_module_init for {0}.\n",
+                        "Triggering event {0} for {1}.\n",
+                        "on_module_init",
                         "ConfService",
                     ),
                 );
             };
             service.on_module_init();
             ctx
+        }
+        fn destroy(&self, ctx: &nidrs::ModuleCtx) {
+            let service = ctx.services.get("ConfService").unwrap();
+            let service = service.downcast_ref::<std::sync::Arc<ConfService>>().unwrap();
+            let service = service.clone();
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "Triggering event {0} for {1}.\n",
+                        "on_module_destroy",
+                        "ConfService",
+                    ),
+                );
+            };
+            service.on_module_destroy();
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!("Destroying module {0}.\n", "ConfModule"),
+                );
+            };
+        }
+    }
+    impl nidrs::ImplMeta for ConfModule {
+        fn __meta() -> nidrs::Meta {
+            let mut meta = nidrs::Meta::new();
+            meta.set("module_name".to_string(), "ConfModule");
+            meta
         }
     }
     impl ConfModule {
@@ -1386,11 +1450,7 @@ mod user {
             if ctx.modules.contains_key("UserModule") {
                 return ctx;
             }
-            ctx.modules
-                .insert(
-                    "UserModule".to_string(),
-                    Box::new(self) as Box<dyn std::any::Any>,
-                );
+            ctx.modules.insert("UserModule".to_string(), Box::new(self));
             {
                 ::std::io::_print(
                     format_args!(
@@ -1530,6 +1590,28 @@ mod user {
             };
             let ctx = t.inject(ctx);
             ctx
+        }
+        fn destroy(&self, ctx: &nidrs::ModuleCtx) {
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!("Destroying module {0}.\n", "UserModule"),
+                );
+            };
+        }
+    }
+    impl nidrs::ImplMeta for UserModule {
+        fn __meta() -> nidrs::Meta {
+            let mut meta = nidrs::Meta::new();
+            meta.set("module_name".to_string(), "UserModule");
+            meta
         }
     }
 }
@@ -1691,11 +1773,7 @@ mod log {
             if ctx.modules.contains_key("LogModule") {
                 return ctx;
             }
-            ctx.modules
-                .insert(
-                    "LogModule".to_string(),
-                    Box::new(self) as Box<dyn std::any::Any>,
-                );
+            ctx.modules.insert("LogModule".to_string(), Box::new(self));
             {
                 ::std::io::_print(
                     format_args!(
@@ -1744,6 +1822,26 @@ mod log {
             };
             let ctx = t.inject(ctx);
             ctx
+        }
+        fn destroy(&self, ctx: &nidrs::ModuleCtx) {
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(format_args!("Destroying module {0}.\n", "LogModule"));
+            };
+        }
+    }
+    impl nidrs::ImplMeta for LogModule {
+        fn __meta() -> nidrs::Meta {
+            let mut meta = nidrs::Meta::new();
+            meta.set("module_name".to_string(), "LogModule");
+            meta
         }
     }
 }

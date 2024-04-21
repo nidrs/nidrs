@@ -1,11 +1,13 @@
-use nidrs_extern::axum;
+use nidrs_extern::{axum, tokio::signal};
 use nidrs_extern::tokio;
-use std::{any::Any, collections::HashMap};
+use std::{any::Any, collections::HashMap, process::exit};
 
-use crate::{provider, AppResult, Service};
+use crate::{provider, AppResult, ImplMeta, Meta, Service};
 
 pub trait Module {
   fn init(self, ctx: ModuleCtx)->ModuleCtx;
+
+  fn destroy(&self, ctx: &ModuleCtx);
 }
 
 pub struct DynamicModule {
@@ -28,6 +30,15 @@ impl DynamicModule {
     let (name, service) = provider(service);
     self.services.insert(name, service);
     self
+  }
+}
+
+impl Module for DynamicModule {
+  fn init(self, ctx: ModuleCtx) -> ModuleCtx {
+    return ctx;
+  }
+
+  fn destroy(&self, ctx: &ModuleCtx) {
   }
 }
 
@@ -71,7 +82,7 @@ impl <T: Module>NidrsFactory<T> {
     }));
     let module_ctx = ModuleCtx::new(self.defaults);
     let module_ctx = self.module.init(module_ctx);
-    let routers = module_ctx.routers;
+    let routers = module_ctx.routers.clone();
     let mut sub_router = axum::Router::new();
     for router in routers.iter() {
         sub_router = sub_router.merge(router.clone());
@@ -88,8 +99,30 @@ impl <T: Module>NidrsFactory<T> {
 
       AppResult::Ok(())
     };
+
+    let rt = tokio::runtime::Builder::new_multi_thread()
+      .worker_threads(4) // 设置工作线程数量
+      .enable_all() // 启用所有运行时功能
+      .build()
+      .unwrap();
+
+    rt.block_on(async {
+        // 使用 tokio::select 宏同时监听服务器和退出信号
+        tokio::select! {
+            _ = server() => {
+              nidrs_macro::elog!("Server exited unexpectedly.");
+            },
+            _ = signal::ctrl_c() => {
+              nidrs_macro::log!("Received Ctrl+C, shutting down...");
+            }
+        }
+    });
+    module_ctx.destroy();
+    nidrs_macro::log!("Process is exiting now.");
     
-    let _ = tokio::runtime::Runtime::new().unwrap().block_on(server());
+  }
+
+  fn destroy(&self) {
   }
 }
 
@@ -99,7 +132,7 @@ pub struct StateCtx{
 
 pub struct ModuleCtx{
   pub defaults: ModuleDefaults,
-  pub modules:HashMap<String, Box<dyn Any>>,
+  pub modules:HashMap<String, Box<dyn Module>>,
   pub services: HashMap<String, Box<dyn Any>>,
   pub controllers: HashMap<String, Box<dyn Any>>,
   pub routers: Vec<axum::Router<StateCtx>>,
@@ -116,5 +149,11 @@ impl ModuleCtx {
           routers: Vec::new(),
           interceptors: HashMap::new(),
       }
+  }
+
+  pub fn destroy(&self) {
+    for (_, module) in self.modules.iter() {
+      module.destroy(self);
+    }
   }
 }
