@@ -3,28 +3,38 @@
 extern crate proc_macro;
 
 use std::{
-    any::Any, borrow::BorrowMut, cell::RefCell, collections::HashMap, ops::Add, str::FromStr, sync::{Arc, Mutex}
+    any::Any,
+    borrow::BorrowMut,
+    cell::RefCell,
+    collections::HashMap,
+    ops::Add,
+    str::FromStr,
+    sync::{Arc, Mutex},
 };
 
 use once_cell::sync::Lazy;
 use proc_macro::{Ident, Span, TokenStream};
+use proc_macro2::TokenStream as TokenStream2;
 use proc_macro2::{Punct, TokenTree};
 use quote::{quote, ToTokens};
-use syn::{meta, parse::{Parse, ParseStream}, parse_str, Expr, ExprArray, ExprCall, PatPath, Stmt, Token};
 use syn::punctuated::Punctuated;
+use syn::{
+    meta,
+    parse::{Parse, ParseStream},
+    parse_str, Expr, ExprArray, ExprCall, PatPath, Stmt, Token,
+};
 use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatType, Type};
-use proc_macro2::TokenStream as TokenStream2;
 
 mod args_parse;
 use args_parse::*;
 
 static CURRENT_CONTROLLER: Mutex<Option<ControllerMeta>> = Mutex::new(None);
-static ROUTES: Lazy<Mutex<HashMap<String, HashMap<String, RouteMeta>>>> = Lazy::new(||Mutex::new(HashMap::new())); // HashMap<ControllerName, HashMap<RouteName, RouteMeta>>
+static ROUTES: Lazy<Mutex<HashMap<String, HashMap<String, RouteMeta>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<ControllerName, HashMap<RouteName, RouteMeta>>
 static CURRENT_SERVICE: Mutex<Option<ServiceMeta>> = Mutex::new(None);
-static EVENTS: Lazy<Mutex<HashMap<String, Vec<(String, String)>>>> = Lazy::new(||Mutex::new(HashMap::new())); // HashMap<EventName, Vec<(ServiceName,FName)>>
-static INTERS: Lazy<Mutex<HashMap<String, Vec<String>>>> = Lazy::new(||Mutex::new(HashMap::new())); // HashMap<ServiceName, Vec<InterName>>
+static EVENTS: Lazy<Mutex<HashMap<String, Vec<(String, String)>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<EventName, Vec<(ServiceName,FName)>>
+static INTERS: Lazy<Mutex<HashMap<String, Vec<String>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<ServiceName, Vec<InterName>>
 
-static MERGE_MACRO: Lazy<Mutex<Vec<String>>> = Lazy::new(||Mutex::new(vec![]));
+static MERGE_MACRO: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(vec![]));
 
 #[derive(Debug, Clone)]
 struct RouteMeta {
@@ -81,16 +91,13 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
         // throw error
         panic!("Invalid argument");
     };
-    
+
     let func = parse_macro_input!(input as ItemStruct);
-    
+
     let ident = func.ident.clone();
-    
+
     // println!("controller {} {:?}", ident.to_string(), func.attrs);
-    CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta {
-        name: ident.to_string(),
-        path: path,
-    });
+    CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta { name: ident.to_string(), path: path });
     ROUTES.lock().unwrap().insert(ident.to_string(), HashMap::new());
 
     let inject_tokens = gen_service_inject_tokens("ControllerService", &func);
@@ -109,23 +116,20 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemStruct);
     let ident = func.ident.clone();
 
-    let controller_register_tokens= gen_controller_register_tokens(args.controllers.clone());
-    let service_register_tokens= gen_service_register_tokens(args.services.clone());
-    let interceptor_register_tokens= gen_interceptor_register_tokens(args.interceptors.clone());
+    let controller_register_tokens = gen_controller_register_tokens(args.controllers.clone());
+    let service_register_tokens = gen_service_register_tokens(args.services.clone());
+    let interceptor_register_tokens = gen_interceptor_register_tokens(args.interceptors.clone());
     let imports_register_tokens = gen_imports_register_tokens(args.imports.clone());
 
     let services_dep_inject_tokens = gen_dep_inject_tokens("services", args.services.clone());
     let controller_dep_inject_tokens = gen_dep_inject_tokens("controllers", args.controllers.clone());
     let interceptor_dep_inject_tokens = gen_dep_inject_tokens("interceptors", args.interceptors.clone());
 
-    let trigger_on_module_init_tokens =  gen_events_trigger_tokens("on_module_init");
-    let trigger_on_module_destroy_tokens =  gen_events_trigger_tokens("on_module_destroy");
-    
+    let trigger_on_module_init_tokens = gen_events_trigger_tokens("on_module_init");
+    let trigger_on_module_destroy_tokens = gen_events_trigger_tokens("on_module_destroy");
+
     // println!("module {:?}", ident.to_string());
-    CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta {
-        name: "".to_string(),
-        path: "".to_string(),
-    });
+    CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta { name: "".to_string(), path: "".to_string() });
     ROUTES.lock().unwrap().clear();
     EVENTS.lock().unwrap().clear();
     INTERS.lock().unwrap().clear();
@@ -133,7 +137,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
     return TokenStream::from(quote! {
         #func
-        
+
         impl nidrs::Module for #ident {
             fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx{
                 use nidrs::{Service, ControllerService, InterceptorService, InterCtx, Interceptor, ModuleCtx, StateCtx, ImplMeta};
@@ -146,7 +150,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
                     #interceptor_register_tokens
 
                     #controller_register_tokens
-    
+
                     #service_register_tokens
                 // }
                 // {
@@ -154,7 +158,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
                 // }
                 // {
                     #services_dep_inject_tokens
-    
+
                     #controller_dep_inject_tokens
 
                     #interceptor_dep_inject_tokens
@@ -166,7 +170,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
                 ctx
             }
-            
+
             fn destroy(&self, ctx: &nidrs::ModuleCtx){
                 #trigger_on_module_destroy_tokens
                 nidrs::log!("Destroying module {}.", stringify!(#ident));
@@ -183,13 +187,10 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     });
 }
 
-
 #[proc_macro_attribute]
 pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemStruct);
-    CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta {
-        name: func.ident.to_string(),
-    });
+    CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta { name: func.ident.to_string() });
 
     let inject_tokens = gen_service_inject_tokens("Service", &func);
 
@@ -203,9 +204,7 @@ pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn interceptor(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemStruct);
-    CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta {
-        name: func.ident.to_string(),
-    });
+    CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta { name: func.ident.to_string() });
 
     let inject_tokens = gen_service_inject_tokens("InterceptorService", &func);
 
@@ -219,14 +218,11 @@ pub fn interceptor(args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn on_module_init(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemFn);
-    
+
     let ident = func.sig.ident.clone();
     let current_service = CURRENT_SERVICE.lock().unwrap().clone();
 
-    EVENTS.lock().unwrap()
-        .entry("on_module_init".to_string())
-        .or_insert(vec![])
-        .push((current_service.unwrap().name, ident.to_string()));
+    EVENTS.lock().unwrap().entry("on_module_init".to_string()).or_insert(vec![]).push((current_service.unwrap().name, ident.to_string()));
 
     return TokenStream::from(quote! {
         #func
@@ -236,14 +232,11 @@ pub fn on_module_init(args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn on_module_destroy(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemFn);
-    
+
     let ident = func.sig.ident.clone();
     let current_service = CURRENT_SERVICE.lock().unwrap().clone();
 
-    EVENTS.lock().unwrap()
-        .entry("on_module_destroy".to_string())
-        .or_insert(vec![])
-        .push((current_service.unwrap().name, ident.to_string()));
+    EVENTS.lock().unwrap().entry("on_module_destroy".to_string()).or_insert(vec![]).push((current_service.unwrap().name, ident.to_string()));
 
     return TokenStream::from(quote! {
         #func
@@ -256,25 +249,23 @@ pub fn uses(args: TokenStream, input: TokenStream) -> TokenStream {
     let input_type = input.clone();
     let input_type = parse_macro_input!(input_type as InterceptorArgs);
     let used_ident = input_type.ident;
-    let inter_names = args.items.iter().map(|arg| {
-        if let Expr::Path(path) = arg {
-            path.to_token_stream().to_string()
-        } else {
-            panic!("Invalid argument");
-        }
-    }).collect::<Vec<String>>();
+    let inter_names = args
+        .items
+        .iter()
+        .map(|arg| {
+            if let Expr::Path(path) = arg {
+                path.to_token_stream().to_string()
+            } else {
+                panic!("Invalid argument");
+            }
+        })
+        .collect::<Vec<String>>();
     if let TokenType::Fn(_) = input_type.typ {
         let controller_name = CURRENT_CONTROLLER.lock().unwrap().as_ref().unwrap().name.clone();
         let hook_name = controller_name + ":" + &used_ident.to_string();
-        INTERS.lock().unwrap()
-            .entry(hook_name)
-            .or_insert(vec![])
-            .append(&mut inter_names.clone());
+        INTERS.lock().unwrap().entry(hook_name).or_insert(vec![]).append(&mut inter_names.clone());
     } else if let TokenType::Struct(_) = input_type.typ {
-        INTERS.lock().unwrap()
-            .entry(used_ident.to_string())
-            .or_insert(vec![])
-            .append(&mut inter_names.clone());
+        INTERS.lock().unwrap().entry(used_ident.to_string()).or_insert(vec![]).append(&mut inter_names.clone());
     }
     return input;
 }
@@ -286,30 +277,30 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as InterceptorArgs);
     let func_ident = func.ident.clone();
     let func_name = func.ident.to_string();
-    let meta_tokens = args.kv.iter().map(|(key, value)| {
-        // value parse expr
-        let exp = parse_str::<Expr>(&value).unwrap();
-        // println!("// meta {} {} {:?}", key, value, exp);
+    let meta_tokens = args
+        .kv
+        .iter()
+        .map(|(key, value)| {
+            // value parse expr
+            let exp = parse_str::<Expr>(&value).unwrap();
+            // println!("// meta {} {} {:?}", key, value, exp);
 
-        let v = match exp {
-            Expr::Array(arr) => {
-                // arr to vec
-                let arr = arr.elems.iter().map(|elem| {
-                    elem.to_owned()
-                }).collect::<Vec<Expr>>();
-                quote! {
-                    Vec::from([#(#arr),*])
+            let v = match exp {
+                Expr::Array(arr) => {
+                    // arr to vec
+                    let arr = arr.elems.iter().map(|elem| elem.to_owned()).collect::<Vec<Expr>>();
+                    quote! {
+                        Vec::from([#(#arr),*])
+                    }
                 }
+                _ => exp.to_token_stream(),
+            };
+
+            quote! {
+                meta.set(#key.to_string(), #v);
             }
-            _ => {exp.to_token_stream()}
-        };
-
-
-
-        quote! {
-            meta.set(#key.to_string(), #v);
-        }
-    }).collect::<Vec<TokenStream2>>();
+        })
+        .collect::<Vec<TokenStream2>>();
     let meta_tokens = TokenStream2::from(quote! {
         #(#meta_tokens)*
     });
@@ -319,14 +310,14 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
 
     // } else if  let TokenType::Fn(p) = func.typ {
     //     println!("meta {} {:?}", func_name, p.to_token_stream().to_string());
-    // } 
+    // }
 
     return TokenStream::from(quote! {
         #raw_input
     });
 }
 
-fn is_macro(s: ItemStruct, name: &str)->bool{
+fn is_macro(s: ItemStruct, name: &str) -> bool {
     !s.attrs.iter().any(|attr: &syn::Attribute| {
         if let syn::Meta::List(name_value) = attr.meta.to_owned() {
             if name_value.path.is_ident(name) {
@@ -363,9 +354,9 @@ pub fn throw(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn log(input: TokenStream) -> TokenStream {
     let input = TokenStream2::from(input);
-    
+
     let input_tokens = input.into_iter().collect::<Vec<_>>();
-    
+
     return TokenStream::from(quote::quote! {
         print!("{} ", nidrs_extern::colored::Colorize::green("[nidrs]"));
         println!(#(#input_tokens)*);
@@ -375,9 +366,9 @@ pub fn log(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn elog(input: TokenStream) -> TokenStream {
     let input = TokenStream2::from(input);
-    
+
     let input_tokens = input.into_iter().collect::<Vec<_>>();
-    
+
     return TokenStream::from(quote::quote! {
         eprint!("{} ", nidrs_extern::colored::Colorize::red("[nidrs]"));
         eprintln!(#(#input_tokens)*);
@@ -390,17 +381,24 @@ pub fn version(args: TokenStream, input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(args as ExprList);
     let raw_input = TokenStream2::from(input.clone());
 
-    let version = args.items.iter().map(|arg| {
-        if let Expr::Lit(lit) = arg {
-            if let syn::Lit::Str(str) = lit.to_owned().lit {
-                str.value().trim().to_string()
+    let version = args
+        .items
+        .iter()
+        .map(|arg| {
+            if let Expr::Lit(lit) = arg {
+                if let syn::Lit::Str(str) = lit.to_owned().lit {
+                    str.value().trim().to_string()
+                } else {
+                    panic!("Invalid argument")
+                }
             } else {
                 panic!("Invalid argument")
             }
-        } else {
-            panic!("Invalid argument")
-        }
-    }).collect::<Vec<String>>().first().unwrap().clone();
+        })
+        .collect::<Vec<String>>()
+        .first()
+        .unwrap()
+        .clone();
 
     return TokenStream::from(quote! {
         #[meta(version = #version)]
@@ -409,20 +407,18 @@ pub fn version(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
-pub fn main(args:TokenStream, input: TokenStream) -> TokenStream {
-
+pub fn main(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemFn);
     let ident = func.sig.ident.clone();
 
     let main_tokens = TokenStream2::from(quote! {
-        #func        
+        #func
     });
-
 
     return main_tokens.into();
 }
 
-fn route(method:&str, args: TokenStream, input: TokenStream)-> TokenStream{
+fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(args as syn::Expr);
     let func = parse_macro_input!(input as ItemFn);
 
@@ -443,7 +439,7 @@ fn route(method:&str, args: TokenStream, input: TokenStream)-> TokenStream{
     let mut pindex = 0;
     let mut is_body = false;
     let mut is_meta = false;
-    
+
     let func_args = func
         .sig
         .inputs
@@ -454,7 +450,7 @@ fn route(method:&str, args: TokenStream, input: TokenStream)-> TokenStream{
                 let ty = ty.to_token_stream();
                 if ty.to_string().contains("Json") {
                     is_body = true;
-                }else if ty.to_string().contains("Meta") {
+                } else if ty.to_string().contains("Meta") {
                     is_meta = true;
                 }
                 let pat = format!("p{}", pindex);
@@ -465,16 +461,12 @@ fn route(method:&str, args: TokenStream, input: TokenStream)-> TokenStream{
                 }
             }
             _ => quote! {},
-        }).map(|arg| arg.to_string()).filter(|v|!v.is_empty()).collect::<Vec<String>>();
+        })
+        .map(|arg| arg.to_string())
+        .filter(|v| !v.is_empty())
+        .collect::<Vec<String>>();
 
-    let route = RouteMeta {
-        method: method.to_string(),
-        path: path,
-        name: name.clone(),
-        func_args,
-        is_body,
-        is_meta,
-    };
+    let route = RouteMeta { method: method.to_string(), path: path, name: name.clone(), func_args, is_body, is_meta };
 
     let mut binding = ROUTES.lock().unwrap();
     let controller = binding.get_mut(&CURRENT_CONTROLLER.lock().unwrap().as_ref().unwrap().name).unwrap();
@@ -568,7 +560,6 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                         };
                     });
                 }
-                
                 (
                     quote!{
                         let #prev_t_interceptor_ident = ctx.interceptors.get(stringify!(#inter_id)).unwrap();
@@ -688,10 +679,8 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
 
             #(#router_path)*
         });
-        
         quote! {
             ctx.controllers.insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(controller::#controller_ident::default())));
-            
             #router_path
         }
     }).collect::<Vec<TokenStream2>>();
@@ -705,7 +694,6 @@ fn gen_service_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
     let controller_tokens= services.iter().map(|controller_tokens| {
         let controller_str = controller_tokens.to_string();
         let controller_ident = controller_tokens;
-        
         quote! {
             nidrs_macro::log!("Registering service {}.", #controller_str);
             ctx.services.insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(#controller_ident::default())) as Box<dyn std::any::Any>);
@@ -721,7 +709,6 @@ fn gen_interceptor_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 
     let controller_tokens= services.iter().map(|controller_tokens| {
         let controller_str = controller_tokens.to_string();
         let controller_ident = controller_tokens;
-        
         quote! {
             nidrs_macro::log!("Registering interceptor {}.", #controller_str);
             ctx.interceptors.insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(#controller_ident::default())) as Box<dyn std::any::Any>);
@@ -734,31 +721,34 @@ fn gen_interceptor_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 
 }
 
 fn gen_imports_register_tokens(imports: Vec<TokenStream2>) -> TokenStream2 {
-    let imports = imports.iter().map(|import_tokens| {
-        let import = import_tokens.to_string();
+    let imports = imports
+        .iter()
+        .map(|import_tokens| {
+            let import = import_tokens.to_string();
 
-        if import.contains("for_root") {
-            let import_call = syn::parse2::<ExprCall>(import_tokens.clone()).unwrap();
-            if let Expr::Path(path)  = import_call.func.as_ref(){
-                let module_ident = path.path.segments.first().unwrap().ident.clone();
-                quote! {
-                    let dyn_module = #import_call;
-                    let mut dyn_module_services = dyn_module.services;
-                    dyn_module_services.drain().for_each(|(k, v)| {
-                        nidrs_macro::log!("Registering dyn service {}.", k);
-                        ctx.services.insert(k.to_string(), v);
-                    });
-                    let ctx = #module_ident::default().init(ctx);
+            if import.contains("for_root") {
+                let import_call = syn::parse2::<ExprCall>(import_tokens.clone()).unwrap();
+                if let Expr::Path(path) = import_call.func.as_ref() {
+                    let module_ident = path.path.segments.first().unwrap().ident.clone();
+                    quote! {
+                        let dyn_module = #import_call;
+                        let mut dyn_module_services = dyn_module.services;
+                        dyn_module_services.drain().for_each(|(k, v)| {
+                            nidrs_macro::log!("Registering dyn service {}.", k);
+                            ctx.services.insert(k.to_string(), v);
+                        });
+                        let ctx = #module_ident::default().init(ctx);
+                    }
+                } else {
+                    panic!("Invalid import.")
                 }
-            }else {
-                panic!("Invalid import.")
+            } else {
+                quote! {
+                    let ctx = #import_tokens::default().init(ctx);
+                }
             }
-        } else {
-            quote! {
-                let ctx = #import_tokens::default().init(ctx);
-            }
-        }
-    }).collect::<Vec<TokenStream2>>();
+        })
+        .collect::<Vec<TokenStream2>>();
 
     let imports = TokenStream2::from(quote! {
         #(#imports)*
@@ -769,25 +759,28 @@ fn gen_imports_register_tokens(imports: Vec<TokenStream2>) -> TokenStream2 {
 
 fn gen_dep_inject_tokens(con: &str, services: Vec<TokenStream2>) -> TokenStream2 {
     let con_ident = syn::Ident::new(con, Span::call_site().into());
-    let controller_tokens= services.iter().map(|tokens| {
-        let controller_str = tokens.to_string();
-        let controller_ident = tokens;
-        
-        quote! {
-            let t = ctx.#con_ident.get(#controller_str).unwrap();
-            let t = t.downcast_ref::<std::sync::Arc<#controller_ident>>().unwrap();
-            let t = t.clone();
-            nidrs_macro::log!("Injecting {}.", #controller_str);
-            let ctx = t.inject(ctx);
-        }
-    }).collect::<Vec<TokenStream2>>();
+    let controller_tokens = services
+        .iter()
+        .map(|tokens| {
+            let controller_str = tokens.to_string();
+            let controller_ident = tokens;
+
+            quote! {
+                let t = ctx.#con_ident.get(#controller_str).unwrap();
+                let t = t.downcast_ref::<std::sync::Arc<#controller_ident>>().unwrap();
+                let t = t.clone();
+                nidrs_macro::log!("Injecting {}.", #controller_str);
+                let ctx = t.inject(ctx);
+            }
+        })
+        .collect::<Vec<TokenStream2>>();
     let controller_tokens = TokenStream2::from(quote! {
         #(#controller_tokens)*
     });
     return controller_tokens;
 }
 
-fn gen_service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStream2{
+fn gen_service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStream2 {
     let is_service = "Service".contains(service_type);
     let service_type = syn::Ident::new(service_type, Span::call_site().into());
     let ident = func.ident.clone();
@@ -828,9 +821,13 @@ fn gen_service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStre
     } else {
         vec![]
     };
-    let middle_tokens = if is_service { quote! {} } else { quote! {
-        impl nidrs::#service_type for #ident {}
-    } };
+    let middle_tokens = if is_service {
+        quote! {}
+    } else {
+        quote! {
+            impl nidrs::#service_type for #ident {}
+        }
+    };
 
     let prev_meta_tokens = gen_meta_tokens();
 
@@ -855,18 +852,20 @@ fn gen_service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStre
     });
 
     return inject_tokens;
-
 }
 
 fn gen_meta_tokens() -> TokenStream2 {
-    let prev_meta_tokens = MERGE_MACRO.lock().unwrap().drain(..).map(
-        |tokens| {
+    let prev_meta_tokens = MERGE_MACRO
+        .lock()
+        .unwrap()
+        .drain(..)
+        .map(|tokens| {
             let tokens = TokenStream2::from_str(tokens.as_str()).unwrap();
             quote! {
                 #tokens
             }
-        }
-    ).collect::<Vec<TokenStream2>>();
+        })
+        .collect::<Vec<TokenStream2>>();
     let prev_meta_tokens: TokenStream2 = TokenStream2::from(quote! {
         #(#prev_meta_tokens)*
     });
@@ -880,17 +879,21 @@ fn gen_events_trigger_tokens(event_name: &str) -> TokenStream2 {
     if let None = on_module_event {
         return TokenStream2::new();
     }
-    let events_trigger_tokens = on_module_event.unwrap().iter().map(|(service, func)| {
-        let service_ident = syn::Ident::new(service, Span::call_site().into());
-        let func_ident = syn::Ident::new(func, Span::call_site().into());
-        quote! {
-            let service = ctx.services.get(#service).unwrap();
-            let service = service.downcast_ref::<std::sync::Arc<#service_ident>>().unwrap();
-            let service = service.clone();
-            nidrs_macro::log!("Triggering event {} for {}.", #event_name, #service);
-            service.#func_ident();
-        }
-    }).collect::<Vec<TokenStream2>>();
+    let events_trigger_tokens = on_module_event
+        .unwrap()
+        .iter()
+        .map(|(service, func)| {
+            let service_ident = syn::Ident::new(service, Span::call_site().into());
+            let func_ident = syn::Ident::new(func, Span::call_site().into());
+            quote! {
+                let service = ctx.services.get(#service).unwrap();
+                let service = service.downcast_ref::<std::sync::Arc<#service_ident>>().unwrap();
+                let service = service.clone();
+                nidrs_macro::log!("Triggering event {} for {}.", #event_name, #service);
+                service.#func_ident();
+            }
+        })
+        .collect::<Vec<TokenStream2>>();
     let events_trigger_tokens = TokenStream2::from(quote! {
         #(#events_trigger_tokens)*
     });
@@ -898,12 +901,15 @@ fn gen_events_trigger_tokens(event_name: &str) -> TokenStream2 {
 }
 
 fn str_args_to_indent(args: Vec<String>) -> TokenStream2 {
-    let args = args.iter().map(|arg| {
-        let arg_ident = syn::Ident::new(arg, Span::call_site().into());
-        quote! {
-            #arg_ident
-        }
-    }).collect::<Vec<TokenStream2>>();
+    let args = args
+        .iter()
+        .map(|arg| {
+            let arg_ident = syn::Ident::new(arg, Span::call_site().into());
+            quote! {
+                #arg_ident
+            }
+        })
+        .collect::<Vec<TokenStream2>>();
     let args = TokenStream2::from(quote! {
         #(#args),*
     });

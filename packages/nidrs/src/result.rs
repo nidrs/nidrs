@@ -1,5 +1,5 @@
-use nidrs_extern::{colored::Colorize, *};
 use nidrs_extern::axum::{http::StatusCode, response::IntoResponse};
+use nidrs_extern::{colored::Colorize, *};
 
 pub type AppResult<T = ()> = Result<T, AppError>;
 
@@ -9,10 +9,10 @@ pub enum AppError {
     EnvironmentVariableNotFound(#[from] std::env::VarError),
     #[error(transparent)]
     IOError(#[from] std::io::Error),
-    
+
     #[error(transparent)]
     SerdeError(#[from] serde_json::Error),
-    
+
     #[error("get meta error: {0}")]
     MetaNotFoundError(String),
 
@@ -20,17 +20,17 @@ pub enum AppError {
     Exception(#[from] Exception),
 }
 
-impl IntoResponse for AppError{
+impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
         axum::response::Response::builder()
             .status(StatusCode::INTERNAL_SERVER_ERROR)
             .body(format!("Error: {}", self.to_string()))
             .unwrap()
-        .into_response()
+            .into_response()
     }
 }
 
-pub fn __throw<E: Into<AppError>>(e: E, line: &str)->AppResult<()>{
+pub fn __throw<E: Into<AppError>>(e: E, line: &str) -> AppResult<()> {
     let e = e.into();
     if let AppError::Exception(mut e) = e {
         e.line = line.to_string();
@@ -41,7 +41,6 @@ pub fn __throw<E: Into<AppError>>(e: E, line: &str)->AppResult<()>{
     return Err(e);
 }
 
-
 #[derive(thiserror::Error, Debug)]
 pub struct Exception {
     pub status: StatusCode,
@@ -51,11 +50,7 @@ pub struct Exception {
 
 impl Exception {
     pub fn new(status: StatusCode, error: anyhow::Error) -> Self {
-        Exception {
-            status,
-            error,
-            line: String::new(),
-        }
+        Exception { status, error, line: String::new() }
     }
 }
 
@@ -65,9 +60,8 @@ impl std::fmt::Display for Exception {
     }
 }
 
-impl IntoResponse for Exception{
+impl IntoResponse for Exception {
     fn into_response(self) -> axum::response::Response {
-        axum::response::Html("Internal Server Error".to_string())
-        .into_response()
+        axum::response::Html("Internal Server Error".to_string()).into_response()
     }
 }
