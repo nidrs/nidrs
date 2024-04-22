@@ -11,7 +11,7 @@ pub trait Module {
 }
 
 pub struct DynamicModule {
-    pub services: HashMap<&'static str, Box<dyn Any>>,
+    pub services: HashMap<&'static str, Arc<dyn Service>>,
 }
 
 impl Default for DynamicModule {
@@ -25,7 +25,7 @@ impl DynamicModule {
         DynamicModule { services: HashMap::new() }
     }
 
-    pub fn service(mut self, service: (&'static str, Box<dyn Any>)) -> Self {
+    pub fn service(mut self, service: (&'static str, Arc<dyn Service>)) -> Self {
         self.services.insert(service.0, service.1);
         self
     }

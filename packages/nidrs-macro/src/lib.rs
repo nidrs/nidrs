@@ -655,7 +655,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
             };
             quote! {
                 let t_controller = ctx.controllers.get(#controller_str).unwrap();
-                let t_controller = t_controller.downcast_ref::<std::sync::Arc<controller::#controller_ident>>().unwrap();
+                let t_controller = t_controller.as_any().downcast_ref::<std::sync::Arc<controller::#controller_ident>>().unwrap();
                 let t_controller = t_controller.clone();
 
                 #def_inter_tokens
@@ -680,7 +680,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
             #(#router_path)*
         });
         quote! {
-            ctx.controllers.insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(controller::#controller_ident::default())));
+            ctx.controllers.insert(#controller_str.to_string(), std::sync::Arc::new(controller::#controller_ident::default()));
             #router_path
         }
     }).collect::<Vec<TokenStream2>>();

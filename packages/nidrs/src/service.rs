@@ -36,7 +36,7 @@ impl<T> std::ops::Deref for Inject<T> {
     }
 }
 
-pub fn provider<T: Service + ImplMeta + 'static>(service: T) -> (&'static str, Box<dyn Any>) {
+pub fn provider<T: Service + ImplMeta + 'static>(service: T) -> (&'static str, Arc<dyn Service>) {
     let name = *T::__meta().get::<&str>("service_name").unwrap();
-    (name, Box::new(Arc::new(service)) as Box<dyn Any>)
+    (name, Arc::new(service))
 }
