@@ -563,7 +563,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                 (
                     quote!{
                         let #prev_t_interceptor_ident = ctx.interceptors.get(stringify!(#inter_id)).unwrap();
-                        let #prev_t_interceptor_ident = #prev_t_interceptor_ident.downcast_ref::<std::sync::Arc<#inter_id>>().unwrap();
+                        let #prev_t_interceptor_ident = #prev_t_interceptor_ident.as_any().downcast_ref::<std::sync::Arc<#inter_id>>().unwrap();
                         let #prev_t_interceptor_ident = #prev_t_interceptor_ident.clone();
                     },
                     quote!{
@@ -696,7 +696,7 @@ fn gen_service_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
         let controller_ident = controller_tokens;
         quote! {
             nidrs_macro::log!("Registering service {}.", #controller_str);
-            ctx.services.insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(#controller_ident::default())) as Box<dyn std::any::Any>);
+            ctx.services.insert(#controller_str.to_string(), std::sync::Arc::new(#controller_ident::default()));
         }
     }).collect::<Vec<TokenStream2>>();
     let controller_tokens = TokenStream2::from(quote! {
@@ -711,7 +711,7 @@ fn gen_interceptor_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 
         let controller_ident = controller_tokens;
         quote! {
             nidrs_macro::log!("Registering interceptor {}.", #controller_str);
-            ctx.interceptors.insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(#controller_ident::default())) as Box<dyn std::any::Any>);
+            ctx.interceptors.insert(#controller_str.to_string(), std::sync::Arc::new(#controller_ident::default()));
         }
     }).collect::<Vec<TokenStream2>>();
     let controller_tokens = TokenStream2::from(quote! {
@@ -767,7 +767,7 @@ fn gen_dep_inject_tokens(con: &str, services: Vec<TokenStream2>) -> TokenStream2
 
             quote! {
                 let t = ctx.#con_ident.get(#controller_str).unwrap();
-                let t = t.downcast_ref::<std::sync::Arc<#controller_ident>>().unwrap();
+                let t = t.as_any().downcast_ref::<std::sync::Arc<#controller_ident>>().unwrap();
                 let t = t.clone();
                 nidrs_macro::log!("Injecting {}.", #controller_str);
                 let ctx = t.inject(ctx);
@@ -802,7 +802,7 @@ fn gen_service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStre
                             let injected_type_str = injected_type.to_string();
                             quote! {
                                 let service = ctx.services.get(#injected_type_str).expect(format!("[{}] Service {} not register.", #ident_str, #injected_type_str).as_str());
-                                let service = service.downcast_ref::<std::sync::Arc<#injected_type>>().unwrap();
+                                let service = service.as_any().downcast_ref::<std::sync::Arc<#injected_type>>().unwrap();
                                 self.#field_ident.inject(service.clone());
                             }
                         } else{
@@ -837,6 +837,9 @@ fn gen_service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStre
             fn inject(&self, ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx{
                 #(#fields)*
                 ctx
+            }
+            fn as_any(&self) -> &dyn std::any::Any {
+                self
             }
         }
 
@@ -887,7 +890,7 @@ fn gen_events_trigger_tokens(event_name: &str) -> TokenStream2 {
             let func_ident = syn::Ident::new(func, Span::call_site().into());
             quote! {
                 let service = ctx.services.get(#service).unwrap();
-                let service = service.downcast_ref::<std::sync::Arc<#service_ident>>().unwrap();
+                let service = service.as_any().downcast_ref::<std::sync::Arc<#service_ident>>().unwrap();
                 let service = service.clone();
                 nidrs_macro::log!("Triggering event {} for {}.", #event_name, #service);
                 service.#func_ident();

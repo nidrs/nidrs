@@ -4,8 +4,10 @@ use std::{any::Any, sync::Arc};
 
 use crate::{ImplMeta, ModuleCtx};
 
-pub trait Service: ImplMeta {
+pub trait Service: Any {
     fn inject(&self, ctx: ModuleCtx) -> ModuleCtx;
+
+    fn as_any(&self) -> &dyn Any;
 }
 
 #[derive(Clone, Debug, Default)]
@@ -34,7 +36,7 @@ impl<T> std::ops::Deref for Inject<T> {
     }
 }
 
-pub fn provider<T: Service + 'static>(service: T) -> (&'static str, Box<dyn Any>) {
+pub fn provider<T: Service + ImplMeta + 'static>(service: T) -> (&'static str, Box<dyn Any>) {
     let name = *T::__meta().get::<&str>("service_name").unwrap();
     (name, Box::new(Arc::new(service)) as Box<dyn Any>)
 }

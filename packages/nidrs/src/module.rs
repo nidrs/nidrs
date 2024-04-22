@@ -1,8 +1,8 @@
 use nidrs_extern::tokio;
 use nidrs_extern::{axum, tokio::signal};
-use std::{any::Any, collections::HashMap};
+use std::{any::Any, collections::HashMap, sync::Arc};
 
-use crate::{provider, AppResult, Service};
+use crate::{provider, AppResult, ControllerService, ImplMeta, InterceptorService, Service};
 
 pub trait Module {
     fn init(self, ctx: ModuleCtx) -> ModuleCtx;
@@ -30,7 +30,7 @@ impl DynamicModule {
         self
     }
 
-    pub fn provider<T: Service + 'static>(mut self, service: T) -> Self {
+    pub fn provider<T: Service + ImplMeta + 'static>(mut self, service: T) -> Self {
         let (name, service) = provider(service);
         self.services.insert(name, service);
         self
@@ -123,10 +123,10 @@ pub struct StateCtx {}
 pub struct ModuleCtx {
     pub defaults: ModuleDefaults,
     pub modules: HashMap<String, Box<dyn Module>>,
-    pub services: HashMap<String, Box<dyn Any>>,
-    pub controllers: HashMap<String, Box<dyn Any>>,
+    pub services: HashMap<String, Arc<dyn Service>>,
+    pub controllers: HashMap<String, Arc<dyn ControllerService>>,
     pub routers: Vec<axum::Router<StateCtx>>,
-    pub interceptors: HashMap<String, Box<dyn Any>>,
+    pub interceptors: HashMap<String, Arc<dyn InterceptorService>>,
 }
 
 impl ModuleCtx {
