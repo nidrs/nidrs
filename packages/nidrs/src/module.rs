@@ -150,47 +150,75 @@ impl ModuleCtx {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
-
-    use super::*;
+    use std::{collections::HashMap, ops::Deref, sync::{Arc, Mutex}, thread::spawn};
 
     #[test]
     fn test_nidrs_factory() {
         use std::any::Any;
 
-        trait ControllerService: Any {
-            fn handle_request(&self);
+        trait Service: Any + Send + Sync{
+            fn inject(&self);
             // 定义一个方法，用于将 `&self` 转换为 `&dyn Any`
             fn as_any(&self) -> &dyn Any;
         }
         
-        struct ConcreteService{
-            pub name: String,
-        };
-        
-        impl ControllerService for ConcreteService {
+        struct TestServiceInner{
+            pub name: Mutex<String>
+        }
+
+        struct TestService{
+            pub inner: Arc<TestServiceInner>
+        }
+        impl TestService {
+            fn new() -> Self {
+                TestService {
+                    inner: Arc::new(TestServiceInner{ name: Mutex::new("test".to_string())})
+                }
+            }
+        }
+        impl TestService {
             fn handle_request(&self) {
-                println!("Handling request...");
+                println!("Handling request... {}", self.name.lock().unwrap());
+            }
+            
+        }
+        
+        impl Service for TestService {
+            fn inject(&self) {
+                println!("Injecting service...");
+                self.name.lock().unwrap().push_str("inject");
             }
             
             fn as_any(&self) -> &dyn Any {
                 self
             }
         }
-        
-        fn main() {
-            let service: Arc<dyn ControllerService> = Arc::new(ConcreteService{ name: "hello".to_string() });
-            
-            service.handle_request();
 
-            let service_ref: &dyn ControllerService = service.as_ref();
-            let service_any: &dyn Any = service_ref.as_any();
-        
-            if let Some(concrete) = service_any.downcast_ref::<ConcreteService>() {
-                concrete.handle_request();
-            } else {
-                println!("Not a ConcreteService instance.");
+        impl Clone for TestService {
+            fn clone(&self) -> Self {
+                TestService {
+                    inner: self.inner.clone()
+                }
             }
+        }
+
+        impl Deref for TestService {
+            type Target = TestServiceInner;
+            fn deref(&self) -> &Self::Target {
+                &self.inner
+            }
+        }
+
+        fn main() {
+            // let mut map = HashMap::<&str, Box<dyn Service>>::new();
+            let service: Box<dyn Service> = Box::new(TestService::new());
+            let test_service = service.as_any().downcast_ref::<TestService>().unwrap().clone();
+            service.inject();
+
+            spawn(move || {
+                test_service.handle_request();
+            }).join().unwrap();
+
         }
         main();
     }
