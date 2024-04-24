@@ -123,10 +123,10 @@ pub struct StateCtx {}
 pub struct ModuleCtx {
     pub defaults: ModuleDefaults,
     pub modules: HashMap<String, Box<dyn Module>>,
-    pub services: HashMap<String, Arc<dyn Service>>,
-    pub controllers: HashMap<String, Arc<dyn ControllerService>>,
+    pub services: HashMap<String, Box<dyn Service>>,
+    pub controllers: HashMap<String, Box<dyn ControllerService>>,
     pub routers: Vec<axum::Router<StateCtx>>,
-    pub interceptors: HashMap<String, Arc<dyn InterceptorService>>,
+    pub interceptors: HashMap<String, Box<dyn InterceptorService>>,
 }
 
 impl ModuleCtx {

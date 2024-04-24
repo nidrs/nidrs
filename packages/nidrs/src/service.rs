@@ -11,26 +11,26 @@ pub trait Service: Any {
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct Inject<T> {
-    value: OnceCell<Arc<T>>,
+pub struct Inject<T: Clone> {
+    value: OnceCell<T>,
 }
 
-impl<T> Inject<T> {
+impl<T: Clone> Inject<T> {
     pub fn new() -> Self {
         Inject { value: OnceCell::new() }
     }
 
-    pub fn inject(&self, value: Arc<T>) {
+    pub fn inject(&self, value: T) {
         let _ = self.value.set(value);
     }
 
-    pub fn extract(&self) -> Arc<T> {
+    pub fn extract(&self) -> T {
         self.value.get().unwrap().clone()
     }
 }
 
-impl<T> std::ops::Deref for Inject<T> {
-    type Target = Arc<T>;
+impl<T: Clone> std::ops::Deref for Inject<T> {
+    type Target = T;
     fn deref(&self) -> &Self::Target {
         self.value.get().unwrap()
     }

@@ -152,7 +152,7 @@ pub trait ImplMeta {
     fn __meta() -> Meta;
 }
 
-pub fn get_meta<T: ImplMeta>(_t: Arc<T>) -> Meta {
+pub fn get_meta<T: ImplMeta>(_t: &T) -> Meta {
     T::__meta()
 }
 

@@ -6,7 +6,7 @@ use nidrs_macro::injectable;
 use crate::app::service::AppService;
 
 #[injectable()]
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub struct UserService {
     app_service: Inject<AppService>,
     count: Arc<Mutex<i32>>,

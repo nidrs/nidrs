@@ -18,7 +18,7 @@ mod app {
         use crate::AppResult;
         use super::{dto::Status, service::AppService};
         pub struct AppController {
-            app_service: Inject<AppService>,
+            inner: std::sync::Arc<AppControllerInner>,
         }
         #[automatically_derived]
         impl ::core::fmt::Debug for AppController {
@@ -27,8 +27,8 @@ mod app {
                 ::core::fmt::Formatter::debug_struct_field1_finish(
                     f,
                     "AppController",
-                    "app_service",
-                    &&self.app_service,
+                    "inner",
+                    &&self.inner,
                 )
             }
         }
@@ -37,8 +37,45 @@ mod app {
             #[inline]
             fn default() -> AppController {
                 AppController {
+                    inner: ::core::default::Default::default(),
+                }
+            }
+        }
+        pub struct AppControllerInner {
+            app_service: Inject<AppService>,
+        }
+        #[automatically_derived]
+        impl ::core::fmt::Debug for AppControllerInner {
+            #[inline]
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                ::core::fmt::Formatter::debug_struct_field1_finish(
+                    f,
+                    "AppControllerInner",
+                    "app_service",
+                    &&self.app_service,
+                )
+            }
+        }
+        #[automatically_derived]
+        impl ::core::default::Default for AppControllerInner {
+            #[inline]
+            fn default() -> AppControllerInner {
+                AppControllerInner {
                     app_service: ::core::default::Default::default(),
                 }
+            }
+        }
+        impl Clone for AppController {
+            fn clone(&self) -> Self {
+                AppController {
+                    inner: self.inner.clone(),
+                }
+            }
+        }
+        impl std::ops::Deref for AppController {
+            type Target = AppControllerInner;
+            fn deref(&self) -> &Self::Target {
+                &self.inner
             }
         }
         impl nidrs::ControllerService for AppController {}
@@ -60,10 +97,7 @@ mod app {
                         }
                             .as_str(),
                     );
-                let service = service
-                    .as_any()
-                    .downcast_ref::<std::sync::Arc<AppService>>()
-                    .unwrap();
+                let service = service.as_any().downcast_ref::<AppService>().unwrap();
                 self.app_service.inject(service.clone());
                 ctx
             }
@@ -74,11 +108,6 @@ mod app {
         impl nidrs::ImplMeta for AppController {
             fn __meta() -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
-                meta.set("version".to_string(), "v1");
-                meta.set("role".to_string(), "admin");
-                meta.set("auth".to_string(), "true");
-                meta.set("test".to_string(), true);
-                meta.set("disable_default_prefix".to_string(), true);
                 meta.set("service_name".to_string(), "AppController");
                 meta.set("service_type".to_string(), "ControllerService");
                 meta
@@ -105,8 +134,6 @@ mod app {
             }
             pub fn __meta_get_hello_world(&self) -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
-                meta.set("arr".to_string(), Vec::from(["user"]));
-                meta.set("version".to_string(), "v2");
                 meta
             }
             pub async fn get_hello_world2(
@@ -442,16 +469,7 @@ mod app {
         use nidrs::Inject;
         use nidrs_macro::injectable;
         pub struct AppService {
-            user_service: Inject<UserService>,
-        }
-        #[automatically_derived]
-        impl ::core::clone::Clone for AppService {
-            #[inline]
-            fn clone(&self) -> AppService {
-                AppService {
-                    user_service: ::core::clone::Clone::clone(&self.user_service),
-                }
-            }
+            inner: std::sync::Arc<AppServiceInner>,
         }
         #[automatically_derived]
         impl ::core::fmt::Debug for AppService {
@@ -460,8 +478,8 @@ mod app {
                 ::core::fmt::Formatter::debug_struct_field1_finish(
                     f,
                     "AppService",
-                    "user_service",
-                    &&self.user_service,
+                    "inner",
+                    &&self.inner,
                 )
             }
         }
@@ -470,8 +488,45 @@ mod app {
             #[inline]
             fn default() -> AppService {
                 AppService {
+                    inner: ::core::default::Default::default(),
+                }
+            }
+        }
+        pub struct AppServiceInner {
+            user_service: Inject<UserService>,
+        }
+        #[automatically_derived]
+        impl ::core::fmt::Debug for AppServiceInner {
+            #[inline]
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                ::core::fmt::Formatter::debug_struct_field1_finish(
+                    f,
+                    "AppServiceInner",
+                    "user_service",
+                    &&self.user_service,
+                )
+            }
+        }
+        #[automatically_derived]
+        impl ::core::default::Default for AppServiceInner {
+            #[inline]
+            fn default() -> AppServiceInner {
+                AppServiceInner {
                     user_service: ::core::default::Default::default(),
                 }
+            }
+        }
+        impl Clone for AppService {
+            fn clone(&self) -> Self {
+                AppService {
+                    inner: self.inner.clone(),
+                }
+            }
+        }
+        impl std::ops::Deref for AppService {
+            type Target = AppServiceInner;
+            fn deref(&self) -> &Self::Target {
+                &self.inner
             }
         }
         impl nidrs::Service for AppService {
@@ -492,10 +547,7 @@ mod app {
                         }
                             .as_str(),
                     );
-                let service = service
-                    .as_any()
-                    .downcast_ref::<std::sync::Arc<UserService>>()
-                    .unwrap();
+                let service = service.as_any().downcast_ref::<UserService>().unwrap();
                 self.user_service.inject(service.clone());
                 ctx
             }
@@ -520,10 +572,6 @@ mod app {
             }
         }
     }
-    use crate::conf::ConfModule;
-    use crate::conf::ConfOptions;
-    use crate::log::interceptor::LogInterceptor;
-    use crate::log::LogModule;
     use crate::user::UserModule;
     use controller::AppController;
     use service::AppService;
@@ -572,28 +620,10 @@ mod app {
                     format_args!("Registering module {0}.\n", "AppModule"),
                 );
             };
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "{0} ",
-                        nidrs_extern::colored::Colorize::green("[nidrs]"),
-                    ),
-                );
-            };
-            {
-                ::std::io::_print(
-                    format_args!("Registering interceptor {0}.\n", "LogInterceptor"),
-                );
-            };
-            ctx.interceptors
-                .insert(
-                    "LogInterceptor".to_string(),
-                    std::sync::Arc::new(LogInterceptor::default()),
-                );
             ctx.controllers
                 .insert(
                     "AppController".to_string(),
-                    std::sync::Arc::new(controller::AppController::default()),
+                    Box::new(controller::AppController::default()),
                 );
             {
                 ::std::io::_print(
@@ -614,89 +644,7 @@ mod app {
                 .downcast_ref::<controller::AppController>()
                 .unwrap();
             let t_controller = t_controller.clone();
-            let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
-            let t_interceptor_0 = t_interceptor_0
-                .as_any()
-                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
-                .unwrap();
-            let t_interceptor_0 = t_interceptor_0.clone();
-            let mut meta = nidrs::get_meta(t_controller.clone());
-            let t_meta = t_controller.__meta_post_hello_world();
-            meta.merge(t_meta);
-            let meta = std::sync::Arc::new(meta);
-            let version = *meta
-                .get::<&str>("version")
-                .unwrap_or(&ctx.defaults.default_version);
-            let disable_default_prefix = *meta
-                .get::<bool>("disable_default_prefix")
-                .unwrap_or(&false);
-            let path = if disable_default_prefix {
-                "/app/hello".to_string()
-            } else {
-                nidrs::template_format(
-                    &{
-                        let res = ::alloc::fmt::format(
-                            format_args!(
-                                "{0}{1}",
-                                ctx.defaults.default_prefix,
-                                "/app/hello",
-                            ),
-                        );
-                        res
-                    },
-                    [("version", version)],
-                )
-            };
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "{0} ",
-                        nidrs_extern::colored::Colorize::green("[nidrs]"),
-                    ),
-                );
-            };
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "Registering router \'{0} {1}\'.\n",
-                        "post".to_uppercase(),
-                        path,
-                    ),
-                );
-            };
-            let router = axum::Router::new()
-                .route(
-                    &path,
-                    axum::routing::post(|parts, p0, p1| async move {
-                        let mut t_meta = nidrs::Meta::new();
-                        t_meta.extend(meta);
-                        let t_body = p1;
-                        let ctx = InterCtx {
-                            meta: t_meta,
-                            parts,
-                            body: t_body,
-                        };
-                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
-                            let t_body = ctx.body;
-                            t_controller.post_hello_world(p0, t_body).await
-                        };
-                        t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
-                    }),
-                );
-            ctx.routers.push(router);
-            let t_controller = ctx.controllers.get("AppController").unwrap();
-            let t_controller = t_controller
-                .as_any()
-                .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                .unwrap();
-            let t_controller = t_controller.clone();
-            let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
-            let t_interceptor_0 = t_interceptor_0
-                .as_any()
-                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
-                .unwrap();
-            let t_interceptor_0 = t_interceptor_0.clone();
-            let mut meta = nidrs::get_meta(t_controller.clone());
+            let mut meta = nidrs::get_meta(&t_controller);
             let t_meta = t_controller.__meta_get_hello_world();
             meta.merge(t_meta);
             let meta = std::sync::Arc::new(meta);
@@ -743,36 +691,81 @@ mod app {
             let router = axum::Router::new()
                 .route(
                     &path,
-                    axum::routing::get(|parts, p1| async move {
+                    axum::routing::get(|p1| async move {
                         let mut t_meta = nidrs::Meta::new();
                         t_meta.extend(meta);
-                        let t_body = nidrs_extern::axum::body::Body::empty();
-                        let ctx = InterCtx {
-                            meta: t_meta,
-                            parts,
-                            body: t_body,
-                        };
-                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
-                            let p0 = ctx.meta;
-                            t_controller.get_hello_world(p0, p1).await
-                        };
-                        t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
+                        let p0 = t_meta;
+                        t_controller.get_hello_world(p0, p1).await
                     }),
                 );
             ctx.routers.push(router);
             let t_controller = ctx.controllers.get("AppController").unwrap();
             let t_controller = t_controller
                 .as_any()
-                .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                .downcast_ref::<controller::AppController>()
                 .unwrap();
             let t_controller = t_controller.clone();
-            let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
-            let t_interceptor_0 = t_interceptor_0
+            let mut meta = nidrs::get_meta(&t_controller);
+            let t_meta = t_controller.__meta_post_hello_world();
+            meta.merge(t_meta);
+            let meta = std::sync::Arc::new(meta);
+            let version = *meta
+                .get::<&str>("version")
+                .unwrap_or(&ctx.defaults.default_version);
+            let disable_default_prefix = *meta
+                .get::<bool>("disable_default_prefix")
+                .unwrap_or(&false);
+            let path = if disable_default_prefix {
+                "/app/hello".to_string()
+            } else {
+                nidrs::template_format(
+                    &{
+                        let res = ::alloc::fmt::format(
+                            format_args!(
+                                "{0}{1}",
+                                ctx.defaults.default_prefix,
+                                "/app/hello",
+                            ),
+                        );
+                        res
+                    },
+                    [("version", version)],
+                )
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "Registering router \'{0} {1}\'.\n",
+                        "post".to_uppercase(),
+                        path,
+                    ),
+                );
+            };
+            let router = axum::Router::new()
+                .route(
+                    &path,
+                    axum::routing::post(|p0, p1| async move {
+                        let mut t_meta = nidrs::Meta::new();
+                        t_meta.extend(meta);
+                        t_controller.post_hello_world(p0, p1).await
+                    }),
+                );
+            ctx.routers.push(router);
+            let t_controller = ctx.controllers.get("AppController").unwrap();
+            let t_controller = t_controller
                 .as_any()
-                .downcast_ref::<std::sync::Arc<LogInterceptor>>()
+                .downcast_ref::<controller::AppController>()
                 .unwrap();
-            let t_interceptor_0 = t_interceptor_0.clone();
-            let mut meta = nidrs::get_meta(t_controller.clone());
+            let t_controller = t_controller.clone();
+            let mut meta = nidrs::get_meta(&t_controller);
             let t_meta = t_controller.__meta_get_hello_world2();
             meta.merge(t_meta);
             let meta = std::sync::Arc::new(meta);
@@ -819,19 +812,10 @@ mod app {
             let router = axum::Router::new()
                 .route(
                     &path,
-                    axum::routing::get(|parts, p0| async move {
+                    axum::routing::get(|p0| async move {
                         let mut t_meta = nidrs::Meta::new();
                         t_meta.extend(meta);
-                        let t_body = nidrs_extern::axum::body::Body::empty();
-                        let ctx = InterCtx {
-                            meta: t_meta,
-                            parts,
-                            body: t_body,
-                        };
-                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
-                            t_controller.get_hello_world2(p0).await
-                        };
-                        t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
+                        t_controller.get_hello_world2(p0).await
                     }),
                 );
             ctx.routers.push(router);
@@ -849,37 +833,10 @@ mod app {
                 );
             };
             ctx.services
-                .insert(
-                    "AppService".to_string(),
-                    std::sync::Arc::new(AppService::default()),
-                );
-            let dyn_module = ConfModule::for_root(ConfOptions {
-                log_level: "info".to_string(),
-            });
-            let mut dyn_module_services = dyn_module.services;
-            dyn_module_services
-                .drain()
-                .for_each(|(k, v)| {
-                    {
-                        ::std::io::_print(
-                            format_args!(
-                                "{0} ",
-                                nidrs_extern::colored::Colorize::green("[nidrs]"),
-                            ),
-                        );
-                    };
-                    {
-                        ::std::io::_print(
-                            format_args!("Registering dyn service {0}.\n", k),
-                        );
-                    };
-                    ctx.services.insert(k.to_string(), v);
-                });
-            let ctx = ConfModule::default().init(ctx);
-            let ctx = LogModule::default().init(ctx);
+                .insert("AppService".to_string(), Box::new(AppService::default()));
             let ctx = UserModule::default().init(ctx);
             let t = ctx.services.get("AppService").unwrap();
-            let t = t.as_any().downcast_ref::<std::sync::Arc<AppService>>().unwrap();
+            let t = t.as_any().downcast_ref::<AppService>().unwrap();
             let t = t.clone();
             {
                 ::std::io::_print(
@@ -894,7 +851,7 @@ mod app {
             };
             let ctx = t.inject(ctx);
             let t = ctx.controllers.get("AppController").unwrap();
-            let t = t.as_any().downcast_ref::<std::sync::Arc<AppController>>().unwrap();
+            let t = t.as_any().downcast_ref::<AppController>().unwrap();
             let t = t.clone();
             {
                 ::std::io::_print(
@@ -906,21 +863,6 @@ mod app {
             };
             {
                 ::std::io::_print(format_args!("Injecting {0}.\n", "AppController"));
-            };
-            let ctx = t.inject(ctx);
-            let t = ctx.interceptors.get("LogInterceptor").unwrap();
-            let t = t.as_any().downcast_ref::<std::sync::Arc<LogInterceptor>>().unwrap();
-            let t = t.clone();
-            {
-                ::std::io::_print(
-                    format_args!(
-                        "{0} ",
-                        nidrs_extern::colored::Colorize::green("[nidrs]"),
-                    ),
-                );
-            };
-            {
-                ::std::io::_print(format_args!("Injecting {0}.\n", "LogInterceptor"));
             };
             let ctx = t.inject(ctx);
             ctx
@@ -951,16 +893,7 @@ mod conf {
     pub mod options {
         use nidrs_macro::injectable;
         pub struct ConfOptions {
-            pub log_level: String,
-        }
-        #[automatically_derived]
-        impl ::core::clone::Clone for ConfOptions {
-            #[inline]
-            fn clone(&self) -> ConfOptions {
-                ConfOptions {
-                    log_level: ::core::clone::Clone::clone(&self.log_level),
-                }
-            }
+            inner: std::sync::Arc<ConfOptionsInner>,
         }
         #[automatically_derived]
         impl ::core::fmt::Debug for ConfOptions {
@@ -969,8 +902,8 @@ mod conf {
                 ::core::fmt::Formatter::debug_struct_field1_finish(
                     f,
                     "ConfOptions",
-                    "log_level",
-                    &&self.log_level,
+                    "inner",
+                    &&self.inner,
                 )
             }
         }
@@ -979,8 +912,45 @@ mod conf {
             #[inline]
             fn default() -> ConfOptions {
                 ConfOptions {
+                    inner: ::core::default::Default::default(),
+                }
+            }
+        }
+        pub struct ConfOptionsInner {
+            pub log_level: String,
+        }
+        #[automatically_derived]
+        impl ::core::fmt::Debug for ConfOptionsInner {
+            #[inline]
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                ::core::fmt::Formatter::debug_struct_field1_finish(
+                    f,
+                    "ConfOptionsInner",
+                    "log_level",
+                    &&self.log_level,
+                )
+            }
+        }
+        #[automatically_derived]
+        impl ::core::default::Default for ConfOptionsInner {
+            #[inline]
+            fn default() -> ConfOptionsInner {
+                ConfOptionsInner {
                     log_level: ::core::default::Default::default(),
                 }
+            }
+        }
+        impl Clone for ConfOptions {
+            fn clone(&self) -> Self {
+                ConfOptions {
+                    inner: self.inner.clone(),
+                }
+            }
+        }
+        impl std::ops::Deref for ConfOptions {
+            type Target = ConfOptionsInner;
+            fn deref(&self) -> &Self::Target {
+                &self.inner
             }
         }
         impl nidrs::Service for ConfOptions {
@@ -1005,30 +975,17 @@ mod conf {
         use nidrs_macro::{injectable, on_module_init};
         use super::options::ConfOptions;
         pub struct ConfService {
-            pub options: Inject<ConfOptions>,
-            pub log_level: String,
-        }
-        #[automatically_derived]
-        impl ::core::clone::Clone for ConfService {
-            #[inline]
-            fn clone(&self) -> ConfService {
-                ConfService {
-                    options: ::core::clone::Clone::clone(&self.options),
-                    log_level: ::core::clone::Clone::clone(&self.log_level),
-                }
-            }
+            inner: std::sync::Arc<ConfServiceInner>,
         }
         #[automatically_derived]
         impl ::core::fmt::Debug for ConfService {
             #[inline]
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                ::core::fmt::Formatter::debug_struct_field2_finish(
+                ::core::fmt::Formatter::debug_struct_field1_finish(
                     f,
                     "ConfService",
-                    "options",
-                    &self.options,
-                    "log_level",
-                    &&self.log_level,
+                    "inner",
+                    &&self.inner,
                 )
             }
         }
@@ -1037,9 +994,49 @@ mod conf {
             #[inline]
             fn default() -> ConfService {
                 ConfService {
+                    inner: ::core::default::Default::default(),
+                }
+            }
+        }
+        pub struct ConfServiceInner {
+            pub options: Inject<ConfOptions>,
+            pub log_level: String,
+        }
+        #[automatically_derived]
+        impl ::core::fmt::Debug for ConfServiceInner {
+            #[inline]
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                ::core::fmt::Formatter::debug_struct_field2_finish(
+                    f,
+                    "ConfServiceInner",
+                    "options",
+                    &self.options,
+                    "log_level",
+                    &&self.log_level,
+                )
+            }
+        }
+        #[automatically_derived]
+        impl ::core::default::Default for ConfServiceInner {
+            #[inline]
+            fn default() -> ConfServiceInner {
+                ConfServiceInner {
                     options: ::core::default::Default::default(),
                     log_level: ::core::default::Default::default(),
                 }
+            }
+        }
+        impl Clone for ConfService {
+            fn clone(&self) -> Self {
+                ConfService {
+                    inner: self.inner.clone(),
+                }
+            }
+        }
+        impl std::ops::Deref for ConfService {
+            type Target = ConfServiceInner;
+            fn deref(&self) -> &Self::Target {
+                &self.inner
             }
         }
         impl nidrs::Service for ConfService {
@@ -1060,10 +1057,7 @@ mod conf {
                         }
                             .as_str(),
                     );
-                let service = service
-                    .as_any()
-                    .downcast_ref::<std::sync::Arc<ConfOptions>>()
-                    .unwrap();
+                let service = service.as_any().downcast_ref::<ConfOptions>().unwrap();
                 self.options.inject(service.clone());
                 ctx
             }
@@ -1161,12 +1155,9 @@ mod conf {
                 );
             };
             ctx.services
-                .insert(
-                    "ConfService".to_string(),
-                    std::sync::Arc::new(ConfService::default()),
-                );
+                .insert("ConfService".to_string(), Box::new(ConfService::default()));
             let t = ctx.services.get("ConfService").unwrap();
-            let t = t.as_any().downcast_ref::<std::sync::Arc<ConfService>>().unwrap();
+            let t = t.as_any().downcast_ref::<ConfService>().unwrap();
             let t = t.clone();
             {
                 ::std::io::_print(
@@ -1181,10 +1172,7 @@ mod conf {
             };
             let ctx = t.inject(ctx);
             let service = ctx.services.get("ConfService").unwrap();
-            let service = service
-                .as_any()
-                .downcast_ref::<std::sync::Arc<ConfService>>()
-                .unwrap();
+            let service = service.as_any().downcast_ref::<ConfService>().unwrap();
             let service = service.clone();
             {
                 ::std::io::_print(
@@ -1208,10 +1196,7 @@ mod conf {
         }
         fn destroy(&self, ctx: &nidrs::ModuleCtx) {
             let service = ctx.services.get("ConfService").unwrap();
-            let service = service
-                .as_any()
-                .downcast_ref::<std::sync::Arc<ConfService>>()
-                .unwrap();
+            let service = service.as_any().downcast_ref::<ConfService>().unwrap();
             let service = service.clone();
             {
                 ::std::io::_print(
@@ -1269,15 +1254,40 @@ mod log {
         use crate::AppResult;
         use super::service::LogService;
         pub struct LogInterceptor {
-            log_service: Inject<LogService>,
+            inner: std::sync::Arc<LogInterceptorInner>,
         }
         #[automatically_derived]
         impl ::core::default::Default for LogInterceptor {
             #[inline]
             fn default() -> LogInterceptor {
                 LogInterceptor {
+                    inner: ::core::default::Default::default(),
+                }
+            }
+        }
+        pub struct LogInterceptorInner {
+            log_service: Inject<LogService>,
+        }
+        #[automatically_derived]
+        impl ::core::default::Default for LogInterceptorInner {
+            #[inline]
+            fn default() -> LogInterceptorInner {
+                LogInterceptorInner {
                     log_service: ::core::default::Default::default(),
                 }
+            }
+        }
+        impl Clone for LogInterceptor {
+            fn clone(&self) -> Self {
+                LogInterceptor {
+                    inner: self.inner.clone(),
+                }
+            }
+        }
+        impl std::ops::Deref for LogInterceptor {
+            type Target = LogInterceptorInner;
+            fn deref(&self) -> &Self::Target {
+                &self.inner
             }
         }
         impl nidrs::InterceptorService for LogInterceptor {}
@@ -1299,10 +1309,7 @@ mod log {
                         }
                             .as_str(),
                     );
-                let service = service
-                    .as_any()
-                    .downcast_ref::<std::sync::Arc<LogService>>()
-                    .unwrap();
+                let service = service.as_any().downcast_ref::<LogService>().unwrap();
                 self.log_service.inject(service.clone());
                 ctx
             }
@@ -1349,12 +1356,37 @@ mod log {
     }
     pub mod service {
         use nidrs_macro::injectable;
-        pub struct LogService {}
+        pub struct LogService {
+            inner: std::sync::Arc<LogServiceInner>,
+        }
         #[automatically_derived]
         impl ::core::default::Default for LogService {
             #[inline]
             fn default() -> LogService {
-                LogService {}
+                LogService {
+                    inner: ::core::default::Default::default(),
+                }
+            }
+        }
+        pub struct LogServiceInner {}
+        #[automatically_derived]
+        impl ::core::default::Default for LogServiceInner {
+            #[inline]
+            fn default() -> LogServiceInner {
+                LogServiceInner {}
+            }
+        }
+        impl Clone for LogService {
+            fn clone(&self) -> Self {
+                LogService {
+                    inner: self.inner.clone(),
+                }
+            }
+        }
+        impl std::ops::Deref for LogService {
+            type Target = LogServiceInner;
+            fn deref(&self) -> &Self::Target {
+                &self.inner
             }
         }
         impl nidrs::Service for LogService {
@@ -1441,12 +1473,9 @@ mod log {
                 );
             };
             ctx.services
-                .insert(
-                    "LogService".to_string(),
-                    std::sync::Arc::new(LogService::default()),
-                );
+                .insert("LogService".to_string(), Box::new(LogService::default()));
             let t = ctx.services.get("LogService").unwrap();
-            let t = t.as_any().downcast_ref::<std::sync::Arc<LogService>>().unwrap();
+            let t = t.as_any().downcast_ref::<LogService>().unwrap();
             let t = t.clone();
             {
                 ::std::io::_print(
@@ -1519,7 +1548,7 @@ mod user {
         use nidrs_macro::{controller, get};
         use super::service::UserService;
         pub struct UserController {
-            user_service: Inject<UserService>,
+            inner: std::sync::Arc<UserControllerInner>,
         }
         #[automatically_derived]
         impl ::core::fmt::Debug for UserController {
@@ -1528,8 +1557,8 @@ mod user {
                 ::core::fmt::Formatter::debug_struct_field1_finish(
                     f,
                     "UserController",
-                    "user_service",
-                    &&self.user_service,
+                    "inner",
+                    &&self.inner,
                 )
             }
         }
@@ -1538,8 +1567,45 @@ mod user {
             #[inline]
             fn default() -> UserController {
                 UserController {
+                    inner: ::core::default::Default::default(),
+                }
+            }
+        }
+        pub struct UserControllerInner {
+            user_service: Inject<UserService>,
+        }
+        #[automatically_derived]
+        impl ::core::fmt::Debug for UserControllerInner {
+            #[inline]
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                ::core::fmt::Formatter::debug_struct_field1_finish(
+                    f,
+                    "UserControllerInner",
+                    "user_service",
+                    &&self.user_service,
+                )
+            }
+        }
+        #[automatically_derived]
+        impl ::core::default::Default for UserControllerInner {
+            #[inline]
+            fn default() -> UserControllerInner {
+                UserControllerInner {
                     user_service: ::core::default::Default::default(),
                 }
+            }
+        }
+        impl Clone for UserController {
+            fn clone(&self) -> Self {
+                UserController {
+                    inner: self.inner.clone(),
+                }
+            }
+        }
+        impl std::ops::Deref for UserController {
+            type Target = UserControllerInner;
+            fn deref(&self) -> &Self::Target {
+                &self.inner
             }
         }
         impl nidrs::ControllerService for UserController {}
@@ -1561,10 +1627,7 @@ mod user {
                         }
                             .as_str(),
                     );
-                let service = service
-                    .as_any()
-                    .downcast_ref::<std::sync::Arc<UserService>>()
-                    .unwrap();
+                let service = service.as_any().downcast_ref::<UserService>().unwrap();
                 self.user_service.inject(service.clone());
                 ctx
             }
@@ -1602,30 +1665,17 @@ mod user {
         use nidrs_macro::injectable;
         use crate::app::service::AppService;
         pub struct UserService {
-            app_service: Inject<AppService>,
-            count: Arc<Mutex<i32>>,
-        }
-        #[automatically_derived]
-        impl ::core::clone::Clone for UserService {
-            #[inline]
-            fn clone(&self) -> UserService {
-                UserService {
-                    app_service: ::core::clone::Clone::clone(&self.app_service),
-                    count: ::core::clone::Clone::clone(&self.count),
-                }
-            }
+            inner: std::sync::Arc<UserServiceInner>,
         }
         #[automatically_derived]
         impl ::core::fmt::Debug for UserService {
             #[inline]
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                ::core::fmt::Formatter::debug_struct_field2_finish(
+                ::core::fmt::Formatter::debug_struct_field1_finish(
                     f,
                     "UserService",
-                    "app_service",
-                    &self.app_service,
-                    "count",
-                    &&self.count,
+                    "inner",
+                    &&self.inner,
                 )
             }
         }
@@ -1634,9 +1684,49 @@ mod user {
             #[inline]
             fn default() -> UserService {
                 UserService {
+                    inner: ::core::default::Default::default(),
+                }
+            }
+        }
+        pub struct UserServiceInner {
+            app_service: Inject<AppService>,
+            count: Arc<Mutex<i32>>,
+        }
+        #[automatically_derived]
+        impl ::core::fmt::Debug for UserServiceInner {
+            #[inline]
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                ::core::fmt::Formatter::debug_struct_field2_finish(
+                    f,
+                    "UserServiceInner",
+                    "app_service",
+                    &self.app_service,
+                    "count",
+                    &&self.count,
+                )
+            }
+        }
+        #[automatically_derived]
+        impl ::core::default::Default for UserServiceInner {
+            #[inline]
+            fn default() -> UserServiceInner {
+                UserServiceInner {
                     app_service: ::core::default::Default::default(),
                     count: ::core::default::Default::default(),
                 }
+            }
+        }
+        impl Clone for UserService {
+            fn clone(&self) -> Self {
+                UserService {
+                    inner: self.inner.clone(),
+                }
+            }
+        }
+        impl std::ops::Deref for UserService {
+            type Target = UserServiceInner;
+            fn deref(&self) -> &Self::Target {
+                &self.inner
             }
         }
         impl nidrs::Service for UserService {
@@ -1657,10 +1747,7 @@ mod user {
                         }
                             .as_str(),
                     );
-                let service = service
-                    .as_any()
-                    .downcast_ref::<std::sync::Arc<AppService>>()
-                    .unwrap();
+                let service = service.as_any().downcast_ref::<AppService>().unwrap();
                 self.app_service.inject(service.clone());
                 ctx
             }
@@ -1743,7 +1830,7 @@ mod user {
             ctx.controllers
                 .insert(
                     "UserController".to_string(),
-                    std::sync::Arc::new(controller::UserController::default()),
+                    Box::new(controller::UserController::default()),
                 );
             {
                 ::std::io::_print(
@@ -1761,10 +1848,10 @@ mod user {
             let t_controller = ctx.controllers.get("UserController").unwrap();
             let t_controller = t_controller
                 .as_any()
-                .downcast_ref::<std::sync::Arc<controller::UserController>>()
+                .downcast_ref::<controller::UserController>()
                 .unwrap();
             let t_controller = t_controller.clone();
-            let mut meta = nidrs::get_meta(t_controller.clone());
+            let mut meta = nidrs::get_meta(&t_controller);
             let t_meta = t_controller.__meta_get_hello_world();
             meta.merge(t_meta);
             let meta = std::sync::Arc::new(meta);
@@ -1832,13 +1919,10 @@ mod user {
                 );
             };
             ctx.services
-                .insert(
-                    "UserService".to_string(),
-                    std::sync::Arc::new(UserService::default()),
-                );
+                .insert("UserService".to_string(), Box::new(UserService::default()));
             let ctx = AppModule::default().init(ctx);
             let t = ctx.services.get("UserService").unwrap();
-            let t = t.as_any().downcast_ref::<std::sync::Arc<UserService>>().unwrap();
+            let t = t.as_any().downcast_ref::<UserService>().unwrap();
             let t = t.clone();
             {
                 ::std::io::_print(
@@ -1853,7 +1937,7 @@ mod user {
             };
             let ctx = t.inject(ctx);
             let t = ctx.controllers.get("UserController").unwrap();
-            let t = t.as_any().downcast_ref::<std::sync::Arc<UserController>>().unwrap();
+            let t = t.as_any().downcast_ref::<UserController>().unwrap();
             let t = t.clone();
             {
                 ::std::io::_print(
@@ -1897,8 +1981,6 @@ pub use nidrs::AppError;
 pub use nidrs::AppResult;
 fn main() {
     let app = nidrs::NidrsFactory::create(app::AppModule);
-    let app = app.default_prefix("/api/{version}");
-    let app = app.default_version("v1");
     app.listen(3000);
 }
 extern crate alloc;

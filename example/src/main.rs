@@ -11,8 +11,8 @@ pub use nidrs::AppResult;
 fn main() {
     let app = nidrs::NidrsFactory::create(app::AppModule);
 
-    let app = app.default_prefix("/api/{version}");
-    let app = app.default_version("v1");
+    // let app = app.default_prefix("/api/{version}");
+    // let app = app.default_version("v1");
 
     app.listen(3000);
 }
