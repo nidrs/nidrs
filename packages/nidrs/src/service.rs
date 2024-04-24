@@ -1,6 +1,6 @@
 use nidrs_extern::once_cell;
 use once_cell::sync::OnceCell;
-use std::{any::Any, sync::Arc};
+use std::any::Any;
 
 use crate::{ImplMeta, ModuleCtx};
 
@@ -36,7 +36,7 @@ impl<T: Clone> std::ops::Deref for Inject<T> {
     }
 }
 
-pub fn provider<T: Service + ImplMeta + 'static>(service: T) -> (&'static str, Arc<dyn Service>) {
+pub fn provider<T: Service + ImplMeta + 'static>(service: T) -> (&'static str, Box<dyn Service>) {
     let name = *T::__meta().get::<&str>("service_name").unwrap();
-    (name, Arc::new(service))
+    (name, Box::new(service))
 }

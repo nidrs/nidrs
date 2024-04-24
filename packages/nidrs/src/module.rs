@@ -1,6 +1,6 @@
 use nidrs_extern::tokio;
 use nidrs_extern::{axum, tokio::signal};
-use std::{any::Any, collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
 use crate::{provider, AppResult, ControllerService, ImplMeta, InterceptorService, Service};
 
@@ -11,7 +11,7 @@ pub trait Module {
 }
 
 pub struct DynamicModule {
-    pub services: HashMap<&'static str, Arc<dyn Service>>,
+    pub services: HashMap<&'static str, Box<dyn Service>>,
 }
 
 impl Default for DynamicModule {
@@ -25,7 +25,7 @@ impl DynamicModule {
         DynamicModule { services: HashMap::new() }
     }
 
-    pub fn service(mut self, service: (&'static str, Arc<dyn Service>)) -> Self {
+    pub fn service(mut self, service: (&'static str, Box<dyn Service>)) -> Self {
         self.services.insert(service.0, service.1);
         self
     }
@@ -150,45 +150,46 @@ impl ModuleCtx {
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::HashMap, ops::Deref, sync::{Arc, Mutex}, thread::spawn};
+    use std::{
+        ops::Deref,
+        sync::{Arc, Mutex},
+        thread::spawn,
+    };
 
     #[test]
     fn test_nidrs_factory() {
         use std::any::Any;
 
-        trait Service: Any + Send + Sync{
+        trait Service: Any + Send + Sync {
             fn inject(&self);
             // 定义一个方法，用于将 `&self` 转换为 `&dyn Any`
             fn as_any(&self) -> &dyn Any;
         }
-        
-        struct TestServiceInner{
-            pub name: Mutex<String>
+
+        struct TestServiceInner {
+            pub name: Mutex<String>,
         }
 
-        struct TestService{
-            pub inner: Arc<TestServiceInner>
+        struct TestService {
+            pub inner: Arc<TestServiceInner>,
         }
         impl TestService {
             fn new() -> Self {
-                TestService {
-                    inner: Arc::new(TestServiceInner{ name: Mutex::new("test".to_string())})
-                }
+                TestService { inner: Arc::new(TestServiceInner { name: Mutex::new("test".to_string()) }) }
             }
         }
         impl TestService {
             fn handle_request(&self) {
                 println!("Handling request... {}", self.name.lock().unwrap());
             }
-            
         }
-        
+
         impl Service for TestService {
             fn inject(&self) {
                 println!("Injecting service...");
                 self.name.lock().unwrap().push_str("inject");
             }
-            
+
             fn as_any(&self) -> &dyn Any {
                 self
             }
@@ -196,9 +197,7 @@ mod tests {
 
         impl Clone for TestService {
             fn clone(&self) -> Self {
-                TestService {
-                    inner: self.inner.clone()
-                }
+                TestService { inner: self.inner.clone() }
             }
         }
 
@@ -206,6 +205,12 @@ mod tests {
             type Target = TestServiceInner;
             fn deref(&self) -> &Self::Target {
                 &self.inner
+            }
+        }
+
+        impl From<TestServiceInner> for TestService {
+            fn from(service: TestServiceInner) -> Self {
+                TestService { inner: Arc::new(service) }
             }
         }
 
@@ -217,8 +222,9 @@ mod tests {
 
             spawn(move || {
                 test_service.handle_request();
-            }).join().unwrap();
-
+            })
+            .join()
+            .unwrap();
         }
         main();
     }

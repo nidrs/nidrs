@@ -17,12 +17,12 @@ use proc_macro::{Ident, Span, TokenStream};
 use proc_macro2::TokenStream as TokenStream2;
 use proc_macro2::{Punct, TokenTree};
 use quote::{quote, ToTokens};
-use syn::{parse::Parser, punctuated::Punctuated};
 use syn::{
     meta,
     parse::{Parse, ParseStream},
     parse_str, Expr, ExprArray, ExprCall, PatPath, Stmt, Token,
 };
+use syn::{parse::Parser, punctuated::Punctuated};
 use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatType, Type};
 
 mod args_parse;
@@ -679,14 +679,17 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
 }
 
 fn gen_service_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
-    let controller_tokens= services.iter().map(|controller_tokens| {
-        let controller_str = controller_tokens.to_string();
-        let controller_ident = controller_tokens;
-        quote! {
-            nidrs_macro::log!("Registering service {}.", #controller_str);
-            ctx.services.insert(#controller_str.to_string(), Box::new(#controller_ident::default()));
-        }
-    }).collect::<Vec<TokenStream2>>();
+    let controller_tokens = services
+        .iter()
+        .map(|controller_tokens| {
+            let controller_str = controller_tokens.to_string();
+            let controller_ident = controller_tokens;
+            quote! {
+                nidrs_macro::log!("Registering service {}.", #controller_str);
+                ctx.services.insert(#controller_str.to_string(), Box::new(#controller_ident::default()));
+            }
+        })
+        .collect::<Vec<TokenStream2>>();
     let controller_tokens = TokenStream2::from(quote! {
         #(#controller_tokens)*
     });
@@ -694,14 +697,17 @@ fn gen_service_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
 }
 
 fn gen_interceptor_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
-    let controller_tokens= services.iter().map(|controller_tokens| {
-        let controller_str = controller_tokens.to_string();
-        let controller_ident = controller_tokens;
-        quote! {
-            nidrs_macro::log!("Registering interceptor {}.", #controller_str);
-            ctx.interceptors.insert(#controller_str.to_string(), Box::new(#controller_ident::default()));
-        }
-    }).collect::<Vec<TokenStream2>>();
+    let controller_tokens = services
+        .iter()
+        .map(|controller_tokens| {
+            let controller_str = controller_tokens.to_string();
+            let controller_ident = controller_tokens;
+            quote! {
+                nidrs_macro::log!("Registering interceptor {}.", #controller_str);
+                ctx.interceptors.insert(#controller_str.to_string(), Box::new(#controller_ident::default()));
+            }
+        })
+        .collect::<Vec<TokenStream2>>();
     let controller_tokens = TokenStream2::from(quote! {
         #(#controller_tokens)*
     });
@@ -853,11 +859,7 @@ fn gen_service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStre
     // clear all fields, add inner fields
     if let syn::Fields::Named(fields) = &mut raw_struct_tokens.fields {
         fields.named.clear();
-        fields.named.push(
-            syn::Field::parse_named
-                .parse2(quote! { inner: std::sync::Arc<#struct_inner_ident> })
-                .unwrap(),
-        );
+        fields.named.push(syn::Field::parse_named.parse2(quote! { inner: std::sync::Arc<#struct_inner_ident> }).unwrap());
     }
 
     return quote! {
@@ -876,6 +878,14 @@ fn gen_service_inject_tokens(service_type: &str, func: &ItemStruct) -> TokenStre
             type Target = #struct_inner_ident;
             fn deref(&self) -> &Self::Target {
                 &self.inner
+            }
+        }
+
+        impl From<#struct_inner_ident> for #ident {
+            fn from(service: #struct_inner_ident) -> Self {
+                #ident {
+                    inner: std::sync::Arc::new(service)
+                }
             }
         }
 

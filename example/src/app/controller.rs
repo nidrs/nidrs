@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use axum::{extract::Query, Json};
-use nidrs::{version, Inject, Meta};
-use nidrs_macro::{controller, get, meta, post, uses};
+use nidrs::{Inject, Meta};
+use nidrs_macro::{controller, get, post};
 
 use crate::AppResult;
 
@@ -47,7 +47,6 @@ impl AppController {
         Ok("Hello, World2!".to_string())
     }
 
-
     // pub fn __route_post_hello_workd(&self) {
     //     let router = axum::Router::new()
     //     .route(
@@ -58,5 +57,5 @@ impl AppController {
     //             t_controller.post_hello_world(p0, p1).await
     //         }),
     //     );
-    // } 
+    // }
 }
