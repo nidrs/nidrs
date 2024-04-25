@@ -28,6 +28,8 @@ use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatTyp
 mod args_parse;
 use args_parse::*;
 
+mod import_path;
+
 static CURRENT_CONTROLLER: Mutex<Option<ControllerMeta>> = Mutex::new(None);
 static ROUTES: Lazy<Mutex<HashMap<String, HashMap<String, RouteMeta>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<ControllerName, HashMap<RouteName, RouteMeta>>
 static CURRENT_SERVICE: Mutex<Option<ServiceMeta>> = Mutex::new(None);
@@ -95,6 +97,8 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemStruct);
 
     let ident = func.ident.clone();
+    
+    import_path::push_path(&func.ident.to_string());
 
     // println!("controller {} {:?}", ident.to_string(), func.attrs);
     CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta { name: ident.to_string(), path: path });
@@ -127,8 +131,9 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let trigger_on_module_init_tokens = gen_events_trigger_tokens("on_module_init");
     let trigger_on_module_destroy_tokens = gen_events_trigger_tokens("on_module_destroy");
+    
+    println!("// module {:?}", ident.to_string());
 
-    // println!("module {:?}", ident.to_string());
     CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta { name: "".to_string(), path: "".to_string() });
     ROUTES.lock().unwrap().clear();
     EVENTS.lock().unwrap().clear();
@@ -192,6 +197,14 @@ pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemStruct);
     CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta { name: func.ident.to_string() });
 
+    let call_site = Span::call_site();
+    let binding = call_site.source_file().path();
+    let call_site_str = binding.to_string_lossy();
+    let call_site_line = call_site.start().line();
+
+    println!("// injectable {}", func.ident.to_string());
+    import_path::push_path(&func.ident.to_string());
+
     let inject_tokens = gen_service_inject_tokens("Service", &func);
 
     return TokenStream::from(quote! {
@@ -207,6 +220,8 @@ pub fn interceptor(args: TokenStream, input: TokenStream) -> TokenStream {
     CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta { name: func.ident.to_string() });
 
     let inject_tokens = gen_service_inject_tokens("InterceptorService", &func);
+
+    import_path::push_path(&func.ident.to_string()); 
 
     return TokenStream::from(quote! {
         #func
@@ -411,8 +426,13 @@ pub fn main(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemFn);
     let ident = func.sig.ident.clone();
 
+    let import_mod_tokens = import_path::gen_import_mod_tokens();
+
+    // println!("main {:?} {}", func.sig.ident.to_string(), import_mod_tokens.to_string());
+
     let main_tokens = TokenStream2::from(quote! {
         #func
+        #import_mod_tokens
     });
 
     return main_tokens.into();
