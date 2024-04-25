@@ -122,7 +122,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let controller_register_tokens = gen_controller_register_tokens(args.controllers.clone());
     let service_register_tokens = gen_service_register_tokens(args.services.clone());
-    let interceptor_register_tokens = gen_interceptor_register_tokens(args.interceptors.clone());
+    let interceptor_register_tokens = gen_interceptor_register_tokens(inters_to_vec_tokens());
     let imports_register_tokens = gen_imports_register_tokens(args.imports.clone());
 
     let services_dep_inject_tokens = gen_dep_inject_tokens("services", args.services.clone());
@@ -531,10 +531,14 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
 
             // interceptor handle
             let inter_ids = inter_ids.iter().map(|inter_id| {
-                syn::Ident::new(inter_id, Span::call_site().into())
-            }).collect::<Vec<syn::Ident>>();
+                let crate_tokens = import_path::gen_import_tokens(&inter_id);
+                let inter_id = syn::Ident::new(inter_id, Span::call_site().into()).to_token_stream();
+                (inter_id, crate_tokens)
+            }).collect::<Vec<(TokenStream2, TokenStream2)>>();
             let mut i = 0;
-            let inter_tokens = inter_ids.iter().map(|inter_id| {
+            let inter_tokens = inter_ids.iter().map(|inter_wrap| {
+                let inter_import = inter_wrap.1.clone();
+                let inter_id = inter_wrap.0.clone();
                 let prev_t_interceptor_ident = syn::Ident::new(format!("t_interceptor_{}", i.to_string()).as_str(), Span::call_site().into());
                 let prev_t_inter_fn_indent = syn::Ident::new(format!("t_inter_fn_{}", i.to_string()).as_str(), Span::call_site().into());
                 i += 1;
@@ -583,7 +587,7 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
                 (
                     quote!{
                         let #prev_t_interceptor_ident = ctx.interceptors.get(stringify!(#inter_id)).unwrap();
-                        let #prev_t_interceptor_ident = #prev_t_interceptor_ident.downcast_ref::<std::sync::Arc<#inter_id>>().unwrap();
+                        let #prev_t_interceptor_ident = #prev_t_interceptor_ident.downcast_ref::<std::sync::Arc<#inter_import>>().unwrap();
                         let #prev_t_interceptor_ident = #prev_t_interceptor_ident.clone();
                     },
                     quote!{
@@ -726,12 +730,14 @@ fn gen_service_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
 }
 
 fn gen_interceptor_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
+    // println!("// gen_interceptor_register_tokens {:?}", services);
     let controller_tokens= services.iter().map(|controller_tokens| {
         let controller_str = controller_tokens.to_string();
         let controller_ident = controller_tokens;
+        let crate_tokens = import_path::gen_import_tokens(&controller_str);
         quote! {
             nidrs_macro::log!("Registering interceptor {}.", #controller_str);
-            ctx.interceptors.insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(#controller_ident::default())) as Box<dyn std::any::Any>);
+            ctx.interceptors.insert(#controller_str.to_string(), Box::new(std::sync::Arc::new(#crate_tokens::default())) as Box<dyn std::any::Any>);
         }
     }).collect::<Vec<TokenStream2>>();
     let controller_tokens = TokenStream2::from(quote! {
@@ -934,4 +940,21 @@ fn str_args_to_indent(args: Vec<String>) -> TokenStream2 {
         #(#args),*
     });
     return args;
+}
+
+fn inters_to_vec_tokens() -> Vec<TokenStream2> {
+    let mut all_inters = Vec::new();
+    let inters = INTERS.lock().unwrap();
+    inters.iter().for_each(|(k, v)| {
+        all_inters.extend(v.clone());
+    });
+    // 去重复
+    all_inters.sort();
+    all_inters.dedup();
+    // println!("inters {:?}", all_inters);
+    let inters = all_inters.iter().map(|inter| {
+        let inter_ident = syn::Ident::new(inter, Span::call_site().into());
+        return inter_ident.to_token_stream();
+    }).collect::<Vec<TokenStream2>>();
+    inters
 }

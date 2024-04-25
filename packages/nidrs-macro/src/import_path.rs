@@ -3,6 +3,7 @@ use std::{collections::HashMap, hash::Hash, sync::{Arc, Mutex}};
 use once_cell::sync::Lazy;
 use proc_macro::Span;
 use proc_macro2::TokenStream;
+use quote::ToTokens;
 
 pub static mut PATHS: Lazy<HashMap<String, String>> = Lazy::new(|| HashMap::new());
 
@@ -20,6 +21,20 @@ pub fn push_path(item_name: &str) {
 pub fn concat_path(item_name: &str) -> String {
   let path = unsafe { PATHS.get(item_name).unwrap() };
   path.to_string() + "::" + item_name
+}
+
+pub fn gen_concat_path_tokens(item_name: &str) -> TokenStream {
+  let concat = concat_path(item_name);
+  let path_tokens = syn::parse_str::<syn::Path>(&concat).unwrap();
+  path_tokens.into_token_stream()
+}
+
+pub fn gen_import_tokens(item_name: &str) -> TokenStream {
+  let ident = syn::Ident::new(item_name, Span::call_site().into());
+  let tokens = quote::quote! {
+    crate::import::#ident
+  };
+  tokens
 }
 
 pub fn gen_use_path_tokens(item_name: &str) -> TokenStream {

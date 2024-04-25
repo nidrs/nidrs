@@ -7,7 +7,6 @@ pub mod service;
 
 use crate::conf::ConfModule;
 use crate::conf::ConfOptions;
-use crate::log::interceptor::LogInterceptor;
 use crate::log::LogModule;
 use crate::user::UserModule;
 use controller::AppController;
@@ -21,7 +20,6 @@ use service::AppService;
         LogModule,
         UserModule,
     ];
-    interceptors = [LogInterceptor];
     controllers = [AppController];
     services = [AppService];
 })]
