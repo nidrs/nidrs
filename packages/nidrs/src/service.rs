@@ -30,7 +30,7 @@ impl<T> Inject<T> {
 impl<T> std::ops::Deref for Inject<T> {
     type Target = Arc<T>;
     fn deref(&self) -> &Self::Target {
-        self.value.get().unwrap()
+        self.value.get().unwrap_or_else(|| panic!("{} not inject.", std::any::type_name::<T>()))
     }
 }
 
