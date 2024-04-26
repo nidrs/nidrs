@@ -81,8 +81,8 @@ mod app {
             fn __meta() -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
                 meta.set("version".to_string(), "v1");
-                meta.set("role".to_string(), "admin");
                 meta.set("auth".to_string(), "true");
+                meta.set("role".to_string(), "admin");
                 meta.set("test".to_string(), true);
                 meta.set("service_name".to_string(), "AppController");
                 meta.set("service_type".to_string(), "ControllerService");
@@ -439,7 +439,7 @@ mod app {
     }
     pub mod exception {
         pub enum AppException {
-            ServiceException,
+            ServiceException(String),
         }
     }
     pub mod service {
@@ -1195,32 +1195,6 @@ mod modules {
             }
         }
     }
-    pub mod shared {
-        pub mod fn_test {
-            use axum::http::StatusCode;
-            use nidrs::{throw, Exception};
-            use crate::AppResult;
-            pub fn fn_test() -> AppResult {
-                nidrs::__throw(
-                    Exception::new(
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        anyhow::Error::msg("Error"),
-                    ),
-                    &{
-                        let res = ::alloc::fmt::format(
-                            format_args!(
-                                "from {0} line {1}",
-                                "example/src/modules/shared/fn_test.rs",
-                                7usize,
-                            ),
-                        );
-                        res
-                    },
-                )?;
-                Ok(())
-            }
-        }
-    }
     pub mod user {
         use nidrs_macro::module;
         pub mod controller {
@@ -1929,6 +1903,32 @@ mod modules {
         }
     }
 }
+mod shared {
+    pub mod fn_test {
+        use axum::http::StatusCode;
+        use nidrs::{throw, Exception};
+        use crate::AppResult;
+        pub fn fn_test() -> AppResult {
+            nidrs::__throw(
+                Exception::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    anyhow::Error::msg("Error"),
+                ),
+                &{
+                    let res = ::alloc::fmt::format(
+                        format_args!(
+                            "from {0} line {1}",
+                            "example/src/shared/fn_test.rs",
+                            7usize,
+                        ),
+                    );
+                    res
+                },
+            )?;
+            Ok(())
+        }
+    }
+}
 pub use nidrs::AppError;
 pub use nidrs::AppResult;
 fn main() {
@@ -1938,13 +1938,13 @@ fn main() {
     app.listen(3000);
 }
 pub mod import {
-    pub use crate::modules::log::service::LogService;
     pub use crate::modules::log::interceptor::LogInterceptor;
-    pub use crate::app::service::AppService;
     pub use crate::modules::user::controller::UserController;
-    pub use crate::modules::user::service::UserService;
-    pub use crate::modules::conf::service::ConfService;
-    pub use crate::app::controller::AppController;
+    pub use crate::app::service::AppService;
     pub use crate::modules::conf::options::ConfOptions;
+    pub use crate::app::controller::AppController;
+    pub use crate::modules::log::service::LogService;
+    pub use crate::modules::conf::service::ConfService;
+    pub use crate::modules::user::service::UserService;
 }
 extern crate alloc;
