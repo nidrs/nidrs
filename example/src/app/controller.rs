@@ -12,7 +12,7 @@ use super::{dto::Status, service::AppService};
 #[version("v1")]
 #[meta(role = "admin", auth = "true")]
 #[meta(test = true)]
-#[meta(disable_default_prefix)]
+// #[meta(disable_default_prefix)]
 #[controller("/app")]
 #[derive(Debug, Default)]
 pub struct AppController {
@@ -21,7 +21,7 @@ pub struct AppController {
 
 impl AppController {
     #[meta(arr = ["user"])]
-    #[uses(LogInterceptor)]
+    // #[uses(LogInterceptor)]
     #[version("v2")]
     #[get("/hello")]
     pub async fn get_hello_world(&self, meta: Meta, Query(q): Query<HashMap<String, String>>) -> AppResult<Status> {

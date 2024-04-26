@@ -38,6 +38,8 @@ static INTERS: Lazy<Mutex<HashMap<String, Vec<String>>>> = Lazy::new(|| Mutex::n
 
 static MERGE_MACRO: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(vec![]));
 
+static DEFAULT_INTERS: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(vec![]));
+
 #[derive(Debug, Clone)]
 struct RouteMeta {
     method: String,
@@ -286,6 +288,31 @@ pub fn uses(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
+pub fn default_uses(args: TokenStream, input: TokenStream) -> TokenStream{
+    let args = parse_macro_input!(args as ExprList);
+    let input_type = input.clone();
+    let input_type = parse_macro_input!(input_type as InterceptorArgs);
+    let used_ident = input_type.ident;
+    let inter_names = args
+        .items
+        .iter()
+        .map(|arg| {
+            if let Expr::Path(path) = arg {
+                path.to_token_stream().to_string()
+            } else {
+                panic!("Invalid argument");
+            }
+        })
+        .collect::<Vec<String>>();
+
+    DEFAULT_INTERS.lock().unwrap().append(&mut inter_names.clone());
+
+    // println!("// default_uses {:?}", inter_names);
+
+    return input;
+}
+
+#[proc_macro_attribute]
 pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(args as MetaArgs);
     let raw_input = TokenStream2::from(input.clone());
@@ -526,6 +553,8 @@ fn gen_controller_register_tokens(services: Vec<TokenStream2>) -> TokenStream2 {
             let inter_name = controller_str.clone() + ":" + &route_name.to_string();
             let binding = INTERS.lock().unwrap();
             let struct_inter_ids = binding.get(&controller_str).unwrap_or(&noop_ids);
+            let default_inter_ids = DEFAULT_INTERS.lock().unwrap();
+            let struct_inter_ids: Vec<String> = struct_inter_ids.iter().chain(default_inter_ids.iter()).map(|v| v.clone()).collect();
             let inter_ids = binding.get(&inter_name).unwrap_or(&noop_ids);
             let inter_ids = struct_inter_ids.iter().chain(inter_ids.iter()).collect::<Vec<&String>>();
 

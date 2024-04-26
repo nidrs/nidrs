@@ -1,3 +1,4 @@
+use nidrs::default_uses;
 use nidrs_macro::module;
 
 pub mod controller;
@@ -12,6 +13,7 @@ use crate::user::UserModule;
 use controller::AppController;
 use service::AppService;
 
+#[default_uses(LogInterceptor)]
 #[module({
     imports = [
         ConfModule::for_root(ConfOptions{

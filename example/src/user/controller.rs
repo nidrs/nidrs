@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use axum::extract::Query;
-use nidrs::Inject;
+use nidrs::{AppResult, Inject};
 use nidrs_macro::{controller, get};
 
 use super::service::UserService;
@@ -14,8 +14,8 @@ pub struct UserController {
 
 impl UserController {
     #[get("/hello")]
-    pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> String {
+    pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<String> {
         println!("Query {:?}", q);
-        self.user_service.extract().get_hello_world2()
+        Ok(self.user_service.extract().get_hello_world2())
     }
 }
