@@ -1,7 +1,8 @@
 [package]
-name = "example-expand"
-version = "0.1.0"
-edition = "2021"
+name = "hello"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -11,13 +12,10 @@ axum-extra = { version = "0.9.2", features = ["typed-header", "typed-routing"] }
 tokio = {version = "1.36.0", features = ["full"]}
 tower = "0.4.13"
 serde_json = "1.0.115"
-serde = "1.0.197"
-nidrs = { path = "../packages/nidrs" }
-nidrs-macro = { path = "../packages/nidrs-macro" }
-nidrs-extern = { path = "../packages/nidrs-extern" }
+serde = {version = "1.0.197", features = ["derive"]}
 thiserror = "1.0.58"
 anyhow = "1.0.82"
 
-
-[toolchain]
-channel = "nightly"
+nidrs = { workspace = true }
+nidrs-macro = { workspace = true }
+nidrs-extern = { workspace = true }

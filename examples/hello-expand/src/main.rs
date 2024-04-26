@@ -81,8 +81,8 @@ mod app {
             fn __meta() -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
                 meta.set("version".to_string(), "v1");
-                meta.set("auth".to_string(), "true");
                 meta.set("role".to_string(), "admin");
+                meta.set("auth".to_string(), "true");
                 meta.set("test".to_string(), true);
                 meta.set("service_name".to_string(), "AppController");
                 meta.set("service_type".to_string(), "ControllerService");
@@ -625,80 +625,6 @@ mod app {
                     .downcast_ref::<std::sync::Arc<crate::import::LogInterceptor>>()
                     .unwrap();
                 let t_interceptor_0 = t_interceptor_0.clone();
-                let mut meta = nidrs::get_meta(t_controller.clone());
-                let t_meta = t_controller.__meta_get_hello_world();
-                meta.merge(t_meta);
-                let meta = std::sync::Arc::new(meta);
-                let version = *meta
-                    .get::<&str>("version")
-                    .unwrap_or(&ctx.defaults.default_version);
-                let disable_default_prefix = *meta
-                    .get::<bool>("disable_default_prefix")
-                    .unwrap_or(&false);
-                let path = if disable_default_prefix {
-                    "/app/hello".to_string()
-                } else {
-                    nidrs::template_format(
-                        &{
-                            let res = ::alloc::fmt::format(
-                                format_args!(
-                                    "{0}{1}",
-                                    ctx.defaults.default_prefix,
-                                    "/app/hello",
-                                ),
-                            );
-                            res
-                        },
-                        [("version", version)],
-                    )
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "Registering router \'{0} {1}\'.\n",
-                            "get".to_uppercase(),
-                            path,
-                        ),
-                    );
-                };
-                let router = axum::Router::new()
-                    .route(
-                        &path,
-                        axum::routing::get(|parts, p1| async move {
-                            let mut t_meta = nidrs::Meta::new();
-                            t_meta.extend(meta);
-                            let t_body = nidrs_extern::axum::body::Body::empty();
-                            let ctx = InterCtx {
-                                meta: t_meta,
-                                parts,
-                                body: t_body,
-                            };
-                            let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
-                                let p0 = ctx.meta;
-                                t_controller.get_hello_world(p0, p1).await
-                            };
-                            t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
-                        }),
-                    );
-                ctx.routers.push(router);
-                let t_controller = ctx.controllers.get("AppController").unwrap();
-                let t_controller = t_controller
-                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
-                    .unwrap();
-                let t_controller = t_controller.clone();
-                let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
-                let t_interceptor_0 = t_interceptor_0
-                    .downcast_ref::<std::sync::Arc<crate::import::LogInterceptor>>()
-                    .unwrap();
-                let t_interceptor_0 = t_interceptor_0.clone();
                 let t_interceptor_1 = ctx.interceptors.get("LogInterceptor").unwrap();
                 let t_interceptor_1 = t_interceptor_1
                     .downcast_ref::<std::sync::Arc<crate::import::LogInterceptor>>()
@@ -849,6 +775,80 @@ mod app {
                                 t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
                             };
                             t_interceptor_1.interceptor(ctx, t_inter_fn_1).await
+                        }),
+                    );
+                ctx.routers.push(router);
+                let t_controller = ctx.controllers.get("AppController").unwrap();
+                let t_controller = t_controller
+                    .downcast_ref::<std::sync::Arc<controller::AppController>>()
+                    .unwrap();
+                let t_controller = t_controller.clone();
+                let t_interceptor_0 = ctx.interceptors.get("LogInterceptor").unwrap();
+                let t_interceptor_0 = t_interceptor_0
+                    .downcast_ref::<std::sync::Arc<crate::import::LogInterceptor>>()
+                    .unwrap();
+                let t_interceptor_0 = t_interceptor_0.clone();
+                let mut meta = nidrs::get_meta(t_controller.clone());
+                let t_meta = t_controller.__meta_get_hello_world();
+                meta.merge(t_meta);
+                let meta = std::sync::Arc::new(meta);
+                let version = *meta
+                    .get::<&str>("version")
+                    .unwrap_or(&ctx.defaults.default_version);
+                let disable_default_prefix = *meta
+                    .get::<bool>("disable_default_prefix")
+                    .unwrap_or(&false);
+                let path = if disable_default_prefix {
+                    "/app/hello".to_string()
+                } else {
+                    nidrs::template_format(
+                        &{
+                            let res = ::alloc::fmt::format(
+                                format_args!(
+                                    "{0}{1}",
+                                    ctx.defaults.default_prefix,
+                                    "/app/hello",
+                                ),
+                            );
+                            res
+                        },
+                        [("version", version)],
+                    )
+                };
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
+                };
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "Registering router \'{0} {1}\'.\n",
+                            "get".to_uppercase(),
+                            path,
+                        ),
+                    );
+                };
+                let router = axum::Router::new()
+                    .route(
+                        &path,
+                        axum::routing::get(|parts, p1| async move {
+                            let mut t_meta = nidrs::Meta::new();
+                            t_meta.extend(meta);
+                            let t_body = nidrs_extern::axum::body::Body::empty();
+                            let ctx = InterCtx {
+                                meta: t_meta,
+                                parts,
+                                body: t_body,
+                            };
+                            let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
+                                let p0 = ctx.meta;
+                                t_controller.get_hello_world(p0, p1).await
+                            };
+                            t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
                         }),
                     );
                 ctx.routers.push(router);
@@ -1918,7 +1918,7 @@ mod shared {
                     let res = ::alloc::fmt::format(
                         format_args!(
                             "from {0} line {1}",
-                            "example/src/shared/fn_test.rs",
+                            "examples/hello/src/shared/fn_test.rs",
                             7usize,
                         ),
                     );
@@ -1938,13 +1938,13 @@ fn main() {
     app.listen(3000);
 }
 pub mod import {
-    pub use crate::modules::log::interceptor::LogInterceptor;
-    pub use crate::modules::user::controller::UserController;
     pub use crate::app::service::AppService;
+    pub use crate::modules::conf::service::ConfService;
+    pub use crate::modules::user::controller::UserController;
+    pub use crate::modules::user::service::UserService;
+    pub use crate::modules::log::service::LogService;
     pub use crate::modules::conf::options::ConfOptions;
     pub use crate::app::controller::AppController;
-    pub use crate::modules::log::service::LogService;
-    pub use crate::modules::conf::service::ConfService;
-    pub use crate::modules::user::service::UserService;
+    pub use crate::modules::log::interceptor::LogInterceptor;
 }
 extern crate alloc;

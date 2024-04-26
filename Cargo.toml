@@ -1,9 +1,16 @@
 [workspace]
 members = [
-  "example",
-  "packages/nidrs",
-  "packages/nidrs-macro",
-  "packages/nidrs-extern"
-, "example-expand"]
-
+  "packages/*",
+  "examples/*",
+]
 resolver = "2"
+
+[workspace.package]
+version = "0.0.5"
+edition = "2021"
+publish = false
+
+[workspace.dependencies]
+nidrs = { path = "packages/nidrs" }
+nidrs-extern = { path = "packages/nidrs-extern" }
+nidrs-macro = { path = "packages/nidrs-macro" }
