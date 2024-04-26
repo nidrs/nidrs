@@ -1,4 +1,4 @@
-use crate::user::service::UserService;
+use crate::modules::user::service::UserService;
 use nidrs::Inject;
 use nidrs_macro::injectable;
 

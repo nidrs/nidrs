@@ -1,8 +1,5 @@
 mod app;
-mod conf;
-mod log;
-mod shared;
-mod user;
+mod modules;
 
 pub use nidrs::AppError;
 pub use nidrs::AppResult;

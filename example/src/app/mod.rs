@@ -6,10 +6,10 @@ pub mod dto;
 pub mod exception;
 pub mod service;
 
-use crate::conf::ConfModule;
-use crate::conf::ConfOptions;
-use crate::log::LogModule;
-use crate::user::UserModule;
+use crate::modules::conf::ConfModule;
+use crate::modules::conf::ConfOptions;
+use crate::modules::log::LogModule;
+use crate::modules::user::UserModule;
 use controller::AppController;
 use service::AppService;
 
