@@ -288,7 +288,7 @@ pub fn uses(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
-pub fn default_uses(args: TokenStream, input: TokenStream) -> TokenStream{
+pub fn default_uses(args: TokenStream, input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(args as ExprList);
     let input_type = input.clone();
     let input_type = parse_macro_input!(input_type as InterceptorArgs);

@@ -94,7 +94,7 @@ impl<T: Module> NidrsFactory<T> {
         };
 
         let rt = tokio::runtime::Builder::new_multi_thread()
-            .worker_threads(4) // 设置工作线程数量
+            // .worker_threads(4) // 设置工作线程数量
             .enable_all() // 启用所有运行时功能
             .build()
             .unwrap();
