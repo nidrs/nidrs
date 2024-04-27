@@ -5,7 +5,7 @@ use std::{any::Any, sync::Arc};
 use crate::{ImplMeta, ModuleCtx};
 
 pub trait Service: ImplMeta {
-    fn inject(&self, ctx: ModuleCtx) -> ModuleCtx;
+    fn inject(&self, ctx: ModuleCtx, module_name: &str) -> ModuleCtx;
 }
 
 #[derive(Clone, Debug, Default)]

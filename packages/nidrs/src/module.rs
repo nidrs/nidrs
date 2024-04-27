@@ -1,6 +1,6 @@
 use nidrs_extern::tokio;
 use nidrs_extern::{axum, tokio::signal};
-use std::{any::Any, collections::HashMap};
+use std::{any::Any, collections::HashMap, sync::Arc};
 
 use crate::{provider, AppResult, Service};
 
@@ -127,17 +127,24 @@ pub struct ModuleCtx {
     pub controllers: HashMap<String, Box<dyn Any>>,
     pub routers: Vec<axum::Router<StateCtx>>,
     pub interceptors: HashMap<String, Box<dyn Any>>,
+
+    pub imports: HashMap<String, Vec<String>>,
+    pub exports: HashMap<String, Vec<String>>,
+    pub deps: HashMap<String, Vec<String>>,
 }
 
 impl ModuleCtx {
     pub fn new(defaults: ModuleDefaults) -> Self {
         ModuleCtx {
             defaults,
-            modules: HashMap::new(),
-            services: HashMap::new(),
-            controllers: HashMap::new(),
-            routers: Vec::new(),
-            interceptors: HashMap::new(),
+            modules: HashMap::new(),      // {"UserModule": Box<UserModule>}
+            services: HashMap::new(),     // {"UserModule::UserService": Arc<UserService>}
+            controllers: HashMap::new(),  // {"UserModule::UserController": Arc<UserController>}
+            routers: Vec::new(),          // vec![axum::Router::new().route("/", axum::routing::get(|| async move { "Hello, Nidrs!" }))],
+            interceptors: HashMap::new(), // {"UserModule::UserService": Arc<UserService>}
+            imports: HashMap::new(),      // {"UserModule": ["AppModule"]}
+            exports: HashMap::new(),      // {"UserModule": ["UserService"]}
+            deps: HashMap::new(),         // {"UserService": ["UserModule"]}
         }
     }
 
@@ -145,6 +152,93 @@ impl ModuleCtx {
         for (_, module) in self.modules.iter() {
             module.destroy(self);
         }
+    }
+
+    pub fn get_controller<R: 'static>(&self, current_module_name: &str, service_name: &str) -> Arc<R> {
+        let svc_mods = self.deps.get(service_name).unwrap_or_else(|| panic!("[nidrs] not deps {} {}", current_module_name, service_name)); // ["UserModule"];
+        let imp_mods =
+            self.imports.get(current_module_name).unwrap_or_else(|| panic!("[nidrs] not import {}::{}", current_module_name, service_name)); // ["UserModule"];
+        let intersection_mods = svc_mods.iter().filter(|&m| imp_mods.contains(m)).cloned().collect::<Vec<_>>();
+        let first_mod = intersection_mods.first().unwrap_or(&current_module_name.to_string()).clone();
+        let svc_key = format!("{}::{}", first_mod, service_name);
+
+        let svc = self.controllers.get(&svc_key).unwrap();
+        let svc = svc.downcast_ref::<std::sync::Arc<R>>().unwrap();
+
+        svc.clone()
+    }
+
+    pub fn register_controller(&mut self, current_module_name: &str, service_name: &str, controller: Box<dyn Any>) -> bool {
+        let svc_key = current_module_name.to_string() + "::" + service_name;
+        if !self.controllers.contains_key(svc_key.as_str()) {
+            self.controllers.insert(svc_key.clone(), controller);
+            self.deps.entry(service_name.to_string()).or_default().push(current_module_name.to_string());
+            self.exports.entry(current_module_name.to_string()).or_default().push(service_name.to_string());
+            nidrs_macro::log!("Registering controller {}.", svc_key);
+            return true;
+        }
+        false
+    }
+
+    pub fn get_interceptor<R: 'static>(&self, current_module_name: &str, service_name: &str) -> Arc<R> {
+        let current_module_name = "Defaults";
+        // let svc_mods = self.deps.get(service_name).expect(format!("[nidrs] not deps {} {}", current_module_name, service_name).as_str()); // ["UserModule"];
+        // println!("svc_mods: {:?}", (&self.imports, &self.exports, &svc_mods));
+        // let imp_mods = self.imports.get(current_module_name).expect(format!("[nidrs] not import {}::{}", current_module_name, service_name).as_str()); // ["UserModule"];
+        // let intersection_mods = svc_mods
+        //     .iter()
+        //     .filter(|&m| imp_mods.contains(m))
+        //     .map(|m| m.clone())
+        //     .collect::<Vec<_>>();
+        // let first_mod = intersection_mods.get(0).unwrap_or(&current_module_name.to_string()).clone();
+        // let svc_key = format!("{}::{}", first_mod, service_name);
+        let svc_key = format!("{}::{}", current_module_name, service_name);
+
+        let svc =
+            self.interceptors.get(&svc_key).unwrap_or_else(|| panic!("[nidrs] not inject {}::{} {}", current_module_name, service_name, svc_key));
+        let svc = svc.downcast_ref::<std::sync::Arc<R>>().unwrap();
+
+        svc.clone()
+    }
+
+    pub fn register_interceptor(&mut self, current_module_name: &str, service_name: &str, interceptor: Box<dyn Any>) -> bool {
+        let current_module_name = "Defaults";
+        let svc_key = current_module_name.to_string() + "::" + service_name;
+        if !self.interceptors.contains_key(svc_key.as_str()) {
+            self.interceptors.insert(svc_key.clone(), interceptor);
+            self.deps.entry(service_name.to_string()).or_default().push(current_module_name.to_string());
+            self.exports.entry(current_module_name.to_string()).or_default().push(service_name.to_string());
+            nidrs_macro::log!("Registering interceptor {}.", svc_key);
+            return true;
+        }
+        false
+    }
+
+    pub fn get_service<R: 'static>(&self, current_module_name: &str, service_name: &str) -> Arc<R> {
+        let svc_mods = self.deps.get(service_name).unwrap_or_else(|| panic!("[nidrs] not deps {} {}", current_module_name, service_name)); // ["UserModule"];
+        let imp_mods =
+            self.imports.get(current_module_name).unwrap_or_else(|| panic!("[nidrs] not import {}::{}", current_module_name, service_name)); // ["UserModule"];
+        let intersection_mods = svc_mods.iter().filter(|&m| imp_mods.contains(m)).cloned().collect::<Vec<_>>();
+        let first_mod = intersection_mods.first().unwrap_or(&current_module_name.to_string()).clone();
+        let svc_key = format!("{}::{}", first_mod, service_name);
+
+        let svc = self.services.get(&svc_key).unwrap_or_else(|| panic!("[nidrs] not inject {}::{} {}", current_module_name, service_name, svc_key));
+        let svc =
+            svc.downcast_ref::<std::sync::Arc<R>>().unwrap_or_else(|| panic!("[nidrs] not downcast_ref {} {}", current_module_name, service_name));
+
+        svc.clone()
+    }
+
+    pub fn register_service(&mut self, current_module_name: &str, service_name: &str, service: Box<dyn Any>) -> bool {
+        let svc_key = current_module_name.to_string() + "::" + service_name;
+        if !self.services.contains_key(svc_key.as_str()) {
+            self.services.insert(svc_key.clone(), service);
+            self.deps.entry(service_name.to_string()).or_default().push(current_module_name.to_string());
+            self.exports.entry(current_module_name.to_string()).or_default().push(service_name.to_string());
+            nidrs_macro::log!("Registering service {}.", svc_key);
+            return true;
+        }
+        false
     }
 }
 
