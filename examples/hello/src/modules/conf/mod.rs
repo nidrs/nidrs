@@ -8,8 +8,8 @@ pub use options::ConfOptions;
 use service::ConfService;
 
 #[module({
-  services = [ConfService];
-  exports = [ConfService];
+  services: [ConfService],
+  exports: [ConfService],
 })]
 #[derive(Clone, Debug, Default)]
 pub struct ConfModule;

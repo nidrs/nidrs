@@ -15,15 +15,15 @@ use service::AppService;
 
 #[default_uses(LogInterceptor)]
 #[module({
-    imports = [
+    imports: [
         ConfModule::for_root(ConfOptions{
             log_level: "info".to_string(),
         }),
         LogModule,
         UserModule,
-    ];
-    controllers = [AppController];
-    services = [AppService];
+    ],
+    controllers: [AppController],
+    services: [AppService],
 })]
 #[derive(Clone, Debug, Default)]
 pub struct AppModule;

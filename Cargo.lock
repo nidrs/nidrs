@@ -614,6 +614,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+ "syn-serde",
 ]
 
 [[package]]
@@ -909,6 +910,19 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "syn-serde"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "426cde3e127e22e4f5a019004c78f13def65c8f5dcdaff685bb6880a61015147"
+dependencies = [
+ "proc-macro2",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "syn",
 ]
 
 [[package]]

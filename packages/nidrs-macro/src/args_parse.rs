@@ -5,8 +5,9 @@ use quote::ToTokens;
 use syn::{
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
-    Expr, Ident, ItemFn, ItemStruct, Token,
+    Expr, FieldValue, Ident, ItemFn, ItemStruct, Member, Token,
 };
+use syn_serde::json;
 
 #[derive(Clone)]
 pub struct ExprList {
@@ -57,8 +58,19 @@ pub struct ModuleArgs {
 
 impl Parse for ModuleArgs {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        let args: syn::Block = input.parse()?;
-        // let args = parse_macro_input!(input.parse::<Expr>()) as Expr;
+        let content;
+        let _ = syn::braced!(content in input);
+
+        let mut fields: Punctuated<FieldValue, Token![,]> = Punctuated::new();
+
+        while !content.is_empty() {
+            fields.push(content.parse()?);
+            if content.is_empty() {
+                break;
+            }
+            let punct: Token![,] = content.parse()?;
+            fields.push_punct(punct);
+        }
 
         let mut imports = Vec::new();
         let mut controllers = Vec::new();
@@ -66,48 +78,63 @@ impl Parse for ModuleArgs {
         let mut exports = Vec::new();
         let mut interceptors = Vec::new();
 
-        let parse_args_map = args
-            .stmts
-            .iter()
-            .map(|stmt| {
-                if let syn::Stmt::Expr(exp, _) = stmt {
-                    if let syn::Expr::Assign(assign) = exp {
-                        if let syn::Expr::Path(path) = *assign.left.clone() {
-                            return (
-                                path.path.segments.first().unwrap().ident.to_string(),
-                                if let syn::Expr::Array(array) = *assign.right.clone() {
-                                    array
-                                        .elems
-                                        .iter()
-                                        .map(|elem| {
-                                            if let syn::Expr::Path(path) = elem {
-                                                return path.path.segments.first().unwrap().ident.to_token_stream();
-                                            }
-                                            if let syn::Expr::Call(lit) = elem {
-                                                return lit.to_token_stream();
-                                            }
-                                            return TokenStream2::new();
-                                        })
-                                        .collect::<Vec<TokenStream2>>()
-                                } else {
-                                    vec![]
-                                },
-                            );
+        fields.iter().for_each(|field| {
+            if let Member::Named(field_ident) = &field.member {
+                match field_ident.to_string().as_str() {
+                    "imports" => {
+                        if let syn::Expr::Array(array) = &field.expr {
+                            array.elems.iter().for_each(|elem| {
+                                imports.push(elem.to_token_stream());
+                            });
                         }
                     }
+                    "controllers" => {
+                        if let syn::Expr::Array(array) = &field.expr {
+                            array.elems.iter().for_each(|elem| {
+                                controllers.push(elem.to_token_stream());
+                            });
+                        }
+                    }
+                    "services" => {
+                        if let syn::Expr::Array(array) = &field.expr {
+                            array.elems.iter().for_each(|elem| {
+                                services.push(elem.to_token_stream());
+                            });
+                        }
+                    }
+                    "exports" => {
+                        if let syn::Expr::Array(array) = &field.expr {
+                            array.elems.iter().for_each(|elem| {
+                                exports.push(elem.to_token_stream());
+                            });
+                        }
+                    }
+                    "interceptors" => {
+                        if let syn::Expr::Array(array) = &field.expr {
+                            array.elems.iter().for_each(|elem| {
+                                interceptors.push(elem.to_token_stream());
+                            });
+                        }
+                    }
+                    _ => (),
                 }
-                panic!("Invalid argument");
-            })
-            .collect::<HashMap<String, Vec<TokenStream2>>>();
+            }
+            // println!("{}", json::to_string_pretty(field));
+            // println!("{}", json::to_string_pretty(field));
+            // let field_ident = field.ident.clone().unwrap().to_string();
+            // match field {
 
-        parse_args_map.iter().for_each(|(k, v)| match k.as_str() {
-            "imports" => imports = v.clone(),
-            "controllers" => controllers = v.clone(),
-            "services" => services = v.clone(),
-            "exports" => exports = v.clone(),
-            "interceptors" => interceptors = v.clone(),
-            _ => {}
+            // }
         });
+
+        // parse_args_map.iter().for_each(|(k, v)| match k.as_str() {
+        //     "imports" => imports = v.clone(),
+        //     "controllers" => controllers = v.clone(),
+        //     "services" => services = v.clone(),
+        //     "exports" => exports = v.clone(),
+        //     "interceptors" => interceptors = v.clone(),
+        //     _ => {}
+        // });
 
         // nidrs_macro::log!("{:?}", parse_args_map);
 
@@ -138,5 +165,30 @@ impl Parse for InterceptorArgs {
         } else {
             Err(syn::Error::new(input.span(), "Invalid interceptor"))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use proc_macro::TokenStream;
+    use proc_macro2::TokenStream as TokenStream2;
+    use quote::ToTokens;
+    use syn::{parse, parse2, parse_macro_input, Block, ExprStruct, ItemFn, ItemStruct, Stmt};
+    use syn_serde::json;
+
+    #[test]
+    fn test_args_parse() {
+        let t = quote::quote! {
+            {
+                imports: [ControllerService, InterceptorService::for_root()],
+                services: [ServiceA, ServiceB],
+            }
+        };
+        let taste: ModuleArgs = parse2(t).unwrap();
+
+        assert!(taste.imports.len() == 2);
+        assert!(taste.services.len() == 2);
     }
 }

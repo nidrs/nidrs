@@ -7,9 +7,9 @@ use interceptor::LogInterceptor;
 use service::LogService;
 
 #[module({
-  interceptors = [LogInterceptor];
-  services = [LogService];
-  exports = [LogService];
+  interceptors: [LogInterceptor],
+  services: [LogService],
+  exports: [LogService],
 })]
 #[derive(Clone, Debug, Default)]
 pub struct LogModule;

@@ -8,10 +8,10 @@ use controller::UserController;
 use service::UserService;
 
 #[module({
-  imports = [AppModule];
-  controllers = [UserController];
-  services = [UserService];
-  exports = [UserService];
+  imports: [AppModule],
+  controllers: [UserController],
+  services: [UserService],
+  export: [UserService],
 })]
 #[derive(Clone, Debug, Default)]
 pub struct UserModule;
