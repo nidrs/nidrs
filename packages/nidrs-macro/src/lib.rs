@@ -128,6 +128,18 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     let interceptor_register_tokens = gen_interceptor_register_tokens(module_name.clone(), inters_to_vec_tokens());
     let (import_names_tokens, imports_register_tokens) = gen_imports_register_tokens(module_name.clone(), args.imports.clone());
     let imports_register_names = args.imports.clone().iter().map(|import_tokens| import_tokens.to_string()).collect::<Vec<String>>();
+    let exports_names = args.exports.clone().iter().map(|export_tokens| export_tokens.to_string()).collect::<Vec<String>>();
+    let exports_names_tokens = exports_names
+        .iter()
+        .map(|export_name| {
+            quote! {
+                #export_name.to_string()
+            }
+        })
+        .collect::<Vec<TokenStream2>>();
+    let exports_names_tokens = TokenStream2::from(quote! {
+        Vec::from([#(#exports_names_tokens),*])
+    });
 
     let services_dep_inject_tokens = gen_dep_inject_tokens("get_service", module_name.clone(), args.services.clone());
     let controller_dep_inject_tokens = gen_dep_inject_tokens("get_controller", module_name.clone(), args.controllers.clone());
@@ -156,7 +168,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
                 nidrs_macro::log!("Registering module {}.", stringify!(#ident));
                 ctx.modules.insert(stringify!(#ident).to_string(), Box::new(self));
                 ctx.imports.insert(#module_name.to_string(), #import_names_tokens);
-
+                ctx.exports.insert(#module_name.to_string(), #exports_names_tokens);
 
                 // {
                     #interceptor_register_tokens

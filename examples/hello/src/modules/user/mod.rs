@@ -11,7 +11,7 @@ use service::UserService;
   imports: [AppModule],
   controllers: [UserController],
   services: [UserService],
-  export: [UserService],
+  exports: [UserService],
 })]
 #[derive(Clone, Debug, Default)]
 pub struct UserModule;

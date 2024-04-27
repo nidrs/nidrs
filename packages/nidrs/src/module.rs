@@ -75,6 +75,11 @@ impl<T: Module> NidrsFactory<T> {
         let router = axum::Router::new().route("/", axum::routing::get(|| async move { "Hello, Nidrs!" }));
         let module_ctx = ModuleCtx::new(self.defaults);
         let module_ctx = self.module.init(module_ctx);
+        // println!("ModuleCtx Imports: {:?}", &module_ctx.imports);
+        // println!("ModuleCtx Exports: {:?}", &module_ctx.exports);
+        // println!("ModuleCtx Deps: {:?}", &module_ctx.deps);
+        // println!("ModuleCtx Services: {:?}", &module_ctx.services.keys());
+
         let routers = module_ctx.routers.clone();
         let mut sub_router = axum::Router::new();
         for router in routers.iter() {
@@ -173,7 +178,7 @@ impl ModuleCtx {
         if !self.controllers.contains_key(svc_key.as_str()) {
             self.controllers.insert(svc_key.clone(), controller);
             self.deps.entry(service_name.to_string()).or_default().push(current_module_name.to_string());
-            self.exports.entry(current_module_name.to_string()).or_default().push(service_name.to_string());
+            // self.exports.entry(current_module_name.to_string()).or_default().push(service_name.to_string());
             nidrs_macro::log!("Registering controller {}.", svc_key);
             return true;
         }
@@ -207,7 +212,7 @@ impl ModuleCtx {
         if !self.interceptors.contains_key(svc_key.as_str()) {
             self.interceptors.insert(svc_key.clone(), interceptor);
             self.deps.entry(service_name.to_string()).or_default().push(current_module_name.to_string());
-            self.exports.entry(current_module_name.to_string()).or_default().push(service_name.to_string());
+            // self.exports.entry(current_module_name.to_string()).or_default().push(service_name.to_string());
             nidrs_macro::log!("Registering interceptor {}.", svc_key);
             return true;
         }
@@ -220,6 +225,10 @@ impl ModuleCtx {
             self.imports.get(current_module_name).unwrap_or_else(|| panic!("[nidrs] not import {}::{}", current_module_name, service_name)); // ["UserModule"];
         let intersection_mods = svc_mods.iter().filter(|&m| imp_mods.contains(m)).cloned().collect::<Vec<_>>();
         let first_mod = intersection_mods.first().unwrap_or(&current_module_name.to_string()).clone();
+        if first_mod != current_module_name && !self.exports.get(&first_mod).unwrap().contains(&service_name.to_string()) {
+            nidrs_macro::elog!("[{}] {} is not exported by {}", current_module_name, service_name, first_mod);
+            // panic!("exit");
+        }
         let svc_key = format!("{}::{}", first_mod, service_name);
 
         let svc = self.services.get(&svc_key).unwrap_or_else(|| panic!("[nidrs] not inject {}::{} {}", current_module_name, service_name, svc_key));
@@ -234,7 +243,7 @@ impl ModuleCtx {
         if !self.services.contains_key(svc_key.as_str()) {
             self.services.insert(svc_key.clone(), service);
             self.deps.entry(service_name.to_string()).or_default().push(current_module_name.to_string());
-            self.exports.entry(current_module_name.to_string()).or_default().push(service_name.to_string());
+            // self.exports.entry(current_module_name.to_string()).or_default().push(service_name.to_string());
             nidrs_macro::log!("Registering service {}.", svc_key);
             return true;
         }

@@ -395,8 +395,51 @@ mod app {
             };
             ctx.modules.insert("AppModule".to_string(), Box::new(self));
             ctx.imports.insert("AppModule".to_string(), Vec::from(["ConfModule".to_string(), "LogModule".to_string(), "UserModule".to_string()]));
+            ctx.exports.insert("AppModule".to_string(), Vec::from(["AppService".to_string()]));
             ctx.register_interceptor("AppModule", "LogInterceptor", Box::new(std::sync::Arc::new(crate::import::LogInterceptor::default())));
             if ctx.register_controller("AppModule", "AppController", Box::new(std::sync::Arc::new(controller::AppController::default()))) {
+                let t_controller = ctx.get_controller::<controller::AppController>("AppModule", "AppController");
+                let t_interceptor_0 = ctx.get_interceptor::<crate::import::LogInterceptor>("AppModule", "LogInterceptor");
+                let t_interceptor_1 = ctx.get_interceptor::<crate::import::LogInterceptor>("AppModule", "LogInterceptor");
+                let mut meta = nidrs::get_meta(t_controller.clone());
+                let t_meta = t_controller.__meta_post_hello_world();
+                meta.merge(t_meta);
+                let meta = std::sync::Arc::new(meta);
+                let version = *meta.get::<&str>("version").unwrap_or(&ctx.defaults.default_version);
+                let disable_default_prefix = *meta.get::<bool>("disable_default_prefix").unwrap_or(&false);
+                let path = if disable_default_prefix {
+                    "/app/hello".to_string()
+                } else {
+                    nidrs::template_format(
+                        &{
+                            let res = ::alloc::fmt::format(format_args!("{0}{1}", ctx.defaults.default_prefix, "/app/hello",));
+                            res
+                        },
+                        [("version", version)],
+                    )
+                };
+                {
+                    ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                };
+                {
+                    ::std::io::_print(format_args!("Registering router \'{0} {1}\'.\n", "post".to_uppercase(), path,));
+                };
+                let router = axum::Router::new().route(
+                    &path,
+                    axum::routing::post(|parts, p0, p1| async move {
+                        let mut t_meta = nidrs::Meta::new();
+                        t_meta.extend(meta);
+                        let t_body = p1;
+                        let ctx = InterCtx { meta: t_meta, parts, body: t_body };
+                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
+                            let t_body = ctx.body;
+                            t_controller.post_hello_world(p0, t_body).await
+                        };
+                        let t_inter_fn_1 = |ctx: InterCtx<_>| async move { t_interceptor_0.interceptor(ctx, t_inter_fn_0).await };
+                        t_interceptor_1.interceptor(ctx, t_inter_fn_1).await
+                    }),
+                );
+                ctx.routers.push(router);
                 let t_controller = ctx.get_controller::<controller::AppController>("AppModule", "AppController");
                 let t_interceptor_0 = ctx.get_interceptor::<crate::import::LogInterceptor>("AppModule", "LogInterceptor");
                 let mut meta = nidrs::get_meta(t_controller.clone());
@@ -471,48 +514,6 @@ mod app {
                         let t_body = nidrs_extern::axum::body::Body::empty();
                         let ctx = InterCtx { meta: t_meta, parts, body: t_body };
                         let t_inter_fn_0 = |ctx: InterCtx<_>| async move { t_controller.get_hello_world2(p0).await };
-                        let t_inter_fn_1 = |ctx: InterCtx<_>| async move { t_interceptor_0.interceptor(ctx, t_inter_fn_0).await };
-                        t_interceptor_1.interceptor(ctx, t_inter_fn_1).await
-                    }),
-                );
-                ctx.routers.push(router);
-                let t_controller = ctx.get_controller::<controller::AppController>("AppModule", "AppController");
-                let t_interceptor_0 = ctx.get_interceptor::<crate::import::LogInterceptor>("AppModule", "LogInterceptor");
-                let t_interceptor_1 = ctx.get_interceptor::<crate::import::LogInterceptor>("AppModule", "LogInterceptor");
-                let mut meta = nidrs::get_meta(t_controller.clone());
-                let t_meta = t_controller.__meta_post_hello_world();
-                meta.merge(t_meta);
-                let meta = std::sync::Arc::new(meta);
-                let version = *meta.get::<&str>("version").unwrap_or(&ctx.defaults.default_version);
-                let disable_default_prefix = *meta.get::<bool>("disable_default_prefix").unwrap_or(&false);
-                let path = if disable_default_prefix {
-                    "/app/hello".to_string()
-                } else {
-                    nidrs::template_format(
-                        &{
-                            let res = ::alloc::fmt::format(format_args!("{0}{1}", ctx.defaults.default_prefix, "/app/hello",));
-                            res
-                        },
-                        [("version", version)],
-                    )
-                };
-                {
-                    ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
-                };
-                {
-                    ::std::io::_print(format_args!("Registering router \'{0} {1}\'.\n", "post".to_uppercase(), path,));
-                };
-                let router = axum::Router::new().route(
-                    &path,
-                    axum::routing::post(|parts, p0, p1| async move {
-                        let mut t_meta = nidrs::Meta::new();
-                        t_meta.extend(meta);
-                        let t_body = p1;
-                        let ctx = InterCtx { meta: t_meta, parts, body: t_body };
-                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
-                            let t_body = ctx.body;
-                            t_controller.post_hello_world(p0, t_body).await
-                        };
                         let t_inter_fn_1 = |ctx: InterCtx<_>| async move { t_interceptor_0.interceptor(ctx, t_inter_fn_0).await };
                         t_interceptor_1.interceptor(ctx, t_inter_fn_1).await
                     }),
@@ -703,6 +704,7 @@ mod modules {
                 };
                 ctx.modules.insert("ConfModule".to_string(), Box::new(self));
                 ctx.imports.insert("ConfModule".to_string(), Vec::from([]));
+                ctx.exports.insert("ConfModule".to_string(), Vec::from(["ConfService".to_string()]));
                 ctx.register_service("ConfModule", "ConfService", Box::new(std::sync::Arc::new(ConfService::default())));
                 let t = ctx.get_service::<ConfService>("ConfModule", "ConfService");
                 {
@@ -873,6 +875,7 @@ mod modules {
                 };
                 ctx.modules.insert("LogModule".to_string(), Box::new(self));
                 ctx.imports.insert("LogModule".to_string(), Vec::from([]));
+                ctx.exports.insert("LogModule".to_string(), Vec::from(["LogService".to_string()]));
                 ctx.register_service("LogModule", "LogService", Box::new(std::sync::Arc::new(LogService::default())));
                 let t = ctx.get_service::<LogService>("LogModule", "LogService");
                 {
@@ -1061,6 +1064,7 @@ mod modules {
                 };
                 ctx.modules.insert("UserModule".to_string(), Box::new(self));
                 ctx.imports.insert("UserModule".to_string(), Vec::from(["AppModule".to_string()]));
+                ctx.exports.insert("UserModule".to_string(), Vec::from(["UserService".to_string()]));
                 if ctx.register_controller("UserModule", "UserController", Box::new(std::sync::Arc::new(controller::UserController::default()))) {
                     let t_controller = ctx.get_controller::<controller::UserController>("UserModule", "UserController");
                     let t_interceptor_0 = ctx.get_interceptor::<crate::import::LogInterceptor>("UserModule", "LogInterceptor");

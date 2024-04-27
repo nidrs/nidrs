@@ -24,6 +24,7 @@ use service::AppService;
     ],
     controllers: [AppController],
     services: [AppService],
+    exports: [AppService],
 })]
 #[derive(Clone, Debug, Default)]
 pub struct AppModule;
