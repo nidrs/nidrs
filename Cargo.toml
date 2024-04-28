@@ -9,6 +9,9 @@ resolver = "2"
 version = "0.0.5"
 edition = "2021"
 publish = false
+homepage = "https://github.com/nidrs/nidrs.git"
+repository = "https://github.com/nidrs/nidrs.git"
+license = "MIT"
 
 [workspace.dependencies]
 nidrs = { path = "packages/nidrs" }

@@ -3,14 +3,14 @@ name = "nidrs-macro"
 version = "0.0.5"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
 description = "a nidrs macro."
-edition = "2021"
 keywords = ["nidrs"]
 categories = [
   "macros",
 ]
-homepage = "https://github.com/nidrs/nidrs.git"
-repository = "https://github.com/nidrs/nidrs.git"
-license = "MIT"
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

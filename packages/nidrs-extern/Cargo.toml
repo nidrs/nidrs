@@ -3,7 +3,6 @@ name = "nidrs-extern"
 version = "0.0.5"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
 description = "Nidrs external library."
-edition = "2021"
 keywords = ["nidrs", "axum", "http", "web", "framework"]
 categories = [
     "network-programming",
@@ -11,9 +10,10 @@ categories = [
     "web-programming::http-server",
     "web-programming::websocket"
 ]
-homepage = "https://github.com/nidrs/nidrs.git"
-repository = "https://github.com/nidrs/nidrs.git"
-license = "MIT"
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
 
 [dependencies]
 axum = { version = "0.7.4", features = ["ws"] }

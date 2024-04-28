@@ -3,7 +3,6 @@ name = "nidrs"
 version = "0.0.5"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
 description = "Nidrs is a web framework based on axum and tokio."
-edition = "2021"
 keywords = ["nidrs", "axum", "http", "web", "framework"]
 categories = [
     "network-programming",
@@ -11,13 +10,14 @@ categories = [
     "web-programming::http-server",
     "web-programming::websocket"
 ]
-homepage = "https://github.com/nidrs/nidrs.git"
-repository = "https://github.com/nidrs/nidrs.git"
-license = "MIT"
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
 
 [dependencies]
-nidrs-extern = { path = "../nidrs-extern", version = "0.0.5"}
-nidrs-macro = { path = "../nidrs-macro", version = "0.0.5"}
+nidrs-macro = { workspace = true }
+nidrs-extern = { workspace = true }
 
 serde_json = "1.0.115"
 serde = {version = "1.0.197", features = ["derive"]}
