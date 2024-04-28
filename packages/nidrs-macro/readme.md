@@ -1,5 +1,5 @@
 <div align="center" style="background: #f6cf46">
-  <p><img src="readme.assets/image-20240421150932023.png" /></p>
+  <p><img src="https://github.com/nidrs/nidrs/raw/main/readme.assets/image-20240421150932023.png" /></p>
   <p>
     <img src="https://img.shields.io/discord/1223548737075281952?style=for-the-badge" />
     <img src="https://img.shields.io/crates/v/nidrs?style=for-the-badge" />
