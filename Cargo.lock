@@ -369,7 +369,7 @@ checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
 name = "hello"
-version = "0.0.6"
+version = "0.0.7"
 dependencies = [
  "anyhow",
  "axum",
@@ -386,7 +386,7 @@ dependencies = [
 
 [[package]]
 name = "hello-expand"
-version = "0.0.6"
+version = "0.0.7"
 dependencies = [
  "anyhow",
  "axum",
@@ -582,7 +582,7 @@ dependencies = [
 
 [[package]]
 name = "nidrs"
-version = "0.0.6"
+version = "0.0.7"
 dependencies = [
  "nidrs-extern",
  "nidrs-macro",
@@ -592,7 +592,7 @@ dependencies = [
 
 [[package]]
 name = "nidrs-extern"
-version = "0.0.6"
+version = "0.0.7"
 dependencies = [
  "anyhow",
  "axum",
@@ -608,7 +608,7 @@ dependencies = [
 
 [[package]]
 name = "nidrs-macro"
-version = "0.0.6"
+version = "0.0.7"
 dependencies = [
  "once_cell",
  "proc-macro2",
