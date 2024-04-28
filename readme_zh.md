@@ -25,12 +25,13 @@ Nidrs 提供了一个即插即用的应用程序架构，使开发人员和团�
   - [x] service 自动注入 v0.0.1
   - [x] 动态 service 注入 v0.0.3
   - [x] service 作用域（全局）v0.0.1
-  - [ ] service 作用域（模块）v0.0.6
+  - [x] service 作用域（模块）v0.0.6
   - [x] service 实例域（单例）v0.0.1
   - [ ] service 实例域（请求级）
   - [ ] service 实例域（注入级）
 - [x] 分层架构
   - [x] Controller 层 v0.0.1
+    - [x] meta 支持在路由方法中读取 v0.0.6
   - [x] Service 层 v0.0.1
   - [ ] Model 层
 - [x] 模块生命周期钩子
@@ -40,7 +41,7 @@ Nidrs 提供了一个即插即用的应用程序架构，使开发人员和团�
   - [ ] on_application_shutdown (待定)
 - [x] 请求响应拦截器
   - [x] 控制器作用域 v0.0.4
-  - [ ] 全局作用域  v0.0.6
+  - [x] 全局作用域  v0.0.6
 - [ ] 请求参数校验
 - [ ] 基于请求参数校验的 Mock 服务
 - [x] 统一返回类型 v0.0.4
@@ -116,7 +117,7 @@ impl AppController {
 
 ### example/src/app/service.rs
 
-```rs
+```rust
 use nidrs::Inject;
 use nidrs_macro::{injectable, on_module_init};
 use crate::user::service::UserService;
@@ -140,33 +141,34 @@ impl AppService {
 
 ### example/src/app/mod.rs
 
-```rs
+```rust
+use nidrs::default_uses;
 use nidrs_macro::module;
 
 pub mod controller;
-pub mod service;
 pub mod dto;
 pub mod exception;
+pub mod service;
 
+use crate::modules::conf::ConfModule;
+use crate::modules::conf::ConfOptions;
+use crate::modules::log::LogModule;
+use crate::modules::user::UserModule;
 use controller::AppController;
 use service::AppService;
-use crate::user::UserModule;
-use crate::log::LogModule;
-use crate::conf::ConfModule;
-use crate::conf::ConfOptions;
-use crate::log::interceptor::LogInterceptor;
 
+#[default_uses(LogInterceptor)]
 #[module({
-    imports = [
+    imports: [
         ConfModule::for_root(ConfOptions{
             log_level: "info".to_string(),
         }),
         LogModule,
         UserModule,
-    ];
-    interceptors = [LogInterceptor];
-    controllers = [AppController];
-    services = [AppService];
+    ],
+    controllers: [AppController],
+    services: [AppService],
+    exports: [AppService],
 })]
 #[derive(Clone, Debug, Default)]
 pub struct AppModule;
@@ -175,7 +177,7 @@ pub struct AppModule;
 
 ### example/src/main.rs
 
-```rs
+```rust
 mod app;
 mod conf;
 mod user;
@@ -234,6 +236,12 @@ ConfService initialized with log_level: ConfOptions { log_level: "info" }
 [nidrs] Injecting AppController.
 [nidrs] Injecting LogInterceptor.
 [nidrs] Listening on 0.0.0.0:3000
+```
+
+## Install Develop Env
+
+```shell
+cargo install --locked cocogitto
 ```
 
 ## Design

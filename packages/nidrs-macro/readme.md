@@ -23,39 +23,44 @@ Nidrs provides a plug-and-play application architecture enabling developers and 
 - [x] Modular encapsulation v0.0.1
   - [x] Static module registration v0.0.1
   - [x] Configurable module registration v0.0.2
-- [x] Automatic dependency injection
-  - [x] Service auto-injection v0.0.1
+- [x] Dependency automatic injection
+  - [x] Service automatic injection v0.0.1
   - [x] Dynamic service injection v0.0.3
   - [x] Service scope (global) v0.0.1
-  - [ ] Service scope (module)
+  - [x] Service scope (module) v0.0.6
   - [x] Service instance scope (singleton) v0.0.1
-  - [ ] Service instance scope (request-level)
-  - [ ] Service instance scope (injection-level)
+  - [ ] Service instance scope (request level)
+  - [ ] Service instance scope (injection level)
 - [x] Layered architecture
   - [x] Controller layer v0.0.1
+    - [x] Meta support for reading in route methods v0.0.6
   - [x] Service layer v0.0.1
   - [ ] Model layer
 - [x] Module lifecycle hooks
   - [x] on_module_init v0.0.2
   - [x] on_module_destroy v0.0.5
-  - [ ] on_application_bootstrap (tentative)
-  - [ ] on_application_shutdown (tentative)
-- [x] Request-response interceptors v0.0.4
+  - [ ] on_application_bootstrap (pending)
+  - [ ] on_application_shutdown (pending)
+- [x] Request response interceptors
+  - [x] Controller scope v0.0.4
+  - [x] Global scope v0.0.6
 - [ ] Request parameter validation
 - [ ] Mock service based on request parameter validation
 - [x] Unified return type v0.0.4
 - [x] Error encapsulation and handling v0.0.4
-- [x] Uniformly adding route prefixes v0.0.5
-  - [x] default_prefix
+- [x] Unified addition of route prefixes v0.0.5
+  - [x] app.default_prefix
   - [x] #[meta(disable_default_prefix)]
-- [x] Interface versioning v0.0.5
-  - [x] default_version
+- [x] Interface version control v0.0.5
+  - [x] app.default_version
   - [x] #[version("v1")]
+- [ ] Compatibility with tower middleware
 - [ ] Automatic OpenAPI documentation
-- [ ] API invocation interface generation
+- [ ] API call interface generation
 - [ ] Module testing
+- [ ] Support for running in wasm environment
 - [ ] CLI commands
-- [ ] Comprehensive documentation and examples
+- [ ] Complete documentation and examples
 
 ## Example
 
@@ -84,7 +89,7 @@ pub struct AppController {
 
 impl AppController {
     #[meta(arr = ["user"])]
-    #[uses(LogInterceptor)]
+    // #[uses(LogInterceptor)]
     #[version("v2")]
     #[get("/hello")]
     pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<Status> {
@@ -93,7 +98,7 @@ impl AppController {
         Ok(Status { db: "ok".to_string(), redis: "ok".to_string() })
     }
 
-    #[uses(LogInterceptor)]
+    // #[uses(LogInterceptor)]
     #[get("/hello2")]
     pub async fn get_hello_world2(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<String> {
         println!("Query {:?}", q);
@@ -139,32 +144,33 @@ impl AppService {
 ### example/src/app/mod.rs
 
 ```rs
+use nidrs::default_uses;
 use nidrs_macro::module;
 
 pub mod controller;
-pub mod service;
 pub mod dto;
 pub mod exception;
+pub mod service;
 
+use crate::modules::conf::ConfModule;
+use crate::modules::conf::ConfOptions;
+use crate::modules::log::LogModule;
+use crate::modules::user::UserModule;
 use controller::AppController;
 use service::AppService;
-use crate::user::UserModule;
-use crate::log::LogModule;
-use crate::conf::ConfModule;
-use crate::conf::ConfOptions;
-use crate::log::interceptor::LogInterceptor;
 
+#[default_uses(LogInterceptor)]
 #[module({
-    imports = [
+    imports: [
         ConfModule::for_root(ConfOptions{
             log_level: "info".to_string(),
         }),
         LogModule,
         UserModule,
-    ];
-    interceptors = [LogInterceptor];
-    controllers = [AppController];
-    services = [AppService];
+    ],
+    controllers: [AppController],
+    services: [AppService],
+    exports: [AppService],
 })]
 #[derive(Clone, Debug, Default)]
 pub struct AppModule;
