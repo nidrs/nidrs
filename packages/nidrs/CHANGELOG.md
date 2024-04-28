@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-v0.0.7 - 2024-04-28
+#### Bug Fixes
+- update version - (c058256) - WumaCoder
+#### Miscellaneous Chores
+- update readme - (5b557d0) - WumaCoder
+
+- - -
+
 ## nidrs-v0.0.6 - 2024-04-28
 #### Bug Fixes
 - 完成模块的 exports 支持 - (209bc7c) - WumaCoder

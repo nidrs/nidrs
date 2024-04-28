@@ -1,6 +1,6 @@
 [package]
 name = "nidrs"
-version = "0.0.6"
+version = "0.0.7"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
 description = "Nidrs is a web framework based on axum and tokio."
 keywords = ["nidrs", "axum", "http", "web", "framework"]
@@ -16,8 +16,8 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
-nidrs-macro = { workspace = true, version = "0.0.6" }
-nidrs-extern = { workspace = true, version = "0.0.6" }
+nidrs-macro = { workspace = true, version = "0.0.7" }
+nidrs-extern = { workspace = true, version = "0.0.7" }
 
 serde_json = "1.0.115"
 serde = {version = "1.0.197", features = ["derive"]}
