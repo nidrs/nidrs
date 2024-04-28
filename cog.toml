@@ -29,8 +29,14 @@ git add .
 
 [changelog]
 path = "CHANGELOG.md"
-authors = []
-
+template = "remote"
+remote = "github.com"
+repository = "nidrs"
+owner = "nidrs"
+authors = [
+  { signature = "WumaCoder", username = "WumaCoder" },
+  { signature = "刘欢", username = "WumaCoder" },
+]
 [bump_profiles]
 
 [packages]
