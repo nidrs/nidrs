@@ -29,14 +29,13 @@ mod args_parse;
 use args_parse::*;
 
 mod import_path;
+mod meta_parse;
 
 static CURRENT_CONTROLLER: Mutex<Option<ControllerMeta>> = Mutex::new(None);
 static ROUTES: Lazy<Mutex<HashMap<String, HashMap<String, RouteMeta>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<ControllerName, HashMap<RouteName, RouteMeta>>
 static CURRENT_SERVICE: Mutex<Option<ServiceMeta>> = Mutex::new(None);
 static EVENTS: Lazy<Mutex<HashMap<String, Vec<(String, String)>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<EventName, Vec<(ServiceName,FName)>>
 static INTERS: Lazy<Mutex<HashMap<String, Vec<String>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<ServiceName, Vec<InterName>>
-
-static MERGE_META: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(vec![]));
 
 static DEFAULT_INTERS: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(vec![]));
 
@@ -154,7 +153,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     ROUTES.lock().unwrap().clear();
     EVENTS.lock().unwrap().clear();
     INTERS.lock().unwrap().clear();
-    MERGE_META.lock().unwrap().clear();
+    meta_parse::clear();
 
     return TokenStream::from(quote! {
         #func
@@ -331,40 +330,11 @@ pub fn default_uses(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(args as MetaArgs);
     let raw_input = TokenStream2::from(input.clone());
-    let func = parse_macro_input!(input as InterceptorArgs);
-    let func_ident = func.ident.clone();
-    let func_name = func.ident.to_string();
-    let meta_tokens = args
-        .kv
-        .iter()
-        .map(|(key, value)| {
-            // value parse expr
-            let exp = parse_str::<Expr>(&value).unwrap();
-            // println!("// meta {} {} {:?}", key, value, exp);
+    let args = parse_macro_input!(args as MetaArgs);
+    // let func = parse_macro_input!(input as InterceptorArgs);
 
-            let v = match exp {
-                Expr::Array(arr) => {
-                    // arr to vec
-                    let arr = arr.elems.iter().map(|elem| elem.to_owned()).collect::<Vec<Expr>>();
-                    quote! {
-                        Vec::from([#(#arr),*])
-                    }
-                }
-                _ => exp.to_token_stream(),
-            };
-
-            quote! {
-                meta.set(#key.to_string(), #v);
-            }
-        })
-        .collect::<Vec<TokenStream2>>();
-    let meta_tokens = TokenStream2::from(quote! {
-        #(#meta_tokens)*
-    });
-    MERGE_META.lock().unwrap().push(meta_tokens.to_string());
-
+    meta_parse::collect(args);
     // if let TokenType::Struct(_) = func.typ {
 
     // } else if  let TokenType::Fn(p) = func.typ {
@@ -536,7 +506,7 @@ fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
     let controller = binding.get_mut(&CURRENT_CONTROLLER.lock().unwrap().as_ref().unwrap().name).unwrap();
     controller.insert(name.clone(), route);
 
-    let prev_meta_tokens = gen_meta_tokens();
+    let meta_tokens = meta_parse::build_tokens();
 
     let meta_ident = syn::Ident::new(format!("__meta_{}", name).as_str(), Span::call_site().into());
     TokenStream::from(quote! {
@@ -544,7 +514,7 @@ fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
 
         pub fn #meta_ident(&self)->nidrs::Meta{
             let mut meta = nidrs::Meta::new();
-            #prev_meta_tokens
+            #meta_tokens
             meta
         }
     })
@@ -927,7 +897,7 @@ fn gen_service_inject_tokens(service_type_name: &str, func: &ItemStruct) -> Toke
         }
     };
 
-    let prev_meta_tokens = gen_meta_tokens();
+    let meta_tokens = meta_parse::build_tokens();
 
     let inject_tokens = TokenStream2::from(quote! {
         #middle_tokens
@@ -941,7 +911,7 @@ fn gen_service_inject_tokens(service_type_name: &str, func: &ItemStruct) -> Toke
         impl nidrs::ImplMeta for #ident{
             fn __meta() -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
-                #prev_meta_tokens
+                #meta_tokens
                 meta.set("service_name".to_string(), stringify!(#ident));
                 meta.set("service_type".to_string(), stringify!(#service_type));
                 meta
@@ -950,24 +920,6 @@ fn gen_service_inject_tokens(service_type_name: &str, func: &ItemStruct) -> Toke
     });
 
     return inject_tokens;
-}
-
-fn gen_meta_tokens() -> TokenStream2 {
-    let prev_meta_tokens = MERGE_META
-        .lock()
-        .unwrap()
-        .drain(..)
-        .map(|tokens| {
-            let tokens = TokenStream2::from_str(tokens.as_str()).unwrap();
-            quote! {
-                #tokens
-            }
-        })
-        .collect::<Vec<TokenStream2>>();
-    let prev_meta_tokens: TokenStream2 = TokenStream2::from(quote! {
-        #(#prev_meta_tokens)*
-    });
-    prev_meta_tokens
 }
 
 fn gen_events_trigger_tokens(module_name: String, event_name: &str) -> TokenStream2 {
