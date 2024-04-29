@@ -1,0 +1,13 @@
+[package]
+name = "nidrs-diesel"
+version = "0.1.0"
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+diesel = "2.1.6"
+nidrs = { workspace = true }
+nidrs-macro = { workspace = true }
+nidrs-extern = { workspace = true }
