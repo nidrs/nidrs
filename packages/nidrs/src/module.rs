@@ -4,6 +4,8 @@ use std::{any::Any, collections::HashMap, sync::Arc};
 
 use crate::{provider, AppResult, Service};
 
+static GLOBALS_KEY: &str = "Globals";
+
 pub trait Module {
     fn init(self, ctx: ModuleCtx) -> ModuleCtx;
 
@@ -186,7 +188,7 @@ impl ModuleCtx {
     }
 
     pub fn get_interceptor<R: 'static>(&self, current_module_name: &str, service_name: &str) -> Arc<R> {
-        let current_module_name = "Defaults";
+        let current_module_name = GLOBALS_KEY;
         // let svc_mods = self.deps.get(service_name).expect(format!("[nidrs] not deps {} {}", current_module_name, service_name).as_str()); // ["UserModule"];
         // println!("svc_mods: {:?}", (&self.imports, &self.exports, &svc_mods));
         // let imp_mods = self.imports.get(current_module_name).expect(format!("[nidrs] not import {}::{}", current_module_name, service_name).as_str()); // ["UserModule"];
@@ -207,7 +209,7 @@ impl ModuleCtx {
     }
 
     pub fn register_interceptor(&mut self, current_module_name: &str, service_name: &str, interceptor: Box<dyn Any>) -> bool {
-        let current_module_name = "Defaults";
+        let current_module_name = GLOBALS_KEY;
         let svc_key = current_module_name.to_string() + "::" + service_name;
         if !self.interceptors.contains_key(svc_key.as_str()) {
             self.interceptors.insert(svc_key.clone(), interceptor);
@@ -231,6 +233,8 @@ impl ModuleCtx {
         }
         let svc_key = format!("{}::{}", first_mod, service_name);
 
+        let svc_key = if self.services.contains_key(&svc_key) { svc_key } else { format!("{}::{}", GLOBALS_KEY, service_name) };
+
         let svc = self.services.get(&svc_key).unwrap_or_else(|| panic!("[nidrs] not inject {}::{} {}", current_module_name, service_name, svc_key));
         let svc =
             svc.downcast_ref::<std::sync::Arc<R>>().unwrap_or_else(|| panic!("[nidrs] not downcast_ref {} {}", current_module_name, service_name));
@@ -246,6 +250,8 @@ impl ModuleCtx {
             // self.exports.entry(current_module_name.to_string()).or_default().push(service_name.to_string());
             nidrs_macro::log!("Registering service {}.", svc_key);
             return true;
+        } else {
+            nidrs_macro::elog!("Service {} already exists.", svc_key);
         }
         false
     }
