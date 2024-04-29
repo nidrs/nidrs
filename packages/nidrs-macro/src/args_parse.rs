@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use proc_macro2::TokenStream as TokenStream2;
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 use syn::{
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
@@ -23,7 +23,7 @@ impl Parse for ExprList {
 
 #[derive(Clone)]
 pub struct MetaArgs {
-    pub kv: HashMap<String, String>,
+    pub kv: HashMap<String, Box<Expr>>,
 }
 
 impl Parse for MetaArgs {
@@ -34,11 +34,11 @@ impl Parse for MetaArgs {
             if let syn::Expr::Assign(assign) = item {
                 if let syn::Expr::Path(path) = *assign.left.clone() {
                     let k = path.path.segments.first().unwrap().ident.to_string();
-                    let v = assign.right.clone().to_token_stream().to_string();
+                    let v = assign.right.clone();
                     kv.insert(k, v);
                 }
             } else if let syn::Expr::Path(path) = item {
-                kv.insert(path.path.segments.first().unwrap().ident.to_string(), "true".to_string());
+                kv.insert(path.path.segments.first().unwrap().ident.to_string(), Box::new(Expr::Verbatim(quote! { true })));
             } else {
                 panic!("Invalid argument");
             }
