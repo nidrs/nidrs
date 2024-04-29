@@ -36,7 +36,7 @@ static CURRENT_SERVICE: Mutex<Option<ServiceMeta>> = Mutex::new(None);
 static EVENTS: Lazy<Mutex<HashMap<String, Vec<(String, String)>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<EventName, Vec<(ServiceName,FName)>>
 static INTERS: Lazy<Mutex<HashMap<String, Vec<String>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<ServiceName, Vec<InterName>>
 
-static MERGE_MACRO: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(vec![]));
+static MERGE_META: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(vec![]));
 
 static DEFAULT_INTERS: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(vec![]));
 
@@ -150,11 +150,11 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
     println!("// module {:?}", ident.to_string());
 
-    CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta { name: "".to_string(), path: "".to_string() });
+    CURRENT_CONTROLLER.lock().unwrap().take();
     ROUTES.lock().unwrap().clear();
     EVENTS.lock().unwrap().clear();
     INTERS.lock().unwrap().clear();
-    MERGE_MACRO.lock().unwrap().clear();
+    MERGE_META.lock().unwrap().clear();
 
     return TokenStream::from(quote! {
         #func
@@ -363,7 +363,7 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     let meta_tokens = TokenStream2::from(quote! {
         #(#meta_tokens)*
     });
-    MERGE_MACRO.lock().unwrap().push(meta_tokens.to_string());
+    MERGE_META.lock().unwrap().push(meta_tokens.to_string());
 
     // if let TokenType::Struct(_) = func.typ {
 
@@ -953,7 +953,7 @@ fn gen_service_inject_tokens(service_type_name: &str, func: &ItemStruct) -> Toke
 }
 
 fn gen_meta_tokens() -> TokenStream2 {
-    let prev_meta_tokens = MERGE_MACRO
+    let prev_meta_tokens = MERGE_META
         .lock()
         .unwrap()
         .drain(..)
