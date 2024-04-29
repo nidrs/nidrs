@@ -552,6 +552,9 @@ fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
 
 fn gen_controller_register_tokens(module_name: String, services: Vec<TokenStream2>) -> TokenStream2 {
     let binding = CURRENT_CONTROLLER.lock().unwrap();
+    if let None = binding.as_ref() {
+        return TokenStream2::new();
+    }
     let current_controller = binding.as_ref().unwrap();
     let controller_path = current_controller.path.clone();
     let controller_tokens= services.iter().map(|controller_token| {
