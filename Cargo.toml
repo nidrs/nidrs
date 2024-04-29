@@ -6,9 +6,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.0.7"
 edition = "2021"
-publish = false
 homepage = "https://github.com/nidrs/nidrs.git"
 repository = "https://github.com/nidrs/nidrs.git"
 license = "MIT"
