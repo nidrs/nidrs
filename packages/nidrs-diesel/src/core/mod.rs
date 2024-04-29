@@ -1,12 +1,11 @@
-
 use nidrs::{DynamicModule, Service};
 use nidrs_macro::module;
 
-pub mod service;
 pub mod options;
+pub mod service;
 
-pub use service::DieselService;
 pub use options::DieselOptions;
+pub use service::DieselService;
 
 #[module({
   services: [DieselService],
