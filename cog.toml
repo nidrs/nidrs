@@ -27,8 +27,20 @@ cog check
 """
 [git_hooks.pre-commit]
 script = """#!/bin/sh
-cargo clippy --fix --allow-dirty --allow-staged && cargo fmt -v --all
-git add .
+cargo clippy --fix --allow-staged --allow-dirty
+STAGED_CHANGES=$(git diff --cached --name-only --diff-filter=ACM | grep '\\.rs$')
+
+if [ -n "$STAGED_CHANGES" ]; then
+    echo "Running cargo fmt on staged changes..."
+    for FILE in $STAGED_CHANGES; do
+        cargo fmt -- "$FILE"
+        git add "$FILE"
+    done
+    echo "cargo fmt completed successfully."
+fi
+
+exit 0
+# git add .
 """
 
 [commit_types]
