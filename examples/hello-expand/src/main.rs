@@ -400,48 +400,6 @@ mod app {
             if ctx.register_controller("AppModule", "AppController", Box::new(std::sync::Arc::new(controller::AppController::default()))) {
                 let t_controller = ctx.get_controller::<controller::AppController>("AppModule", "AppController");
                 let t_interceptor_0 = ctx.get_interceptor::<crate::import::LogInterceptor>("AppModule", "LogInterceptor");
-                let t_interceptor_1 = ctx.get_interceptor::<crate::import::LogInterceptor>("AppModule", "LogInterceptor");
-                let mut meta = nidrs::get_meta(t_controller.clone());
-                let t_meta = t_controller.__meta_post_hello_world();
-                meta.merge(t_meta);
-                let meta = std::sync::Arc::new(meta);
-                let version = *meta.get::<&str>("version").unwrap_or(&ctx.defaults.default_version);
-                let disable_default_prefix = *meta.get::<bool>("disable_default_prefix").unwrap_or(&false);
-                let path = if disable_default_prefix {
-                    "/app/hello".to_string()
-                } else {
-                    nidrs::template_format(
-                        &{
-                            let res = ::alloc::fmt::format(format_args!("{0}{1}", ctx.defaults.default_prefix, "/app/hello",));
-                            res
-                        },
-                        [("version", version)],
-                    )
-                };
-                {
-                    ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
-                };
-                {
-                    ::std::io::_print(format_args!("Registering router \'{0} {1}\'.\n", "post".to_uppercase(), path,));
-                };
-                let router = axum::Router::new().route(
-                    &path,
-                    axum::routing::post(|parts, p0, p1| async move {
-                        let mut t_meta = nidrs::Meta::new();
-                        t_meta.extend(meta);
-                        let t_body = p1;
-                        let ctx = InterCtx { meta: t_meta, parts, body: t_body };
-                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
-                            let t_body = ctx.body;
-                            t_controller.post_hello_world(p0, t_body).await
-                        };
-                        let t_inter_fn_1 = |ctx: InterCtx<_>| async move { t_interceptor_0.interceptor(ctx, t_inter_fn_0).await };
-                        t_interceptor_1.interceptor(ctx, t_inter_fn_1).await
-                    }),
-                );
-                ctx.routers.push(router);
-                let t_controller = ctx.get_controller::<controller::AppController>("AppModule", "AppController");
-                let t_interceptor_0 = ctx.get_interceptor::<crate::import::LogInterceptor>("AppModule", "LogInterceptor");
                 let mut meta = nidrs::get_meta(t_controller.clone());
                 let t_meta = t_controller.__meta_get_hello_world();
                 meta.merge(t_meta);
@@ -519,8 +477,51 @@ mod app {
                     }),
                 );
                 ctx.routers.push(router);
+                let t_controller = ctx.get_controller::<controller::AppController>("AppModule", "AppController");
+                let t_interceptor_0 = ctx.get_interceptor::<crate::import::LogInterceptor>("AppModule", "LogInterceptor");
+                let t_interceptor_1 = ctx.get_interceptor::<crate::import::LogInterceptor>("AppModule", "LogInterceptor");
+                let mut meta = nidrs::get_meta(t_controller.clone());
+                let t_meta = t_controller.__meta_post_hello_world();
+                meta.merge(t_meta);
+                let meta = std::sync::Arc::new(meta);
+                let version = *meta.get::<&str>("version").unwrap_or(&ctx.defaults.default_version);
+                let disable_default_prefix = *meta.get::<bool>("disable_default_prefix").unwrap_or(&false);
+                let path = if disable_default_prefix {
+                    "/app/hello".to_string()
+                } else {
+                    nidrs::template_format(
+                        &{
+                            let res = ::alloc::fmt::format(format_args!("{0}{1}", ctx.defaults.default_prefix, "/app/hello",));
+                            res
+                        },
+                        [("version", version)],
+                    )
+                };
+                {
+                    ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                };
+                {
+                    ::std::io::_print(format_args!("Registering router \'{0} {1}\'.\n", "post".to_uppercase(), path,));
+                };
+                let router = axum::Router::new().route(
+                    &path,
+                    axum::routing::post(|parts, p0, p1| async move {
+                        let mut t_meta = nidrs::Meta::new();
+                        t_meta.extend(meta);
+                        let t_body = p1;
+                        let ctx = InterCtx { meta: t_meta, parts, body: t_body };
+                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
+                            let t_body = ctx.body;
+                            t_controller.post_hello_world(p0, t_body).await
+                        };
+                        let t_inter_fn_1 = |ctx: InterCtx<_>| async move { t_interceptor_0.interceptor(ctx, t_inter_fn_0).await };
+                        t_interceptor_1.interceptor(ctx, t_inter_fn_1).await
+                    }),
+                );
+                ctx.routers.push(router);
             }
-            ctx.register_service("AppModule", "AppService", Box::new(std::sync::Arc::new(AppService::default())));
+            let svc = std::sync::Arc::new(AppService::default());
+            ctx.register_service("AppModule", "AppService", Box::new(svc));
             let dyn_module = ConfModule::for_root(ConfOptions { log_level: "info".to_string() });
             let mut dyn_module_services = dyn_module.services;
             dyn_module_services.drain().for_each(|(k, v)| {
@@ -664,7 +665,7 @@ mod modules {
                 }
             }
         }
-        use nidrs::{DynamicModule, Service};
+        use nidrs::{meta, DynamicModule, Service};
         use nidrs_macro::module;
         pub use options::ConfOptions;
         use service::ConfService;
@@ -705,7 +706,9 @@ mod modules {
                 ctx.modules.insert("ConfModule".to_string(), Box::new(self));
                 ctx.imports.insert("ConfModule".to_string(), Vec::from([]));
                 ctx.exports.insert("ConfModule".to_string(), Vec::from(["ConfService".to_string()]));
-                ctx.register_service("ConfModule", "ConfService", Box::new(std::sync::Arc::new(ConfService::default())));
+                let svc = std::sync::Arc::new(ConfService::default());
+                ctx.register_service("Globals", "ConfService", Box::new(svc.clone()));
+                ctx.register_service("ConfModule", "ConfService", Box::new(svc));
                 let t = ctx.get_service::<ConfService>("ConfModule", "ConfService");
                 {
                     ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
@@ -876,7 +879,8 @@ mod modules {
                 ctx.modules.insert("LogModule".to_string(), Box::new(self));
                 ctx.imports.insert("LogModule".to_string(), Vec::from([]));
                 ctx.exports.insert("LogModule".to_string(), Vec::from(["LogService".to_string()]));
-                ctx.register_service("LogModule", "LogService", Box::new(std::sync::Arc::new(LogService::default())));
+                let svc = std::sync::Arc::new(LogService::default());
+                ctx.register_service("LogModule", "LogService", Box::new(svc));
                 let t = ctx.get_service::<LogService>("LogModule", "LogService");
                 {
                     ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
@@ -1104,7 +1108,8 @@ mod modules {
                     );
                     ctx.routers.push(router);
                 }
-                ctx.register_service("UserModule", "UserService", Box::new(std::sync::Arc::new(UserService::default())));
+                let svc = std::sync::Arc::new(UserService::default());
+                ctx.register_service("UserModule", "UserService", Box::new(svc));
                 let mut ctx = AppModule::default().init(ctx);
                 let t = ctx.get_service::<UserService>("UserModule", "UserService");
                 {

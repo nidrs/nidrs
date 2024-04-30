@@ -11,7 +11,7 @@ static MERGE_META: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(vec![]));
 static MATE_VALUE: Lazy<Mutex<HashMap<String, MetaValue>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Debug, Clone)]
-enum MetaValue {
+pub enum MetaValue {
     String(String),
     Bool(bool),
     Int(i64),

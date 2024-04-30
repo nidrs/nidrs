@@ -28,6 +28,8 @@ use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatTyp
 mod args_parse;
 use args_parse::*;
 
+use crate::meta_parse::MetaValue;
+
 mod import_path;
 mod meta_parse;
 
@@ -736,8 +738,22 @@ fn gen_service_register_tokens(module_name: String, services: Vec<TokenStream2>)
         .map(|service_tokens| {
             let service_name = service_tokens.to_string();
             let service_ident = service_tokens;
+            let is_global = meta_parse::get_meta_value("global").unwrap_or_else(|| MetaValue::Bool(false));
+            let register_global_tokens = if let MetaValue::Bool(is_global) = is_global {
+                if is_global {
+                    quote! {
+                        ctx.register_service("Globals", #service_name, Box::new(svc.clone()));
+                    }
+                } else {
+                    quote! {}
+                }
+            } else {
+                quote! {}
+            };
             quote! {
-                ctx.register_service(#module_name, #service_name, Box::new(std::sync::Arc::new(#service_ident::default())));
+                let svc = std::sync::Arc::new(#service_ident::default());
+                #register_global_tokens
+                ctx.register_service(#module_name, #service_name, Box::new(svc));
             }
         })
         .collect::<Vec<TokenStream2>>();

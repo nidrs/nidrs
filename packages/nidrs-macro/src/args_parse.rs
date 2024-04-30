@@ -5,7 +5,8 @@ use quote::{quote, ToTokens};
 use syn::{
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
-    Expr, FieldValue, Ident, ItemFn, ItemStruct, Member, Token,
+    spanned::Spanned,
+    Expr, FieldValue, Ident, ItemFn, ItemStruct, LitBool, Member, Token,
 };
 use syn_serde::json;
 
@@ -38,7 +39,9 @@ impl Parse for MetaArgs {
                     kv.insert(k, v);
                 }
             } else if let syn::Expr::Path(path) = item {
-                kv.insert(path.path.segments.first().unwrap().ident.to_string(), Box::new(Expr::Verbatim(quote! { true })));
+                let bool_true = syn::Lit::Bool(LitBool::new(true, path.span().clone()));
+                let bool_exp = syn::ExprLit { attrs: Vec::new(), lit: bool_true };
+                kv.insert(path.path.segments.first().unwrap().ident.to_string(), Box::new(syn::Expr::Lit(bool_exp)));
             } else {
                 panic!("Invalid argument");
             }
