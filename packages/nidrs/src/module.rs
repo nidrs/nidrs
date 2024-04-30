@@ -235,7 +235,7 @@ impl ModuleCtx {
 
         let svc_key = if self.services.contains_key(&svc_key) { svc_key } else { format!("{}::{}", GLOBALS_KEY, service_name) };
 
-        let svc = self.services.get(&svc_key).unwrap_or_else(|| panic!("[nidrs] not inject {}::{} {}", current_module_name, service_name, svc_key));
+        let svc = self.services.get(&svc_key).unwrap_or_else(|| panic!("[nidrs] {}::{} inject {} error", current_module_name, service_name, svc_key));
         let svc =
             svc.downcast_ref::<std::sync::Arc<R>>().unwrap_or_else(|| panic!("[nidrs] not downcast_ref {} {}", current_module_name, service_name));
 
