@@ -15,3 +15,4 @@ license = "MIT"
 nidrs = { path = "packages/nidrs", version = "0.0.7" }
 nidrs-extern = { path = "packages/nidrs-extern", version = "0.0.7" }
 nidrs-macro = { path = "packages/nidrs-macro", version = "0.0.7" }
+nidrs-diesel = { path = "packages/nidrs-diesel", version = "0.1.0" }
