@@ -32,6 +32,7 @@ use crate::meta_parse::MetaValue;
 
 mod import_path;
 mod meta_parse;
+mod utils;
 
 static CURRENT_CONTROLLER: Mutex<Option<ControllerMeta>> = Mutex::new(None);
 static ROUTES: Lazy<Mutex<HashMap<String, HashMap<String, RouteMeta>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<ControllerName, HashMap<RouteName, RouteMeta>>
@@ -126,7 +127,8 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let controller_register_tokens = gen_controller_register_tokens(module_name.clone(), args.controllers.clone());
     let service_register_tokens = gen_service_register_tokens(module_name.clone(), args.services.clone());
-    let interceptor_register_tokens = gen_interceptor_register_tokens(module_name.clone(), inters_to_vec_tokens());
+    let interceptor_register_tokens =
+        gen_interceptor_register_tokens(module_name.clone(), utils::merge_vec(args.interceptors.clone(), inters_to_vec_tokens()));
     let (import_names_tokens, imports_register_tokens) = gen_imports_register_tokens(module_name.clone(), args.imports.clone());
     let imports_register_names = args.imports.clone().iter().map(|import_tokens| import_tokens.to_string()).collect::<Vec<String>>();
     let exports_names = args.exports.clone().iter().map(|export_tokens| export_tokens.to_string()).collect::<Vec<String>>();
@@ -767,7 +769,7 @@ fn gen_service_register_tokens(module_name: String, services: Vec<TokenStream2>)
 }
 
 fn gen_interceptor_register_tokens(module_name: String, services: Vec<TokenStream2>) -> TokenStream2 {
-    // println!("// gen_interceptor_register_tokens {:?}", services);
+    // println!("// gen_interceptor_register_tokens {} {:?}", module_name, services);
     let interceptor_tokens = services
         .iter()
         .map(|interceptor_token| {
