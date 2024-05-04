@@ -7,6 +7,7 @@ pub type AppResult<T = ()> = Result<T, AppError>;
 pub enum AppError {
     #[error("Environment variable not found")]
     EnvironmentVariableNotFound(#[from] std::env::VarError),
+
     #[error(transparent)]
     IOError(#[from] std::io::Error),
 
@@ -17,12 +18,17 @@ pub enum AppError {
     MetaNotFoundError(String),
 
     #[error(transparent)]
+    TokioJoinError(#[from] tokio::task::JoinError),
+
+    #[error(transparent)]
     Exception(#[from] Exception),
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
-        axum::response::Response::builder().status(StatusCode::INTERNAL_SERVER_ERROR).body(format!("Error: {}", self)).unwrap().into_response()
+        let t = format!("Error: {:?}", self);
+        nidrs_macro::elog!("{}", t);
+        axum::response::Response::builder().status(StatusCode::INTERNAL_SERVER_ERROR).body(t).unwrap().into_response()
     }
 }
 

@@ -134,7 +134,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
         .iter()
         .map(|export_name| {
             quote! {
-                #export_name.to_string()
+                #export_name
             }
         })
         .collect::<Vec<TokenStream2>>();
@@ -142,11 +142,11 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
         Vec::from([#(#exports_names_tokens),*])
     });
 
-    let services_dep_inject_tokens = gen_dep_inject_tokens("get_service", module_name.clone(), args.services.clone());
+    let services_dep_inject_tokens: TokenStream2 = gen_dep_inject_tokens("get_service", module_name.clone(), args.services.clone());
     let controller_dep_inject_tokens = gen_dep_inject_tokens("get_controller", module_name.clone(), args.controllers.clone());
     let interceptor_dep_inject_tokens = gen_dep_inject_tokens("get_interceptor", module_name.clone(), args.interceptors.clone());
 
-    let trigger_on_module_init_tokens = gen_events_trigger_tokens(module_name.clone(), "on_module_init");
+    let trigger_on_module_init_tokens: TokenStream2 = gen_events_trigger_tokens(module_name.clone(), "on_module_init");
     let trigger_on_module_destroy_tokens = gen_events_trigger_tokens(module_name.clone(), "on_module_destroy");
 
     println!("// module {:?}", ident.to_string());
@@ -169,7 +169,8 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
                 nidrs_macro::log!("Registering module {}.", stringify!(#ident));
                 ctx.modules.insert(stringify!(#ident).to_string(), Box::new(self));
                 ctx.imports.insert(#module_name.to_string(), #import_names_tokens);
-                ctx.exports.insert(#module_name.to_string(), #exports_names_tokens);
+                // ctx.exports.insert(#module_name.to_string(), #exports_names_tokens);
+                ctx.append_exports(#module_name, #exports_names_tokens);
 
                 // {
                     #interceptor_register_tokens
@@ -801,6 +802,8 @@ fn gen_imports_register_tokens(module_name: String, imports: Vec<TokenStream2>) 
                         dyn_module_services.drain().for_each(|(k, v)| {
                             ctx.register_service(#dyn_module_name, k, v);
                         });
+                        let mut dyn_module_exports = dyn_module.exports;
+                        ctx.append_exports(#dyn_module_name, dyn_module_exports);
                         let mut ctx = #module_ident::default().init(ctx);
                     }
                 } else {

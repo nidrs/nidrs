@@ -14,6 +14,7 @@ pub trait Module {
 
 pub struct DynamicModule {
     pub services: HashMap<&'static str, Box<dyn Any>>,
+    pub exports: Vec<&'static str>,
 }
 
 impl Default for DynamicModule {
@@ -24,17 +25,24 @@ impl Default for DynamicModule {
 
 impl DynamicModule {
     pub fn new() -> Self {
-        DynamicModule { services: HashMap::new() }
+        DynamicModule { services: HashMap::new(), exports: Vec::new() }
     }
 
-    pub fn service(mut self, service: (&'static str, Box<dyn Any>)) -> Self {
+    pub fn provider(mut self, service: (&'static str, Box<dyn Any>)) -> Self {
         self.services.insert(service.0, service.1);
         self
     }
 
-    pub fn provider<T: Service + 'static>(mut self, service: T) -> Self {
+    pub fn service<T: Service + 'static>(mut self, service: T) -> Self {
         let (name, service) = provider(service);
         self.services.insert(name, service);
+        self
+    }
+
+    pub fn export<T: Service + 'static>(mut self, service: T) -> Self {
+        let (name, service) = provider(service);
+        self.services.insert(name, service);
+        self.exports.push(name);
         self
     }
 }
@@ -77,10 +85,10 @@ impl<T: Module> NidrsFactory<T> {
         let router = axum::Router::new().route("/", axum::routing::get(|| async move { "Hello, Nidrs!" }));
         let module_ctx = ModuleCtx::new(self.defaults);
         let module_ctx = self.module.init(module_ctx);
-        // println!("ModuleCtx Imports: {:?}", &module_ctx.imports);
-        // println!("ModuleCtx Exports: {:?}", &module_ctx.exports);
-        // println!("ModuleCtx Deps: {:?}", &module_ctx.deps);
-        // println!("ModuleCtx Services: {:?}", &module_ctx.services.keys());
+        println!("ModuleCtx Imports: {:?}", &module_ctx.imports);
+        println!("ModuleCtx Exports: {:?}", &module_ctx.exports);
+        println!("ModuleCtx Deps: {:?}", &module_ctx.deps);
+        println!("ModuleCtx Services: {:?}", &module_ctx.services.keys());
 
         let routers = module_ctx.routers.clone();
         let mut sub_router = axum::Router::new();
@@ -255,11 +263,30 @@ impl ModuleCtx {
         }
         false
     }
+
+    pub fn append_exports(&mut self, current_module_name: &str, service_names: Vec<&str>) -> bool {
+        let mut success = true;
+        for service_name in service_names {
+            let svc_key = current_module_name.to_string() + "::" + service_name;
+            if !self.exports.contains_key(current_module_name) {
+                self.exports.insert(current_module_name.to_string(), vec![service_name.to_string()]);
+            } else {
+                let exports = self.exports.get_mut(current_module_name).unwrap();
+                if !exports.contains(&service_name.to_string()) {
+                    exports.push(service_name.to_string());
+                } else {
+                    nidrs_macro::elog!("Service {} already exported.", svc_key);
+                    success = false;
+                }
+            }
+        }
+        success
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use std::{sync::Arc, vec};
 
     #[test]
     fn test_nidrs_factory() {
@@ -298,6 +325,10 @@ mod tests {
             } else {
                 println!("Not a ConcreteService instance.");
             }
+
+            let mut t = vec!["str", "st2"];
+
+            t.drain(..).for_each(|x| println!("{}", x));
         }
         main();
     }
