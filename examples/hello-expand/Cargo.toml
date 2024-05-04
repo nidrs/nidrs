@@ -20,6 +20,10 @@ nidrs = { workspace = true }
 nidrs-macro = { workspace = true }
 nidrs-extern = { workspace = true }
 
+diesel = { version = "2.1.6", features = ["sqlite", "chrono", "r2d2"] }
+nidrs-diesel = { workspace = true }
+chrono = { version = "0.4.38", features = ["serde"] }
+dotenvy = "0.15.7"
 
 [toolchain]
 channel = "nightly"

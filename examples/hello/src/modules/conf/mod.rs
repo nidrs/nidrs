@@ -17,6 +17,6 @@ pub struct ConfModule;
 
 impl ConfModule {
     pub fn for_root(options: ConfOptions) -> DynamicModule {
-        DynamicModule::new().provider(options)
+        DynamicModule::new().service(options)
     }
 }
