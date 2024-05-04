@@ -149,7 +149,9 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     let trigger_on_module_init_tokens: TokenStream2 = gen_events_trigger_tokens(module_name.clone(), "on_module_init");
     let trigger_on_module_destroy_tokens = gen_events_trigger_tokens(module_name.clone(), "on_module_destroy");
 
-    println!("// module {:?}", ident.to_string());
+    let module_meta_tokens = meta_parse::build_tokens();
+    let is_global_tokens: TokenStream2 = meta_parse::get_meta_value("global").unwrap_or_else(|| MetaValue::Bool(false)).into();
+    // println!("// module {:?}", ident.to_string());
 
     CURRENT_CONTROLLER.lock().unwrap().take();
     ROUTES.lock().unwrap().clear();
@@ -170,7 +172,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
                 ctx.modules.insert(stringify!(#ident).to_string(), Box::new(self));
                 ctx.imports.insert(#module_name.to_string(), #import_names_tokens);
                 // ctx.exports.insert(#module_name.to_string(), #exports_names_tokens);
-                ctx.append_exports(#module_name, #exports_names_tokens);
+                ctx.append_exports(#module_name, #exports_names_tokens, #is_global_tokens);
 
                 // {
                     #interceptor_register_tokens
@@ -206,6 +208,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
         impl nidrs::ImplMeta for #ident{
             fn __meta() -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
+                #module_meta_tokens
                 meta.set("module_name".to_string(), stringify!(#ident));
                 meta
             }
@@ -739,21 +742,20 @@ fn gen_service_register_tokens(module_name: String, services: Vec<TokenStream2>)
         .map(|service_tokens| {
             let service_name = service_tokens.to_string();
             let service_ident = service_tokens;
-            let is_global = meta_parse::get_meta_value("global").unwrap_or_else(|| MetaValue::Bool(false));
-            let register_global_tokens = if let MetaValue::Bool(is_global) = is_global {
-                if is_global {
-                    quote! {
-                        ctx.register_service("Globals", #service_name, Box::new(svc.clone()));
-                    }
-                } else {
-                    quote! {}
-                }
-            } else {
-                quote! {}
-            };
+            // let register_global_tokens = if let MetaValue::Bool(is_global) = is_global {
+            //     if is_global {
+            //         quote! {
+            //             ctx.register_service("Globals", #service_name, Box::new(svc.clone()));
+            //         }
+            //     } else {
+            //         quote! {}
+            //     }
+            // } else {
+            //     quote! {}
+            // };
             quote! {
                 let svc = std::sync::Arc::new(#service_ident::default());
-                #register_global_tokens
+                // #register_global_tokens
                 ctx.register_service(#module_name, #service_name, Box::new(svc));
             }
         })
@@ -785,6 +787,8 @@ fn gen_interceptor_register_tokens(module_name: String, services: Vec<TokenStrea
 
 fn gen_imports_register_tokens(module_name: String, imports: Vec<TokenStream2>) -> (TokenStream2, TokenStream2) {
     let mut import_names = vec![];
+    let is_global = meta_parse::get_meta_value("global").unwrap_or_else(|| MetaValue::Bool(false));
+    let is_global_tokens: TokenStream2 = is_global.into();
     let imports = imports
         .iter()
         .map(|import_tokens| {
@@ -803,7 +807,7 @@ fn gen_imports_register_tokens(module_name: String, imports: Vec<TokenStream2>) 
                             ctx.register_service(#dyn_module_name, k, v);
                         });
                         let mut dyn_module_exports = dyn_module.exports;
-                        ctx.append_exports(#dyn_module_name, dyn_module_exports);
+                        ctx.append_exports(#dyn_module_name, dyn_module_exports, *nidrs::get_meta_by_type::<#module_ident>().get("global").unwrap_or(&false));
                         let mut ctx = #module_ident::default().init(ctx);
                     }
                 } else {

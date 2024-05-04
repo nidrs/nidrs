@@ -85,10 +85,11 @@ impl<T: Module> NidrsFactory<T> {
         let router = axum::Router::new().route("/", axum::routing::get(|| async move { "Hello, Nidrs!" }));
         let module_ctx = ModuleCtx::new(self.defaults);
         let module_ctx = self.module.init(module_ctx);
-        println!("ModuleCtx Imports: {:?}", &module_ctx.imports);
-        println!("ModuleCtx Exports: {:?}", &module_ctx.exports);
-        println!("ModuleCtx Deps: {:?}", &module_ctx.deps);
-        println!("ModuleCtx Services: {:?}", &module_ctx.services.keys());
+        // println!("ModuleCtx Imports: {:?}", &module_ctx.imports);
+        // println!("ModuleCtx Exports: {:?}", &module_ctx.exports);
+        // println!("ModuleCtx Deps: {:?}", &module_ctx.deps);
+        // println!("ModuleCtx Services: {:?}", &module_ctx.services.keys());
+        // println!("ModuleCtx Globals: {:?}", &module_ctx.globals);
 
         let routers = module_ctx.routers.clone();
         let mut sub_router = axum::Router::new();
@@ -146,6 +147,7 @@ pub struct ModuleCtx {
     pub imports: HashMap<String, Vec<String>>,
     pub exports: HashMap<String, Vec<String>>,
     pub deps: HashMap<String, Vec<String>>,
+    pub globals: HashMap<String, String>,
 }
 
 impl ModuleCtx {
@@ -160,6 +162,7 @@ impl ModuleCtx {
             imports: HashMap::new(),      // {"UserModule": ["AppModule"]}
             exports: HashMap::new(),      // {"UserModule": ["UserService"]}
             deps: HashMap::new(),         // {"UserService": ["UserModule"]}
+            globals: HashMap::new(),      // {"UserService": "UserModule::UserService"}
         }
     }
 
@@ -239,9 +242,19 @@ impl ModuleCtx {
             nidrs_macro::elog!("[{}] {} is not exported by {}", current_module_name, service_name, first_mod);
             // panic!("exit");
         }
+
         let svc_key = format!("{}::{}", first_mod, service_name);
 
-        let svc_key = if self.services.contains_key(&svc_key) { svc_key } else { format!("{}::{}", GLOBALS_KEY, service_name) };
+        let svc_key = if self.services.contains_key(&svc_key) {
+            svc_key
+        } else {
+            let mod_name = self
+                .globals
+                .get(service_name)
+                .unwrap_or_else(|| panic!("[nidrs] {}::{} inject {} error", current_module_name, service_name, svc_key))
+                .to_string();
+            format!("{}::{}", mod_name, service_name)
+        };
 
         let svc = self.services.get(&svc_key).unwrap_or_else(|| panic!("[nidrs] {}::{} inject {} error", current_module_name, service_name, svc_key));
         let svc =
@@ -256,6 +269,7 @@ impl ModuleCtx {
             self.services.insert(svc_key.clone(), service);
             self.deps.entry(service_name.to_string()).or_default().push(current_module_name.to_string());
             // self.exports.entry(current_module_name.to_string()).or_default().push(service_name.to_string());
+
             nidrs_macro::log!("Registering service {}.", svc_key);
             return true;
         } else {
@@ -264,7 +278,7 @@ impl ModuleCtx {
         false
     }
 
-    pub fn append_exports(&mut self, current_module_name: &str, service_names: Vec<&str>) -> bool {
+    pub fn append_exports(&mut self, current_module_name: &str, service_names: Vec<&str>, is_global: bool) -> bool {
         let mut success = true;
         for service_name in service_names {
             let svc_key = current_module_name.to_string() + "::" + service_name;
@@ -278,6 +292,9 @@ impl ModuleCtx {
                     nidrs_macro::elog!("Service {} already exported.", svc_key);
                     success = false;
                 }
+            }
+            if is_global {
+                self.globals.insert(service_name.to_string(), current_module_name.to_string());
             }
         }
         success

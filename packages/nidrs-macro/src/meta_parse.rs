@@ -20,6 +20,37 @@ pub enum MetaValue {
     Object(HashMap<String, MetaValue>),
 }
 
+impl Into<TokenStream2> for MetaValue {
+    fn into(self) -> TokenStream2 {
+        match self {
+            MetaValue::String(s) => {
+                let s = s.as_str();
+                quote! {
+                    #s.to_string()
+                }
+            }
+            MetaValue::Bool(b) => {
+                quote! {
+                    #b
+                }
+            }
+            MetaValue::Int(i) => {
+                quote! {
+                    #i
+                }
+            }
+            MetaValue::Float(f) => {
+                quote! {
+                    #f
+                }
+            }
+            _ => {
+                quote! {}
+            }
+        }
+    }
+}
+
 pub fn clear() {
     MERGE_META.lock().unwrap().clear();
     MATE_VALUE.lock().unwrap().clear();

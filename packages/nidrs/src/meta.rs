@@ -156,6 +156,10 @@ pub fn get_meta<T: ImplMeta>(_t: Arc<T>) -> Meta {
     T::__meta()
 }
 
+pub fn get_meta_by_type<T: ImplMeta>() -> Meta {
+    T::__meta()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
