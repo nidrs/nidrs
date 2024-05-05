@@ -10,7 +10,6 @@ use crate::{interceptors::json_interceptor::JsonInterceptor, modules::user::User
 use controller::AppController;
 use service::AppService;
 
-use nidrs_diesel::ConnectionDriver;
 use nidrs_diesel::DieselModule;
 use nidrs_diesel::DieselOptions;
 use nidrs_diesel::SqlitePoolManager;
@@ -19,7 +18,7 @@ use nidrs_diesel::SqlitePoolManager;
 #[module({
     imports: [
         DieselModule::for_root(DieselOptions{
-            driver: ConnectionDriver::Sqlite(SqlitePoolManager::new("file:db.sqlite3".to_string())),
+            driver: SqlitePoolManager::new("file:db.sqlite3"),
         }),
         UserModule,
     ],

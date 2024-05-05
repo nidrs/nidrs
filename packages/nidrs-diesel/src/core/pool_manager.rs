@@ -11,6 +11,8 @@ use nidrs_extern::{
     tokio::task,
 };
 
+use crate::ConnectionDriver;
+
 #[injectable()]
 #[derive(Default)]
 pub struct SqlitePoolManager {
@@ -18,7 +20,7 @@ pub struct SqlitePoolManager {
 }
 
 impl SqlitePoolManager {
-    pub fn new(url: String) -> SqlitePoolManager {
+    pub fn new<T: Into<String>>(url: T) -> SqlitePoolManager {
         let manager: ConnectionManager<SqliteConnection> = ConnectionManager::<SqliteConnection>::new(url);
         // Refer to the `r2d2` documentation for more methods to use
         // when building a connection pool
@@ -33,6 +35,12 @@ impl PoolManager for SqlitePoolManager {
     type Connection = SqliteConnection;
     fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<SqliteConnection>>>> {
         &self.pool
+    }
+}
+
+impl From<SqlitePoolManager> for ConnectionDriver {
+    fn from(val: SqlitePoolManager) -> Self {
+        ConnectionDriver::Sqlite(val)
     }
 }
 

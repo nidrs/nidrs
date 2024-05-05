@@ -20,7 +20,7 @@ pub struct DieselModule;
 impl DieselModule {
     pub fn for_root(opts: DieselOptions) -> DynamicModule {
         let d = DynamicModule::new();
-        if let options::ConnectionDriver::Sqlite(pool) = opts.driver {
+        if let options::ConnectionDriver::Sqlite(pool) = opts.driver.into() {
             return d.export(pool);
         }
         d
