@@ -8,13 +8,12 @@ use clap::Parser;
 
 #[derive(Debug, clap::Parser)]
 struct Cli {
-    #[command(flatten)]
-    manifest: clap_cargo::Manifest,
-    #[command(flatten)]
-    workspace: clap_cargo::Workspace,
-    #[command(flatten)]
-    features: clap_cargo::Features,
-
+    // #[command(flatten)]
+    // manifest: clap_cargo::Manifest,
+    // #[command(flatten)]
+    // workspace: clap_cargo::Workspace,
+    // #[command(flatten)]
+    // features: clap_cargo::Features,
     /// Dot path to the manifest key, eg: package.name
     dot_path: String,
 
