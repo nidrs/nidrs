@@ -9,6 +9,8 @@ pub use options::DieselOptions;
 pub use pool_manager::PoolManager;
 pub use service::DieselService;
 
+use crate::ConnectionDriver;
+
 #[meta(global)]
 #[module({
   services: [DieselService],
@@ -18,12 +20,17 @@ pub use service::DieselService;
 pub struct DieselModule;
 
 impl DieselModule {
-    pub fn for_root(opts: DieselOptions) -> DynamicModule {
+    pub fn for_root<D: Into<ConnectionDriver>>(opts: DieselOptions<D>) -> DynamicModule {
         let d = DynamicModule::new();
-        if let options::ConnectionDriver::Sqlite(pool) = opts.driver.into() {
-            return d.export(pool);
+        match opts.driver.into() {
+            #[cfg(feature = "sqlite")]
+            options::ConnectionDriver::Sqlite(pool) => d.export(pool),
+            #[cfg(feature = "mysql")]
+            options::ConnectionDriver::Mysql(pool) => d.export(pool),
+            #[cfg(feature = "postgres")]
+            options::ConnectionDriver::Postgres(pool) => d.export(pool),
+            _ => d,
         }
-        d
     }
 
     pub fn register() -> DieselModule {

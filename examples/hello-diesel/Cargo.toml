@@ -20,7 +20,7 @@ nidrs = { workspace = true }
 nidrs-macro = { workspace = true }
 nidrs-extern = { workspace = true }
 
-diesel = { version = "2.1.6", features = ["sqlite", "chrono", "r2d2"] }
-nidrs-diesel = { workspace = true }
+nidrs-diesel = { workspace = true, features = ["sqlite"] }
+diesel = { version = "2.1.6", default-features = false, features = ["sqlite", "chrono", "r2d2"] }
 chrono = { version = "0.4.38", features = ["serde"] }
 dotenvy = "0.15.7"

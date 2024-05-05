@@ -8,4 +8,7 @@ pub use core::options::DieselOptions;
 pub use core::pool_manager::PoolManager;
 pub use core::service::DieselService;
 
-pub use core::pool_manager::SqlitePoolManager;
+#[cfg(feature = "mysql")]
+pub use core::pool_manager::mysql::MysqlPoolManager;
+#[cfg(feature = "sqlite")]
+pub use core::pool_manager::sqlite::SqlitePoolManager;

@@ -2,45 +2,155 @@ use std::{marker::Send, sync::Mutex};
 
 use diesel::{
     r2d2::{ConnectionManager, Pool},
-    QueryResult, SqliteConnection,
+    QueryResult,
 };
-use nidrs::{injectable, AppResult};
+use nidrs::AppResult;
 use nidrs_extern::{
     anyhow,
     axum::{async_trait, http},
     tokio::task,
 };
 
-use crate::ConnectionDriver;
+#[cfg(feature = "sqlite")]
+pub mod sqlite {
+    use crate::ConnectionDriver;
 
-#[injectable()]
-#[derive(Default)]
-pub struct SqlitePoolManager {
-    pub pool: Option<Mutex<Pool<ConnectionManager<SqliteConnection>>>>,
-}
+    use super::PoolManager;
 
-impl SqlitePoolManager {
-    pub fn new<T: Into<String>>(url: T) -> SqlitePoolManager {
-        let manager: ConnectionManager<SqliteConnection> = ConnectionManager::<SqliteConnection>::new(url);
-        // Refer to the `r2d2` documentation for more methods to use
-        // when building a connection pool
-        let pool: Pool<ConnectionManager<SqliteConnection>> =
-            Pool::builder().test_on_check_out(true).build(manager).expect("Could not build connection pool");
+    use diesel::SqliteConnection;
 
-        SqlitePoolManager { pool: Some(Mutex::new(pool)) }
+    use diesel::r2d2::ConnectionManager;
+
+    use diesel::r2d2::Pool;
+    use nidrs::injectable;
+
+    use std::sync::Mutex;
+
+    type TConnection = SqliteConnection;
+
+    #[injectable()]
+    #[derive(Default)]
+    pub struct SqlitePoolManager {
+        pub pool: Option<Mutex<Pool<ConnectionManager<TConnection>>>>,
+    }
+
+    impl SqlitePoolManager {
+        pub fn new<T: Into<String>>(url: T) -> SqlitePoolManager {
+            let manager: ConnectionManager<TConnection> = ConnectionManager::<TConnection>::new(url);
+            // Refer to the `r2d2` documentation for more methods to use
+            // when building a connection pool
+            let pool: Pool<ConnectionManager<TConnection>> =
+                Pool::builder().test_on_check_out(true).build(manager).expect("Could not build connection pool");
+
+            SqlitePoolManager { pool: Some(Mutex::new(pool)) }
+        }
+    }
+
+    impl PoolManager for SqlitePoolManager {
+        type Connection = TConnection;
+        fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<TConnection>>>> {
+            &self.pool
+        }
+    }
+
+    impl From<SqlitePoolManager> for ConnectionDriver {
+        fn from(val: SqlitePoolManager) -> Self {
+            ConnectionDriver::Sqlite(val)
+        }
     }
 }
 
-impl PoolManager for SqlitePoolManager {
-    type Connection = SqliteConnection;
-    fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<SqliteConnection>>>> {
-        &self.pool
+#[cfg(feature = "mysql")]
+pub mod mysql {
+    use crate::ConnectionDriver;
+
+    use super::super::PoolManager;
+
+    use diesel::MysqlConnection;
+
+    use diesel::r2d2::ConnectionManager;
+
+    use diesel::r2d2::Pool;
+    use nidrs::injectable;
+
+    use std::sync::Mutex;
+
+    type TConnection = MysqlConnection;
+
+    #[injectable()]
+    #[derive(Default)]
+    pub struct MysqlPoolManager {
+        pub pool: Option<Mutex<Pool<ConnectionManager<TConnection>>>>,
+    }
+
+    impl MysqlPoolManager {
+        pub fn new<T: Into<String>>(url: T) -> MysqlPoolManager {
+            let manager: ConnectionManager<TConnection> = ConnectionManager::<TConnection>::new(url);
+            let pool: Pool<ConnectionManager<TConnection>> =
+                Pool::builder().test_on_check_out(true).build(manager).expect("Could not build connection pool");
+
+            MysqlPoolManager { pool: Some(Mutex::new(pool)) }
+        }
+    }
+
+    impl PoolManager for MysqlPoolManager {
+        type Connection = TConnection;
+        fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<TConnection>>>> {
+            &self.pool
+        }
+    }
+
+    impl From<MysqlPoolManager> for ConnectionDriver {
+        fn from(val: MysqlPoolManager) -> Self {
+            ConnectionDriver::Mysql(val)
+        }
     }
 }
 
-impl From<SqlitePoolManager> for ConnectionDriver {
-    fn from(val: SqlitePoolManager) -> Self {
-        ConnectionDriver::Sqlite(val)
+#[cfg(feature = "postgres")]
+pub mod postgres {
+    use crate::ConnectionDriver;
+
+    use super::super::PoolManager;
+
+    use diesel::PgConnection;
+
+    use diesel::r2d2::ConnectionManager;
+
+    use diesel::r2d2::Pool;
+    use nidrs::injectable;
+
+    use std::sync::Mutex;
+
+    type TConnection = PgConnection;
+
+    #[injectable()]
+    #[derive(Default)]
+    pub struct PostgresPoolManager {
+        pub pool: Option<Mutex<Pool<ConnectionManager<TConnection>>>>,
+    }
+
+    impl PostgresPoolManager {
+        pub fn new<T: Into<String>>(url: T) -> PostgresPoolManager {
+            let manager: ConnectionManager<TConnection> = ConnectionManager::<TConnection>::new(url);
+            let pool: Pool<ConnectionManager<TConnection>> =
+                Pool::builder().test_on_check_out(true).build(manager).expect("Could not build connection pool");
+
+            PostgresPoolManager { pool: Some(Mutex::new(pool)) }
+        }
+    }
+
+    impl PoolManager for PostgresPoolManager {
+        type Connection = TConnection;
+        fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<TConnection>>>> {
+            &self.pool
+        }
+    }
+
+    impl From<PostgresPoolManager> for ConnectionDriver {
+        fn from(val: PostgresPoolManager) -> Self {
+            ConnectionDriver::Postgres(val)
+        }
     }
 }
 
