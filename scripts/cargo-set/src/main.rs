@@ -14,6 +14,18 @@ struct Cli {
     // workspace: clap_cargo::Workspace,
     // #[command(flatten)]
     // features: clap_cargo::Features,
+    #[clap(subcommand)]
+    subcmd: SubCommand,
+}
+
+#[derive(clap::Parser, Debug)]
+enum SubCommand {
+    #[clap(name = "set", about = "set value to Cargo.toml key")]
+    Set(SetCmd),
+}
+
+#[derive(clap::Parser, Debug)]
+struct SetCmd {
     /// Dot path to the manifest key, eg: package.name
     dot_path: String,
 
@@ -23,62 +35,66 @@ struct Cli {
 
 fn main() {
     let cwd = std::env::current_dir().unwrap();
+
+    // println!("Args: {:?}", std::env::args().collect::<Vec<_>>());
     let opts: Cli = Cli::parse();
 
-    let cargo_toml = cwd.join("Cargo.toml");
+    if let SubCommand::Set(opts) = opts.subcmd {
+        let cargo_toml = cwd.join("Cargo.toml");
 
-    let cargo_toml_path = cargo_toml.clone();
+        let cargo_toml_path = cargo_toml.clone();
 
-    let cargo_toml = fs::read_to_string(cargo_toml).expect("Error reading Cargo.toml");
+        let cargo_toml = fs::read_to_string(cargo_toml).expect("Error reading Cargo.toml");
 
-    let mut doc = cargo_toml.parse::<DocumentMut>().expect("invalid doc");
+        let mut doc = cargo_toml.parse::<DocumentMut>().expect("invalid doc");
 
-    let mut key = opts.dot_path.split('.').collect::<Vec<_>>();
-    // let mut key = vec!["workspace", "members", "0"]; //opts.dot_path.split('.').collect::<Vec<_>>();
+        let mut key = opts.dot_path.split('.').collect::<Vec<_>>();
+        // let mut key = vec!["workspace", "members", "0"]; //opts.dot_path.split('.').collect::<Vec<_>>();
 
-    let table = doc.as_table_mut();
+        let table = doc.as_table_mut();
 
-    // println!("{:?}", table);
+        // println!("{:?}", table);
 
-    let mut table_ref = table.get_mut(key.remove(0));
+        let mut table_ref = table.get_mut(key.remove(0));
 
-    // read workspace.members.1
+        // read workspace.members.1
 
-    for k in key.iter() {
-        if let Some(t) = table_ref {
-            let kt = k.parse::<usize>();
-            if let Ok(kt) = kt {
-                table_ref = t.get_mut(kt)
+        for k in key.iter() {
+            if let Some(t) = table_ref {
+                let kt = k.parse::<usize>();
+                if let Ok(kt) = kt {
+                    table_ref = t.get_mut(kt)
+                } else {
+                    table_ref = t.get_mut(k)
+                }
             } else {
-                table_ref = t.get_mut(k)
+                panic!("not found");
+            }
+        }
+
+        let set_value = opts.value;
+
+        if let Some(t) = table_ref {
+            // update value
+            // int\float\bool\string
+
+            if let Ok(v) = set_value.parse::<f64>() {
+                *t = value(v);
+            } else if let Ok(v) = set_value.parse::<f64>() {
+                *t = value(v);
+            } else if let Ok(v) = set_value.parse::<bool>() {
+                *t = value(v);
+            } else {
+                *t = value(set_value.trim_matches('"'));
             }
         } else {
             panic!("not found");
         }
+
+        // println!("{:?}", table_ref);
+
+        fs::write(cargo_toml_path.clone(), doc.to_string()).expect("Error writing to file");
+
+        println!("set {:?} value {:?} success. ", cargo_toml_path.to_str().unwrap(), opts.dot_path);
     }
-
-    let set_value = opts.value;
-
-    if let Some(t) = table_ref {
-        // update value
-        // int\float\bool\string
-
-        if let Ok(v) = set_value.parse::<f64>() {
-            *t = value(v);
-        } else if let Ok(v) = set_value.parse::<f64>() {
-            *t = value(v);
-        } else if let Ok(v) = set_value.parse::<bool>() {
-            *t = value(v);
-        } else {
-            *t = value(set_value.trim_matches('"'));
-        }
-    } else {
-        panic!("not found");
-    }
-
-    // println!("{:?}", table_ref);
-
-    fs::write(cargo_toml_path.clone(), doc.to_string()).expect("Error writing to file");
-
-    println!("set {:?} value {:?} success. ", cargo_toml_path.to_str().unwrap(), opts.dot_path);
 }

@@ -12,7 +12,7 @@ cargo install cargo-set
 
 ## Use
 
-./Cargo.toml
+./Cargo.toml:
 
 ```toml
 [package]
@@ -21,13 +21,15 @@ version = "0.1.0"
 publish = true
 ```
 
+Run:
+
 ```shell
 cargo set package.name "test" 
 cargo set package.version "\"0.2.0\"" 
 cargo set package.publish false
 ```
 
-> !: Numeric strings need to be wrapped in \"0.2.0\".
+> !: Numeric strings need to be wrapped in `\"0.2.0\"`.
 > Currently, only setting Int, Float, Bool, and String is supported.
 
 Update ./Cargo.toml:
