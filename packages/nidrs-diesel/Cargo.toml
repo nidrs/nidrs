@@ -1,6 +1,16 @@
 [package]
 name = "nidrs-diesel"
 version = "0.0.1"
+authors = ["WumaCoder <wumacoder@gmail.com>"]
+description = "Nidrs & Diesel integration"
+keywords = ["nidrs", "orm", "diesel", "web", "database"]
+categories = [
+    "network-programming",
+    "asynchronous",
+    "web-programming::http-server",
+    "web-programming::websocket"
+]
+publish = true
 edition.workspace = true
 homepage.workspace = true
 repository.workspace = true
