@@ -9,5 +9,6 @@
   ],
   "files.associations": {
     "cog.toml": "plaintext",
-  }
+  },
+  "commentTranslate.source": "Kaiqun.tencent-cloud-translate-tencentCloud"
 }
