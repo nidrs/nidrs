@@ -60,4 +60,5 @@ authors = [
 [packages]
 nidrs-extern = { path = "packages/nidrs-extern" }
 nidrs-macro = { path = "packages/nidrs-macro" }
+nidrs-diesel = { path = "packages/nidrs-diesel" }
 nidrs = { path = "packages/nidrs" }
