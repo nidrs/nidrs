@@ -7,7 +7,9 @@ branch_whitelist = ["main", "release/**"]
 skip_ci = "[skip ci]"
 skip_untracked = false
 pre_bump_hooks = []
-post_bump_hooks = []
+post_bump_hooks = [
+    "git add Cargo.lock && git commit -m 'chore: bump to {{version}}'",
+]
 # pre_package_bump_hooks = []
 post_package_bump_hooks = []
 tag_prefix = "v"
@@ -15,7 +17,8 @@ tag_prefix = "v"
 monorepo_version_separator = "-"
 pre_package_bump_hooks = [
     "echo 'upgrading {{package}}' to {{version}}",
-    "cargo set-version {{version}}"
+    "cargo set-version {{version}}",
+    "cd ../../ && cargo set  workspace.dependencies.{{package}}.version {{version}}",
 ]
 
 [git_hooks]
