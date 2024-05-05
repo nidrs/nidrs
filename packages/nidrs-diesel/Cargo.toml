@@ -1,6 +1,6 @@
 [package]
 name = "nidrs-diesel"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
 description = "Nidrs & Diesel integration"
 keywords = ["nidrs", "orm", "diesel", "web", "database"]

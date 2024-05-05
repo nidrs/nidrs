@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-diesel-v0.0.2 - 2024-05-05
+#### Miscellaneous Chores
+- Update nidrs-diesel package metadata - (8c6e05e) - WumaCoder
+
+- - -
+
 ## nidrs-diesel-v0.0.1 - 2024-05-05
 #### Features
 - 初步支持 mysql、pg - (eb94c78) - WumaCoder
