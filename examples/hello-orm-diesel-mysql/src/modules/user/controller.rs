@@ -1,0 +1,41 @@
+use std::collections::HashMap;
+
+use axum::{
+    extract::{Path, Query},
+    Json,
+};
+use nidrs::{post, AppResult, Inject};
+use nidrs_macro::{controller, get};
+
+use crate::models::entities::user::User;
+
+use super::{dto::CreateUserDto, service::UserService};
+
+#[controller("/user")]
+#[derive(Default)]
+pub struct UserController {
+    user_service: Inject<UserService>,
+}
+
+impl UserController {
+    #[get("/")]
+    pub async fn get_user_all(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<Vec<User>> {
+        println!("Query {:?}", q);
+
+        self.user_service.all().await
+    }
+
+    #[get("/:id")]
+    pub async fn get_user_by_id(&self, Path(user_id): Path<u32>, Query(q): Query<HashMap<String, String>>) -> AppResult<User> {
+        println!("Query {:?}", q);
+
+        self.user_service.find_by_id(user_id).await
+    }
+
+    #[post("/")]
+    pub async fn create_user(&self, Json(j): Json<CreateUserDto>) -> AppResult<usize> {
+        println!("Query {:?}", j);
+
+        self.user_service.create(j).await
+    }
+}
