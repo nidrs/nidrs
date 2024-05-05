@@ -2,7 +2,7 @@ use crate::models::schema::users;
 use chrono::NaiveDateTime;
 use diesel::{connection::LoadConnection, prelude::*};
 use nidrs::{injectable, AppResult, Inject};
-use nidrs_diesel::{PoolManager, MysqlPoolManager};
+use nidrs_diesel::{MysqlPoolManager, PoolManager};
 // use nidrs_diesel::{PoolManager, SqlitePoolManager};
 use serde::Serialize;
 
