@@ -1,6 +1,6 @@
 [package]
 name = "cargo-set"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
 description = "a Cargo.toml file editor cli tool"
 keywords = [
