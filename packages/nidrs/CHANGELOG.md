@@ -2,6 +2,20 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-v0.0.8 - 2024-05-05
+#### Bug Fixes
+- 优化框架细节 - (60744b5) - WumaCoder
+- 完善错误打印提示 - (eb302b3) - WumaCoder
+- add global metadata to conf module - (b28314a) - WumaCoder
+#### Miscellaneous Chores
+- **(version)** nidrs-v0.0.7 - (d19d685) - *WumaCoder*
+- update toml - (7cbe44e) - WumaCoder
+#### Refactoring
+- Update DieselOptions struct to use generic type for driver - (b2dbc64) - WumaCoder
+- 优化 global service 获取逻辑 - (d36c717) - WumaCoder
+
+- - -
+
 ## nidrs-v0.0.7 - 2024-04-28
 #### Bug Fixes
 - update version - (c058256) - WumaCoder
