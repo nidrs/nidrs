@@ -4,6 +4,8 @@ This is a wrapper module for the Diesel ORM framework used in Nidrs to make it e
 
 ## Install
 
+[Example](https://github.com/nidrs/nidrs/blob/80ba1fcc43d73473afa104e8dac132b2fdcfe1df/examples/hello-orm-diesel-mysql)
+
 ```toml
 nidrs-diesel = { version = "*", features = ["sqlite"] }
 diesel = { version = "2.1.6", default-features = false, features = ["sqlite", "chrono", "r2d2"] }
