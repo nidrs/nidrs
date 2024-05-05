@@ -33,6 +33,7 @@ cargo set package.publish false
 Update ./Cargo.toml:
 
 ```toml
+[package]
 name = "test"
 version = "0.2.0"
 publish = false
