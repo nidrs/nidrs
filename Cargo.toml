@@ -2,6 +2,7 @@
 members = [
   "packages/*",
   "examples/*",
+  "scripts/*",
 ]
 resolver = "2"
 

@@ -1,0 +1,31 @@
+[package]
+name = "cargo-set"
+version = "0.1.0"
+authors = ["WumaCoder <wumacoder@gmail.com>"]
+description = "a Cargo.toml file editor cli tool"
+keywords = [
+    "cargo",
+    "toml",
+    "cli",
+    "tool",
+    "editor",
+]
+categories = [
+    "development-tools",
+    "development-tools::cargo-plugins",
+]
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+clap = { version = "4.5.4", features = ["derive", "env", "cargo"] }
+clap-cargo = "0.14.0"
+thiserror = "1.0.32"
+toml = "0.8.12"
+toml_edit = "0.22.12"
+
+[dev_dependencies]
+assert_cmd = "2.0.4"
+assert_fs = "1.0.7"
