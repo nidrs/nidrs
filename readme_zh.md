@@ -62,7 +62,7 @@ Nidrs 提供了一个即插即用的应用程序架构，使开发人员和团�
 
 ## Example
 
-### example/src/app/controller.rs
+### examples/hello/src/app/controller.rs
 
 ```rs
 use std::{collections::HashMap, sync::Arc};
@@ -115,7 +115,7 @@ impl AppController {
 
 ```
 
-### example/src/app/service.rs
+### examples/hello/src/app/service.rs
 
 ```rust
 use nidrs::Inject;
@@ -139,7 +139,7 @@ impl AppService {
 }
 ```
 
-### example/src/app/mod.rs
+### examples/hello/src/app/mod.rs
 
 ```rust
 use nidrs::default_uses;
@@ -175,7 +175,7 @@ pub struct AppModule;
 
 ```
 
-### example/src/main.rs
+### examples/hello/src/main.rs
 
 ```rust
 mod app;
@@ -203,8 +203,8 @@ fn main() {
 
 ```shell
 git clone https://github.com/nidrs/nidrs.git
-cd nidrs/example
-cargo run
+cd nidrs
+cargo run -p hello
 ```
 
 运行日志：

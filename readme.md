@@ -64,7 +64,7 @@ Nidrs provides a plug-and-play application architecture enabling developers and 
 
 ## Example
 
-### example/src/app/controller.rs
+### examples/hello/src/app/controller.rs
 
 ```rs
 use std::{collections::HashMap, sync::Arc};
@@ -117,7 +117,7 @@ impl AppController {
 
 ```
 
-### example/src/app/service.rs
+### examples/hello/src/app/service.rs
 
 ```rs
 use nidrs::Inject;
@@ -141,7 +141,7 @@ impl AppService {
 }
 ```
 
-### example/src/app/mod.rs
+### examples/hello/src/app/mod.rs
 
 ```rs
 use nidrs::default_uses;
@@ -177,7 +177,7 @@ pub struct AppModule;
 
 ```
 
-### example/src/main.rs
+### examples/hello/src/main.rs
 
 ```rs
 mod app;
@@ -205,8 +205,8 @@ Run Example:
 
 ```shell
 git clone https://github.com/nidrs/nidrs.git
-cd nidrs/example
-cargo run
+cd nidrs
+cargo run -p hello
 ```
 
 Launch Log:
