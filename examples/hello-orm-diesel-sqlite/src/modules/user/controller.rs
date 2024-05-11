@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use axum::{
     extract::{Path, Query},
     http::HeaderMap,
-    response::AppendHeaders,
     Json,
 };
 use nidrs::{post, AppResult, Inject};
@@ -21,11 +20,7 @@ pub struct UserController {
 
 impl UserController {
     #[get("/")]
-    pub async fn get_user_all(
-        &self,
-        header: HeaderMap,
-        Query(q): Query<HashMap<String, String>>,
-    ) -> AppResult<(AppendHeaders<Vec<(String, String)>>, Vec<User>)> {
+    pub async fn get_user_all(&self, header: HeaderMap, Query(q): Query<HashMap<String, String>>) -> AppResult<Vec<User>> {
         println!("Query {:?}", q);
 
         let rid = header.get("X-RID");
@@ -34,10 +29,8 @@ impl UserController {
             println!("rid: {:?}", rid);
         }
 
-        Ok((
-            AppendHeaders(vec![("X-Request-ID".to_string(), "123".to_string()), ("X-Request-ID".to_string(), "456".to_string())]),
-            self.user_service.all().await?,
-        ))
+        // AppResult::Ok(self.user_service.all().await?).header("X-Test", "test");
+        self.user_service.all().await
     }
 
     #[get("/:id")]
