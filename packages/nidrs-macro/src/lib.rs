@@ -84,6 +84,36 @@ pub fn delete(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
+pub fn any(args: TokenStream, input: TokenStream) -> TokenStream {
+    return route("any", args, input);
+}
+
+#[proc_macro_attribute]
+pub fn head(args: TokenStream, input: TokenStream) -> TokenStream {
+    return route("head", args, input);
+}
+
+#[proc_macro_attribute]
+pub fn on(args: TokenStream, input: TokenStream) -> TokenStream {
+    return route("on", args, input);
+}
+
+#[proc_macro_attribute]
+pub fn options(args: TokenStream, input: TokenStream) -> TokenStream {
+    return route("options", args, input);
+}
+
+#[proc_macro_attribute]
+pub fn patch(args: TokenStream, input: TokenStream) -> TokenStream {
+    return route("patch", args, input);
+}
+
+#[proc_macro_attribute]
+pub fn trace(args: TokenStream, input: TokenStream) -> TokenStream {
+    return route("trace", args, input);
+}
+
+#[proc_macro_attribute]
 pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
     // 解析宏的参数
     let args = parse_macro_input!(args as syn::Expr);
