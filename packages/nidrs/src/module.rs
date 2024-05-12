@@ -67,44 +67,40 @@ pub struct ModuleDefaults {
 }
 
 pub struct NidrsFactory<T: Module> {
-    pub defaults: ModuleDefaults,
     pub module: T,
-    pub module_ctx: Option<ModuleCtx>,
+    pub module_ctx: ModuleCtx,
+    pub rt: RwLock<Option<tokio::runtime::Runtime>>,
 }
 
 impl<T: Module> NidrsFactory<T> {
     pub fn create(module: T) -> Self {
-        NidrsFactory { module, defaults: ModuleDefaults { default_version: "v1", default_prefix: "" }, module_ctx: None }
+        NidrsFactory { module, module_ctx: ModuleCtx::new(ModuleDefaults { default_version: "v1", default_prefix: "" }), rt: RwLock::new(None) }
     }
 
     pub fn default_prefix(mut self, prefix: &'static str) -> Self {
-        self.defaults.default_prefix = prefix;
+        self.module_ctx.defaults.default_prefix = prefix;
         self
     }
 
     pub fn default_version(mut self, v: &'static str) -> Self {
-        self.defaults.default_version = v;
+        self.module_ctx.defaults.default_version = v;
         self
     }
 
     pub fn listen(mut self, port: u32) {
         let router = axum::Router::new().route("/", axum::routing::get(|| async move { "Hello, Nidrs!" }));
-        let module_ctx = ModuleCtx::new(self.defaults);
-        let module_ctx = self.module.init(module_ctx);
+        self.module_ctx = self.module.init(self.module_ctx);
         // println!("ModuleCtx Imports: {:?}", &module_ctx.imports);
         // println!("ModuleCtx Exports: {:?}", &module_ctx.exports);
         // println!("ModuleCtx Deps: {:?}", &module_ctx.deps);
         // println!("ModuleCtx Services: {:?}", &module_ctx.services.keys());
         // println!("ModuleCtx Globals: {:?}", &module_ctx.globals);
 
-        let routers = module_ctx.routers.clone();
         let mut sub_router = axum::Router::new();
-        for router in routers.iter() {
+        for router in self.module_ctx.routers.iter() {
             sub_router = sub_router.merge(router.clone());
         }
         let router = router.merge(sub_router);
-
-        self.module_ctx = Some(module_ctx);
 
         // listen...
         let server = || async {
@@ -117,7 +113,7 @@ impl<T: Module> NidrsFactory<T> {
             AppResult::Ok(())
         };
 
-        let rt = RwLock::new(Some(
+        self.rt = RwLock::new(Some(
             tokio::runtime::Builder::new_multi_thread()
                 // .worker_threads(4) // 设置工作线程数量
                 .enable_all() // 启用所有运行时功能
@@ -125,7 +121,7 @@ impl<T: Module> NidrsFactory<T> {
                 .unwrap(),
         ));
 
-        if let Some(rt) = &*rt.write().unwrap() {
+        if let Some(rt) = &*self.rt.write().unwrap() {
             rt.block_on(async {
                 // 使用 tokio::select 宏同时监听服务器和退出信号
                 tokio::select! {
@@ -138,17 +134,21 @@ impl<T: Module> NidrsFactory<T> {
                 }
             });
         }
-        self.module_ctx.unwrap().destroy();
+
+        self.module_ctx.destroy();
         nidrs_macro::log!("Process is exiting now.");
-        let rt = rt.write().unwrap().take();
+        let rt = self.rt.write().unwrap().take();
         if let Some(rt) = rt {
             rt.shutdown_timeout(Duration::from_secs(1));
         }
     }
 
     pub fn destroy(&self) {
-        if let Some(module_ctx) = &self.module_ctx {
-            module_ctx.destroy();
+        self.module_ctx.destroy();
+        nidrs_macro::log!("Process is exiting now.");
+        let rt = self.rt.write().unwrap().take();
+        if let Some(rt) = rt {
+            rt.shutdown_timeout(Duration::from_secs(1));
         }
     }
 }
