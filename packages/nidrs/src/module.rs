@@ -1,6 +1,11 @@
 use nidrs_extern::tokio;
 use nidrs_extern::{axum, tokio::signal};
-use std::{any::Any, collections::HashMap, sync::Arc};
+use std::{
+    any::Any,
+    collections::HashMap,
+    sync::{Arc, RwLock},
+    time::Duration,
+};
 
 use crate::{provider, AppResult, Service};
 
@@ -64,11 +69,12 @@ pub struct ModuleDefaults {
 pub struct NidrsFactory<T: Module> {
     pub defaults: ModuleDefaults,
     pub module: T,
+    pub module_ctx: Option<ModuleCtx>,
 }
 
 impl<T: Module> NidrsFactory<T> {
     pub fn create(module: T) -> Self {
-        NidrsFactory { module, defaults: ModuleDefaults { default_version: "v1", default_prefix: "" } }
+        NidrsFactory { module, defaults: ModuleDefaults { default_version: "v1", default_prefix: "" }, module_ctx: None }
     }
 
     pub fn default_prefix(mut self, prefix: &'static str) -> Self {
@@ -81,7 +87,7 @@ impl<T: Module> NidrsFactory<T> {
         self
     }
 
-    pub fn listen(self, port: u32) {
+    pub fn listen(mut self, port: u32) {
         let router = axum::Router::new().route("/", axum::routing::get(|| async move { "Hello, Nidrs!" }));
         let module_ctx = ModuleCtx::new(self.defaults);
         let module_ctx = self.module.init(module_ctx);
@@ -98,6 +104,8 @@ impl<T: Module> NidrsFactory<T> {
         }
         let router = router.merge(sub_router);
 
+        self.module_ctx = Some(module_ctx);
+
         // listen...
         let server = || async {
             let tcp = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
@@ -109,28 +117,40 @@ impl<T: Module> NidrsFactory<T> {
             AppResult::Ok(())
         };
 
-        let rt = tokio::runtime::Builder::new_multi_thread()
-            // .worker_threads(4) // 设置工作线程数量
-            .enable_all() // 启用所有运行时功能
-            .build()
-            .unwrap();
+        let rt = RwLock::new(Some(
+            tokio::runtime::Builder::new_multi_thread()
+                // .worker_threads(4) // 设置工作线程数量
+                .enable_all() // 启用所有运行时功能
+                .build()
+                .unwrap(),
+        ));
 
-        rt.block_on(async {
-            // 使用 tokio::select 宏同时监听服务器和退出信号
-            tokio::select! {
-                _ = server() => {
-                  nidrs_macro::elog!("Server exited unexpectedly.");
-                },
-                _ = signal::ctrl_c() => {
-                  nidrs_macro::log!("Received Ctrl+C, shutting down...");
+        if let Some(rt) = &*rt.write().unwrap() {
+            rt.block_on(async {
+                // 使用 tokio::select 宏同时监听服务器和退出信号
+                tokio::select! {
+                    _ = server() => {
+                      nidrs_macro::elog!("Server exited unexpectedly.");
+                    },
+                    _ = signal::ctrl_c() => {
+                      nidrs_macro::log!("Received Ctrl+C, shutting down...");
+                    }
                 }
-            }
-        });
-        module_ctx.destroy();
+            });
+        }
+        self.module_ctx.unwrap().destroy();
         nidrs_macro::log!("Process is exiting now.");
+        let rt = rt.write().unwrap().take();
+        if let Some(rt) = rt {
+            rt.shutdown_timeout(Duration::from_secs(1));
+        }
     }
 
-    fn destroy(&self) {}
+    pub fn destroy(&self) {
+        if let Some(module_ctx) = &self.module_ctx {
+            module_ctx.destroy();
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
