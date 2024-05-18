@@ -17,3 +17,5 @@ pub use module::*;
 
 pub mod meta;
 pub use meta::*;
+
+pub use nidrs_extern as externs;
