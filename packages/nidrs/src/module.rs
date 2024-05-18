@@ -66,15 +66,29 @@ pub struct ModuleDefaults {
     pub default_prefix: &'static str,
 }
 
-pub struct NidrsFactory<T: Module> {
-    pub module: T,
+pub struct NidrsFactory {
     pub module_ctx: ModuleCtx,
+    pub router: axum::Router<StateCtx>,
     pub rt: RwLock<Option<tokio::runtime::Runtime>>,
 }
 
-impl<T: Module> NidrsFactory<T> {
-    pub fn create(module: T) -> Self {
-        NidrsFactory { module, module_ctx: ModuleCtx::new(ModuleDefaults { default_version: "v1", default_prefix: "" }), rt: RwLock::new(None) }
+impl NidrsFactory {
+    pub fn create<T: Module>(module: T) -> Self {
+        let router = axum::Router::new().route("/", axum::routing::get(|| async move { "Hello, Nidrs!" }));
+        let module_ctx = ModuleCtx::new(ModuleDefaults { default_version: "v1", default_prefix: "" });
+        let module_ctx = module.init(module_ctx);
+        // println!("ModuleCtx Imports: {:?}", &module_ctx.imports);
+        // println!("ModuleCtx Exports: {:?}", &module_ctx.exports);
+        // println!("ModuleCtx Deps: {:?}", &module_ctx.deps);
+        // println!("ModuleCtx Services: {:?}", &module_ctx.services.keys());
+        // println!("ModuleCtx Globals: {:?}", &module_ctx.globals);
+        let mut sub_router = axum::Router::new();
+        for router in module_ctx.routers.iter() {
+            sub_router = sub_router.merge(router.clone());
+        }
+        let router = router.merge(sub_router);
+
+        NidrsFactory { module_ctx, rt: RwLock::new(None), router }
     }
 
     pub fn default_prefix(mut self, prefix: &'static str) -> Self {
@@ -88,27 +102,13 @@ impl<T: Module> NidrsFactory<T> {
     }
 
     pub fn listen(mut self, port: u32) {
-        let router = axum::Router::new().route("/", axum::routing::get(|| async move { "Hello, Nidrs!" }));
-        self.module_ctx = self.module.init(self.module_ctx);
-        // println!("ModuleCtx Imports: {:?}", &module_ctx.imports);
-        // println!("ModuleCtx Exports: {:?}", &module_ctx.exports);
-        // println!("ModuleCtx Deps: {:?}", &module_ctx.deps);
-        // println!("ModuleCtx Services: {:?}", &module_ctx.services.keys());
-        // println!("ModuleCtx Globals: {:?}", &module_ctx.globals);
-
-        let mut sub_router = axum::Router::new();
-        for router in self.module_ctx.routers.iter() {
-            sub_router = sub_router.merge(router.clone());
-        }
-        let router = router.merge(sub_router);
-
         // listen...
         let server = || async {
             let tcp = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
             let addr = tcp.local_addr()?;
             nidrs_macro::log!("Listening on {}", addr);
 
-            axum::serve(tcp, router.with_state(StateCtx {})).await?;
+            axum::serve(tcp, self.router.with_state(StateCtx {})).await?;
 
             AppResult::Ok(())
         };
