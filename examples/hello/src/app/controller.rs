@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use axum::{extract::Query, Json};
 use nidrs::{version, Inject, Meta};
-use nidrs_macro::{controller, get, meta, post, uses};
+use nidrs_macro::{controller, get, meta, post};
 
 use crate::AppResult;
 
@@ -31,14 +31,14 @@ impl AppController {
         Ok(Status { db: "ok".to_string(), redis: "ok".to_string() })
     }
 
-    #[uses(LogInterceptor)]
+    // #[uses(LogInterceptor)]
     #[get("/hello2")]
     pub async fn get_hello_world2(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<String> {
         println!("Query {:?}", q);
         Ok(self.app_service.get_hello_world())
     }
 
-    #[uses(LogInterceptor)]
+    // #[uses(LogInterceptor)]
     #[post("/hello")]
     pub async fn post_hello_world(&self, Query(q): Query<HashMap<String, String>>, Json(j): Json<serde_json::Value>) -> AppResult<String> {
         println!("Query {:?}", q);

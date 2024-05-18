@@ -22,6 +22,7 @@ use service::AppService;
         LogModule,
         UserModule,
     ],
+    // interceptors: [LogInterceptor],
     controllers: [AppController],
     services: [AppService],
     exports: [AppService],
