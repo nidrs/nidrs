@@ -7,7 +7,6 @@ use nidrs_macro::interceptor;
 use crate::AppResult;
 
 #[interceptor()]
-#[derive(Default)]
 pub struct JsonInterceptor {}
 
 impl<B: FromRequest<StateCtx> + Debug, P: IntoAnyBody> Interceptor<B, P> for JsonInterceptor {

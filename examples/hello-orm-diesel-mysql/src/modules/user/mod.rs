@@ -14,5 +14,4 @@ use crate::models::entities::user::UserEntity;
   services: [UserService, UserEntity],
   exports: [UserService],
 })]
-#[derive(Default)]
 pub struct UserModule;

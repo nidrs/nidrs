@@ -13,5 +13,4 @@ use service::UserService;
   services: [UserService],
   exports: [UserService],
 })]
-#[derive(Clone, Debug, Default)]
 pub struct UserModule;

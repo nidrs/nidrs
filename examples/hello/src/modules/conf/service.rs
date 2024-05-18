@@ -4,7 +4,7 @@ use nidrs_macro::{injectable, on_module_init};
 use super::options::ConfOptions;
 
 #[injectable()]
-#[derive(Clone, Debug, Default)]
+#[derive(Debug)]
 pub struct ConfService {
     pub options: Inject<ConfOptions>,
     pub log_level: String,

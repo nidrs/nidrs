@@ -14,7 +14,6 @@ use super::{dto::Status, service::AppService};
 #[meta(test = true)]
 // #[meta(disable_default_prefix)]
 #[controller()]
-#[derive(Debug, Default)]
 pub struct AppController {
     app_service: Inject<AppService>,
 }

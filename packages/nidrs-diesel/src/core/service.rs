@@ -2,7 +2,6 @@ use nidrs::on_module_destroy;
 use nidrs_macro::{injectable, on_module_init};
 
 #[injectable()]
-#[derive(Default)]
 pub struct DieselService {}
 
 impl DieselService {

@@ -3,7 +3,6 @@ use nidrs::Inject;
 use nidrs_macro::injectable;
 
 #[injectable()]
-#[derive(Clone, Debug, Default)]
 pub struct AppService {
     user_service: Inject<UserService>,
 }

@@ -27,5 +27,4 @@ use service::AppService;
     services: [AppService],
     exports: [AppService],
 })]
-#[derive(Clone, Debug, Default)]
 pub struct AppModule;

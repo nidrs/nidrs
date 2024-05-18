@@ -24,7 +24,6 @@ pub struct NewUser {
 }
 
 #[injectable()]
-#[derive(Default)]
 pub struct UserEntity {
     // pool: Inject<MysqlPoolManager>,
     pool: Inject<SqlitePoolManager>,

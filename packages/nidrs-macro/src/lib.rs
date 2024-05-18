@@ -145,6 +145,7 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
     let inject_tokens = gen_service_inject_tokens("ControllerService", &func);
 
     TokenStream::from(quote! {
+        #[derive(Default)]
         #func
 
         #inject_tokens
@@ -207,6 +208,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     meta_parse::clear();
 
     return TokenStream::from(quote! {
+        #[derive(Default)]
         #func
 
         impl nidrs::Module for #ident {
@@ -279,6 +281,7 @@ pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
     let inject_tokens = gen_service_inject_tokens("Service", &func);
 
     return TokenStream::from(quote! {
+        #[derive(Default)]
         #func
 
         #inject_tokens
@@ -295,6 +298,7 @@ pub fn interceptor(args: TokenStream, input: TokenStream) -> TokenStream {
     import_path::push_path(&func.ident.to_string());
 
     return TokenStream::from(quote! {
+        #[derive(Default)]
         #func
 
         #inject_tokens

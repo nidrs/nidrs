@@ -9,7 +9,6 @@ use crate::AppResult;
 use super::service::LogService;
 
 #[interceptor()]
-#[derive(Default)]
 pub struct LogInterceptor {
     log_service: Inject<LogService>,
 }

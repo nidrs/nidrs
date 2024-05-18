@@ -29,7 +29,6 @@ pub mod sqlite {
     type TConnection = SqliteConnection;
 
     #[injectable()]
-    #[derive(Default)]
     pub struct SqlitePoolManager {
         pub pool: Option<Mutex<Pool<ConnectionManager<TConnection>>>>,
     }
@@ -78,7 +77,6 @@ pub mod mysql {
     type TConnection = MysqlConnection;
 
     #[injectable()]
-    #[derive(Default)]
     pub struct MysqlPoolManager {
         pub pool: Option<Mutex<Pool<ConnectionManager<TConnection>>>>,
     }

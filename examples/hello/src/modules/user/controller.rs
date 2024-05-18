@@ -9,7 +9,6 @@ use crate::modules::log::service::LogService;
 use super::service::UserService;
 
 #[controller("/user")]
-#[derive(Default)]
 pub struct UserController {
     user_service: Inject<UserService>,
     log_service: Inject<LogService>,

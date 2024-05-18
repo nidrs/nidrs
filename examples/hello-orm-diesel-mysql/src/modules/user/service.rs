@@ -6,7 +6,6 @@ use crate::models::entities::user::{User, UserEntity};
 use super::dto::CreateUserDto;
 
 #[injectable()]
-#[derive(Default)]
 pub struct UserService {
     user_entity: Inject<UserEntity>,
 }

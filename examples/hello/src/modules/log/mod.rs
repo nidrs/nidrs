@@ -13,5 +13,4 @@ use service::LogService;
   services: [LogService],
   exports: [LogService],
 })]
-#[derive(Clone, Debug, Default)]
 pub struct LogModule;

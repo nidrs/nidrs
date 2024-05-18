@@ -12,7 +12,6 @@ use service::ConfService;
   services: [ConfService],
   exports: [ConfService],
 })]
-#[derive(Clone, Debug, Default)]
 pub struct ConfModule;
 
 impl ConfModule {

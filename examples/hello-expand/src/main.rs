@@ -27,13 +27,6 @@ mod app {
             app_service: Inject<AppService>,
         }
         #[automatically_derived]
-        impl ::core::fmt::Debug for AppController {
-            #[inline]
-            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                ::core::fmt::Formatter::debug_struct_field1_finish(f, "AppController", "app_service", &&self.app_service)
-            }
-        }
-        #[automatically_derived]
         impl ::core::default::Default for AppController {
             #[inline]
             fn default() -> AppController {
@@ -52,8 +45,8 @@ mod app {
             fn __meta() -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
                 meta.set("version".to_string(), "v1");
-                meta.set("role".to_string(), "admin");
                 meta.set("auth".to_string(), "true");
+                meta.set("role".to_string(), "admin");
                 meta.set("test".to_string(), true);
                 meta.set("service_name".to_string(), "AppController");
                 meta.set("service_type".to_string(), "ControllerService");
@@ -305,20 +298,6 @@ mod app {
             user_service: Inject<UserService>,
         }
         #[automatically_derived]
-        impl ::core::clone::Clone for AppService {
-            #[inline]
-            fn clone(&self) -> AppService {
-                AppService { user_service: ::core::clone::Clone::clone(&self.user_service) }
-            }
-        }
-        #[automatically_derived]
-        impl ::core::fmt::Debug for AppService {
-            #[inline]
-            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                ::core::fmt::Formatter::debug_struct_field1_finish(f, "AppService", "user_service", &&self.user_service)
-            }
-        }
-        #[automatically_derived]
         impl ::core::default::Default for AppService {
             #[inline]
             fn default() -> AppService {
@@ -357,20 +336,6 @@ mod app {
     use service::AppService;
     pub struct AppModule;
     #[automatically_derived]
-    impl ::core::clone::Clone for AppModule {
-        #[inline]
-        fn clone(&self) -> AppModule {
-            AppModule
-        }
-    }
-    #[automatically_derived]
-    impl ::core::fmt::Debug for AppModule {
-        #[inline]
-        fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-            ::core::fmt::Formatter::write_str(f, "AppModule")
-        }
-    }
-    #[automatically_derived]
     impl ::core::default::Default for AppModule {
         #[inline]
         fn default() -> AppModule {
@@ -394,46 +359,6 @@ mod app {
             ctx.append_exports("AppModule", Vec::from(["AppService"]), false);
             ctx.register_interceptor("AppModule", "LogInterceptor", Box::new(std::sync::Arc::new(crate::import::LogInterceptor::default())));
             if ctx.register_controller("AppModule", "AppController", Box::new(std::sync::Arc::new(controller::AppController::default()))) {
-                let t_controller = ctx.get_controller::<controller::AppController>("AppModule", "AppController");
-                let t_interceptor_0 = ctx.get_interceptor::<crate::import::LogInterceptor>("AppModule", "LogInterceptor");
-                let mut meta = nidrs::get_meta(t_controller.clone());
-                let t_meta = t_controller.__meta_get_hello_world();
-                meta.merge(t_meta);
-                let meta = std::sync::Arc::new(meta);
-                let version = *meta.get::<&str>("version").unwrap_or(&ctx.defaults.default_version);
-                let disable_default_prefix = *meta.get::<bool>("disable_default_prefix").unwrap_or(&false);
-                let path = if disable_default_prefix {
-                    "/hello".to_string()
-                } else {
-                    nidrs::template_format(
-                        &{
-                            let res = ::alloc::fmt::format(format_args!("{0}{1}", ctx.defaults.default_prefix, "/hello",));
-                            res
-                        },
-                        [("version", version)],
-                    )
-                };
-                {
-                    ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
-                };
-                {
-                    ::std::io::_print(format_args!("Registering router \'{0} {1}\'.\n", "get".to_uppercase(), path,));
-                };
-                let router = nidrs::externs::axum::Router::new().route(
-                    &path,
-                    nidrs::externs::axum::routing::get(|parts, p1| async move {
-                        let mut t_meta = nidrs::Meta::new();
-                        t_meta.extend(meta);
-                        let t_body = nidrs_extern::axum::body::Body::empty();
-                        let ctx = InterCtx { meta: t_meta, parts, body: t_body };
-                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
-                            let p0 = ctx.meta;
-                            t_controller.get_hello_world(p0, p1).await
-                        };
-                        t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
-                    }),
-                );
-                ctx.routers.push(router);
                 let t_controller = ctx.get_controller::<controller::AppController>("AppModule", "AppController");
                 let t_interceptor_0 = ctx.get_interceptor::<crate::import::LogInterceptor>("AppModule", "LogInterceptor");
                 let mut meta = nidrs::get_meta(t_controller.clone());
@@ -511,6 +436,46 @@ mod app {
                     }),
                 );
                 ctx.routers.push(router);
+                let t_controller = ctx.get_controller::<controller::AppController>("AppModule", "AppController");
+                let t_interceptor_0 = ctx.get_interceptor::<crate::import::LogInterceptor>("AppModule", "LogInterceptor");
+                let mut meta = nidrs::get_meta(t_controller.clone());
+                let t_meta = t_controller.__meta_get_hello_world();
+                meta.merge(t_meta);
+                let meta = std::sync::Arc::new(meta);
+                let version = *meta.get::<&str>("version").unwrap_or(&ctx.defaults.default_version);
+                let disable_default_prefix = *meta.get::<bool>("disable_default_prefix").unwrap_or(&false);
+                let path = if disable_default_prefix {
+                    "/hello".to_string()
+                } else {
+                    nidrs::template_format(
+                        &{
+                            let res = ::alloc::fmt::format(format_args!("{0}{1}", ctx.defaults.default_prefix, "/hello",));
+                            res
+                        },
+                        [("version", version)],
+                    )
+                };
+                {
+                    ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                };
+                {
+                    ::std::io::_print(format_args!("Registering router \'{0} {1}\'.\n", "get".to_uppercase(), path,));
+                };
+                let router = nidrs::externs::axum::Router::new().route(
+                    &path,
+                    nidrs::externs::axum::routing::get(|parts, p1| async move {
+                        let mut t_meta = nidrs::Meta::new();
+                        t_meta.extend(meta);
+                        let t_body = nidrs_extern::axum::body::Body::empty();
+                        let ctx = InterCtx { meta: t_meta, parts, body: t_body };
+                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
+                            let p0 = ctx.meta;
+                            t_controller.get_hello_world(p0, p1).await
+                        };
+                        t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
+                    }),
+                );
+                ctx.routers.push(router);
             }
             let svc = std::sync::Arc::new(AppService::default());
             ctx.register_service("AppModule", "AppService", Box::new(svc));
@@ -567,13 +532,6 @@ mod modules {
                 pub log_level: String,
             }
             #[automatically_derived]
-            impl ::core::clone::Clone for ConfOptions {
-                #[inline]
-                fn clone(&self) -> ConfOptions {
-                    ConfOptions { log_level: ::core::clone::Clone::clone(&self.log_level) }
-                }
-            }
-            #[automatically_derived]
             impl ::core::fmt::Debug for ConfOptions {
                 #[inline]
                 fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
@@ -608,13 +566,6 @@ mod modules {
             pub struct ConfService {
                 pub options: Inject<ConfOptions>,
                 pub log_level: String,
-            }
-            #[automatically_derived]
-            impl ::core::clone::Clone for ConfService {
-                #[inline]
-                fn clone(&self) -> ConfService {
-                    ConfService { options: ::core::clone::Clone::clone(&self.options), log_level: ::core::clone::Clone::clone(&self.log_level) }
-                }
             }
             #[automatically_derived]
             impl ::core::fmt::Debug for ConfService {
@@ -664,20 +615,6 @@ mod modules {
         pub use options::ConfOptions;
         use service::ConfService;
         pub struct ConfModule;
-        #[automatically_derived]
-        impl ::core::clone::Clone for ConfModule {
-            #[inline]
-            fn clone(&self) -> ConfModule {
-                ConfModule
-            }
-        }
-        #[automatically_derived]
-        impl ::core::fmt::Debug for ConfModule {
-            #[inline]
-            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                ::core::fmt::Formatter::write_str(f, "ConfModule")
-            }
-        }
         #[automatically_derived]
         impl ::core::default::Default for ConfModule {
             #[inline]
@@ -840,20 +777,6 @@ mod modules {
         use service::LogService;
         pub struct LogModule;
         #[automatically_derived]
-        impl ::core::clone::Clone for LogModule {
-            #[inline]
-            fn clone(&self) -> LogModule {
-                LogModule
-            }
-        }
-        #[automatically_derived]
-        impl ::core::fmt::Debug for LogModule {
-            #[inline]
-            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                ::core::fmt::Formatter::write_str(f, "LogModule")
-            }
-        }
-        #[automatically_derived]
         impl ::core::default::Default for LogModule {
             #[inline]
             fn default() -> LogModule {
@@ -977,20 +900,6 @@ mod modules {
                 count: Arc<Mutex<i32>>,
             }
             #[automatically_derived]
-            impl ::core::clone::Clone for UserService {
-                #[inline]
-                fn clone(&self) -> UserService {
-                    UserService { app_service: ::core::clone::Clone::clone(&self.app_service), count: ::core::clone::Clone::clone(&self.count) }
-                }
-            }
-            #[automatically_derived]
-            impl ::core::fmt::Debug for UserService {
-                #[inline]
-                fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                    ::core::fmt::Formatter::debug_struct_field2_finish(f, "UserService", "app_service", &self.app_service, "count", &&self.count)
-                }
-            }
-            #[automatically_derived]
             impl ::core::default::Default for UserService {
                 #[inline]
                 fn default() -> UserService {
@@ -1030,20 +939,6 @@ mod modules {
         use controller::UserController;
         use service::UserService;
         pub struct UserModule;
-        #[automatically_derived]
-        impl ::core::clone::Clone for UserModule {
-            #[inline]
-            fn clone(&self) -> UserModule {
-                UserModule
-            }
-        }
-        #[automatically_derived]
-        impl ::core::fmt::Debug for UserModule {
-            #[inline]
-            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                ::core::fmt::Formatter::write_str(f, "UserModule")
-            }
-        }
         #[automatically_derived]
         impl ::core::default::Default for UserModule {
             #[inline]
@@ -1159,13 +1054,20 @@ mod shared {
         }
     }
 }
+use axum::Router;
 pub use nidrs::AppError;
 pub use nidrs::AppResult;
 fn main() {
     let app = nidrs::NidrsFactory::create(app::AppModule);
     let app = app.default_prefix("/api/{version}");
     let app = app.default_version("v1");
-    app.listen(3000).block();
+    let mut app = app.listen(3000);
+    let mut sub_router = axum::Router::new();
+    for router in app.module_ctx.routers.iter() {
+        sub_router = sub_router.merge(router.clone());
+    }
+    app.router = Router::new().nest("/t", sub_router);
+    app.block();
 }
 pub mod import {
     pub use crate::app::controller::AppController;

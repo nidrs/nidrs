@@ -29,5 +29,4 @@ use nidrs_diesel::MysqlPoolManager;
     services: [AppService],
     exports: [AppService],
 })]
-#[derive(Clone, Debug, Default)]
 pub struct AppModule;

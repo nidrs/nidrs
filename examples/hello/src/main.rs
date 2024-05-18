@@ -2,6 +2,7 @@ mod app;
 mod modules;
 mod shared;
 
+use axum::Router;
 pub use nidrs::AppError;
 pub use nidrs::AppResult;
 
@@ -12,5 +13,13 @@ fn main() {
     let app = app.default_prefix("/api/{version}");
     let app = app.default_version("v1");
 
-    app.listen(3000).block();
+    let mut app = app.listen(3000);
+
+    let mut sub_router = axum::Router::new();
+    for router in app.module_ctx.routers.iter() {
+        sub_router = sub_router.merge(router.clone());
+    }
+    app.router = Router::new().nest("/t", sub_router);
+
+    app.block();
 }

@@ -13,7 +13,6 @@ use crate::models::entities::user::User;
 use super::{dto::CreateUserDto, service::UserService};
 
 #[controller("/user")]
-#[derive(Default)]
 pub struct UserController {
     user_service: Inject<UserService>,
 }

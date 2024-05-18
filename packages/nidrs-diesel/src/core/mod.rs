@@ -16,7 +16,6 @@ use crate::ConnectionDriver;
   services: [DieselService],
   exports: [DieselService],
 })]
-#[derive(Default)]
 pub struct DieselModule;
 
 impl DieselModule {

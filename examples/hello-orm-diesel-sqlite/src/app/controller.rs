@@ -9,7 +9,6 @@ use crate::AppResult;
 use super::service::AppService;
 
 #[controller("/app")]
-#[derive(Default)]
 pub struct AppController {
     app_service: Inject<AppService>,
 }

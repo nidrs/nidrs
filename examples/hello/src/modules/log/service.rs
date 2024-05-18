@@ -1,7 +1,6 @@
 use nidrs_macro::injectable;
 
 #[injectable()]
-#[derive(Default)]
 pub struct LogService {}
 
 impl LogService {

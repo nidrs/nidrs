@@ -29,5 +29,4 @@ use nidrs_diesel::SqlitePoolManager;
     services: [AppService],
     exports: [AppService],
 })]
-#[derive(Clone, Debug, Default)]
 pub struct AppModule;
