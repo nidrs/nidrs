@@ -116,16 +116,20 @@ pub fn trace(args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
     // 解析宏的参数
-    let args = parse_macro_input!(args as syn::Expr);
-    let path = if let syn::Expr::Lit(lit) = args {
-        if let syn::Lit::Str(str) = lit.lit {
-            str.value().trim().to_string()
-        } else {
-            panic!("Invalid argument")
-        }
+    let path = if args.is_empty() {
+        "".to_string()
     } else {
-        // throw error
-        panic!("Invalid argument");
+        let args = parse_macro_input!(args as syn::Expr);
+        let path = if let syn::Expr::Lit(lit) = args {
+            if let syn::Lit::Str(str) = lit.lit {
+                str.value().trim().to_string()
+            } else {
+                panic!("Invalid argument")
+            }
+        } else {
+            "".to_string()
+        };
+        path
     };
 
     let func = parse_macro_input!(input as ItemStruct);
@@ -502,19 +506,24 @@ pub fn main(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(args as syn::Expr);
+    let path = if args.is_empty() {
+        "".to_string()
+    } else {
+        let args = parse_macro_input!(args as syn::Expr);
+        let path = if let syn::Expr::Lit(lit) = args {
+            if let syn::Lit::Str(str) = lit.lit {
+                str.value().trim().to_string()
+            } else {
+                panic!("Invalid argument")
+            }
+        } else {
+            // throw error
+            panic!("Invalid argument");
+        };
+        path
+    };
     let func = parse_macro_input!(input as ItemFn);
 
-    let path = if let syn::Expr::Lit(lit) = args {
-        if let syn::Lit::Str(str) = lit.lit {
-            str.value().trim().to_string()
-        } else {
-            panic!("Invalid argument")
-        }
-    } else {
-        // throw error
-        panic!("Invalid argument");
-    };
     let name = func.sig.ident.to_string();
 
     let vis = func.vis.clone();
