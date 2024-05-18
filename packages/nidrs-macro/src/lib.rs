@@ -489,6 +489,16 @@ pub fn version(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
+pub fn disable_default_prefix(args: TokenStream, input: TokenStream) -> TokenStream {
+    let raw_input = TokenStream2::from(input.clone());
+
+    return TokenStream::from(quote! {
+        #[meta(disable_default_prefix = true)]
+        #raw_input
+    });
+}
+
+#[proc_macro_attribute]
 pub fn main(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemFn);
     let ident = func.sig.ident.clone();
