@@ -487,7 +487,7 @@ pub fn version(args: TokenStream, input: TokenStream) -> TokenStream {
         .clone();
 
     return TokenStream::from(quote! {
-        #[meta(version = #version)]
+        #[nidrs::macros::meta(version = #version)]
         #raw_input
     });
 }
@@ -497,7 +497,7 @@ pub fn disable_default_prefix(args: TokenStream, input: TokenStream) -> TokenStr
     let raw_input = TokenStream2::from(input.clone());
 
     return TokenStream::from(quote! {
-        #[meta(disable_default_prefix = true)]
+        #[nidrs::macros::meta(disable_default_prefix = true)]
         #raw_input
     });
 }
