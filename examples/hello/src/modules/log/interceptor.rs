@@ -4,7 +4,7 @@ use axum::{body::to_bytes, extract::FromRequest, http::Response, response::IntoR
 use nidrs::{AnyResponse, Inject, InterCtx, Interceptor, IntoAnyResponse, StateCtx};
 use nidrs_macro::interceptor;
 
-use crate::AppResult;
+use crate::{AppResult, CurrentUser};
 
 use super::service::LogService;
 
@@ -22,6 +22,7 @@ impl<B: FromRequest<StateCtx> + Debug, P: IntoResponse> Interceptor<B, P> for Lo
         H: FnOnce(InterCtx<B>) -> F,
     {
         println!("ctx: {:?}", ctx.meta.get::<bool>("disable_default_prefix"));
+        println!("ctx: {:?}", ctx.parts.extensions.get::<CurrentUser>());
         self.log_service.log("Before");
         let r: AppResult<AnyResponse> = handler(ctx).await.map(|r| AnyResponse::from_response(r));
 
