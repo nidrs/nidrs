@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use axum::{extract::Query, Json};
+use axum::{extract::Query, response::AppendHeaders, Json};
 use nidrs::{version, Inject, Meta};
 use nidrs_macro::{controller, get, meta, post};
 
@@ -23,11 +23,19 @@ impl AppController {
     // #[uses(LogInterceptor)]
     #[version("v2")]
     #[get("/hello")]
-    pub async fn get_hello_world(&self, meta: Meta, Query(q): Query<HashMap<String, String>>) -> AppResult<Status> {
+    pub async fn get_hello_world(
+        &self,
+        meta: Meta,
+        Query(q): Query<HashMap<String, String>>,
+    ) -> AppResult<(AppendHeaders<[(String, String); 2]>, Status)> {
         println!("Query {:?}", q);
         println!("Meta {:?}", meta.get::<&str>("role"));
         // fn_test()?;
-        Ok(Status { db: "ok".to_string(), redis: "ok".to_string() })
+
+        Ok((
+            AppendHeaders([("X-Custom-Header".to_string(), "hello".to_string()), ("X-Custom-Header".to_string(), "world".to_string())]),
+            Status { db: "ok".to_string(), redis: "ok".to_string() },
+        ))
     }
 
     // #[uses(LogInterceptor)]

@@ -11,7 +11,7 @@ use crate::{AppError, AppResult, Meta, Service, StateCtx};
 pub trait InterceptorService: Service {}
 
 /// P 和 R 是可以配置的
-pub trait Interceptor<B: axum::extract::FromRequest<StateCtx>, P>: Sized {
+pub trait Interceptor<B: axum::extract::FromRequest<StateCtx>, P> {
     type R;
 
     fn interceptor<F, H>(&self, ctx: InterCtx<B>, handler: H) -> impl Future<Output = AppResult<Self::R>>
@@ -53,6 +53,36 @@ pub trait IntoAnyBody: Sized + serde::Serialize {
 impl<T: serde::Serialize> IntoAnyBody for T {
     fn from_serializable<P: serde::Serialize>(s: P) -> AnyBody<Self> {
         AnyBody { body: serde_json::to_vec(&s).map(Bytes::from).map_err(|e| e.into()), marker: std::marker::PhantomData }
+    }
+}
+
+pub struct AnyResponse {
+    pub response: axum::http::Response<Body>,
+}
+
+impl IntoResponse for AnyResponse {
+    fn into_response(self) -> Response {
+        self.response
+    }
+}
+
+impl From<axum::http::Response<Body>> for AnyResponse {
+    fn from(response: axum::http::Response<Body>) -> Self {
+        AnyResponse { response }
+    }
+}
+
+pub trait IntoAnyResponse {
+    fn from_response<R: IntoResponse>(r: R) -> AnyResponse;
+}
+
+impl<T> IntoAnyResponse for T
+where
+    T: IntoResponse,
+{
+    fn from_response<R: IntoResponse>(r: R) -> AnyResponse {
+        let response: axum::http::Response<Body> = r.into_response();
+        AnyResponse { response }
     }
 }
 
