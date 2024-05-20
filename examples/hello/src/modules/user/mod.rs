@@ -1,4 +1,4 @@
-use nidrs_macro::module;
+use nidrs::macros::module;
 
 pub mod controller;
 pub mod service;

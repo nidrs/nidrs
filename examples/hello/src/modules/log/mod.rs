@@ -1,5 +1,5 @@
+use nidrs::macros::module;
 use nidrs::meta;
-use nidrs_macro::module;
 
 pub mod interceptor;
 pub mod service;

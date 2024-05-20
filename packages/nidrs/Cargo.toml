@@ -4,12 +4,7 @@ version = "0.0.8"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
 description = "Nidrs is a web framework based on axum and tokio."
 keywords = ["nidrs", "axum", "http", "web", "framework"]
-categories = [
-    "network-programming",
-    "asynchronous",
-    "web-programming::http-server",
-    "web-programming::websocket"
-]
+categories = ["network-programming", "asynchronous", "web-programming::http-server", "web-programming::websocket"]
 publish = true
 edition.workspace = true
 homepage.workspace = true
@@ -20,7 +15,10 @@ license.workspace = true
 nidrs-macro = { workspace = true }
 nidrs-extern = { workspace = true }
 
-serde_json = "1.0.115"
-serde = {version = "1.0.197", features = ["derive"]}
+
+[features]
+default = ["tower", "serde"]
+tower = ["nidrs-extern/tower"]
+serde = ["nidrs-extern/serde"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

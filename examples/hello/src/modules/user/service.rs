@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use nidrs::Inject;
-use nidrs_macro::injectable;
+use nidrs::macros::injectable;
 
 use crate::app::service::AppService;
 

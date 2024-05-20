@@ -1,9 +1,10 @@
-use axum::{
+use nidrs::externs::axum::{
     body::Body,
     http::{header, StatusCode},
     response::{IntoResponse, Response},
 };
-use serde::{Deserialize, Serialize};
+use nidrs::externs::serde::{Deserialize, Serialize};
+use nidrs::externs::serde_json;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Status {

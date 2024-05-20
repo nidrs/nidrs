@@ -1,8 +1,8 @@
 use std::{fmt::Debug, usize::MAX};
 
-use axum::{body::to_bytes, extract::FromRequest, http::Response, response::IntoResponse};
+use nidrs::externs::axum::{body::to_bytes, extract::FromRequest, http::Response, response::IntoResponse};
+use nidrs::macros::interceptor;
 use nidrs::{AnyResponse, Inject, InterCtx, Interceptor, IntoAnyResponse, StateCtx};
-use nidrs_macro::interceptor;
 
 use crate::{AppResult, CurrentUser};
 

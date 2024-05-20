@@ -3,7 +3,9 @@ use nidrs_extern::axum::{
     body::{Body, Bytes},
     response::Response,
 };
-use serde::Serialize;
+use nidrs_extern::serde;
+use nidrs_extern::serde::Serialize;
+use nidrs_extern::serde_json;
 use std::{fmt::Debug, future::Future};
 
 use crate::{AppError, AppResult, Meta, Service, StateCtx};

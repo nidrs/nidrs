@@ -1,4 +1,4 @@
-use nidrs_macro::injectable;
+use nidrs::macros::injectable;
 
 #[injectable()]
 #[derive(Debug)]

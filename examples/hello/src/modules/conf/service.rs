@@ -1,5 +1,5 @@
 use nidrs::{on_module_destroy, Inject};
-use nidrs_macro::{injectable, on_module_init};
+use nidrs::macros::{injectable, on_module_init};
 
 use super::options::ConfOptions;
 

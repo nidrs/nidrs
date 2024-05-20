@@ -1,6 +1,6 @@
 use crate::modules::user::service::UserService;
+use nidrs::macros::injectable;
 use nidrs::Inject;
-use nidrs_macro::injectable;
 
 #[injectable()]
 pub struct AppService {

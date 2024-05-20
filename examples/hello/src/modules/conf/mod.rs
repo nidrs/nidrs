@@ -1,8 +1,8 @@
 pub mod options;
 pub mod service;
 
+use nidrs::macros::module;
 use nidrs::{meta, DynamicModule, Service};
-use nidrs_macro::module;
 
 pub use options::ConfOptions;
 use service::ConfService;

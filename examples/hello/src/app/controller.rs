@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
-use axum::{extract::Query, response::AppendHeaders, Json};
+use nidrs::externs::axum::{extract::Query, response::AppendHeaders, Json};
+use nidrs::externs::serde_json;
+use nidrs::macros::{controller, get, meta, post};
 use nidrs::{version, Inject, Meta};
-use nidrs_macro::{controller, get, meta, post};
 
 use crate::AppResult;
 

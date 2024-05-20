@@ -4,7 +4,7 @@ mod shared;
 
 use std::time::Duration;
 
-use axum::{
+use nidrs::externs::axum::{
     error_handling::HandleErrorLayer,
     extract::Request,
     http::StatusCode,
@@ -12,9 +12,9 @@ use axum::{
     response::Response,
     BoxError,
 };
+use nidrs::externs::tower::timeout::TimeoutLayer;
 pub use nidrs::AppError;
 pub use nidrs::AppResult;
-use tower::timeout::TimeoutLayer;
 
 #[nidrs::main]
 fn main() {
@@ -28,9 +28,9 @@ fn main() {
     // app.router = app.router.route_layer(middleware::from_fn(auth));
     // app.router = app.router.layer(ServiceBuilder::new().layer(middleware::from_fn(auth)));
     app.router = app.router.layer(
-        tower::ServiceBuilder::new()
+        nidrs::externs::tower::ServiceBuilder::new()
             .layer(HandleErrorLayer::new(|error: BoxError| async move {
-                if error.is::<tower::timeout::error::Elapsed>() {
+                if error.is::<nidrs::externs::tower::timeout::error::Elapsed>() {
                     Ok(StatusCode::REQUEST_TIMEOUT)
                 } else {
                     Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Unhandled internal error: {error}")))
