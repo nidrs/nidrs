@@ -18,6 +18,8 @@ monorepo_version_separator = "-"
 pre_package_bump_hooks = [
     "echo 'upgrading {{package}}' to {{version}}",
     "cargo set-version {{version}} -p {{package}}",
+]
+post_package_bump_hooks = [
     "cargo package --allow-dirty -p {{package}}",
     "cargo publish --registry crates-io -p {{package}}",
 ]
