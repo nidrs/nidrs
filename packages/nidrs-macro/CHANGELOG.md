@@ -2,6 +2,18 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-macro-v0.0.9 - 2024-06-03
+#### Features
+- controller and method macro support empty param - (3fd0457) - WumaCoder
+- Add route macros for any, head, on, options, patch, and trace methods - (7b5240a) - WumaCoder
+#### Refactoring
+- 优化 meta 和宏导出的细节 - (0460927) - WumaCoder
+- default impl Default - (9becd92) - WumaCoder
+- Add disable_default_prefix macro attribute - (8c34186) - WumaCoder
+- 重构代码结构 - (eb0826f) - WumaCoder
+
+- - -
+
 ## nidrs-macro-v0.0.8 - 2024-05-05
 #### Bug Fixes
 - 修复注册拦截器的 BUG - (860127f) - WumaCoder
