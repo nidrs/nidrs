@@ -2,6 +2,21 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-v0.0.9 - 2024-06-03
+#### Features
+- add AnyResponse interceptor helper - (ae52dd6) - WumaCoder
+#### Miscellaneous Chores
+- Update NidrsFactory listen method to use module context and add externs module - (aec1b8b) - WumaCoder
+#### Refactoring
+- 优化导入包结构和数量 - (d33674a) - WumaCoder
+- 优化 meta 和宏导出的细节 - (0460927) - WumaCoder
+- 优化初始化细节 - (43e832d) - WumaCoder
+- Update NidrsFactory listen method to use module context and add externs module - (3bf72f6) - WumaCoder
+- Update NidrsFactory listen method to use module context - (399a0fe) - WumaCoder
+- Update NidrsFactory listen method to use module context - (3d861fb) - WumaCoder
+
+- - -
+
 ## nidrs-v0.0.8 - 2024-05-05
 #### Bug Fixes
 - 优化框架细节 - (60744b5) - WumaCoder
