@@ -11,7 +11,7 @@ post_bump_hooks = [
     "git add Cargo.lock && git commit -m 'chore: bump to {{version}}'",
 ]
 # pre_package_bump_hooks = []
-post_package_bump_hooks = []
+# post_package_bump_hooks = []
 tag_prefix = "v"
 
 monorepo_version_separator = "-"
@@ -20,7 +20,9 @@ pre_package_bump_hooks = [
     "cargo set-version {{version}} -p {{package}}",
 ]
 post_package_bump_hooks = [
+    "echo 'package {{package}}'",
     "cargo package --allow-dirty -p {{package}}",
+    "echo 'publishing {{package}}'",
     "cargo publish --registry crates-io -p {{package}}",
 ]
 
