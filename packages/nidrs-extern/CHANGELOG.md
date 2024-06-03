@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-extern-v0.0.9 - 2024-06-03
+#### Bug Fixes
+- add default toml - (f63d00d) - WumaCoder
+#### Refactoring
+- 优化导入包结构和数量 - (d33674a) - WumaCoder
+
+- - -
+
 ## nidrs-extern-v0.0.8 - 2024-05-05
 #### Miscellaneous Chores
 - **(version)** nidrs-v0.0.7 - (d19d685) - *WumaCoder*
