@@ -17,8 +17,7 @@ tag_prefix = "v"
 monorepo_version_separator = "-"
 pre_package_bump_hooks = [
     "echo 'upgrading {{package}}' to {{version}}",
-    "cargo set-version {{version}}",
-    "cd ../../ && cargo set  workspace.dependencies.{{package}}.version {{version}}",
+    "cargo set-version {{version}} -p {{package}}",
 ]
 
 [git_hooks]
