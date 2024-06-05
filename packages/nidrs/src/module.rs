@@ -1,5 +1,8 @@
-use nidrs_extern::tokio;
-use nidrs_extern::{axum, tokio::signal};
+use nidrs_extern::{axum::extract::Request, tokio, tower::Layer};
+use nidrs_extern::{
+    axum::{self, routing::Route},
+    tokio::signal,
+};
 use std::{
     any::Any,
     collections::HashMap,
@@ -7,7 +10,7 @@ use std::{
     time::Duration,
 };
 
-use crate::{provider, AppResult, Service};
+use crate::{provider, AppResult, Meta, Service};
 
 static GLOBALS_KEY: &str = "Globals";
 
@@ -72,13 +75,15 @@ pub struct NidrsFactory<T: Module> {
     pub router: axum::Router<StateCtx>,
     pub port: u32,
     pub rt: RwLock<Option<tokio::runtime::Runtime>>,
+
+    pub router_hook: Box<dyn Fn(RouterWrap) -> axum::Router<StateCtx>>,
 }
 
 impl<T: Module> NidrsFactory<T> {
     pub fn create(module: T) -> Self {
-        let router = axum::Router::new().route("/", axum::routing::get(|| async move { "Hello, Nidrs!" }));
+        let router: axum::Router<StateCtx> = axum::Router::new().route("/", axum::routing::get(|| async move { "Hello, Nidrs!" }));
         let module_ctx = ModuleCtx::new(ModuleDefaults { default_version: "v1", default_prefix: "" });
-        NidrsFactory { rt: RwLock::new(None), router, module: Some(module), module_ctx, port: 3000 }
+        NidrsFactory { rt: RwLock::new(None), router, module: Some(module), module_ctx, port: 3000, router_hook: Box::new(|r| r.router)}
     }
 
     pub fn default_prefix(mut self, prefix: &'static str) -> Self {
@@ -88,6 +93,11 @@ impl<T: Module> NidrsFactory<T> {
 
     pub fn default_version(mut self, v: &'static str) -> Self {
         self.module_ctx.defaults.default_version = v;
+        self
+    }
+
+    pub fn default_router_hook(mut self, hook: impl Fn(RouterWrap) -> axum::Router<StateCtx> + 'static) -> Self {
+        self.router_hook = Box::new(hook);
         self
     }
 
@@ -103,7 +113,7 @@ impl<T: Module> NidrsFactory<T> {
         // println!("ModuleCtx Globals: {:?}", &module_ctx.globals);
         let mut sub_router = axum::Router::new();
         for router in self.module_ctx.routers.iter() {
-            sub_router = sub_router.merge(router.clone());
+            sub_router = sub_router.merge((self.router_hook)(router.clone()));
         }
         self.router = self.router.merge(sub_router);
         self
@@ -169,7 +179,7 @@ pub struct ModuleCtx {
     pub modules: HashMap<String, Box<dyn Module>>,
     pub services: HashMap<String, Box<dyn Any>>,
     pub controllers: HashMap<String, Box<dyn Any>>,
-    pub routers: Vec<axum::Router<StateCtx>>,
+    pub routers: Vec<RouterWrap>,
     pub interceptors: HashMap<String, Box<dyn Any>>,
 
     pub imports: HashMap<String, Vec<String>>,
@@ -328,6 +338,13 @@ impl ModuleCtx {
         success
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct RouterWrap{
+    pub router: axum::Router<StateCtx>,
+    pub meta: Arc<Meta>,
+}
+
 
 #[cfg(test)]
 mod tests {

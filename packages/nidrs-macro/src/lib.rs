@@ -138,14 +138,30 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
 
     import_path::push_path(&func.ident.to_string());
 
-    // println!("controller {} {:?}", ident.to_string(), func.attrs);
-    CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta { name: ident.to_string(), path: path });
+    println!("// controller {} {:?}", ident.to_string(), func.attrs);
+    CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta { name: ident.to_string(), path: path.clone() });
     ROUTES.lock().unwrap().insert(ident.to_string(), HashMap::new());
 
-    let inject_tokens = gen_service_inject_tokens("ControllerService", &func);
+    
 
     TokenStream::from(quote! {
+        #[nidrs::macros::meta(controller_router_path = #path)]
         #[derive(Default)]
+        #[nidrs::macros::__controller_derive]
+        #func
+    })
+}
+
+#[proc_macro_attribute]
+pub fn __controller_derive(args: TokenStream, input: TokenStream) -> TokenStream {
+    let func = parse_macro_input!(input as ItemStruct);
+
+    println!("// controller_collect {:?}", func.ident.to_string());
+
+    let inject_tokens: TokenStream2 = gen_service_inject_tokens("ControllerService", &func);
+
+    
+    TokenStream::from(quote! {
         #func
 
         #inject_tokens
@@ -389,7 +405,9 @@ pub fn default_uses(args: TokenStream, input: TokenStream) -> TokenStream {
 pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     let raw_input = TokenStream2::from(input.clone());
     let args = parse_macro_input!(args as MetaArgs);
-    // let func = parse_macro_input!(input as InterceptorArgs);
+    let func = parse_macro_input!(input as InterceptorArgs);
+
+    println!("// meta {:?} {:?}", func.ident.to_string(), args.kv.keys());
 
     meta_parse::collect(args);
     // if let TokenType::Struct(_) = func.typ {
@@ -401,17 +419,6 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     return TokenStream::from(quote! {
         #raw_input
     });
-}
-
-fn is_macro(s: ItemStruct, name: &str) -> bool {
-    !s.attrs.iter().any(|attr: &syn::Attribute| {
-        if let syn::Meta::List(name_value) = attr.meta.to_owned() {
-            if name_value.path.is_ident(name) {
-                return true;
-            }
-        }
-        return false;
-    })
 }
 
 #[proc_macro]
@@ -536,6 +543,7 @@ fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
         };
         path
     };
+    println!("// route {} {} {:?}", method, path, meta_parse::get_meta_value("controller_router_path"));
     let func = parse_macro_input!(input as ItemFn);
 
     let name = func.sig.ident.to_string();
@@ -572,7 +580,7 @@ fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
         .filter(|v| !v.is_empty())
         .collect::<Vec<String>>();
 
-    let route = RouteMeta { method: method.to_string(), path: path, name: name.clone(), func_args, is_body, is_meta };
+    let route = RouteMeta { method: method.to_string(), path: path.clone(), name: name.clone(), func_args, is_body, is_meta };
 
     let mut binding = ROUTES.lock().unwrap();
     let controller = binding.get_mut(&CURRENT_CONTROLLER.lock().unwrap().as_ref().unwrap().name).unwrap();
@@ -580,12 +588,17 @@ fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
 
     let meta_tokens = meta_parse::build_tokens();
 
+    // println!(meta_parse::get_meta_value())
+
     let meta_ident = syn::Ident::new(format!("__meta_{}", name).as_str(), Span::call_site().into());
     TokenStream::from(quote! {
         #func
 
         pub fn #meta_ident(&self)->nidrs::Meta{
             let mut meta = nidrs::Meta::new();
+            meta.set("router_name".to_string(), stringify!(#ident));
+            meta.set("router_method".to_string(), #method);
+            meta.set("router_path".to_string(), #path);
             #meta_tokens
             meta
         }
@@ -626,11 +639,14 @@ fn gen_controller_register_tokens(module_name: String, services: Vec<TokenStream
                 let disable_default_prefix = *meta.get::<bool>("disable_default_prefix").unwrap_or(&false);
                 let path = if disable_default_prefix { #path.to_string() } else { nidrs::template_format(&format!("{}{}", ctx.defaults.default_prefix, #path), [("version", version)]) };
                 nidrs_macro::log!("Registering router '{} {}'.", #method.to_uppercase(), path);
+                
+                let route_meta = meta.clone();
+                
                 let router = nidrs::externs::axum::Router::new().route(
                     &path,
                     nidrs::externs::axum::routing::#method_ident(#handler),
                 );
-                ctx.routers.push(router);
+                ctx.routers.push(nidrs::RouterWrap{ router: router, meta: route_meta.clone() });
             }
         }).collect::<Vec<TokenStream2>>();
 

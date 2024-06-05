@@ -10,6 +10,7 @@ pub fn template_format<T: IntoIterator<Item = (&'static str, &'static str)>>(pat
     path
 }
 
+
 #[cfg(test)]
 mod tests {
     use super::*;

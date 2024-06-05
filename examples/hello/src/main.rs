@@ -4,17 +4,18 @@ mod shared;
 
 use std::time::Duration;
 
-use nidrs::externs::axum::{
+use nidrs::{externs::axum::{
     error_handling::HandleErrorLayer,
     extract::Request,
     http::StatusCode,
     middleware::{self, Next},
     response::Response,
     BoxError,
-};
+}, StateCtx};
 use nidrs::externs::tower::timeout::TimeoutLayer;
 pub use nidrs::AppError;
 pub use nidrs::AppResult;
+use nidrs_extern::axum::Router;
 
 #[nidrs::main]
 fn main() {
@@ -23,22 +24,51 @@ fn main() {
     let app = app.default_prefix("/api/{version}");
     let app = app.default_version("v1");
 
+    // let app = app.default_layer(
+    //     nidrs::externs::tower::ServiceBuilder::new()
+    //         .layer(HandleErrorLayer::new(|error: BoxError| async move {
+    //             if error.is::<nidrs::externs::tower::timeout::error::Elapsed>() {
+    //                 Ok(StatusCode::REQUEST_TIMEOUT)
+    //             } else {
+    //                 Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Unhandled internal error: {error}")))
+    //             }
+    //         }))
+    //         .layer(TimeoutLayer::new(Duration::from_secs(5)))
+    //         .layer(middleware::from_fn(auth)),
+    // );
+
+    let app = app.default_router_hook(|router_wrap|{
+        println!("router_wrap {:?}", (router_wrap.meta.get::<&str>("service_name"), router_wrap.meta.get::<&str>("router_name"), router_wrap.meta.get::<&str>("controller_router_path")));
+        router_wrap.router.layer(nidrs::externs::tower::ServiceBuilder::new()
+        .layer(HandleErrorLayer::new(|error: BoxError| async move {
+            if error.is::<nidrs::externs::tower::timeout::error::Elapsed>() {
+                Ok(StatusCode::REQUEST_TIMEOUT)
+            } else {
+                Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Unhandled internal error: {error}")))
+            }
+        }))
+        .layer(TimeoutLayer::new(Duration::from_secs(5)))
+        .layer(middleware::from_fn(auth)))
+    });
+
+    // let app = app.default_layer_controller("AppModule::AppController", "get_hello_world", nidrs::externs::tower::ServiceBuilder::new());
+
     let mut app = app.listen(3000);
 
     // app.router = app.router.route_layer(middleware::from_fn(auth));
     // app.router = app.router.layer(ServiceBuilder::new().layer(middleware::from_fn(auth)));
-    app.router = app.router.layer(
-        nidrs::externs::tower::ServiceBuilder::new()
-            .layer(HandleErrorLayer::new(|error: BoxError| async move {
-                if error.is::<nidrs::externs::tower::timeout::error::Elapsed>() {
-                    Ok(StatusCode::REQUEST_TIMEOUT)
-                } else {
-                    Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Unhandled internal error: {error}")))
-                }
-            }))
-            .layer(TimeoutLayer::new(Duration::from_secs(5)))
-            .layer(middleware::from_fn(auth)),
-    );
+    // app.router = app.router.layer(
+    //     nidrs::externs::tower::ServiceBuilder::new()
+    //         .layer(HandleErrorLayer::new(|error: BoxError| async move {
+    //             if error.is::<nidrs::externs::tower::timeout::error::Elapsed>() {
+    //                 Ok(StatusCode::REQUEST_TIMEOUT)
+    //             } else {
+    //                 Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Unhandled internal error: {error}")))
+    //             }
+    //         }))
+    //         .layer(TimeoutLayer::new(Duration::from_secs(5)))
+    //         .layer(middleware::from_fn(auth))
+    // );
 
     // let mut sub_router = axum::Router::new();
     // for router in app.module_ctx.routers.iter() {
