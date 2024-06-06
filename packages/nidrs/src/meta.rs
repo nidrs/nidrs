@@ -50,6 +50,7 @@ impl Meta {
     pub fn get<V: Any + Send + Sync>(&self, key: impl Into<String>) -> AppResult<&V> {
         let key: String = key.into();
         let t = self.map.get(&key).and_then(|v| v.downcast_ref::<V>());
+        println!("{:?}", t.is_none());
         let r = match t {
             Some(v) => Ok(v),
             None => match &self.extend {
@@ -69,15 +70,16 @@ impl Meta {
         }
     }
 
-    pub fn set_value<V: Any + Send + Sync>(&mut self, value: V) -> &mut Self {
+    pub fn set_data<V: Any + Send + Sync>(&mut self, value: V) -> &mut Self {
         self.set(type_key::<V>(), Box::new(value))
     }
 
-    pub fn get_value<V: Any + Send + Sync>(&self) -> AppResult<&V> {
-        self.get(&type_key::<V>())
+    pub fn get_data<V: Any + Send + Sync>(&self) -> AppResult<&V> {
+        println!("{:?}", self.map.get(&type_key::<V>()));
+        self.get(type_key::<V>())
     }
 
-    pub fn get_mut_value<V: Any + Send + Sync>(&mut self) -> AppResult<&mut V> {
+    pub fn get_mut_data<V: Any + Send + Sync>(&mut self) -> AppResult<&mut V> {
         self.get_mut(&type_key::<V>())
     }
 
@@ -86,11 +88,11 @@ impl Meta {
     }
 
     pub fn contains_value<V: Any + Send + Sync>(&self) -> bool {
-        self.contains(&type_key::<V>())
+        self.contains(type_key::<V>())
     }
 
     pub fn remove(&mut self, key: impl Into<String>) -> AppResult<Box<dyn Any + Send + Sync>> {
-        let key:String = key.into();
+        let key: String = key.into();
         let t = self.map.remove(&key);
         match t {
             Some(v) => Ok(v),
@@ -164,6 +166,17 @@ pub fn get_meta_by_type<T: ImplMeta>() -> Meta {
 mod tests {
     use super::*;
 
+    #[derive(Debug, PartialEq, Eq)]
+    enum TestEnum {
+        A,
+        B,
+    }
+
+    #[derive(Debug, PartialEq, Eq)]
+    struct TestData {
+        pub name: String,
+    }
+
     #[test]
     fn test_meta() {
         let mut meta = Meta::new();
@@ -179,6 +192,11 @@ mod tests {
         meta.set("j", vec![vec!["1", "2"], vec!["3", "4"]]);
         meta.set("k", vec![vec![1.0, 2.0], vec![3.0, 4.0]]);
         meta.set("l", vec![vec!["1".to_string(), "2".to_string()], vec!["3".to_string(), "4".to_string()]]);
+        meta.set_data(TestEnum::A);
+        meta.set_data(TestData { name: "test".to_string() });
+        println!("{:?}", meta.keys());
+        println!("{:?}", meta.get_data::<TestEnum>());
+        println!("{:?}", meta.get_data::<TestData>());
 
         assert_eq!(*meta.get::<i32>("a").unwrap(), 1);
         assert_eq!(*meta.get::<&str>("b").unwrap(), "2");
@@ -190,6 +208,8 @@ mod tests {
         assert_eq!(*meta.get::<Vec<String>>("h").unwrap(), vec!["1".to_string(), "2".to_string(), "3".to_string()]);
         assert_eq!(*meta.get::<Vec<Vec<i32>>>("i").unwrap(), vec![vec![1, 2], vec![3, 4]]);
         assert_eq!(*meta.get::<Vec<Vec<&str>>>("j").unwrap(), vec![vec!["1", "2"], vec!["3", "4"]]);
+        assert_eq!(*meta.get_data::<TestEnum>().unwrap(), TestEnum::A);
+        assert_ne!(*meta.get_data::<TestEnum>().unwrap(), TestEnum::B);
     }
 
     #[test]

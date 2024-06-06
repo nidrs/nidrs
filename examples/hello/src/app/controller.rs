@@ -12,7 +12,7 @@ use super::{dto::Status, service::AppService};
 // #[uses(LogInterceptor)]
 #[version("v1")]
 #[meta(role = "admin", auth = "true")]
-#[meta(test = true)]
+#[meta(DefaultPrefix::Disabled)]
 // #[meta(disable_default_prefix)]
 #[controller()]
 pub struct AppController {

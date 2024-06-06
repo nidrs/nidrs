@@ -18,5 +18,7 @@ pub use module::*;
 pub mod meta;
 pub use meta::*;
 
+pub mod metadata;
+
 pub use nidrs_extern as externs;
 pub use nidrs_macro as macros;
