@@ -83,7 +83,7 @@ impl<T: Module> NidrsFactory<T> {
     pub fn create(module: T) -> Self {
         let router: axum::Router<StateCtx> = axum::Router::new().route("/", axum::routing::get(|| async move { "Hello, Nidrs!" }));
         let module_ctx = ModuleCtx::new(ModuleDefaults { default_version: "v1", default_prefix: "" });
-        NidrsFactory { rt: RwLock::new(None), router, module: Some(module), module_ctx, port: 3000, router_hook: Box::new(|r| r.router)}
+        NidrsFactory { rt: RwLock::new(None), router, module: Some(module), module_ctx, port: 3000, router_hook: Box::new(|r| r.router) }
     }
 
     pub fn default_prefix(mut self, prefix: &'static str) -> Self {
@@ -340,11 +340,26 @@ impl ModuleCtx {
 }
 
 #[derive(Debug, Clone)]
-pub struct RouterWrap{
+pub struct RouterWrap {
     pub router: axum::Router<StateCtx>,
     pub meta: Arc<Meta>,
 }
 
+impl RouterWrap {
+    pub fn match_router_path(&self, matcher: &str) -> bool {
+        let glob = nidrs_extern::globset::Glob::new(matcher);
+        match glob {
+            Ok(glob) => {
+                let path = *self.meta.get::<&str>("router_path").unwrap();
+                glob.compile_matcher().is_match(path)
+            }
+            Err(err) => {
+                nidrs_macro::elog!("Error: {:?}", err);
+                false
+            }
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
