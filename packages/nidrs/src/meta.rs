@@ -42,28 +42,27 @@ impl Meta {
         self.map.capacity()
     }
 
-    pub fn set<K: Into<String>, V: Any + Send + Sync>(&mut self, key: K, value: V) -> &mut Self {
+    pub fn set<V: Any + Send + Sync>(&mut self, key: impl Into<String>, value: V) -> &mut Self {
         self.map.insert(key.into(), Box::new(value));
         self
     }
 
-    pub fn get<V: Any + Send + Sync>(&self, key: &str) -> AppResult<&V> {
-        let t = self.map.get(key).and_then(|v| v.downcast_ref::<V>());
+    pub fn get<V: Any + Send + Sync>(&self, key: impl Into<String>) -> AppResult<&V> {
+        let key: String = key.into();
+        let t = self.map.get(&key).and_then(|v| v.downcast_ref::<V>());
         let r = match t {
             Some(v) => Ok(v),
-            None => Err(AppError::MetaNotFoundError(key.to_string())),
-        };
-        match r {
-            Ok(v) => Ok(v),
-            Err(_) => match &self.extend {
+            None => match &self.extend {
                 Some(p) => p.get::<V>(key),
-                None => Err(AppError::MetaNotFoundError(key.to_string())),
+                None => Err(AppError::MetaNotFoundError(key)),
             },
-        }
+        };
+        r
     }
 
-    pub fn get_mut<V: Any + Send + Sync>(&mut self, key: &str) -> AppResult<&mut V> {
-        let t = self.map.get_mut(key).and_then(|v| v.downcast_mut::<V>());
+    pub fn get_mut<V: Any + Send + Sync>(&mut self, key: impl Into<String>) -> AppResult<&mut V> {
+        let key = key.into();
+        let t = self.map.get_mut(&key).and_then(|v| v.downcast_mut::<V>());
         match t {
             Some(v) => Ok(v),
             None => Err(AppError::MetaNotFoundError(key.to_string())),
@@ -82,19 +81,20 @@ impl Meta {
         self.get_mut(&type_key::<V>())
     }
 
-    pub fn contains(&self, key: &str) -> bool {
-        self.map.contains_key(key)
+    pub fn contains(&self, key: impl Into<String>) -> bool {
+        self.map.contains_key(&key.into())
     }
 
     pub fn contains_value<V: Any + Send + Sync>(&self) -> bool {
         self.contains(&type_key::<V>())
     }
 
-    pub fn remove(&mut self, key: &str) -> AppResult<Box<dyn Any + Send + Sync>> {
-        let t = self.map.remove(key);
+    pub fn remove(&mut self, key: impl Into<String>) -> AppResult<Box<dyn Any + Send + Sync>> {
+        let key:String = key.into();
+        let t = self.map.remove(&key);
         match t {
             Some(v) => Ok(v),
-            None => Err(AppError::MetaNotFoundError(key.to_string())),
+            None => Err(AppError::MetaNotFoundError(key)),
         }
     }
 
