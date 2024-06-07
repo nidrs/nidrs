@@ -14,9 +14,6 @@ pub enum AppError {
     #[error(transparent)]
     SerdeError(#[from] serde_json::Error),
 
-    #[error("get meta error: {0}")]
-    MetaNotFoundError(String),
-
     #[error(transparent)]
     TokioJoinError(#[from] tokio::task::JoinError),
 

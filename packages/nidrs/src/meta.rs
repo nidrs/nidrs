@@ -5,7 +5,6 @@ use std::{
     sync::Arc,
 };
 
-use crate::{AppError, AppResult};
 
 #[derive(Default)]
 pub struct Meta {
@@ -47,25 +46,25 @@ impl Meta {
         self
     }
 
-    pub fn get<V: Any + Send + Sync>(&self, key: impl Into<String>) -> AppResult<&V> {
+    pub fn get<V: Any + Send + Sync>(&self, key: impl Into<String>) -> Option<&V> {
         let key: String = key.into();
         let t = self.map.get(&key).and_then(|v| v.downcast_ref::<V>());
         let r = match t {
-            Some(v) => Ok(v),
+            Some(v) => Some(v),
             None => match &self.extend {
                 Some(p) => p.get::<V>(key),
-                None => Err(AppError::MetaNotFoundError(key)),
+                None => None,
             },
         };
         r
     }
 
-    pub fn get_mut<V: Any + Send + Sync>(&mut self, key: impl Into<String>) -> AppResult<&mut V> {
+    pub fn get_mut<V: Any + Send + Sync>(&mut self, key: impl Into<String>) -> Option<&mut V> {
         let key = key.into();
         let t = self.map.get_mut(&key).and_then(|v| v.downcast_mut::<V>());
         match t {
-            Some(v) => Ok(v),
-            None => Err(AppError::MetaNotFoundError(key.to_string())),
+            Some(v) => Some(v),
+            None => None,
         }
     }
 
@@ -73,24 +72,24 @@ impl Meta {
         self.set(type_key::<V>(), value)
     }
 
-    pub fn get_data<V: Any + Send + Sync>(&self) -> AppResult<&V> {
+    pub fn get_data<V: Any + Send + Sync>(&self) -> Option<&V> {
         self.get(type_key::<V>())
     }
 
-    pub fn get_mut_data<V: Any + Send + Sync>(&mut self) -> AppResult<&mut V> {
+    pub fn get_mut_data<V: Any + Send + Sync>(&mut self) -> Option<&mut V> {
         self.get_mut(type_key::<V>())
     }
 
-    pub fn take<V: Any + Send + Sync>(&mut self, key: impl Into<String>) -> AppResult<V> {
+    pub fn take<V: Any + Send + Sync>(&mut self, key: impl Into<String>) -> Option<V> {
         let key: String = key.into();
         let t = self.map.remove(&key).and_then(|v| v.downcast::<V>().ok());
         match t {
-            Some(v) => Ok(*v),
-            None => Err(AppError::MetaNotFoundError(key)),
+            Some(v) => Some(*v),
+            None => None
         }
     }
 
-    pub fn take_data<V: Any + Send + Sync>(&mut self) -> AppResult<V> {
+    pub fn take_data<V: Any + Send + Sync>(&mut self) -> Option<V> {
         self.take(type_key::<V>())
     }
 
@@ -102,16 +101,16 @@ impl Meta {
         self.contains(type_key::<V>())
     }
 
-    pub fn remove(&mut self, key: impl Into<String>) -> AppResult<Box<dyn Any + Send + Sync>> {
+    pub fn remove(&mut self, key: impl Into<String>) -> Option<Box<dyn Any + Send + Sync>> {
         let key: String = key.into();
         let t = self.map.remove(&key);
         match t {
-            Some(v) => Ok(v),
-            None => Err(AppError::MetaNotFoundError(key)),
+            Some(v) => Some(v),
+            None => None,
         }
     }
 
-    pub fn remove_value<V: Any + Send + Sync>(&mut self) -> AppResult<Box<dyn Any + Send + Sync>> {
+    pub fn remove_value<V: Any + Send + Sync>(&mut self) -> Option<Box<dyn Any + Send + Sync>> {
         self.remove(&type_key::<V>())
     }
 
@@ -200,8 +199,8 @@ mod tests {
         assert_eq!(meta.take_data::<TestData>().unwrap(), TestData { name: "test".to_string() });
         assert_eq!(meta.take_data::<TestEnum>().unwrap(), TestEnum::A);
 
-        assert_eq!(meta.get_data::<TestData>().is_err(), true);
-        assert_eq!(meta.get_data::<TestEnum>().is_err(), true);
+        assert_eq!(meta.get_data::<TestData>().is_none(), true);
+        assert_eq!(meta.get_data::<TestEnum>().is_none(), true);
     }
 
     #[test]
