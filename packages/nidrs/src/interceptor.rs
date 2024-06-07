@@ -6,9 +6,10 @@ use nidrs_extern::axum::{
 use nidrs_extern::serde;
 use nidrs_extern::serde::Serialize;
 use nidrs_extern::serde_json;
+use nidrs_extern::meta::Meta;
 use std::{fmt::Debug, future::Future};
 
-use crate::{AppError, AppResult, Meta, Service, StateCtx};
+use crate::{AppError, AppResult, Service, StateCtx};
 
 pub trait InterceptorService: Service {}
 
