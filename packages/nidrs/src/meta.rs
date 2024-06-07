@@ -50,7 +50,6 @@ impl Meta {
     pub fn get<V: Any + Send + Sync>(&self, key: impl Into<String>) -> AppResult<&V> {
         let key: String = key.into();
         let t = self.map.get(&key).and_then(|v| v.downcast_ref::<V>());
-        println!("{:?}", t.is_none());
         let r = match t {
             Some(v) => Ok(v),
             None => match &self.extend {
@@ -71,16 +70,15 @@ impl Meta {
     }
 
     pub fn set_data<V: Any + Send + Sync>(&mut self, value: V) -> &mut Self {
-        self.set(type_key::<V>(), Box::new(value))
+        self.set(type_key::<V>(), value)
     }
 
     pub fn get_data<V: Any + Send + Sync>(&self) -> AppResult<&V> {
-        println!("{:?}", self.map.get(&type_key::<V>()));
         self.get(type_key::<V>())
     }
 
     pub fn get_mut_data<V: Any + Send + Sync>(&mut self) -> AppResult<&mut V> {
-        self.get_mut(&type_key::<V>())
+        self.get_mut(type_key::<V>())
     }
 
     pub fn contains(&self, key: impl Into<String>) -> bool {
@@ -166,15 +164,25 @@ pub fn get_meta_by_type<T: ImplMeta>() -> Meta {
 mod tests {
     use super::*;
 
-    #[derive(Debug, PartialEq, Eq)]
-    enum TestEnum {
-        A,
-        B,
-    }
+    #[test]
+    fn test_metadata() {
+        #[derive(Debug, PartialEq, Eq)]
+        enum TestEnum {
+            A,
+            B,
+        }
 
-    #[derive(Debug, PartialEq, Eq)]
-    struct TestData {
-        pub name: String,
+        #[derive(Debug, PartialEq, Eq)]
+        struct TestData {
+            pub name: String,
+        }
+
+        let mut meta = Meta::new();
+        meta.set_data(TestEnum::A);
+        meta.set_data(TestData { name: "test".to_string() });
+        assert_eq!(*meta.get_data::<TestEnum>().unwrap(), TestEnum::A);
+        assert_ne!(*meta.get_data::<TestEnum>().unwrap(), TestEnum::B);
+        assert_eq!(*meta.get_data::<TestData>().unwrap(), TestData { name: "test".to_string() });
     }
 
     #[test]
@@ -192,11 +200,6 @@ mod tests {
         meta.set("j", vec![vec!["1", "2"], vec!["3", "4"]]);
         meta.set("k", vec![vec![1.0, 2.0], vec![3.0, 4.0]]);
         meta.set("l", vec![vec!["1".to_string(), "2".to_string()], vec!["3".to_string(), "4".to_string()]]);
-        meta.set_data(TestEnum::A);
-        meta.set_data(TestData { name: "test".to_string() });
-        println!("{:?}", meta.keys());
-        println!("{:?}", meta.get_data::<TestEnum>());
-        println!("{:?}", meta.get_data::<TestData>());
 
         assert_eq!(*meta.get::<i32>("a").unwrap(), 1);
         assert_eq!(*meta.get::<&str>("b").unwrap(), "2");
@@ -208,8 +211,6 @@ mod tests {
         assert_eq!(*meta.get::<Vec<String>>("h").unwrap(), vec!["1".to_string(), "2".to_string(), "3".to_string()]);
         assert_eq!(*meta.get::<Vec<Vec<i32>>>("i").unwrap(), vec![vec![1, 2], vec![3, 4]]);
         assert_eq!(*meta.get::<Vec<Vec<&str>>>("j").unwrap(), vec![vec!["1", "2"], vec!["3", "4"]]);
-        assert_eq!(*meta.get_data::<TestEnum>().unwrap(), TestEnum::A);
-        assert_ne!(*meta.get_data::<TestEnum>().unwrap(), TestEnum::B);
     }
 
     #[test]
