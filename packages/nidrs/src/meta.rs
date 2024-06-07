@@ -81,6 +81,19 @@ impl Meta {
         self.get_mut(type_key::<V>())
     }
 
+    pub fn take<V: Any + Send + Sync>(&mut self, key: impl Into<String>) -> AppResult<V> {
+        let key: String = key.into();
+        let t = self.map.remove(&key).and_then(|v| v.downcast::<V>().ok());
+        match t {
+            Some(v) => Ok(*v),
+            None => Err(AppError::MetaNotFoundError(key)),
+        }
+    }
+
+    pub fn take_data<V: Any + Send + Sync>(&mut self) -> AppResult<V> {
+        self.take(type_key::<V>())
+    }
+
     pub fn contains(&self, key: impl Into<String>) -> bool {
         self.map.contains_key(&key.into())
     }
@@ -183,6 +196,12 @@ mod tests {
         assert_eq!(*meta.get_data::<TestEnum>().unwrap(), TestEnum::A);
         assert_ne!(*meta.get_data::<TestEnum>().unwrap(), TestEnum::B);
         assert_eq!(*meta.get_data::<TestData>().unwrap(), TestData { name: "test".to_string() });
+
+        assert_eq!(meta.take_data::<TestData>().unwrap(), TestData { name: "test".to_string() });
+        assert_eq!(meta.take_data::<TestEnum>().unwrap(), TestEnum::A);
+
+        assert_eq!(meta.get_data::<TestData>().is_err(), true);
+        assert_eq!(meta.get_data::<TestEnum>().is_err(), true);
     }
 
     #[test]
