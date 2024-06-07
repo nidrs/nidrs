@@ -1,14 +1,13 @@
 pub mod options;
 pub mod service;
 
-use nidrs::macros::module;
-use nidrs::metadata::Global;
+use nidrs::{global, macros::module};
 use nidrs::{meta, DynamicModule, Service};
 
 pub use options::ConfOptions;
 use service::ConfService;
 
-#[meta(Global::Enabled)]
+#[global]
 #[module({
   services: [ConfService],
   exports: [ConfService],

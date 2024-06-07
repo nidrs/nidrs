@@ -12,7 +12,7 @@ pub use service::DieselService;
 
 use crate::ConnectionDriver;
 
-#[meta(Global::Enabled)]
+#[meta(Global(true))]
 #[module({
   services: [DieselService],
   exports: [DieselService],

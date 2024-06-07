@@ -1,14 +1,21 @@
 use std::{collections::HashMap, str::FromStr, sync::Mutex};
 
+use nidrs_extern::metadata::{DisableDefaultPrefix, Global};
 use once_cell::sync::Lazy;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
-use syn::{parse_str, Expr};
+use syn::{parse_str, Expr, ExprCall};
 
 use crate::MetaArgs;
 
 static MERGE_META: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(vec![]));
 static MATE_VALUE: Lazy<Mutex<HashMap<String, MetaValue>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+
+#[derive(Debug, Clone)]
+pub enum Metadata {
+    DisableDefaultPrefix(DisableDefaultPrefix),
+    Global(Global),
+}
 
 #[derive(Debug, Clone)]
 pub enum MetaValue {
@@ -18,6 +25,7 @@ pub enum MetaValue {
     Float(f64),
     Array(Vec<MetaValue>),
     Object(HashMap<String, MetaValue>),
+    Metadata(String, Box<MetaValue>),
 }
 
 impl Into<TokenStream2> for MetaValue {
@@ -72,6 +80,19 @@ fn exp_to_meta_value(exp: &Expr) -> MetaValue {
                 MetaValue::String(lit.to_token_stream().to_string())
             }
         }
+        Expr::Call(call) => {
+            if let Some(metadata) = tokens_to_metadata(call) {
+                match metadata {
+                    Metadata::DisableDefaultPrefix(disable_default_prefix) => {
+                        return MetaValue::Metadata("DisableDefaultPrefix".to_string(), Box::new(MetaValue::Bool(disable_default_prefix.0)));
+                    }
+                    Metadata::Global(global) => {
+                        return MetaValue::Metadata("Global".to_string(), Box::new(MetaValue::Bool(global.0)));
+                    }
+                }
+            }
+            MetaValue::String(exp.to_token_stream().to_string())
+        }
         Expr::Array(arr) => {
             let arr = arr.elems.iter().map(|elem| exp_to_meta_value(elem)).collect::<Vec<MetaValue>>();
             MetaValue::Array(arr)
@@ -97,7 +118,13 @@ pub fn collect(args: MetaArgs) {
             // println!("// meta {} {} {:?}", key, value, exp);
 
             let mv = exp_to_meta_value(exp.clone().as_ref());
-            MATE_VALUE.lock().unwrap().insert(key.clone(), mv);
+            // println!(" mv {} {:?}", key, mv);
+            if let MetaValue::Metadata(k, v) = mv {
+                MATE_VALUE.lock().unwrap().insert(k, *v);
+            }else{
+                MATE_VALUE.lock().unwrap().insert(key.clone(), mv);
+            }
+
 
             // print META_VALUE
             // println!("META_VALUE: {:?}", MATE_VALUE.lock().unwrap());
@@ -155,4 +182,48 @@ pub fn get_meta_value(key: &str) -> Option<MetaValue> {
 
 pub fn has_meta_value(key: &str) -> bool {
     MATE_VALUE.lock().unwrap().contains_key(key)
+}
+
+fn tokens_to_metadata(expr_call: &ExprCall)-> Option<Metadata>{
+    let p = expr_call.func.to_token_stream().to_string().replace(" ", "");
+
+    if p.contains("DisableDefaultPrefix") {
+        let args = expr_call.args.clone();
+        let args = args.iter().map(|arg| {
+            let mv: MetaValue = exp_to_meta_value(arg);
+            mv
+        }).collect::<Vec<MetaValue>>();
+        if let Some(MetaValue::Bool(b)) = args.first() {
+            return Some(Metadata::DisableDefaultPrefix(nidrs_extern::metadata::DisableDefaultPrefix(*b)));
+        }
+        return Some(Metadata::DisableDefaultPrefix(nidrs_extern::metadata::DisableDefaultPrefix(true)));
+    }
+
+    if p.contains("Global") {
+        let args = expr_call.args.clone();
+        let args = args.iter().map(|arg| {
+            let mv: MetaValue = exp_to_meta_value(arg);
+            mv
+        }).collect::<Vec<MetaValue>>();
+        if let Some(MetaValue::Bool(b)) = args.first() {
+            return Some(Metadata::Global(nidrs_extern::metadata::Global(*b)));
+        }
+        return Some(Metadata::Global(nidrs_extern::metadata::Global(true)));
+    }
+
+    return None;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+        
+    #[test]
+    fn test_trans_metadata(){
+        let call_expr = "nidrs::metadata::DisableDefaultPrefix(true)";
+        let expr_call: ExprCall = syn::parse_str(call_expr).unwrap();
+
+        println!("expr_call: {:?}", tokens_to_metadata(&expr_call));
+    }
 }

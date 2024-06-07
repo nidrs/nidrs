@@ -214,7 +214,11 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     let trigger_on_module_destroy_tokens = gen_events_trigger_tokens(module_name.clone(), "on_module_destroy");
 
     let module_meta_tokens = meta_parse::build_tokens();
-    let is_global_tokens = meta_parse::has_meta_value("METADATA:Global::Enabled");
+    let  is_global_tokens =  if let Some(MetaValue::Bool(bool)) =  meta_parse::get_meta_value("Global"){
+        bool
+    }else{
+        false
+    };
     // println!("// module {:?}", ident.to_string());
 
     CURRENT_CONTROLLER.lock().unwrap().take();
@@ -504,7 +508,7 @@ pub fn disable_default_prefix(args: TokenStream, input: TokenStream) -> TokenStr
     let raw_input = TokenStream2::from(input.clone());
 
     return TokenStream::from(quote! {
-        #[nidrs::macros::meta(nidrs::metadata::DefaultPrefix::Disabled)]
+        #[nidrs::macros::meta(nidrs::metadata::DisableDefaultPrefix(true))]
         #raw_input
     });
 }
@@ -514,7 +518,7 @@ pub fn global(args: TokenStream, input: TokenStream) -> TokenStream {
     let raw_input = TokenStream2::from(input.clone());
 
     return TokenStream::from(quote! {
-        #[nidrs::macros::meta(nidrs::metadata::Global::Enabled)]
+        #[nidrs::macros::meta(nidrs::metadata::Global(true))]
         #raw_input
     });
 }
@@ -647,7 +651,7 @@ fn gen_controller_register_tokens(module_name: String, services: Vec<TokenStream
                 #meta_tokens
 
                 let version = *meta.get::<&str>("version").unwrap_or(&ctx.defaults.default_version);
-                let disable_default_prefix = !meta.get_data::<nidrs::metadata::DefaultPrefix>().unwrap_or(&nidrs::metadata::DefaultPrefix::Enabled).as_bool();
+                let disable_default_prefix = meta.get_data::<nidrs::metadata::DisableDefaultPrefix>().unwrap_or(&nidrs::metadata::DisableDefaultPrefix(false)).as_bool();
                 let path = if disable_default_prefix { #path.to_string() } else { nidrs::template_format(&format!("{}{}", ctx.defaults.default_prefix, #path), [("version", version)]) };
                 nidrs_macro::log!("Registering router '{} {}'.", #method.to_uppercase(), path);
                 
@@ -913,7 +917,7 @@ fn gen_imports_register_tokens(module_name: String, imports: Vec<TokenStream2>) 
                             ctx.register_service(#dyn_module_name, k, v);
                         });
                         let mut dyn_module_exports = dyn_module.exports;
-                        ctx.append_exports(#dyn_module_name, dyn_module_exports, nidrs::get_meta_by_type::<#module_ident>().get_data::<nidrs::metadata::Global>().unwrap_or(&nidrs::metadata::Global::Disabled).as_bool());
+                        ctx.append_exports(#dyn_module_name, dyn_module_exports, nidrs::get_meta_by_type::<#module_ident>().get_data::<nidrs::metadata::Global>().unwrap_or(&nidrs::metadata::Global(false)).as_bool());
                         let mut ctx = #module_ident::default().init(ctx);
                     }
                 } else {

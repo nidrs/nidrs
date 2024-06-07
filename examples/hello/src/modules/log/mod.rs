@@ -1,6 +1,4 @@
-use nidrs::macros::module;
-use nidrs::meta;
-use nidrs::metadata::Global;
+use nidrs::{global, macros::module};
 
 pub mod interceptor;
 pub mod service;
@@ -8,7 +6,7 @@ pub mod service;
 use interceptor::LogInterceptor;
 use service::LogService;
 
-#[meta(Global::Enabled)]
+#[global]
 #[module({
   interceptors: [LogInterceptor],
   services: [LogService],
