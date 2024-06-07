@@ -113,9 +113,14 @@ pub fn collect(args: MetaArgs) {
                 }
                 _ => exp.to_token_stream(),
             };
-
-            quote! {
-                meta.set(#key.to_string(), #v);
+            if key.starts_with("METADATA:") {
+                quote! {
+                    meta.set_data(#v);
+                }
+            } else {
+                quote! {
+                    meta.set(#key.to_string(), #v);
+                }
             }
         })
         .collect::<Vec<TokenStream2>>();
@@ -146,4 +151,8 @@ pub fn build_tokens() -> TokenStream2 {
 
 pub fn get_meta_value(key: &str) -> Option<MetaValue> {
     MATE_VALUE.lock().unwrap().get(key).cloned()
+}
+
+pub fn has_meta_value(key: &str) -> bool {
+    MATE_VALUE.lock().unwrap().contains_key(key)
 }

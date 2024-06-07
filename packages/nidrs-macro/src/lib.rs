@@ -214,7 +214,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     let trigger_on_module_destroy_tokens = gen_events_trigger_tokens(module_name.clone(), "on_module_destroy");
 
     let module_meta_tokens = meta_parse::build_tokens();
-    let is_global_tokens: TokenStream2 = meta_parse::get_meta_value("global").unwrap_or_else(|| MetaValue::Bool(false)).into();
+    let is_global_tokens = meta_parse::has_meta_value("METADATA:Global::Enabled");
     // println!("// module {:?}", ident.to_string());
 
     CURRENT_CONTROLLER.lock().unwrap().take();
@@ -504,10 +504,21 @@ pub fn disable_default_prefix(args: TokenStream, input: TokenStream) -> TokenStr
     let raw_input = TokenStream2::from(input.clone());
 
     return TokenStream::from(quote! {
-        #[nidrs::macros::meta(disable_default_prefix = true)]
+        #[nidrs::macros::meta(nidrs::metadata::DefaultPrefix::Disabled)]
         #raw_input
     });
 }
+
+#[proc_macro_attribute]
+pub fn global(args: TokenStream, input: TokenStream) -> TokenStream {
+    let raw_input = TokenStream2::from(input.clone());
+
+    return TokenStream::from(quote! {
+        #[nidrs::macros::meta(nidrs::metadata::Global::Enabled)]
+        #raw_input
+    });
+}
+
 
 #[proc_macro_attribute]
 pub fn main(args: TokenStream, input: TokenStream) -> TokenStream {
@@ -636,7 +647,7 @@ fn gen_controller_register_tokens(module_name: String, services: Vec<TokenStream
                 #meta_tokens
 
                 let version = *meta.get::<&str>("version").unwrap_or(&ctx.defaults.default_version);
-                let disable_default_prefix = *meta.get::<bool>("disable_default_prefix").unwrap_or(&false);
+                let disable_default_prefix = !meta.get_data::<nidrs::metadata::DefaultPrefix>().unwrap_or(&nidrs::metadata::DefaultPrefix::Enabled).as_bool();
                 let path = if disable_default_prefix { #path.to_string() } else { nidrs::template_format(&format!("{}{}", ctx.defaults.default_prefix, #path), [("version", version)]) };
                 nidrs_macro::log!("Registering router '{} {}'.", #method.to_uppercase(), path);
                 
@@ -849,17 +860,7 @@ fn gen_service_register_tokens(module_name: String, services: Vec<TokenStream2>)
         .map(|service_tokens| {
             let service_name = service_tokens.to_string();
             let service_ident = service_tokens;
-            // let register_global_tokens = if let MetaValue::Bool(is_global) = is_global {
-            //     if is_global {
-            //         quote! {
-            //             ctx.register_service("Globals", #service_name, Box::new(svc.clone()));
-            //         }
-            //     } else {
-            //         quote! {}
-            //     }
-            // } else {
-            //     quote! {}
-            // };
+
             quote! {
                 let svc = std::sync::Arc::new(#service_ident::default());
                 // #register_global_tokens
@@ -894,8 +895,6 @@ fn gen_interceptor_register_tokens(module_name: String, services: Vec<TokenStrea
 
 fn gen_imports_register_tokens(module_name: String, imports: Vec<TokenStream2>) -> (TokenStream2, TokenStream2) {
     let mut import_names = vec![];
-    let is_global = meta_parse::get_meta_value("global").unwrap_or_else(|| MetaValue::Bool(false));
-    let is_global_tokens: TokenStream2 = is_global.into();
     let imports = imports
         .iter()
         .map(|import_tokens| {
@@ -914,7 +913,7 @@ fn gen_imports_register_tokens(module_name: String, imports: Vec<TokenStream2>) 
                             ctx.register_service(#dyn_module_name, k, v);
                         });
                         let mut dyn_module_exports = dyn_module.exports;
-                        ctx.append_exports(#dyn_module_name, dyn_module_exports, *nidrs::get_meta_by_type::<#module_ident>().get("global").unwrap_or(&false));
+                        ctx.append_exports(#dyn_module_name, dyn_module_exports, nidrs::get_meta_by_type::<#module_ident>().get_data::<nidrs::metadata::Global>().unwrap_or(&nidrs::metadata::Global::Disabled).as_bool());
                         let mut ctx = #module_ident::default().init(ctx);
                     }
                 } else {

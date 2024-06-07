@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 
-use nidrs::externs::axum::{extract::Query, response::AppendHeaders, Json};
 use nidrs::externs::serde_json;
 use nidrs::macros::{controller, get, meta, post};
+use nidrs::{
+    externs::axum::{extract::Query, response::AppendHeaders, Json},
+    metadata::DefaultPrefix,
+};
 use nidrs::{version, Inject, Meta};
 
 use crate::AppResult;
@@ -13,7 +16,6 @@ use super::{dto::Status, service::AppService};
 #[version("v1")]
 #[meta(role = "admin", auth = "true")]
 #[meta(DefaultPrefix::Disabled)]
-// #[meta(disable_default_prefix)]
 #[controller()]
 pub struct AppController {
     app_service: Inject<AppService>,
@@ -22,6 +24,7 @@ pub struct AppController {
 impl AppController {
     #[meta(arr = ["user"])]
     // #[uses(LogInterceptor)]
+    #[meta(DefaultPrefix::Enabled)]
     #[version("v2")]
     #[get("/hello")]
     pub async fn get_hello_world(
@@ -30,7 +33,9 @@ impl AppController {
         Query(q): Query<HashMap<String, String>>,
     ) -> AppResult<(AppendHeaders<[(String, String); 2]>, Status)> {
         println!("Query {:?}", q);
+        println!("Meta Keys {:?}", meta.keys());
         println!("Meta {:?}", meta.get::<&str>("role"));
+        println!("Meta {:?}", meta.get_data::<DefaultPrefix>());
         // fn_test()?;
 
         Ok((

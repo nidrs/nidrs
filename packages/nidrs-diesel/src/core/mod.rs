@@ -1,3 +1,4 @@
+use nidrs::metadata::Global;
 use nidrs::{meta, DynamicModule, Service};
 use nidrs_macro::module;
 
@@ -11,7 +12,7 @@ pub use service::DieselService;
 
 use crate::ConnectionDriver;
 
-#[meta(global)]
+#[meta(Global::Enabled)]
 #[module({
   services: [DieselService],
   exports: [DieselService],

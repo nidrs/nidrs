@@ -39,10 +39,28 @@ impl Parse for MetaArgs {
                     kv.insert(k, v);
                 }
             } else if let syn::Expr::Path(path) = item {
-                let bool_true = syn::Lit::Bool(LitBool::new(true, path.span().clone()));
-                let bool_exp = syn::ExprLit { attrs: Vec::new(), lit: bool_true };
-                kv.insert(path.path.segments.first().unwrap().ident.to_string(), Box::new(syn::Expr::Lit(bool_exp)));
+                let mut p = path.path.segments.iter().map(|s| s.ident.to_string()).collect::<Vec<String>>().join("::");
+                if p.contains("Global::") {
+                    if p.contains("Global::Enabled") {
+                        p = "Global::Enabled".to_string();
+                    } else {
+                        p = "Global::Disabled".to_string();
+                    }
+                } else if p.contains("DefaultPrefix::") {
+                    if p.contains("DefaultPrefix::Disabled") {
+                        p = "DefaultPrefix::Disabled".to_string();
+                    } else {
+                        p = "DefaultPrefix::Enabled".to_string();
+                    }
+                }
+                let key = format!("{}:{}", "METADATA", p).replace(" ", "");
+                kv.insert(key, Box::new(path.clone().into()));
+            } else if let syn::Expr::Call(call) = item {
+                let mut p = call.func.to_token_stream().to_string();
+                let key = format!("{}:{}", "METADATA", p).replace(" ", "");
+                kv.insert(key, Box::new(call.clone().into()));
             } else {
+                println!("metaArgs {:?}", item);
                 panic!("Invalid argument");
             }
         });
