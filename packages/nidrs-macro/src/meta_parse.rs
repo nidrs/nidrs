@@ -10,6 +10,7 @@ use crate::MetaArgs;
 
 static MERGE_META: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(vec![]));
 static MATE_VALUE: Lazy<Mutex<HashMap<String, MetaValue>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+static MATE_STACK: Lazy<Mutex<Vec<HashMap<String, MetaValue>>>> = Lazy::new(|| Mutex::new(Vec::new()));
 
 #[derive(Debug, Clone)]
 pub enum Metadata {
@@ -59,9 +60,19 @@ impl Into<TokenStream2> for MetaValue {
     }
 }
 
-pub fn clear() {
+pub fn stash() {
+    MATE_STACK.lock().unwrap().push(MATE_VALUE.lock().unwrap().clone());
+    clear_meta();
+}
+
+pub fn clear_meta() {
     MERGE_META.lock().unwrap().clear();
     MATE_VALUE.lock().unwrap().clear();
+}
+
+pub fn clear() {
+    clear_meta();
+    MATE_STACK.lock().unwrap().clear();
 }
 
 fn exp_to_meta_value(exp: &Expr) -> MetaValue {
@@ -176,7 +187,20 @@ pub fn build_tokens() -> TokenStream2 {
 }
 
 pub fn get_meta_value(key: &str) -> Option<MetaValue> {
-    MATE_VALUE.lock().unwrap().get(key).cloned()
+    let v = MATE_VALUE.lock().unwrap().get(key).cloned();
+    if let Some(v) = v {
+        return Some(v);
+    }
+    let mut stack = MATE_STACK.lock().unwrap();
+    // println!("stack.len() {:?}", stack.len());
+    if stack.len() > 0 {
+        for i in (0..stack.len()).rev() {
+            if stack[i].contains_key(key) {
+                return stack[i].get(key).cloned();
+            }
+        }
+    }
+    None
 }
 
 pub fn has_meta_value(key: &str) -> bool {

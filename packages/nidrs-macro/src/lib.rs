@@ -153,9 +153,11 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
 pub fn __controller_derive(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemStruct);
 
-    println!("// controller_collect {:?}", func.ident.to_string());
+    println!("// controller_derive {:?}", func.ident.to_string());
 
     let inject_tokens: TokenStream2 = gen_service_inject_tokens("ControllerService", &func);
+
+    meta_parse::stash();
 
     TokenStream::from(quote! {
         #[derive(Default)]
@@ -163,6 +165,11 @@ pub fn __controller_derive(args: TokenStream, input: TokenStream) -> TokenStream
 
         #inject_tokens
     })
+}
+
+#[proc_macro_attribute]
+pub fn __route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
+    return route_derive(args, input);
 }
 
 #[proc_macro_attribute]
@@ -212,7 +219,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let module_meta_tokens = meta_parse::build_tokens();
     let is_global_tokens = if let Some(MetaValue::Bool(bool)) = meta_parse::get_meta_value("Global") { bool } else { false };
-    // println!("// module {:?}", ident.to_string());
+    println!("// module {:?}", ident.to_string());
 
     CURRENT_CONTROLLER.lock().unwrap().take();
     ROUTES.lock().unwrap().clear();
@@ -288,7 +295,7 @@ pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
     let call_site_str = binding.to_string_lossy();
     let call_site_line = call_site.start().line();
 
-    println!("// injectable {}", func.ident.to_string());
+    // println!("// injectable {}", func.ident.to_string());
     import_path::push_path(&func.ident.to_string());
 
     let inject_tokens = gen_service_inject_tokens("Service", &func);
@@ -593,19 +600,28 @@ fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
     let controller = binding.get_mut(&CURRENT_CONTROLLER.lock().unwrap().as_ref().unwrap().name).unwrap();
     controller.insert(name.clone(), route);
 
-    let meta_tokens = meta_parse::build_tokens();
+    TokenStream::from(quote! {
+        #[nidrs::meta(router_name = stringify!(#ident))]
+        #[nidrs::meta(router_method = #method)]
+        #[nidrs::meta(router_path = #path)]
+        #[nidrs::__route_derive]
+        #func
+    })
+}
 
-    // println!(meta_parse::get_meta_value())
+fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
+    let func = parse_macro_input!(input as ItemFn);
+    let meta_tokens: TokenStream2 = meta_parse::build_tokens();
+    meta_parse::clear_meta();
+    let meta_fn_ident = syn::Ident::new(format!("__meta_{}", func.sig.ident.to_string()).as_str(), Span::call_site().into());
 
-    let meta_ident = syn::Ident::new(format!("__meta_{}", name).as_str(), Span::call_site().into());
+    println!("// route_derive {:?}", func.sig.ident.to_string());
+
     TokenStream::from(quote! {
         #func
 
-        pub fn #meta_ident(&self)->nidrs::Meta{
+        pub fn #meta_fn_ident(&self)->nidrs::Meta{
             let mut meta = nidrs::Meta::new();
-            meta.set("router_name".to_string(), stringify!(#ident));
-            meta.set("router_method".to_string(), #method);
-            meta.set("router_path".to_string(), #path);
             #meta_tokens
             meta
         }
