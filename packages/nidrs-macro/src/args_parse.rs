@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
 use syn::{
-    parse::{Parse, ParseStream}, punctuated::Punctuated, spanned::Spanned, Expr, ExprCall, FieldValue, Ident, ItemFn, ItemStruct, LitBool, Member, Token
+    parse::{Parse, ParseStream},
+    punctuated::Punctuated,
+    spanned::Spanned,
+    Expr, ExprCall, FieldValue, Ident, ItemFn, ItemStruct, LitBool, Member, Token,
 };
 use syn_serde::json;
 
@@ -65,7 +68,6 @@ impl Parse for MetaArgs {
         Ok(MetaArgs { kv })
     }
 }
-
 
 #[derive(Debug, Clone)]
 pub struct ModuleArgs {
@@ -188,7 +190,6 @@ impl Parse for InterceptorArgs {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -213,5 +214,3 @@ mod tests {
         assert!(taste.services.len() == 2);
     }
 }
-
-

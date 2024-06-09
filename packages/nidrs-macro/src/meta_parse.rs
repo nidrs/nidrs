@@ -121,10 +121,9 @@ pub fn collect(args: MetaArgs) {
             // println!(" mv {} {:?}", key, mv);
             if let MetaValue::Metadata(k, v) = mv {
                 MATE_VALUE.lock().unwrap().insert(k, *v);
-            }else{
+            } else {
                 MATE_VALUE.lock().unwrap().insert(key.clone(), mv);
             }
-
 
             // print META_VALUE
             // println!("META_VALUE: {:?}", MATE_VALUE.lock().unwrap());
@@ -184,15 +183,18 @@ pub fn has_meta_value(key: &str) -> bool {
     MATE_VALUE.lock().unwrap().contains_key(key)
 }
 
-fn tokens_to_metadata(expr_call: &ExprCall)-> Option<Metadata>{
+fn tokens_to_metadata(expr_call: &ExprCall) -> Option<Metadata> {
     let p = expr_call.func.to_token_stream().to_string().replace(" ", "");
 
     if p.contains("DisableDefaultPrefix") {
         let args = expr_call.args.clone();
-        let args = args.iter().map(|arg| {
-            let mv: MetaValue = exp_to_meta_value(arg);
-            mv
-        }).collect::<Vec<MetaValue>>();
+        let args = args
+            .iter()
+            .map(|arg| {
+                let mv: MetaValue = exp_to_meta_value(arg);
+                mv
+            })
+            .collect::<Vec<MetaValue>>();
         if let Some(MetaValue::Bool(b)) = args.first() {
             return Some(Metadata::DisableDefaultPrefix(nidrs_extern::metadata::DisableDefaultPrefix(*b)));
         }
@@ -201,10 +203,13 @@ fn tokens_to_metadata(expr_call: &ExprCall)-> Option<Metadata>{
 
     if p.contains("Global") {
         let args = expr_call.args.clone();
-        let args = args.iter().map(|arg| {
-            let mv: MetaValue = exp_to_meta_value(arg);
-            mv
-        }).collect::<Vec<MetaValue>>();
+        let args = args
+            .iter()
+            .map(|arg| {
+                let mv: MetaValue = exp_to_meta_value(arg);
+                mv
+            })
+            .collect::<Vec<MetaValue>>();
         if let Some(MetaValue::Bool(b)) = args.first() {
             return Some(Metadata::Global(nidrs_extern::metadata::Global(*b)));
         }
@@ -218,9 +223,8 @@ fn tokens_to_metadata(expr_call: &ExprCall)-> Option<Metadata>{
 mod tests {
     use super::*;
 
-        
     #[test]
-    fn test_trans_metadata(){
+    fn test_trans_metadata() {
         let call_expr = "nidrs::metadata::DisableDefaultPrefix(true)";
         let expr_call: ExprCall = syn::parse_str(call_expr).unwrap();
 

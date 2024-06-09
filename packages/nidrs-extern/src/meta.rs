@@ -5,7 +5,6 @@ use std::{
     sync::Arc,
 };
 
-
 #[derive(Default)]
 pub struct Meta {
     map: HashMap<String, Box<dyn Any + Send + Sync>>,
@@ -83,10 +82,7 @@ impl Meta {
     pub fn take<V: Any + Send + Sync>(&mut self, key: impl Into<String>) -> Option<V> {
         let key: String = key.into();
         let t = self.map.remove(&key).and_then(|v| v.downcast::<V>().ok());
-        match t {
-            Some(v) => Some(*v),
-            None => None
-        }
+        t.map(|v| *v)
     }
 
     pub fn take_data<V: Any + Send + Sync>(&mut self) -> Option<V> {
@@ -187,8 +183,8 @@ mod tests {
         #[derive(Debug, PartialEq, Eq)]
         struct TestData {
             pub name: String,
-            }
-            
+        }
+
         #[derive(Debug, PartialEq, Eq)]
         struct TupleData(i32, String);
 
@@ -206,9 +202,9 @@ mod tests {
         assert_eq!(meta.take_data::<TestEnum>().unwrap(), TestEnum::A);
         assert_eq!(meta.take_data::<TupleData>().unwrap(), TupleData(1, "tuple".to_string()));
 
-        assert_eq!(meta.get_data::<TestData>().is_none(), true);
-        assert_eq!(meta.get_data::<TestEnum>().is_none(), true);
-        assert_eq!(meta.get_data::<TupleData>().is_none(), true);
+        assert!(meta.get_data::<TestData>().is_none());
+        assert!(meta.get_data::<TestEnum>().is_none());
+        assert!(meta.get_data::<TupleData>().is_none());
     }
 
     #[test]

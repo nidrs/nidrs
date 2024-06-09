@@ -2,7 +2,7 @@ pub mod options;
 pub mod service;
 
 use nidrs::{global, macros::module};
-use nidrs::{meta, DynamicModule, Service};
+use nidrs::{DynamicModule, Service};
 
 pub use options::ConfOptions;
 use service::ConfService;

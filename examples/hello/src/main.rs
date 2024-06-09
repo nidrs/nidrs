@@ -4,21 +4,17 @@ mod shared;
 
 use std::time::Duration;
 
+use nidrs::externs::axum::{
+    error_handling::HandleErrorLayer,
+    extract::Request,
+    http::StatusCode,
+    middleware::{self, Next},
+    response::Response,
+    BoxError,
+};
 use nidrs::externs::tower::timeout::TimeoutLayer;
 pub use nidrs::AppError;
 pub use nidrs::AppResult;
-use nidrs::{
-    externs::axum::{
-        error_handling::HandleErrorLayer,
-        extract::Request,
-        http::StatusCode,
-        middleware::{self, Next},
-        response::Response,
-        BoxError,
-    },
-    StateCtx,
-};
-use nidrs_extern::axum::Router;
 
 #[nidrs::main]
 fn main() {

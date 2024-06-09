@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use nidrs::externs::axum::extract::Query;
-use nidrs::{AppResult, Inject};
 use nidrs::macros::{controller, get};
+use nidrs::{AppResult, Inject};
 
 use crate::modules::log::service::LogService;
 
