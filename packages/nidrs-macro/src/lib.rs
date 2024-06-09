@@ -144,7 +144,6 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
 
     TokenStream::from(quote! {
         #[nidrs::macros::meta(controller_router_path = #path)]
-        #[derive(Default)]
         #[nidrs::macros::__controller_derive]
         #func
     })
@@ -159,6 +158,7 @@ pub fn __controller_derive(args: TokenStream, input: TokenStream) -> TokenStream
     let inject_tokens: TokenStream2 = gen_service_inject_tokens("ControllerService", &func);
 
     TokenStream::from(quote! {
+        #[derive(Default)]
         #func
 
         #inject_tokens
@@ -550,7 +550,7 @@ fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
         };
         path
     };
-    println!("// route {} {} {:?}", method, path, meta_parse::get_meta_value("controller_router_path"));
+    println!("// route {} {} {:?} {:?}", method, path, meta_parse::get_meta_value("controller_router_path"), meta_parse::get_meta_value("version"));
     let func = parse_macro_input!(input as ItemFn);
 
     let name = func.sig.ident.to_string();
