@@ -103,3 +103,12 @@ impl RouterName {
         self.0
     }
 }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RouterFullPath(pub String);
+
+impl RouterFullPath {
+    pub fn value(&self) -> &String {
+        &self.0
+    }
+}

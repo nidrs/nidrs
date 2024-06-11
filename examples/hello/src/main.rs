@@ -28,6 +28,7 @@ fn main() {
             "router_wrap {:?}",
             (
                 router_wrap.meta.get_data::<nidrs::metadata::ServiceName>(),
+                router_wrap.meta.get_data::<nidrs::metadata::RouterFullPath>(),
                 router_wrap.meta.get::<&str>("router_name"),
                 router_wrap.meta.get::<&str>("controller_router_path"),
                 router_wrap.meta.get::<&str>("router_path")

@@ -9,25 +9,25 @@
 // controller AppController []
 // meta "AppController" ["METADATA:nidrs::metadata::ServiceType::Controller"]
 // meta "AppController" ["METADATA:nidrs::metadata::ServiceName"]
-// meta "AppController" ["controller_router_path"]
+// meta "AppController" ["METADATA:nidrs::metadata::ControllerPath"]
 // service_derive "AppController"
 // meta "get_hello_world" ["arr"]
 // meta "get_hello_world" ["METADATA:nidrs::metadata::DisableDefaultPrefix"]
 // meta "get_hello_world" ["version"]
-// route get /hello Some(String("")) Some(String("v2"))
-// meta "get_hello_world" ["router_name"]
-// meta "get_hello_world" ["router_method"]
-// meta "get_hello_world" ["router_path"]
+// route get /hello None Some(String("v2"))
+// meta "get_hello_world" ["METADATA:nidrs::metadata::RouterName"]
+// meta "get_hello_world" ["METADATA:nidrs::metadata::RouterMethod"]
+// meta "get_hello_world" ["METADATA:nidrs::metadata::RouterPath"]
 // route_derive "get_hello_world"
-// route get /hello2 Some(String("")) Some(String("v1"))
-// meta "get_hello_world2" ["router_name"]
-// meta "get_hello_world2" ["router_method"]
-// meta "get_hello_world2" ["router_path"]
+// route get /hello2 None Some(String("v1"))
+// meta "get_hello_world2" ["METADATA:nidrs::metadata::RouterName"]
+// meta "get_hello_world2" ["METADATA:nidrs::metadata::RouterMethod"]
+// meta "get_hello_world2" ["METADATA:nidrs::metadata::RouterPath"]
 // route_derive "get_hello_world2"
-// route post /hello Some(String("")) Some(String("v1"))
-// meta "post_hello_world" ["router_name"]
-// meta "post_hello_world" ["router_method"]
-// meta "post_hello_world" ["router_path"]
+// route post /hello None Some(String("v1"))
+// meta "post_hello_world" ["METADATA:nidrs::metadata::RouterName"]
+// meta "post_hello_world" ["METADATA:nidrs::metadata::RouterMethod"]
+// meta "post_hello_world" ["METADATA:nidrs::metadata::RouterPath"]
 // route_derive "post_hello_world"
 // meta "AppService" ["METADATA:nidrs::metadata::ServiceType::Service"]
 // meta "AppService" ["METADATA:nidrs::metadata::ServiceName"]
@@ -52,12 +52,12 @@
 // controller UserController []
 // meta "UserController" ["METADATA:nidrs::metadata::ServiceType::Controller"]
 // meta "UserController" ["METADATA:nidrs::metadata::ServiceName"]
-// meta "UserController" ["controller_router_path"]
+// meta "UserController" ["METADATA:nidrs::metadata::ControllerPath"]
 // service_derive "UserController"
-// route get /hello Some(String("/user")) None
-// meta "get_hello_world" ["router_name"]
-// meta "get_hello_world" ["router_method"]
-// meta "get_hello_world" ["router_path"]
+// route get /hello None None
+// meta "get_hello_world" ["METADATA:nidrs::metadata::RouterName"]
+// meta "get_hello_world" ["METADATA:nidrs::metadata::RouterMethod"]
+// meta "get_hello_world" ["METADATA:nidrs::metadata::RouterPath"]
 // route_derive "get_hello_world"
 // meta "UserService" ["METADATA:nidrs::metadata::ServiceType::Service"]
 // meta "UserService" ["METADATA:nidrs::metadata::ServiceName"]
@@ -112,7 +112,7 @@ mod app {
                 meta.set_data(nidrs::metadata::DisableDefaultPrefix(true));
                 meta.set_data(nidrs::metadata::ServiceType::Controller);
                 meta.set_data(nidrs::metadata::ServiceName("AppController"));
-                meta.set("controller_router_path".to_string(), "");
+                meta.set_data(nidrs::metadata::ControllerPath(""));
                 meta
             }
         }
@@ -157,9 +157,9 @@ mod app {
                 meta.set("arr".to_string(), Vec::from(["user"]));
                 meta.set_data(nidrs::metadata::DisableDefaultPrefix(false));
                 meta.set("version".to_string(), "v2");
-                meta.set("router_name".to_string(), "get_hello_world");
-                meta.set("router_method".to_string(), "get");
-                meta.set("router_path".to_string(), "/hello");
+                meta.set_data(nidrs::metadata::RouterName("get_hello_world"));
+                meta.set_data(nidrs::metadata::RouterMethod("get"));
+                meta.set_data(nidrs::metadata::RouterPath("/hello"));
                 meta
             }
             pub async fn get_hello_world2(
@@ -173,9 +173,9 @@ mod app {
             }
             pub fn __meta_get_hello_world2(&self) -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
-                meta.set("router_name".to_string(), "get_hello_world2");
-                meta.set("router_method".to_string(), "get");
-                meta.set("router_path".to_string(), "/hello2");
+                meta.set_data(nidrs::metadata::RouterName("get_hello_world2"));
+                meta.set_data(nidrs::metadata::RouterMethod("get"));
+                meta.set_data(nidrs::metadata::RouterPath("/hello2"));
                 meta
             }
             pub async fn post_hello_world(
@@ -193,9 +193,9 @@ mod app {
             }
             pub fn __meta_post_hello_world(&self) -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
-                meta.set("router_name".to_string(), "post_hello_world");
-                meta.set("router_method".to_string(), "post");
-                meta.set("router_path".to_string(), "/hello");
+                meta.set_data(nidrs::metadata::RouterName("post_hello_world"));
+                meta.set_data(nidrs::metadata::RouterMethod("post"));
+                meta.set_data(nidrs::metadata::RouterPath("/hello"));
                 meta
             }
         }
@@ -610,165 +610,8 @@ mod app {
                         crate::import::LogInterceptor,
                     >("AppModule", "LogInterceptor");
                 let mut meta = nidrs::get_meta(t_controller.clone());
-                let t_meta = t_controller.__meta_get_hello_world();
-                meta.merge(t_meta);
-                let meta = std::sync::Arc::new(meta);
-                let version = *meta
-                    .get::<&str>("version")
-                    .unwrap_or(&ctx.defaults.default_version);
-                let disable_default_prefix = meta
-                    .get_data::<nidrs::metadata::DisableDefaultPrefix>()
-                    .unwrap_or(&nidrs::metadata::DisableDefaultPrefix(false))
-                    .value();
-                let path = if disable_default_prefix {
-                    "/hello".to_string()
-                } else {
-                    nidrs::template_format(
-                        &{
-                            let res = ::alloc::fmt::format(
-                                format_args!(
-                                    "{0}{1}",
-                                    ctx.defaults.default_prefix,
-                                    "/hello",
-                                ),
-                            );
-                            res
-                        },
-                        [("version", version)],
-                    )
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "Registering router \'{0} {1}\'.\n",
-                            "get".to_uppercase(),
-                            path,
-                        ),
-                    );
-                };
-                let route_meta = meta.clone();
-                let router = nidrs::externs::axum::Router::new()
-                    .route(
-                        &path,
-                        nidrs::externs::axum::routing::get(|parts, p1| async move {
-                            let mut t_meta = nidrs::Meta::new();
-                            t_meta.extend(meta);
-                            let t_body = nidrs_extern::axum::body::Body::empty();
-                            let ctx = InterCtx {
-                                meta: t_meta,
-                                parts,
-                                body: t_body,
-                            };
-                            let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
-                                let p0 = ctx.meta;
-                                t_controller.get_hello_world(p0, p1).await
-                            };
-                            t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
-                        }),
-                    );
-                ctx.routers
-                    .push(nidrs::RouterWrap {
-                        router: router,
-                        meta: route_meta.clone(),
-                    });
-                let t_controller = ctx
-                    .get_controller::<
-                        controller::AppController,
-                    >("AppModule", "AppController");
-                let t_interceptor_0 = ctx
-                    .get_interceptor::<
-                        crate::import::LogInterceptor,
-                    >("AppModule", "LogInterceptor");
-                let mut meta = nidrs::get_meta(t_controller.clone());
-                let t_meta = t_controller.__meta_post_hello_world();
-                meta.merge(t_meta);
-                let meta = std::sync::Arc::new(meta);
-                let version = *meta
-                    .get::<&str>("version")
-                    .unwrap_or(&ctx.defaults.default_version);
-                let disable_default_prefix = meta
-                    .get_data::<nidrs::metadata::DisableDefaultPrefix>()
-                    .unwrap_or(&nidrs::metadata::DisableDefaultPrefix(false))
-                    .value();
-                let path = if disable_default_prefix {
-                    "/hello".to_string()
-                } else {
-                    nidrs::template_format(
-                        &{
-                            let res = ::alloc::fmt::format(
-                                format_args!(
-                                    "{0}{1}",
-                                    ctx.defaults.default_prefix,
-                                    "/hello",
-                                ),
-                            );
-                            res
-                        },
-                        [("version", version)],
-                    )
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "{0} ",
-                            nidrs_extern::colored::Colorize::green("[nidrs]"),
-                        ),
-                    );
-                };
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "Registering router \'{0} {1}\'.\n",
-                            "post".to_uppercase(),
-                            path,
-                        ),
-                    );
-                };
-                let route_meta = meta.clone();
-                let router = nidrs::externs::axum::Router::new()
-                    .route(
-                        &path,
-                        nidrs::externs::axum::routing::post(|parts, p0, p1| async move {
-                            let mut t_meta = nidrs::Meta::new();
-                            t_meta.extend(meta);
-                            let t_body = p1;
-                            let ctx = InterCtx {
-                                meta: t_meta,
-                                parts,
-                                body: t_body,
-                            };
-                            let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
-                                let t_body = ctx.body;
-                                t_controller.post_hello_world(p0, t_body).await
-                            };
-                            t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
-                        }),
-                    );
-                ctx.routers
-                    .push(nidrs::RouterWrap {
-                        router: router,
-                        meta: route_meta.clone(),
-                    });
-                let t_controller = ctx
-                    .get_controller::<
-                        controller::AppController,
-                    >("AppModule", "AppController");
-                let t_interceptor_0 = ctx
-                    .get_interceptor::<
-                        crate::import::LogInterceptor,
-                    >("AppModule", "LogInterceptor");
-                let mut meta = nidrs::get_meta(t_controller.clone());
                 let t_meta = t_controller.__meta_get_hello_world2();
                 meta.merge(t_meta);
-                let meta = std::sync::Arc::new(meta);
                 let version = *meta
                     .get::<&str>("version")
                     .unwrap_or(&ctx.defaults.default_version);
@@ -810,6 +653,8 @@ mod app {
                         ),
                     );
                 };
+                meta.set_data(nidrs::metadata::RouterFullPath(path.clone()));
+                let meta = std::sync::Arc::new(meta);
                 let route_meta = meta.clone();
                 let router = nidrs::externs::axum::Router::new()
                     .route(
@@ -825,6 +670,164 @@ mod app {
                             };
                             let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
                                 t_controller.get_hello_world2(p0).await
+                            };
+                            t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
+                        }),
+                    );
+                ctx.routers
+                    .push(nidrs::RouterWrap {
+                        router: router,
+                        meta: route_meta.clone(),
+                    });
+                let t_controller = ctx
+                    .get_controller::<
+                        controller::AppController,
+                    >("AppModule", "AppController");
+                let t_interceptor_0 = ctx
+                    .get_interceptor::<
+                        crate::import::LogInterceptor,
+                    >("AppModule", "LogInterceptor");
+                let mut meta = nidrs::get_meta(t_controller.clone());
+                let t_meta = t_controller.__meta_post_hello_world();
+                meta.merge(t_meta);
+                let version = *meta
+                    .get::<&str>("version")
+                    .unwrap_or(&ctx.defaults.default_version);
+                let disable_default_prefix = meta
+                    .get_data::<nidrs::metadata::DisableDefaultPrefix>()
+                    .unwrap_or(&nidrs::metadata::DisableDefaultPrefix(false))
+                    .value();
+                let path = if disable_default_prefix {
+                    "/hello".to_string()
+                } else {
+                    nidrs::template_format(
+                        &{
+                            let res = ::alloc::fmt::format(
+                                format_args!(
+                                    "{0}{1}",
+                                    ctx.defaults.default_prefix,
+                                    "/hello",
+                                ),
+                            );
+                            res
+                        },
+                        [("version", version)],
+                    )
+                };
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
+                };
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "Registering router \'{0} {1}\'.\n",
+                            "post".to_uppercase(),
+                            path,
+                        ),
+                    );
+                };
+                meta.set_data(nidrs::metadata::RouterFullPath(path.clone()));
+                let meta = std::sync::Arc::new(meta);
+                let route_meta = meta.clone();
+                let router = nidrs::externs::axum::Router::new()
+                    .route(
+                        &path,
+                        nidrs::externs::axum::routing::post(|parts, p0, p1| async move {
+                            let mut t_meta = nidrs::Meta::new();
+                            t_meta.extend(meta);
+                            let t_body = p1;
+                            let ctx = InterCtx {
+                                meta: t_meta,
+                                parts,
+                                body: t_body,
+                            };
+                            let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
+                                let t_body = ctx.body;
+                                t_controller.post_hello_world(p0, t_body).await
+                            };
+                            t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
+                        }),
+                    );
+                ctx.routers
+                    .push(nidrs::RouterWrap {
+                        router: router,
+                        meta: route_meta.clone(),
+                    });
+                let t_controller = ctx
+                    .get_controller::<
+                        controller::AppController,
+                    >("AppModule", "AppController");
+                let t_interceptor_0 = ctx
+                    .get_interceptor::<
+                        crate::import::LogInterceptor,
+                    >("AppModule", "LogInterceptor");
+                let mut meta = nidrs::get_meta(t_controller.clone());
+                let t_meta = t_controller.__meta_get_hello_world();
+                meta.merge(t_meta);
+                let version = *meta
+                    .get::<&str>("version")
+                    .unwrap_or(&ctx.defaults.default_version);
+                let disable_default_prefix = meta
+                    .get_data::<nidrs::metadata::DisableDefaultPrefix>()
+                    .unwrap_or(&nidrs::metadata::DisableDefaultPrefix(false))
+                    .value();
+                let path = if disable_default_prefix {
+                    "/hello".to_string()
+                } else {
+                    nidrs::template_format(
+                        &{
+                            let res = ::alloc::fmt::format(
+                                format_args!(
+                                    "{0}{1}",
+                                    ctx.defaults.default_prefix,
+                                    "/hello",
+                                ),
+                            );
+                            res
+                        },
+                        [("version", version)],
+                    )
+                };
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
+                };
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "Registering router \'{0} {1}\'.\n",
+                            "get".to_uppercase(),
+                            path,
+                        ),
+                    );
+                };
+                meta.set_data(nidrs::metadata::RouterFullPath(path.clone()));
+                let meta = std::sync::Arc::new(meta);
+                let route_meta = meta.clone();
+                let router = nidrs::externs::axum::Router::new()
+                    .route(
+                        &path,
+                        nidrs::externs::axum::routing::get(|parts, p1| async move {
+                            let mut t_meta = nidrs::Meta::new();
+                            t_meta.extend(meta);
+                            let t_body = nidrs_extern::axum::body::Body::empty();
+                            let ctx = InterCtx {
+                                meta: t_meta,
+                                parts,
+                                body: t_body,
+                            };
+                            let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
+                                let p0 = ctx.meta;
+                                t_controller.get_hello_world(p0, p1).await
                             };
                             t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
                         }),
@@ -1460,7 +1463,7 @@ mod modules {
                     let mut meta = nidrs::Meta::new();
                     meta.set_data(nidrs::metadata::ServiceType::Controller);
                     meta.set_data(nidrs::metadata::ServiceName("UserController"));
-                    meta.set("controller_router_path".to_string(), "/user");
+                    meta.set_data(nidrs::metadata::ControllerPath("/user"));
                     meta
                 }
             }
@@ -1477,9 +1480,9 @@ mod modules {
                 }
                 pub fn __meta_get_hello_world(&self) -> nidrs::Meta {
                     let mut meta = nidrs::Meta::new();
-                    meta.set("router_name".to_string(), "get_hello_world");
-                    meta.set("router_method".to_string(), "get");
-                    meta.set("router_path".to_string(), "/hello");
+                    meta.set_data(nidrs::metadata::RouterName("get_hello_world"));
+                    meta.set_data(nidrs::metadata::RouterMethod("get"));
+                    meta.set_data(nidrs::metadata::RouterPath("/hello"));
                     meta
                 }
             }
@@ -1606,7 +1609,6 @@ mod modules {
                     let mut meta = nidrs::get_meta(t_controller.clone());
                     let t_meta = t_controller.__meta_get_hello_world();
                     meta.merge(t_meta);
-                    let meta = std::sync::Arc::new(meta);
                     let version = *meta
                         .get::<&str>("version")
                         .unwrap_or(&ctx.defaults.default_version);
@@ -1648,6 +1650,8 @@ mod modules {
                             ),
                         );
                     };
+                    meta.set_data(nidrs::metadata::RouterFullPath(path.clone()));
+                    let meta = std::sync::Arc::new(meta);
                     let route_meta = meta.clone();
                     let router = nidrs::externs::axum::Router::new()
                         .route(
@@ -1790,6 +1794,9 @@ fn main() {
                         "router_wrap {0:?}\n",
                         (
                             router_wrap.meta.get_data::<nidrs::metadata::ServiceName>(),
+                            router_wrap
+                                .meta
+                                .get_data::<nidrs::metadata::RouterFullPath>(),
                             router_wrap.meta.get::<&str>("router_name"),
                             router_wrap.meta.get::<&str>("controller_router_path"),
                             router_wrap.meta.get::<&str>("router_path"),
@@ -1835,13 +1842,13 @@ fn main() {
     app.block();
 }
 pub mod import {
-    pub use crate::modules::user::controller::UserController;
-    pub use crate::modules::log::service::LogService;
-    pub use crate::app::service::AppService;
-    pub use crate::modules::user::service::UserService;
-    pub use crate::modules::log::interceptor::LogInterceptor;
-    pub use crate::app::controller::AppController;
     pub use crate::modules::conf::options::ConfOptions;
+    pub use crate::modules::log::interceptor::LogInterceptor;
+    pub use crate::modules::log::service::LogService;
+    pub use crate::modules::user::controller::UserController;
+    pub use crate::modules::user::service::UserService;
+    pub use crate::app::service::AppService;
+    pub use crate::app::controller::AppController;
     pub use crate::modules::conf::service::ConfService;
 }
 struct CurrentUser {

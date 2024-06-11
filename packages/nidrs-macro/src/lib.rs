@@ -668,7 +668,7 @@ fn gen_controller_register_tokens(module_name: String, services: Vec<TokenStream
             let route_name = syn::Ident::new(&route.name, Span::call_site().into());
             // println!("route {} {:?}", route_name.to_string(), route.func_args);
             
-            let meta_tokens = gen_controller_meta_tokens(&route_name);
+            let (method_meta_tokens, arc_meta_tokens) = gen_controller_meta_tokens(&route_name);
             
             let (def_inter_tokens, handler) = gen_handler_tokens(&module_name, route, &controller_name, route_name);
     
@@ -677,15 +677,19 @@ fn gen_controller_register_tokens(module_name: String, services: Vec<TokenStream
 
                 #def_inter_tokens
 
-                #meta_tokens
+                #method_meta_tokens
 
                 let version = *meta.get::<&str>("version").unwrap_or(&ctx.defaults.default_version);
                 let disable_default_prefix = meta.get_data::<nidrs::metadata::DisableDefaultPrefix>().unwrap_or(&nidrs::metadata::DisableDefaultPrefix(false)).value();
                 let path = if disable_default_prefix { #path.to_string() } else { nidrs::template_format(&format!("{}{}", ctx.defaults.default_prefix, #path), [("version", version)]) };
                 nidrs_macro::log!("Registering router '{} {}'.", #method.to_uppercase(), path);
                 
+                meta.set_data(nidrs::metadata::RouterFullPath(path.clone()));
+
+                #arc_meta_tokens
+
                 let route_meta = meta.clone();
-                
+
                 let router = nidrs::externs::axum::Router::new().route(
                     &path,
                     nidrs::externs::axum::routing::#method_ident(#handler),
@@ -757,7 +761,7 @@ fn gen_controller_interceptor(
     route_name: &syn::Ident,
 ) -> (TokenStream2, Vec<(TokenStream2, TokenStream2)>, TokenStream2, TokenStream2) {
     let func_args = str_args_to_indent(route.func_args.clone());
-    let noop_ids = vec![];
+    let noop_ids: Vec<String> = vec![];
     let inter_name = controller_name.clone() + ":" + &route_name.to_string();
     let binding = INTERS.lock().unwrap();
     let struct_inter_ids = binding.get(controller_name).unwrap_or(&noop_ids);
@@ -870,8 +874,8 @@ fn gen_controller_interceptor(
     (func_args, inter_ids, def_inter_tokens, def_clone_inter_tokens)
 }
 
-fn gen_controller_meta_tokens(route_name: &syn::Ident) -> TokenStream2 {
-    let struct_meta_tokens = quote! {
+fn gen_controller_meta_tokens(route_name: &syn::Ident) -> (TokenStream2,TokenStream2) {
+    let struct_meta_tokens: TokenStream2 = quote! {
         let mut meta = nidrs::get_meta(t_controller.clone());
     };
     let method_meta = syn::Ident::new(format!("__meta_{}", route_name).as_str(), Span::call_site().into());
@@ -880,11 +884,13 @@ fn gen_controller_meta_tokens(route_name: &syn::Ident) -> TokenStream2 {
         meta.merge(t_meta);
     };
     let meta_tokens = TokenStream2::from(quote! {
-        #struct_meta_tokens
-        #method_meta_tokens
         let meta = std::sync::Arc::new(meta);
     });
-    meta_tokens
+    let struct_meta_tokens = TokenStream2::from(quote! {
+        #struct_meta_tokens
+        #method_meta_tokens
+    });
+    (struct_meta_tokens, meta_tokens)
 }
 
 fn gen_service_register_tokens(module_name: String, services: Vec<TokenStream2>) -> TokenStream2 {
