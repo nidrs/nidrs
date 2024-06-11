@@ -1,6 +1,6 @@
 [package]
 name = "nidrs-extern"
-version = "0.0.9"
+version = "0.0.10"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
 description = "Nidrs external library."
 keywords = ["nidrs", "axum", "http", "web", "framework"]
