@@ -2,6 +2,24 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-macro-v0.0.10 - 2024-06-11
+#### Documentation
+- update readme - (ed7424d) - WumaCoder
+#### Features
+- 添加 RouterFullPath metadata - (32743ef) - WumaCoder
+- 支持 tower 中间件 - (e0a126e) - WumaCoder
+#### Refactoring
+- 使用 meta.set_data 替代  meta.set 来提高使用体验 - (c563c39) - WumaCoder
+- 重构添加 MATE_STACK - (4b84b8d) - WumaCoder
+- 重构 Default derive 到  __controller_derive - (ab8e2f0) - WumaCoder
+- 修改 metadata 的方法名为 value - (e16df2f) - WumaCoder
+- 重构系统默认的 metadata 的实现 - (e134808) - WumaCoder
+- 完善 metadata 在整个框架中配置作用 - (d35cc7e) - WumaCoder
+#### Style
+- format - (4658e92) - WumaCoder
+
+- - -
+
 ## nidrs-macro-v0.0.9 - 2024-06-03
 #### Features
 - controller and method macro support empty param - (3fd0457) - WumaCoder
