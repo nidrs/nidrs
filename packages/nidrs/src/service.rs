@@ -1,4 +1,4 @@
-use nidrs_extern::once_cell;
+use nidrs_extern::{metadata::ServiceName, once_cell};
 use once_cell::sync::OnceCell;
 use std::{any::Any, sync::Arc};
 
@@ -37,6 +37,6 @@ impl<T> std::ops::Deref for Inject<T> {
 }
 
 pub fn provider<T: Service + 'static>(service: T) -> (&'static str, Box<dyn Any>) {
-    let name = *T::__meta().get::<&str>("service_name").unwrap();
+    let name = T::__meta().get_data::<ServiceName>().unwrap().value();
     (name, Box::new(Arc::new(service)) as Box<dyn Any>)
 }

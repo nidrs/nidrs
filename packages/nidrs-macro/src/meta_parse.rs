@@ -207,6 +207,10 @@ pub fn has_meta_value(key: &str) -> bool {
     MATE_VALUE.lock().unwrap().contains_key(key)
 }
 
+pub fn add_meta_value(key: &str, value: MetaValue) {
+    MATE_VALUE.lock().unwrap().insert(key.to_string(), value);
+}
+
 fn tokens_to_metadata(expr_call: &ExprCall) -> Option<Metadata> {
     let p = expr_call.func.to_token_stream().to_string().replace(" ", "");
 

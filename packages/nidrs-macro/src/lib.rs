@@ -12,6 +12,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use nidrs_extern::metadata::ServiceType;
 use once_cell::sync::Lazy;
 use proc_macro::{Ident, Span, TokenStream};
 use proc_macro2::TokenStream as TokenStream2;
@@ -143,7 +144,9 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
     ROUTES.lock().unwrap().insert(ident.to_string(), HashMap::new());
 
     TokenStream::from(quote! {
-        #[nidrs::macros::meta(controller_router_path = #path)]
+        #[nidrs::meta(nidrs::metadata::ServiceType::Controller)]
+        #[nidrs::meta(nidrs::metadata::ServiceName(stringify!(#ident)))]
+        #[nidrs::meta(nidrs::metadata::ControllerPath(#path))]
         #[nidrs::macros::__controller_derive]
         #func
     })
@@ -151,12 +154,16 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn __controller_derive(args: TokenStream, input: TokenStream) -> TokenStream {
+    __service_derive(ServiceType::Controller, input)
+}
+
+fn __service_derive(service_type: ServiceType, input: TokenStream)->TokenStream{
     let func = parse_macro_input!(input as ItemStruct);
 
-    println!("// controller_derive {:?}", func.ident.to_string());
+    println!("// service_derive {:?}", func.ident.to_string());
 
-    let inject_tokens: TokenStream2 = gen_service_inject_tokens("ControllerService", &func);
-
+    let inject_tokens: TokenStream2 = gen_service_inject_tokens(service_type, &func);
+    
     meta_parse::stash();
 
     TokenStream::from(quote! {
@@ -165,6 +172,7 @@ pub fn __controller_derive(args: TokenStream, input: TokenStream) -> TokenStream
 
         #inject_tokens
     })
+
 }
 
 #[proc_macro_attribute]
@@ -278,7 +286,8 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
             fn __meta() -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
                 #module_meta_tokens
-                meta.set("module_name".to_string(), stringify!(#ident));
+                // meta.set("module_name".to_string(), stringify!(#ident));
+                meta.set_data(nidrs::metadata::ModuleName(stringify!(#ident)));
                 meta
             }
         }
@@ -288,6 +297,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemStruct);
+    let func_ident = func.ident.clone();
     CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta { name: func.ident.to_string() });
 
     let call_site = Span::call_site();
@@ -298,32 +308,43 @@ pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
     // println!("// injectable {}", func.ident.to_string());
     import_path::push_path(&func.ident.to_string());
 
-    let inject_tokens = gen_service_inject_tokens("Service", &func);
-
     return TokenStream::from(quote! {
-        #[derive(Default)]
+        #[nidrs::meta(nidrs::metadata::ServiceType::Service)]
+        #[nidrs::meta(nidrs::metadata::ServiceName(stringify!(#func_ident)))]
+        #[nidrs::macros::__injectable_derive]
         #func
-
-        #inject_tokens
     });
 }
+
+
+#[proc_macro_attribute]
+pub fn __injectable_derive(args: TokenStream, input: TokenStream) -> TokenStream {
+    __service_derive(ServiceType::Service, input)
+}
+
 
 #[proc_macro_attribute]
 pub fn interceptor(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemStruct);
+    let func_ident = func.ident.clone();
     CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta { name: func.ident.to_string() });
-
-    let inject_tokens = gen_service_inject_tokens("InterceptorService", &func);
 
     import_path::push_path(&func.ident.to_string());
 
     return TokenStream::from(quote! {
-        #[derive(Default)]
+        #[nidrs::meta(nidrs::metadata::ServiceType::Interceptor)]
+        #[nidrs::meta(nidrs::metadata::ServiceName(stringify!(#func_ident)))]
+        #[nidrs::macros::__interceptor_derive]
         #func
-
-        #inject_tokens
     });
 }
+
+
+#[proc_macro_attribute]
+pub fn __interceptor_derive(args: TokenStream, input: TokenStream) -> TokenStream {
+    __service_derive(ServiceType::Interceptor, input)
+}
+
 
 #[proc_macro_attribute]
 pub fn on_module_init(args: TokenStream, input: TokenStream) -> TokenStream {
@@ -601,9 +622,9 @@ fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
     controller.insert(name.clone(), route);
 
     TokenStream::from(quote! {
-        #[nidrs::meta(router_name = stringify!(#ident))]
-        #[nidrs::meta(router_method = #method)]
-        #[nidrs::meta(router_path = #path)]
+        #[nidrs::meta(nidrs::metadata::RouterName(stringify!(#ident)))]
+        #[nidrs::meta(nidrs::metadata::RouterMethod(#method))]
+        #[nidrs::meta(nidrs::metadata::RouterPath(#path))]
         #[nidrs::__route_derive]
         #func
     })
@@ -980,13 +1001,12 @@ fn gen_dep_inject_tokens(con: &str, module_name: String, services: Vec<TokenStre
     return controller_tokens;
 }
 
-fn gen_service_inject_tokens(service_type_name: &str, func: &ItemStruct) -> TokenStream2 {
-    let is_service = "Service".contains(service_type_name);
-    let service_type = syn::Ident::new(service_type_name, Span::call_site().into());
-    let ident = func.ident.clone();
-    let service_name = ident.to_string();
+fn gen_service_inject_tokens(service_type: ServiceType, func: &ItemStruct) -> TokenStream2 {
+    let is_service = service_type == ServiceType::Service;
+    let service_type_indent = syn::Ident::new(service_type.into(), Span::call_site().into());
+    let service_name_ident = func.ident.clone();
 
-    let fields = if let syn::Fields::Named(fields) = &func.fields {
+    let fields: Vec<TokenStream2> = if let syn::Fields::Named(fields) = &func.fields {
         fields
             .named
             .iter()
@@ -1003,11 +1023,10 @@ fn gen_service_inject_tokens(service_type_name: &str, func: &ItemStruct) -> Toke
                             if let syn::GenericArgument::Type(ty) = type_arg {
                                 let injected_type = ty.to_token_stream();
                                 let injected_type_name = injected_type.to_string();
-                                let con_ident = match service_type_name {
-                                    "Service" => syn::Ident::new("get_service", Span::call_site().into()),
-                                    "ControllerService" => syn::Ident::new("get_controller", Span::call_site().into()),
-                                    "InterceptorService" => syn::Ident::new("get_interceptor", Span::call_site().into()),
-                                    _ => syn::Ident::new("get_service", Span::call_site().into()),
+                                let con_ident = match service_type {
+                                    ServiceType::Service => syn::Ident::new("get_service", Span::call_site().into()),
+                                    ServiceType::Controller => syn::Ident::new("get_controller", Span::call_site().into()),
+                                    ServiceType::Interceptor => syn::Ident::new("get_interceptor", Span::call_site().into()),
                                 };
                                 quote! {
                                     let service = ctx.get_service::<#injected_type>(&module_name, #injected_type_name);
@@ -1034,7 +1053,7 @@ fn gen_service_inject_tokens(service_type_name: &str, func: &ItemStruct) -> Toke
         quote! {}
     } else {
         quote! {
-            impl nidrs::#service_type for #ident {}
+            impl nidrs::#service_type_indent for #service_name_ident {}
         }
     };
 
@@ -1042,19 +1061,17 @@ fn gen_service_inject_tokens(service_type_name: &str, func: &ItemStruct) -> Toke
 
     let inject_tokens = TokenStream2::from(quote! {
         #middle_tokens
-        impl nidrs::Service for #ident {
+        impl nidrs::Service for #service_name_ident {
             fn inject(&self, ctx: nidrs::ModuleCtx, module_name: &str) -> nidrs::ModuleCtx{
                 #(#fields)*
                 ctx
             }
         }
 
-        impl nidrs::ImplMeta for #ident{
+        impl nidrs::ImplMeta for #service_name_ident{
             fn __meta() -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
                 #meta_tokens
-                meta.set("service_name".to_string(), stringify!(#ident));
-                meta.set("service_type".to_string(), stringify!(#service_type));
                 meta
             }
         }

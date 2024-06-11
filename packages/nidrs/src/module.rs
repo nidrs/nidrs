@@ -1,8 +1,8 @@
-use nidrs_extern::tokio;
 use nidrs_extern::{
     axum::{self},
     tokio::signal,
 };
+use nidrs_extern::{metadata::RouterPath, tokio};
 use std::{
     any::Any,
     collections::HashMap,
@@ -350,7 +350,7 @@ impl RouterWrap {
         let glob = nidrs_extern::globset::Glob::new(matcher);
         match glob {
             Ok(glob) => {
-                let path = *self.meta.get::<&str>("router_path").unwrap();
+                let path = self.meta.get_data::<RouterPath>().unwrap().value();
                 glob.compile_matcher().is_match(path)
             }
             Err(err) => {
