@@ -2,6 +2,28 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-v0.0.10 - 2024-06-11
+#### Bug Fixes
+- 修复 meta.set_data 被 Box 包装的问题 - (3beb01d) - WumaCoder
+#### Documentation
+- update readme - (ed7424d) - WumaCoder
+#### Features
+- meta 添加 take 方法 - (c07c6e8) - WumaCoder
+- add match_router_path fn - (f24c019) - WumaCoder
+- 支持 tower 中间件 - (e0a126e) - WumaCoder
+#### Refactoring
+- 使用 meta.set_data 替代  meta.set 来提高使用体验 - (c563c39) - WumaCoder
+- 移动 meta 相关的内容到 nidrs-extern 里 - (15038c8) - WumaCoder
+- 修改 meta 返回值为 Option 类型 - (16b5934) - WumaCoder
+- 完善 metadata 在整个框架中配置作用 - (d35cc7e) - WumaCoder
+- update meta - (14f7a41) - WumaCoder
+#### Style
+- format - (4658e92) - WumaCoder
+#### Tests
+- meta - (d0c3f59) - WumaCoder
+
+- - -
+
 ## nidrs-v0.0.9 - 2024-06-03
 #### Features
 - add AnyResponse interceptor helper - (ae52dd6) - WumaCoder
