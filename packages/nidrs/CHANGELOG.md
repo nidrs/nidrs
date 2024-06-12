@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-v0.0.11 - 2024-06-12
+#### Refactoring
+- **(nidrs)** 修改 metadata 为 datasets - (3f9950b) - *WumaCoder*
+
+- - -
+
 ## nidrs-v0.0.10 - 2024-06-11
 #### Bug Fixes
 - 修复 meta.set_data 被 Box 包装的问题 - (3beb01d) - WumaCoder
