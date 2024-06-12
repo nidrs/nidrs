@@ -1,4 +1,4 @@
-use nidrs::metadata::Global;
+use nidrs::datasets::Global;
 use nidrs::{meta, DynamicModule, Service};
 use nidrs_macro::module;
 
