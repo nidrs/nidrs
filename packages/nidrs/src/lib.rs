@@ -15,8 +15,8 @@ pub use controller::*;
 pub mod module;
 pub use module::*;
 
+pub use nidrs_extern::datasets;
 pub use nidrs_extern::meta::*;
-pub use nidrs_extern::metadata;
 
 pub use nidrs_extern as externs;
 pub use nidrs_macro as macros;

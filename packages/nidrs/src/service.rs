@@ -1,4 +1,4 @@
-use nidrs_extern::{metadata::ServiceName, once_cell};
+use nidrs_extern::{datasets::ServiceName, once_cell};
 use once_cell::sync::OnceCell;
 use std::{any::Any, sync::Arc};
 

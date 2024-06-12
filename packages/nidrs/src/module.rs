@@ -2,7 +2,7 @@ use nidrs_extern::{
     axum::{self},
     tokio::signal,
 };
-use nidrs_extern::{metadata::RouterPath, tokio};
+use nidrs_extern::{datasets::RouterPath, tokio};
 use std::{
     any::Any,
     collections::HashMap,
