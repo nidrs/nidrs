@@ -1,6 +1,6 @@
 use std::{collections::HashMap, str::FromStr, sync::Mutex};
 
-use nidrs_extern::metadata::{DisableDefaultPrefix, Global};
+use nidrs_extern::datasets::{DisableDefaultPrefix, Global};
 use once_cell::sync::Lazy;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
@@ -92,8 +92,8 @@ fn exp_to_meta_value(exp: &Expr) -> MetaValue {
             }
         }
         Expr::Call(call) => {
-            if let Some(metadata) = tokens_to_metadata(call) {
-                match metadata {
+            if let Some(datasets) = tokens_to_metadata(call) {
+                match datasets {
                     Metadata::DisableDefaultPrefix(disable_default_prefix) => {
                         return MetaValue::Metadata("DisableDefaultPrefix".to_string(), Box::new(MetaValue::Bool(disable_default_prefix.0)));
                     }
@@ -224,9 +224,9 @@ fn tokens_to_metadata(expr_call: &ExprCall) -> Option<Metadata> {
             })
             .collect::<Vec<MetaValue>>();
         if let Some(MetaValue::Bool(b)) = args.first() {
-            return Some(Metadata::DisableDefaultPrefix(nidrs_extern::metadata::DisableDefaultPrefix(*b)));
+            return Some(Metadata::DisableDefaultPrefix(nidrs_extern::datasets::DisableDefaultPrefix(*b)));
         }
-        return Some(Metadata::DisableDefaultPrefix(nidrs_extern::metadata::DisableDefaultPrefix(true)));
+        return Some(Metadata::DisableDefaultPrefix(nidrs_extern::datasets::DisableDefaultPrefix(true)));
     }
 
     if p.contains("Global") {
@@ -239,9 +239,9 @@ fn tokens_to_metadata(expr_call: &ExprCall) -> Option<Metadata> {
             })
             .collect::<Vec<MetaValue>>();
         if let Some(MetaValue::Bool(b)) = args.first() {
-            return Some(Metadata::Global(nidrs_extern::metadata::Global(*b)));
+            return Some(Metadata::Global(nidrs_extern::datasets::Global(*b)));
         }
-        return Some(Metadata::Global(nidrs_extern::metadata::Global(true)));
+        return Some(Metadata::Global(nidrs_extern::datasets::Global(true)));
     }
 
     return None;
@@ -253,7 +253,7 @@ mod tests {
 
     #[test]
     fn test_trans_metadata() {
-        let call_expr = "nidrs::metadata::DisableDefaultPrefix(true)";
+        let call_expr = "nidrs::datasets::DisableDefaultPrefix(true)";
         let expr_call: ExprCall = syn::parse_str(call_expr).unwrap();
 
         println!("expr_call: {:?}", tokens_to_metadata(&expr_call));

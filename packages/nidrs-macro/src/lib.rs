@@ -12,7 +12,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use nidrs_extern::metadata::ServiceType;
+use nidrs_extern::datasets::ServiceType;
 use once_cell::sync::Lazy;
 use proc_macro::{Ident, Span, TokenStream};
 use proc_macro2::TokenStream as TokenStream2;
@@ -144,9 +144,9 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
     ROUTES.lock().unwrap().insert(ident.to_string(), HashMap::new());
 
     TokenStream::from(quote! {
-        #[nidrs::meta(nidrs::metadata::ServiceType::Controller)]
-        #[nidrs::meta(nidrs::metadata::ServiceName(stringify!(#ident)))]
-        #[nidrs::meta(nidrs::metadata::ControllerPath(#path))]
+        #[nidrs::meta(nidrs::datasets::ServiceType::Controller)]
+        #[nidrs::meta(nidrs::datasets::ServiceName(stringify!(#ident)))]
+        #[nidrs::meta(nidrs::datasets::ControllerPath(#path))]
         #[nidrs::macros::__controller_derive]
         #func
     })
@@ -287,7 +287,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
                 let mut meta = nidrs::Meta::new();
                 #module_meta_tokens
                 // meta.set("module_name".to_string(), stringify!(#ident));
-                meta.set_data(nidrs::metadata::ModuleName(stringify!(#ident)));
+                meta.set_data(nidrs::datasets::ModuleName(stringify!(#ident)));
                 meta
             }
         }
@@ -309,8 +309,8 @@ pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
     import_path::push_path(&func.ident.to_string());
 
     return TokenStream::from(quote! {
-        #[nidrs::meta(nidrs::metadata::ServiceType::Service)]
-        #[nidrs::meta(nidrs::metadata::ServiceName(stringify!(#func_ident)))]
+        #[nidrs::meta(nidrs::datasets::ServiceType::Service)]
+        #[nidrs::meta(nidrs::datasets::ServiceName(stringify!(#func_ident)))]
         #[nidrs::macros::__injectable_derive]
         #func
     });
@@ -332,8 +332,8 @@ pub fn interceptor(args: TokenStream, input: TokenStream) -> TokenStream {
     import_path::push_path(&func.ident.to_string());
 
     return TokenStream::from(quote! {
-        #[nidrs::meta(nidrs::metadata::ServiceType::Interceptor)]
-        #[nidrs::meta(nidrs::metadata::ServiceName(stringify!(#func_ident)))]
+        #[nidrs::meta(nidrs::datasets::ServiceType::Interceptor)]
+        #[nidrs::meta(nidrs::datasets::ServiceName(stringify!(#func_ident)))]
         #[nidrs::macros::__interceptor_derive]
         #func
     });
@@ -529,7 +529,7 @@ pub fn disable_default_prefix(args: TokenStream, input: TokenStream) -> TokenStr
     let raw_input = TokenStream2::from(input.clone());
 
     return TokenStream::from(quote! {
-        #[nidrs::macros::meta(nidrs::metadata::DisableDefaultPrefix(true))]
+        #[nidrs::macros::meta(nidrs::datasets::DisableDefaultPrefix(true))]
         #raw_input
     });
 }
@@ -539,7 +539,7 @@ pub fn global(args: TokenStream, input: TokenStream) -> TokenStream {
     let raw_input = TokenStream2::from(input.clone());
 
     return TokenStream::from(quote! {
-        #[nidrs::macros::meta(nidrs::metadata::Global(true))]
+        #[nidrs::macros::meta(nidrs::datasets::Global(true))]
         #raw_input
     });
 }
@@ -622,9 +622,9 @@ fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
     controller.insert(name.clone(), route);
 
     TokenStream::from(quote! {
-        #[nidrs::meta(nidrs::metadata::RouterName(stringify!(#ident)))]
-        #[nidrs::meta(nidrs::metadata::RouterMethod(#method))]
-        #[nidrs::meta(nidrs::metadata::RouterPath(#path))]
+        #[nidrs::meta(nidrs::datasets::RouterName(stringify!(#ident)))]
+        #[nidrs::meta(nidrs::datasets::RouterMethod(#method))]
+        #[nidrs::meta(nidrs::datasets::RouterPath(#path))]
         #[nidrs::__route_derive]
         #func
     })
@@ -680,11 +680,11 @@ fn gen_controller_register_tokens(module_name: String, services: Vec<TokenStream
                 #method_meta_tokens
 
                 let version = *meta.get::<&str>("version").unwrap_or(&ctx.defaults.default_version);
-                let disable_default_prefix = meta.get_data::<nidrs::metadata::DisableDefaultPrefix>().unwrap_or(&nidrs::metadata::DisableDefaultPrefix(false)).value();
+                let disable_default_prefix = meta.get_data::<nidrs::datasets::DisableDefaultPrefix>().unwrap_or(&nidrs::datasets::DisableDefaultPrefix(false)).value();
                 let path = if disable_default_prefix { #path.to_string() } else { nidrs::template_format(&format!("{}{}", ctx.defaults.default_prefix, #path), [("version", version)]) };
                 nidrs_macro::log!("Registering router '{} {}'.", #method.to_uppercase(), path);
                 
-                meta.set_data(nidrs::metadata::RouterFullPath(path.clone()));
+                meta.set_data(nidrs::datasets::RouterFullPath(path.clone()));
 
                 #arc_meta_tokens
 
@@ -952,7 +952,7 @@ fn gen_imports_register_tokens(module_name: String, imports: Vec<TokenStream2>) 
                             ctx.register_service(#dyn_module_name, k, v);
                         });
                         let mut dyn_module_exports = dyn_module.exports;
-                        ctx.append_exports(#dyn_module_name, dyn_module_exports, nidrs::get_meta_by_type::<#module_ident>().get_data::<nidrs::metadata::Global>().unwrap_or(&nidrs::metadata::Global(false)).value());
+                        ctx.append_exports(#dyn_module_name, dyn_module_exports, nidrs::get_meta_by_type::<#module_ident>().get_data::<nidrs::datasets::Global>().unwrap_or(&nidrs::datasets::Global(false)).value());
                         let mut ctx = #module_ident::default().init(ctx);
                     }
                 } else {
