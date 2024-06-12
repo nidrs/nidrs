@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-macro-v0.0.11 - 2024-06-12
+#### Refactoring
+- **(nidrs-macro)** 修改 metadata 为 datasets - (65f486d) - *WumaCoder*
+
+- - -
+
 ## nidrs-macro-v0.0.10 - 2024-06-11
 #### Documentation
 - update readme - (ed7424d) - WumaCoder
