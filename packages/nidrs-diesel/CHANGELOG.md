@@ -2,6 +2,19 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-diesel-v0.0.3 - 2024-06-12
+#### Bug Fixes
+- Update package dependencies and versions - (7a4d9e1) - WumaCoder
+#### Miscellaneous Chores
+- **(version)** nidrs-diesel-v0.0.2 - (c59bee3) - *WumaCoder*
+#### Refactoring
+- **(nidrs-diesel)** 修改 metadata 为 datasets - (97fd8f2) - *WumaCoder*
+- 重构系统默认的 metadata 的实现 - (e134808) - WumaCoder
+- 完善 metadata 在整个框架中配置作用 - (d35cc7e) - WumaCoder
+- default impl Default - (9becd92) - WumaCoder
+
+- - -
+
 ## nidrs-diesel-v0.0.2 - 2024-05-05
 #### Miscellaneous Chores
 - Update nidrs-diesel package metadata - (8c6e05e) - WumaCoder
