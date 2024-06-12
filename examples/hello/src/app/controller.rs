@@ -12,7 +12,7 @@ use super::{dto::Status, service::AppService};
 // #[uses(LogInterceptor)]
 #[version("v1")]
 #[meta(role = "admin", auth = "true")]
-#[meta(nidrs::metadata::DisableDefaultPrefix(true))]
+#[meta(nidrs::datasets::DisableDefaultPrefix(true))]
 #[controller()]
 pub struct AppController {
     app_service: Inject<AppService>,
@@ -21,7 +21,7 @@ pub struct AppController {
 impl AppController {
     #[meta(arr = ["user"])]
     // #[uses(LogInterceptor)]
-    #[meta(nidrs::metadata::DisableDefaultPrefix(false))]
+    #[meta(nidrs::datasets::DisableDefaultPrefix(false))]
     #[version("v2")]
     #[get("/hello")]
     pub async fn get_hello_world(
@@ -32,7 +32,7 @@ impl AppController {
         println!("Query {:?}", q);
         println!("Meta Keys {:?}", meta.keys());
         println!("Meta {:?}", meta.get::<&str>("role"));
-        println!("Meta {:?}", meta.get_data::<nidrs::metadata::DisableDefaultPrefix>());
+        println!("Meta {:?}", meta.get_data::<nidrs::datasets::DisableDefaultPrefix>());
         // fn_test()?;
 
         Ok((
