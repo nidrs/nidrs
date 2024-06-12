@@ -14,6 +14,6 @@ license = "MIT"
 
 [workspace.dependencies]
 nidrs = { path = "packages/nidrs", version = "0.0.10" }
-nidrs-extern = { path = "packages/nidrs-extern", version = "0.0.10" }
+nidrs-extern = { path = "packages/nidrs-extern", version = "0.0.11" }
 nidrs-macro = { path = "packages/nidrs-macro", version = "0.0.10" }
 nidrs-diesel = { path = "packages/nidrs-diesel", version = "0.0.2" }
