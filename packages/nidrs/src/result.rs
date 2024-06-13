@@ -25,6 +25,9 @@ impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
         let t = format!("Error: {:?}", self);
         nidrs_macro::elog!("{}", t);
+        if let AppError::Exception(e) = self {
+            return e.into_response();
+        }
         axum::response::Response::builder().status(StatusCode::INTERNAL_SERVER_ERROR).body(t).unwrap().into_response()
     }
 }
@@ -61,6 +64,6 @@ impl std::fmt::Display for Exception {
 
 impl IntoResponse for Exception {
     fn into_response(self) -> axum::response::Response {
-        axum::response::Html("Internal Server Error".to_string()).into_response()
+        axum::response::Response::builder().status(self.status).body(self.error.to_string()).unwrap().into_response()
     }
 }

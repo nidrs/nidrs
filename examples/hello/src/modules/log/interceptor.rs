@@ -26,6 +26,11 @@ impl<B: FromRequest<StateCtx> + Debug, P: IntoResponse> Interceptor<B, P> for Lo
         self.log_service.log("Before");
         let r: AppResult<AnyResponse> = handler(ctx).await.map(|r| AnyResponse::from_response(r));
 
+        if let Err(e) = &r {
+            // println!("Error: {:?}", e);
+            return r;
+        }
+
         let r = r.unwrap();
 
         let (parts, body) = r.response.into_parts();

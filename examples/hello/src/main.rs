@@ -4,17 +4,21 @@ mod shared;
 
 use std::time::Duration;
 
-use nidrs::externs::axum::{
-    error_handling::HandleErrorLayer,
-    extract::Request,
-    http::StatusCode,
-    middleware::{self, Next},
-    response::Response,
-    BoxError,
-};
-use nidrs::externs::tower::timeout::TimeoutLayer;
 pub use nidrs::AppError;
 pub use nidrs::AppResult;
+use nidrs::{
+    externs::axum::{
+        error_handling::HandleErrorLayer,
+        extract::Request,
+        http::StatusCode,
+        middleware::{self, Next},
+        response::Response,
+        BoxError,
+    },
+    throw,
+};
+use nidrs::{externs::tower::timeout::TimeoutLayer, Exception};
+use nidrs_extern::{anyhow, axum::Json};
 
 #[nidrs::main]
 fn main() {
@@ -99,4 +103,28 @@ async fn auth(mut req: Request, next: Next) -> Result<Response, StatusCode> {
 
     req.extensions_mut().insert(CurrentUser { id: 1, username: "foo".to_string() });
     Ok(next.run(req).await)
+}
+
+pub trait Validator {
+    fn valid(&self) -> bool;
+}
+
+pub struct Valid<T> {
+    pub dto: T,
+    pub valid: bool,
+}
+impl<T> Valid<T> {
+    fn ate(self) -> AppResult<T> {
+        if !self.valid {
+            throw!(Exception::new(StatusCode::BAD_REQUEST, anyhow::Error::msg("Invalid data")));
+        }
+        Ok(self.dto)
+    }
+}
+
+impl<V: Validator> From<Json<V>> for Valid<Json<V>> {
+    fn from(dto: Json<V>) -> Self {
+        let valid = dto.0.valid();
+        Valid { dto, valid }
+    }
 }

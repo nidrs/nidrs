@@ -1,6 +1,7 @@
 use nidrs::macros::module;
 
 pub mod controller;
+pub mod dto;
 pub mod service;
 
 use crate::app::AppModule;
