@@ -5,7 +5,7 @@ pub type ValidResult = Result<(), ValidError>;
 
 pub trait Rule<T> {
     fn set_message(self, message: &str) -> Self;
-    fn valid(self, value: T) -> ValidResult;
+    fn valid(&self, value: T) -> ValidResult;
     fn example(&self) -> Vec<Value>;
 }
 

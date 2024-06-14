@@ -12,11 +12,11 @@ impl Rule<&str> for Email {
         self.message = Some(message.into());
         self
     }
-    fn valid(self, value: &str) -> ValidResult {
+    fn valid(&self, value: &str) -> ValidResult {
         if value.contains("@") && value.contains(".com") {
             Ok(())
         } else {
-            Err(ValidError { message: self.message.unwrap_or_else(|| "email format error".into()) })
+            Err(ValidError { message: self.message.clone().unwrap_or_else(|| "email format error".into()) })
         }
     }
     fn example(&self) -> Vec<Value> {
