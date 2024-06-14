@@ -3,20 +3,43 @@ use serde_json::Value;
 use crate::validator::{Rule, ValidError, ValidResult};
 
 #[derive(Debug, Default)]
-pub struct Email {
-    pub message: Option<String>,
-}
+pub struct Email;
 
 impl Rule<&str> for Email {
-    fn set_message(mut self, message: &str) -> Self {
-        self.message = Some(message.into());
-        self
-    }
-    fn valid(&self, value: &str) -> ValidResult {
-        if value.contains("@") && value.contains(".com") {
+    fn valid(&self, value: &str, message: Option<&str>) -> ValidResult {
+        if value.contains("@") && value.contains(".") {
             Ok(())
         } else {
-            Err(ValidError { message: self.message.clone().unwrap_or_else(|| "email format error".into()) })
+            Err(ValidError { message: message.unwrap_or_else(|| "email format error").to_string() })
+        }
+    }
+    fn example(&self) -> Vec<Value> {
+        return vec![Value::String("1111@qq.com".into())];
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct Number;
+
+impl Rule<i32> for Number {
+    fn valid(&self, value: i32, message: Option<&str>) -> ValidResult {
+        if value > 0 {
+            Ok(())
+        } else {
+            Err(ValidError { message: message.unwrap_or_else(|| "email format error").to_string() })
+        }
+    }
+    fn example(&self) -> Vec<Value> {
+        return vec![Value::String("1111@qq.com".into())];
+    }
+}
+
+impl Rule<&String> for Number {
+    fn valid(&self, value: &String, message: Option<&str>) -> ValidResult {
+        if value.contains("@") && value.contains(".") {
+            Ok(())
+        } else {
+            Err(ValidError { message: message.unwrap_or_else(|| "email format error").to_string() })
         }
     }
     fn example(&self) -> Vec<Value> {
