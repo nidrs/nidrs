@@ -30,7 +30,8 @@ impl UserController {
     }
     #[post("/")]
     pub async fn create_user(&self, dto: Json<CreateUserDto>) -> AppResult<String> {
-        let dto = Valid::from(dto).ate()?;
+        let c = Valid::from(&dto).check()?;
+        println!("c {:?}", c);
         Ok(self.user_service.extract().get_hello_world2())
     }
 }

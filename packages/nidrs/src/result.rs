@@ -1,5 +1,6 @@
 use nidrs_extern::axum::{http::StatusCode, response::IntoResponse};
 use nidrs_extern::{colored::Colorize, *};
+use validator::ValidError;
 
 pub type AppResult<T = ()> = Result<T, AppError>;
 
@@ -16,6 +17,9 @@ pub enum AppError {
 
     #[error(transparent)]
     TokioJoinError(#[from] tokio::task::JoinError),
+
+    #[error(transparent)]
+    ValidError(#[from] ValidError),
 
     #[error(transparent)]
     Exception(#[from] Exception),

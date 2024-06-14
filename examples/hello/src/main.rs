@@ -18,7 +18,7 @@ use nidrs::{
     throw,
 };
 use nidrs::{externs::tower::timeout::TimeoutLayer, Exception};
-use nidrs_extern::{anyhow, axum::Json};
+use nidrs_extern::{anyhow, axum::Json, validator::ValidResult};
 
 #[nidrs::main]
 fn main() {
@@ -106,25 +106,24 @@ async fn auth(mut req: Request, next: Next) -> Result<Response, StatusCode> {
 }
 
 pub trait Validator {
-    fn valid(&self) -> bool;
+    fn valid(&self) -> ValidResult;
 }
 
-pub struct Valid<T> {
-    pub dto: T,
-    pub valid: bool,
+pub struct Valid {
+    pub result: ValidResult,
 }
-impl<T> Valid<T> {
-    fn ate(self) -> AppResult<T> {
-        if !self.valid {
-            throw!(Exception::new(StatusCode::BAD_REQUEST, anyhow::Error::msg("Invalid data")));
+impl Valid {
+    fn check(self) -> AppResult {
+        if let Err(e) = self.result {
+            throw!(AppError::ValidError(e));
         }
-        Ok(self.dto)
+        Ok(())
     }
 }
 
-impl<V: Validator> From<Json<V>> for Valid<Json<V>> {
-    fn from(dto: Json<V>) -> Self {
-        let valid = dto.0.valid();
-        Valid { dto, valid }
+impl<V: Validator> From<&Json<V>> for Valid {
+    fn from(dto: &Json<V>) -> Self {
+        let result = dto.0.valid();
+        Valid { result }
     }
 }
