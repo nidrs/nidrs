@@ -3,8 +3,8 @@ use std::fmt;
 
 pub type ValidResult = Result<(), ValidError>;
 
-pub trait Rule<T> {
-    fn valid(&self, value: T, message: Option<&str>) -> ValidResult;
+pub trait Rule<T>: Default {
+    fn valid(&self, value: T, field_path: &str, message: Option<String>) -> ValidResult;
     fn example(&self) -> Vec<Value>;
 }
 
@@ -17,4 +17,8 @@ impl fmt::Display for ValidError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.message)
     }
+}
+
+pub trait Validator {
+    fn valid(&self) -> ValidResult;
 }

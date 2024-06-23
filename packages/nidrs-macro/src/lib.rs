@@ -157,13 +157,13 @@ pub fn __controller_derive(args: TokenStream, input: TokenStream) -> TokenStream
     __service_derive(ServiceType::Controller, input)
 }
 
-fn __service_derive(service_type: ServiceType, input: TokenStream)->TokenStream{
+fn __service_derive(service_type: ServiceType, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemStruct);
 
     println!("// service_derive {:?}", func.ident.to_string());
 
     let inject_tokens: TokenStream2 = gen_service_inject_tokens(service_type, &func);
-    
+
     meta_parse::stash();
 
     TokenStream::from(quote! {
@@ -172,7 +172,6 @@ fn __service_derive(service_type: ServiceType, input: TokenStream)->TokenStream{
 
         #inject_tokens
     })
-
 }
 
 #[proc_macro_attribute]
@@ -316,12 +315,10 @@ pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
     });
 }
 
-
 #[proc_macro_attribute]
 pub fn __injectable_derive(args: TokenStream, input: TokenStream) -> TokenStream {
     __service_derive(ServiceType::Service, input)
 }
-
 
 #[proc_macro_attribute]
 pub fn interceptor(args: TokenStream, input: TokenStream) -> TokenStream {
@@ -339,12 +336,10 @@ pub fn interceptor(args: TokenStream, input: TokenStream) -> TokenStream {
     });
 }
 
-
 #[proc_macro_attribute]
 pub fn __interceptor_derive(args: TokenStream, input: TokenStream) -> TokenStream {
     __service_derive(ServiceType::Interceptor, input)
 }
-
 
 #[proc_macro_attribute]
 pub fn on_module_init(args: TokenStream, input: TokenStream) -> TokenStream {
@@ -874,7 +869,7 @@ fn gen_controller_interceptor(
     (func_args, inter_ids, def_inter_tokens, def_clone_inter_tokens)
 }
 
-fn gen_controller_meta_tokens(route_name: &syn::Ident) -> (TokenStream2,TokenStream2) {
+fn gen_controller_meta_tokens(route_name: &syn::Ident) -> (TokenStream2, TokenStream2) {
     let struct_meta_tokens: TokenStream2 = quote! {
         let mut meta = nidrs::get_meta(t_controller.clone());
     };

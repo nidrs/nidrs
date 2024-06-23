@@ -1079,6 +1079,8 @@ version = "0.0.11"
 dependencies = [
  "nidrs-extern",
  "nidrs-macro",
+ "nidrs-valid",
+ "nidrs-valid-macro",
 ]
 
 [[package]]
@@ -1111,6 +1113,28 @@ dependencies = [
 [[package]]
 name = "nidrs-macro"
 version = "0.0.11"
+dependencies = [
+ "nidrs-extern",
+ "once_cell",
+ "proc-macro2",
+ "quote",
+ "syn",
+ "syn-serde",
+]
+
+[[package]]
+name = "nidrs-valid"
+version = "0.0.1"
+dependencies = [
+ "nidrs-valid-macro",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "nidrs-valid-macro"
+version = "0.0.1"
 dependencies = [
  "nidrs-extern",
  "once_cell",

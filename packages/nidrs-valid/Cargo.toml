@@ -1,8 +1,8 @@
 [package]
-name = "nidrs"
-version = "0.0.11"
+name = "nidrs-valid"
+version = "0.0.1"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
-description = "Nidrs is a web framework based on axum and tokio."
+description = "Nidrs dto valid library."
 keywords = ["nidrs", "axum", "http", "web", "framework"]
 categories = ["network-programming", "asynchronous", "web-programming::http-server", "web-programming::websocket"]
 publish = true
@@ -12,15 +12,8 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
-nidrs-macro = { workspace = true }
-nidrs-extern = { workspace = true }
-nidrs-valid = { workspace = true }
 nidrs-valid-macro = { workspace = true }
-
-
-[features]
-default = ["tower", "serde"]
-tower = ["nidrs-extern/tower"]
-serde = ["nidrs-extern/serde"]
-
+serde_json = "1.0.115"
+serde = "1.0.197"
+thiserror = "1.0.58"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

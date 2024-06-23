@@ -1,17 +1,11 @@
 use std::collections::HashMap;
 
-use nidrs::{externs::axum::extract::Query, post, throw};
-use nidrs::{
-    macros::{controller, get},
-    Exception,
-};
+use nidrs::macros::{controller, get};
+use nidrs::{externs::axum::extract::Query, post, valid::validator::Validator};
 use nidrs::{AppResult, Inject};
-use nidrs_extern::{
-    anyhow,
-    axum::{http::StatusCode, Json},
-};
+use nidrs_extern::axum::Json;
 
-use crate::{modules::log::service::LogService, Valid};
+use crate::modules::log::service::LogService;
 
 use super::{dto::CreateUserDto, service::UserService};
 
@@ -30,8 +24,7 @@ impl UserController {
     }
     #[post("/")]
     pub async fn create_user(&self, dto: Json<CreateUserDto>) -> AppResult<String> {
-        let c = Valid::from(&dto).check()?;
-        println!("c {:?}", c);
+        dto.0.valid()?;
         Ok(self.user_service.extract().get_hello_world2())
     }
 }

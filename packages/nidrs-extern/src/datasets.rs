@@ -49,9 +49,9 @@ impl From<&str> for ServiceType {
     }
 }
 
-impl Into<&'static str> for ServiceType {
-    fn into(self) -> &'static str {
-        match self {
+impl From<ServiceType> for &'static str {
+    fn from(val: ServiceType) -> Self {
+        match val {
             ServiceType::Service => "Service",
             ServiceType::Controller => "ControllerService",
             ServiceType::Interceptor => "InterceptorService",

@@ -1,6 +1,6 @@
 use nidrs_extern::axum::{http::StatusCode, response::IntoResponse};
 use nidrs_extern::{colored::Colorize, *};
-use validator::ValidError;
+use nidrs_valid::validator::ValidError;
 
 pub type AppResult<T = ()> = Result<T, AppError>;
 
