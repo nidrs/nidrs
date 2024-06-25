@@ -1,6 +1,6 @@
 use serde_json::{json, Value};
 
-use crate::validator::{Rule, ValidError, ValidResult};
+use crate::validator::{Rule, ValidError, ValidResult, Validator};
 
 #[derive(Debug, Default)]
 pub struct Email;
@@ -64,5 +64,17 @@ impl Rule<&i32> for Number {
 
     fn example(&self) -> Vec<Value> {
         vec![json!(122)]
+    }
+}
+
+
+pub struct Valid<'a, T: Validator>(pub &'a T);
+
+impl<'a, T: Validator> Rule<&T> for Valid<'a, T> {
+    fn valid(&self, value: &T, field_path: &str, message: Option<String>) -> ValidResult {
+        self.0.valid()
+    }
+    fn example(&self) -> Vec<Value> {
+        vec![]
     }
 }
