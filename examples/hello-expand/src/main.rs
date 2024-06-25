@@ -4,8 +4,7 @@
 #![feature(fmt_helpers_for_derive)]
 #![allow(warnings, unused)]
 // meta "AppController" ["version"]
-// meta "AppController" ["auth", "role"]
-// meta "AppController" ["METADATA:nidrs::datasets::DisableDefaultPrefix"]
+// meta "AppController" ["role", "auth"]
 // controller AppController []
 // meta "AppController" ["METADATA:nidrs::datasets::ServiceType::Controller"]
 // meta "AppController" ["METADATA:nidrs::datasets::ServiceName"]
@@ -83,7 +82,10 @@ mod app {
         use nidrs::macros::{controller, get, meta, post};
         use nidrs::{version, Inject, Meta};
         use crate::AppResult;
-        use super::{dto::Status, service::AppService};
+        use super::{
+            dto::{ArgDto, Status},
+            service::AppService,
+        };
         pub struct AppController {
             app_service: Inject<AppService>,
         }
@@ -112,9 +114,8 @@ mod app {
             fn __meta() -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
                 meta.set("version".to_string(), "v1");
-                meta.set("auth".to_string(), "true");
                 meta.set("role".to_string(), "admin");
-                meta.set_data(nidrs::datasets::DisableDefaultPrefix(true));
+                meta.set("auth".to_string(), "true");
                 meta.set_data(nidrs::datasets::ServiceType::Controller);
                 meta.set_data(nidrs::datasets::ServiceName("AppController"));
                 meta.set_data(nidrs::datasets::ControllerPath(""));
@@ -186,7 +187,7 @@ mod app {
             pub async fn post_hello_world(
                 &self,
                 Query(q): Query<HashMap<String, String>>,
-                Json(j): Json<serde_json::Value>,
+                Json(j): Json<ArgDto>,
             ) -> AppResult<String> {
                 {
                     ::std::io::_print(format_args!("Query {0:?}\n", q));
@@ -206,9 +207,12 @@ mod app {
         }
     }
     pub mod dto {
-        use nidrs::externs::axum::{
-            body::Body, http::{header, StatusCode},
-            response::{IntoResponse, Response},
+        use nidrs::{
+            externs::axum::{
+                body::Body, http::{header, StatusCode},
+                response::{IntoResponse, Response},
+            },
+            valid_macro::dto,
         };
         use nidrs::externs::serde::{Deserialize, Serialize};
         use nidrs::externs::serde_json;
@@ -494,6 +498,861 @@ mod app {
                     .body(json_body.into())
                     .unwrap();
                 res
+            }
+        }
+        pub struct A {
+            #[rule(Email)]
+            pub hello: String,
+            #[rule(Valid(v))]
+            pub hello2: B,
+        }
+        #[doc(hidden)]
+        #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+        const _: () = {
+            #[allow(unused_extern_crates, clippy::useless_attribute)]
+            extern crate serde as _serde;
+            #[automatically_derived]
+            impl _serde::Serialize for A {
+                fn serialize<__S>(
+                    &self,
+                    __serializer: __S,
+                ) -> _serde::__private::Result<__S::Ok, __S::Error>
+                where
+                    __S: _serde::Serializer,
+                {
+                    let mut __serde_state = _serde::Serializer::serialize_struct(
+                        __serializer,
+                        "A",
+                        false as usize + 1 + 1,
+                    )?;
+                    _serde::ser::SerializeStruct::serialize_field(
+                        &mut __serde_state,
+                        "hello",
+                        &self.hello,
+                    )?;
+                    _serde::ser::SerializeStruct::serialize_field(
+                        &mut __serde_state,
+                        "hello2",
+                        &self.hello2,
+                    )?;
+                    _serde::ser::SerializeStruct::end(__serde_state)
+                }
+            }
+        };
+        #[doc(hidden)]
+        #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+        const _: () = {
+            #[allow(unused_extern_crates, clippy::useless_attribute)]
+            extern crate serde as _serde;
+            #[automatically_derived]
+            impl<'de> _serde::Deserialize<'de> for A {
+                fn deserialize<__D>(
+                    __deserializer: __D,
+                ) -> _serde::__private::Result<Self, __D::Error>
+                where
+                    __D: _serde::Deserializer<'de>,
+                {
+                    #[allow(non_camel_case_types)]
+                    #[doc(hidden)]
+                    enum __Field {
+                        __field0,
+                        __field1,
+                        __ignore,
+                    }
+                    #[doc(hidden)]
+                    struct __FieldVisitor;
+                    impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
+                        type Value = __Field;
+                        fn expecting(
+                            &self,
+                            __formatter: &mut _serde::__private::Formatter,
+                        ) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(
+                                __formatter,
+                                "field identifier",
+                            )
+                        }
+                        fn visit_u64<__E>(
+                            self,
+                            __value: u64,
+                        ) -> _serde::__private::Result<Self::Value, __E>
+                        where
+                            __E: _serde::de::Error,
+                        {
+                            match __value {
+                                0u64 => _serde::__private::Ok(__Field::__field0),
+                                1u64 => _serde::__private::Ok(__Field::__field1),
+                                _ => _serde::__private::Ok(__Field::__ignore),
+                            }
+                        }
+                        fn visit_str<__E>(
+                            self,
+                            __value: &str,
+                        ) -> _serde::__private::Result<Self::Value, __E>
+                        where
+                            __E: _serde::de::Error,
+                        {
+                            match __value {
+                                "hello" => _serde::__private::Ok(__Field::__field0),
+                                "hello2" => _serde::__private::Ok(__Field::__field1),
+                                _ => _serde::__private::Ok(__Field::__ignore),
+                            }
+                        }
+                        fn visit_bytes<__E>(
+                            self,
+                            __value: &[u8],
+                        ) -> _serde::__private::Result<Self::Value, __E>
+                        where
+                            __E: _serde::de::Error,
+                        {
+                            match __value {
+                                b"hello" => _serde::__private::Ok(__Field::__field0),
+                                b"hello2" => _serde::__private::Ok(__Field::__field1),
+                                _ => _serde::__private::Ok(__Field::__ignore),
+                            }
+                        }
+                    }
+                    impl<'de> _serde::Deserialize<'de> for __Field {
+                        #[inline]
+                        fn deserialize<__D>(
+                            __deserializer: __D,
+                        ) -> _serde::__private::Result<Self, __D::Error>
+                        where
+                            __D: _serde::Deserializer<'de>,
+                        {
+                            _serde::Deserializer::deserialize_identifier(
+                                __deserializer,
+                                __FieldVisitor,
+                            )
+                        }
+                    }
+                    #[doc(hidden)]
+                    struct __Visitor<'de> {
+                        marker: _serde::__private::PhantomData<A>,
+                        lifetime: _serde::__private::PhantomData<&'de ()>,
+                    }
+                    impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
+                        type Value = A;
+                        fn expecting(
+                            &self,
+                            __formatter: &mut _serde::__private::Formatter,
+                        ) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(
+                                __formatter,
+                                "struct A",
+                            )
+                        }
+                        #[inline]
+                        fn visit_seq<__A>(
+                            self,
+                            mut __seq: __A,
+                        ) -> _serde::__private::Result<Self::Value, __A::Error>
+                        where
+                            __A: _serde::de::SeqAccess<'de>,
+                        {
+                            let __field0 = match _serde::de::SeqAccess::next_element::<
+                                String,
+                            >(&mut __seq)? {
+                                _serde::__private::Some(__value) => __value,
+                                _serde::__private::None => {
+                                    return _serde::__private::Err(
+                                        _serde::de::Error::invalid_length(
+                                            0usize,
+                                            &"struct A with 2 elements",
+                                        ),
+                                    );
+                                }
+                            };
+                            let __field1 = match _serde::de::SeqAccess::next_element::<
+                                B,
+                            >(&mut __seq)? {
+                                _serde::__private::Some(__value) => __value,
+                                _serde::__private::None => {
+                                    return _serde::__private::Err(
+                                        _serde::de::Error::invalid_length(
+                                            1usize,
+                                            &"struct A with 2 elements",
+                                        ),
+                                    );
+                                }
+                            };
+                            _serde::__private::Ok(A {
+                                hello: __field0,
+                                hello2: __field1,
+                            })
+                        }
+                        #[inline]
+                        fn visit_map<__A>(
+                            self,
+                            mut __map: __A,
+                        ) -> _serde::__private::Result<Self::Value, __A::Error>
+                        where
+                            __A: _serde::de::MapAccess<'de>,
+                        {
+                            let mut __field0: _serde::__private::Option<String> = _serde::__private::None;
+                            let mut __field1: _serde::__private::Option<B> = _serde::__private::None;
+                            while let _serde::__private::Some(__key) = _serde::de::MapAccess::next_key::<
+                                __Field,
+                            >(&mut __map)? {
+                                match __key {
+                                    __Field::__field0 => {
+                                        if _serde::__private::Option::is_some(&__field0) {
+                                            return _serde::__private::Err(
+                                                <__A::Error as _serde::de::Error>::duplicate_field("hello"),
+                                            );
+                                        }
+                                        __field0 = _serde::__private::Some(
+                                            _serde::de::MapAccess::next_value::<String>(&mut __map)?,
+                                        );
+                                    }
+                                    __Field::__field1 => {
+                                        if _serde::__private::Option::is_some(&__field1) {
+                                            return _serde::__private::Err(
+                                                <__A::Error as _serde::de::Error>::duplicate_field("hello2"),
+                                            );
+                                        }
+                                        __field1 = _serde::__private::Some(
+                                            _serde::de::MapAccess::next_value::<B>(&mut __map)?,
+                                        );
+                                    }
+                                    _ => {
+                                        let _ = _serde::de::MapAccess::next_value::<
+                                            _serde::de::IgnoredAny,
+                                        >(&mut __map)?;
+                                    }
+                                }
+                            }
+                            let __field0 = match __field0 {
+                                _serde::__private::Some(__field0) => __field0,
+                                _serde::__private::None => {
+                                    _serde::__private::de::missing_field("hello")?
+                                }
+                            };
+                            let __field1 = match __field1 {
+                                _serde::__private::Some(__field1) => __field1,
+                                _serde::__private::None => {
+                                    _serde::__private::de::missing_field("hello2")?
+                                }
+                            };
+                            _serde::__private::Ok(A {
+                                hello: __field0,
+                                hello2: __field1,
+                            })
+                        }
+                    }
+                    #[doc(hidden)]
+                    const FIELDS: &'static [&'static str] = &["hello", "hello2"];
+                    _serde::Deserializer::deserialize_struct(
+                        __deserializer,
+                        "A",
+                        FIELDS,
+                        __Visitor {
+                            marker: _serde::__private::PhantomData::<A>,
+                            lifetime: _serde::__private::PhantomData,
+                        },
+                    )
+                }
+            }
+        };
+        #[automatically_derived]
+        impl ::core::fmt::Debug for A {
+            #[inline]
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                ::core::fmt::Formatter::debug_struct_field2_finish(
+                    f,
+                    "A",
+                    "hello",
+                    &self.hello,
+                    "hello2",
+                    &&self.hello2,
+                )
+            }
+        }
+        impl nidrs::valid::validator::Validator for A {
+            fn valid(&self) -> nidrs::valid::validator::ValidResult {
+                use nidrs::valid::validator::Rule;
+                use nidrs::valid::ruleset;
+                use nidrs::valid::ruleset::*;
+                let v = &self.hello;
+                Email.valid(v, "hello", None)?;
+                let v = &self.hello2;
+                Valid(v).valid(v, "hello2", None)?;
+                return Ok(());
+            }
+        }
+        pub struct B {
+            pub hello2: String,
+        }
+        #[doc(hidden)]
+        #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+        const _: () = {
+            #[allow(unused_extern_crates, clippy::useless_attribute)]
+            extern crate serde as _serde;
+            #[automatically_derived]
+            impl _serde::Serialize for B {
+                fn serialize<__S>(
+                    &self,
+                    __serializer: __S,
+                ) -> _serde::__private::Result<__S::Ok, __S::Error>
+                where
+                    __S: _serde::Serializer,
+                {
+                    let mut __serde_state = _serde::Serializer::serialize_struct(
+                        __serializer,
+                        "B",
+                        false as usize + 1,
+                    )?;
+                    _serde::ser::SerializeStruct::serialize_field(
+                        &mut __serde_state,
+                        "hello2",
+                        &self.hello2,
+                    )?;
+                    _serde::ser::SerializeStruct::end(__serde_state)
+                }
+            }
+        };
+        #[doc(hidden)]
+        #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+        const _: () = {
+            #[allow(unused_extern_crates, clippy::useless_attribute)]
+            extern crate serde as _serde;
+            #[automatically_derived]
+            impl<'de> _serde::Deserialize<'de> for B {
+                fn deserialize<__D>(
+                    __deserializer: __D,
+                ) -> _serde::__private::Result<Self, __D::Error>
+                where
+                    __D: _serde::Deserializer<'de>,
+                {
+                    #[allow(non_camel_case_types)]
+                    #[doc(hidden)]
+                    enum __Field {
+                        __field0,
+                        __ignore,
+                    }
+                    #[doc(hidden)]
+                    struct __FieldVisitor;
+                    impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
+                        type Value = __Field;
+                        fn expecting(
+                            &self,
+                            __formatter: &mut _serde::__private::Formatter,
+                        ) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(
+                                __formatter,
+                                "field identifier",
+                            )
+                        }
+                        fn visit_u64<__E>(
+                            self,
+                            __value: u64,
+                        ) -> _serde::__private::Result<Self::Value, __E>
+                        where
+                            __E: _serde::de::Error,
+                        {
+                            match __value {
+                                0u64 => _serde::__private::Ok(__Field::__field0),
+                                _ => _serde::__private::Ok(__Field::__ignore),
+                            }
+                        }
+                        fn visit_str<__E>(
+                            self,
+                            __value: &str,
+                        ) -> _serde::__private::Result<Self::Value, __E>
+                        where
+                            __E: _serde::de::Error,
+                        {
+                            match __value {
+                                "hello2" => _serde::__private::Ok(__Field::__field0),
+                                _ => _serde::__private::Ok(__Field::__ignore),
+                            }
+                        }
+                        fn visit_bytes<__E>(
+                            self,
+                            __value: &[u8],
+                        ) -> _serde::__private::Result<Self::Value, __E>
+                        where
+                            __E: _serde::de::Error,
+                        {
+                            match __value {
+                                b"hello2" => _serde::__private::Ok(__Field::__field0),
+                                _ => _serde::__private::Ok(__Field::__ignore),
+                            }
+                        }
+                    }
+                    impl<'de> _serde::Deserialize<'de> for __Field {
+                        #[inline]
+                        fn deserialize<__D>(
+                            __deserializer: __D,
+                        ) -> _serde::__private::Result<Self, __D::Error>
+                        where
+                            __D: _serde::Deserializer<'de>,
+                        {
+                            _serde::Deserializer::deserialize_identifier(
+                                __deserializer,
+                                __FieldVisitor,
+                            )
+                        }
+                    }
+                    #[doc(hidden)]
+                    struct __Visitor<'de> {
+                        marker: _serde::__private::PhantomData<B>,
+                        lifetime: _serde::__private::PhantomData<&'de ()>,
+                    }
+                    impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
+                        type Value = B;
+                        fn expecting(
+                            &self,
+                            __formatter: &mut _serde::__private::Formatter,
+                        ) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(
+                                __formatter,
+                                "struct B",
+                            )
+                        }
+                        #[inline]
+                        fn visit_seq<__A>(
+                            self,
+                            mut __seq: __A,
+                        ) -> _serde::__private::Result<Self::Value, __A::Error>
+                        where
+                            __A: _serde::de::SeqAccess<'de>,
+                        {
+                            let __field0 = match _serde::de::SeqAccess::next_element::<
+                                String,
+                            >(&mut __seq)? {
+                                _serde::__private::Some(__value) => __value,
+                                _serde::__private::None => {
+                                    return _serde::__private::Err(
+                                        _serde::de::Error::invalid_length(
+                                            0usize,
+                                            &"struct B with 1 element",
+                                        ),
+                                    );
+                                }
+                            };
+                            _serde::__private::Ok(B { hello2: __field0 })
+                        }
+                        #[inline]
+                        fn visit_map<__A>(
+                            self,
+                            mut __map: __A,
+                        ) -> _serde::__private::Result<Self::Value, __A::Error>
+                        where
+                            __A: _serde::de::MapAccess<'de>,
+                        {
+                            let mut __field0: _serde::__private::Option<String> = _serde::__private::None;
+                            while let _serde::__private::Some(__key) = _serde::de::MapAccess::next_key::<
+                                __Field,
+                            >(&mut __map)? {
+                                match __key {
+                                    __Field::__field0 => {
+                                        if _serde::__private::Option::is_some(&__field0) {
+                                            return _serde::__private::Err(
+                                                <__A::Error as _serde::de::Error>::duplicate_field("hello2"),
+                                            );
+                                        }
+                                        __field0 = _serde::__private::Some(
+                                            _serde::de::MapAccess::next_value::<String>(&mut __map)?,
+                                        );
+                                    }
+                                    _ => {
+                                        let _ = _serde::de::MapAccess::next_value::<
+                                            _serde::de::IgnoredAny,
+                                        >(&mut __map)?;
+                                    }
+                                }
+                            }
+                            let __field0 = match __field0 {
+                                _serde::__private::Some(__field0) => __field0,
+                                _serde::__private::None => {
+                                    _serde::__private::de::missing_field("hello2")?
+                                }
+                            };
+                            _serde::__private::Ok(B { hello2: __field0 })
+                        }
+                    }
+                    #[doc(hidden)]
+                    const FIELDS: &'static [&'static str] = &["hello2"];
+                    _serde::Deserializer::deserialize_struct(
+                        __deserializer,
+                        "B",
+                        FIELDS,
+                        __Visitor {
+                            marker: _serde::__private::PhantomData::<B>,
+                            lifetime: _serde::__private::PhantomData,
+                        },
+                    )
+                }
+            }
+        };
+        #[automatically_derived]
+        impl ::core::fmt::Debug for B {
+            #[inline]
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                ::core::fmt::Formatter::debug_struct_field1_finish(
+                    f,
+                    "B",
+                    "hello2",
+                    &&self.hello2,
+                )
+            }
+        }
+        impl nidrs::valid::validator::Validator for B {
+            fn valid(&self) -> nidrs::valid::validator::ValidResult {
+                use nidrs::valid::validator::Rule;
+                use nidrs::valid::ruleset;
+                use nidrs::valid::ruleset::*;
+                return Ok(());
+            }
+        }
+        pub enum ArgDto {
+            A(A),
+            B(B),
+        }
+        #[doc(hidden)]
+        #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+        const _: () = {
+            #[allow(unused_extern_crates, clippy::useless_attribute)]
+            extern crate serde as _serde;
+            #[automatically_derived]
+            impl _serde::Serialize for ArgDto {
+                fn serialize<__S>(
+                    &self,
+                    __serializer: __S,
+                ) -> _serde::__private::Result<__S::Ok, __S::Error>
+                where
+                    __S: _serde::Serializer,
+                {
+                    match *self {
+                        ArgDto::A(ref __field0) => {
+                            _serde::Serializer::serialize_newtype_variant(
+                                __serializer,
+                                "ArgDto",
+                                0u32,
+                                "A",
+                                __field0,
+                            )
+                        }
+                        ArgDto::B(ref __field0) => {
+                            _serde::Serializer::serialize_newtype_variant(
+                                __serializer,
+                                "ArgDto",
+                                1u32,
+                                "B",
+                                __field0,
+                            )
+                        }
+                    }
+                }
+            }
+        };
+        #[doc(hidden)]
+        #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+        const _: () = {
+            #[allow(unused_extern_crates, clippy::useless_attribute)]
+            extern crate serde as _serde;
+            #[automatically_derived]
+            impl<'de> _serde::Deserialize<'de> for ArgDto {
+                fn deserialize<__D>(
+                    __deserializer: __D,
+                ) -> _serde::__private::Result<Self, __D::Error>
+                where
+                    __D: _serde::Deserializer<'de>,
+                {
+                    #[allow(non_camel_case_types)]
+                    #[doc(hidden)]
+                    enum __Field {
+                        __field0,
+                        __field1,
+                    }
+                    #[doc(hidden)]
+                    struct __FieldVisitor;
+                    impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
+                        type Value = __Field;
+                        fn expecting(
+                            &self,
+                            __formatter: &mut _serde::__private::Formatter,
+                        ) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(
+                                __formatter,
+                                "variant identifier",
+                            )
+                        }
+                        fn visit_u64<__E>(
+                            self,
+                            __value: u64,
+                        ) -> _serde::__private::Result<Self::Value, __E>
+                        where
+                            __E: _serde::de::Error,
+                        {
+                            match __value {
+                                0u64 => _serde::__private::Ok(__Field::__field0),
+                                1u64 => _serde::__private::Ok(__Field::__field1),
+                                _ => {
+                                    _serde::__private::Err(
+                                        _serde::de::Error::invalid_value(
+                                            _serde::de::Unexpected::Unsigned(__value),
+                                            &"variant index 0 <= i < 2",
+                                        ),
+                                    )
+                                }
+                            }
+                        }
+                        fn visit_str<__E>(
+                            self,
+                            __value: &str,
+                        ) -> _serde::__private::Result<Self::Value, __E>
+                        where
+                            __E: _serde::de::Error,
+                        {
+                            match __value {
+                                "A" => _serde::__private::Ok(__Field::__field0),
+                                "B" => _serde::__private::Ok(__Field::__field1),
+                                _ => {
+                                    _serde::__private::Err(
+                                        _serde::de::Error::unknown_variant(__value, VARIANTS),
+                                    )
+                                }
+                            }
+                        }
+                        fn visit_bytes<__E>(
+                            self,
+                            __value: &[u8],
+                        ) -> _serde::__private::Result<Self::Value, __E>
+                        where
+                            __E: _serde::de::Error,
+                        {
+                            match __value {
+                                b"A" => _serde::__private::Ok(__Field::__field0),
+                                b"B" => _serde::__private::Ok(__Field::__field1),
+                                _ => {
+                                    let __value = &_serde::__private::from_utf8_lossy(__value);
+                                    _serde::__private::Err(
+                                        _serde::de::Error::unknown_variant(__value, VARIANTS),
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    impl<'de> _serde::Deserialize<'de> for __Field {
+                        #[inline]
+                        fn deserialize<__D>(
+                            __deserializer: __D,
+                        ) -> _serde::__private::Result<Self, __D::Error>
+                        where
+                            __D: _serde::Deserializer<'de>,
+                        {
+                            _serde::Deserializer::deserialize_identifier(
+                                __deserializer,
+                                __FieldVisitor,
+                            )
+                        }
+                    }
+                    #[doc(hidden)]
+                    struct __Visitor<'de> {
+                        marker: _serde::__private::PhantomData<ArgDto>,
+                        lifetime: _serde::__private::PhantomData<&'de ()>,
+                    }
+                    impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
+                        type Value = ArgDto;
+                        fn expecting(
+                            &self,
+                            __formatter: &mut _serde::__private::Formatter,
+                        ) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(
+                                __formatter,
+                                "enum ArgDto",
+                            )
+                        }
+                        fn visit_enum<__A>(
+                            self,
+                            __data: __A,
+                        ) -> _serde::__private::Result<Self::Value, __A::Error>
+                        where
+                            __A: _serde::de::EnumAccess<'de>,
+                        {
+                            match _serde::de::EnumAccess::variant(__data)? {
+                                (__Field::__field0, __variant) => {
+                                    _serde::__private::Result::map(
+                                        _serde::de::VariantAccess::newtype_variant::<A>(__variant),
+                                        ArgDto::A,
+                                    )
+                                }
+                                (__Field::__field1, __variant) => {
+                                    _serde::__private::Result::map(
+                                        _serde::de::VariantAccess::newtype_variant::<B>(__variant),
+                                        ArgDto::B,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    #[doc(hidden)]
+                    const VARIANTS: &'static [&'static str] = &["A", "B"];
+                    _serde::Deserializer::deserialize_enum(
+                        __deserializer,
+                        "ArgDto",
+                        VARIANTS,
+                        __Visitor {
+                            marker: _serde::__private::PhantomData::<ArgDto>,
+                            lifetime: _serde::__private::PhantomData,
+                        },
+                    )
+                }
+            }
+        };
+        #[automatically_derived]
+        impl ::core::fmt::Debug for ArgDto {
+            #[inline]
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                match self {
+                    ArgDto::A(__self_0) => {
+                        ::core::fmt::Formatter::debug_tuple_field1_finish(
+                            f,
+                            "A",
+                            &__self_0,
+                        )
+                    }
+                    ArgDto::B(__self_0) => {
+                        ::core::fmt::Formatter::debug_tuple_field1_finish(
+                            f,
+                            "B",
+                            &__self_0,
+                        )
+                    }
+                }
+            }
+        }
+        impl nidrs::valid::validator::Validator for ArgDto {
+            fn valid(&self) -> nidrs::valid::validator::ValidResult {
+                use nidrs::valid::validator::Rule;
+                use nidrs::valid::ruleset;
+                use nidrs::valid::ruleset::*;
+                match self {
+                    ArgDto::A(v) => v.valid()?,
+                    ArgDto::B(v) => v.valid()?,
+                }
+                return Ok(());
+            }
+        }
+        pub struct ArgWrapDto(pub ArgDto);
+        #[doc(hidden)]
+        #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+        const _: () = {
+            #[allow(unused_extern_crates, clippy::useless_attribute)]
+            extern crate serde as _serde;
+            #[automatically_derived]
+            impl _serde::Serialize for ArgWrapDto {
+                fn serialize<__S>(
+                    &self,
+                    __serializer: __S,
+                ) -> _serde::__private::Result<__S::Ok, __S::Error>
+                where
+                    __S: _serde::Serializer,
+                {
+                    _serde::Serializer::serialize_newtype_struct(
+                        __serializer,
+                        "ArgWrapDto",
+                        &self.0,
+                    )
+                }
+            }
+        };
+        #[doc(hidden)]
+        #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+        const _: () = {
+            #[allow(unused_extern_crates, clippy::useless_attribute)]
+            extern crate serde as _serde;
+            #[automatically_derived]
+            impl<'de> _serde::Deserialize<'de> for ArgWrapDto {
+                fn deserialize<__D>(
+                    __deserializer: __D,
+                ) -> _serde::__private::Result<Self, __D::Error>
+                where
+                    __D: _serde::Deserializer<'de>,
+                {
+                    #[doc(hidden)]
+                    struct __Visitor<'de> {
+                        marker: _serde::__private::PhantomData<ArgWrapDto>,
+                        lifetime: _serde::__private::PhantomData<&'de ()>,
+                    }
+                    impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
+                        type Value = ArgWrapDto;
+                        fn expecting(
+                            &self,
+                            __formatter: &mut _serde::__private::Formatter,
+                        ) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(
+                                __formatter,
+                                "tuple struct ArgWrapDto",
+                            )
+                        }
+                        #[inline]
+                        fn visit_newtype_struct<__E>(
+                            self,
+                            __e: __E,
+                        ) -> _serde::__private::Result<Self::Value, __E::Error>
+                        where
+                            __E: _serde::Deserializer<'de>,
+                        {
+                            let __field0: ArgDto = <ArgDto as _serde::Deserialize>::deserialize(
+                                __e,
+                            )?;
+                            _serde::__private::Ok(ArgWrapDto(__field0))
+                        }
+                        #[inline]
+                        fn visit_seq<__A>(
+                            self,
+                            mut __seq: __A,
+                        ) -> _serde::__private::Result<Self::Value, __A::Error>
+                        where
+                            __A: _serde::de::SeqAccess<'de>,
+                        {
+                            let __field0 = match _serde::de::SeqAccess::next_element::<
+                                ArgDto,
+                            >(&mut __seq)? {
+                                _serde::__private::Some(__value) => __value,
+                                _serde::__private::None => {
+                                    return _serde::__private::Err(
+                                        _serde::de::Error::invalid_length(
+                                            0usize,
+                                            &"tuple struct ArgWrapDto with 1 element",
+                                        ),
+                                    );
+                                }
+                            };
+                            _serde::__private::Ok(ArgWrapDto(__field0))
+                        }
+                    }
+                    _serde::Deserializer::deserialize_newtype_struct(
+                        __deserializer,
+                        "ArgWrapDto",
+                        __Visitor {
+                            marker: _serde::__private::PhantomData::<ArgWrapDto>,
+                            lifetime: _serde::__private::PhantomData,
+                        },
+                    )
+                }
+            }
+        };
+        #[automatically_derived]
+        impl ::core::fmt::Debug for ArgWrapDto {
+            #[inline]
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                ::core::fmt::Formatter::debug_tuple_field1_finish(
+                    f,
+                    "ArgWrapDto",
+                    &&self.0,
+                )
+            }
+        }
+        impl nidrs::valid::validator::Validator for ArgWrapDto {
+            fn valid(&self) -> nidrs::valid::validator::ValidResult {
+                use nidrs::valid::validator::Rule;
+                use nidrs::valid::ruleset;
+                use nidrs::valid::ruleset::*;
+                return Ok(());
             }
         }
     }
@@ -1513,11 +2372,7 @@ mod modules {
             }
         }
         pub mod dto {
-            use nidrs::{
-                valid::validator::{Rule, ValidResult},
-                valid_macro::Validator,
-            };
-            use serde::{Deserialize, Serialize};
+            use nidrs::valid_macro::dto;
             pub struct CreateUserDto {
                 #[rule(Email, "age must be greater than 0")]
                 pub name: String,
@@ -1787,16 +2642,19 @@ mod modules {
                 }
             }
             impl nidrs::valid::validator::Validator for CreateUserDto {
-                fn valid(&self) -> ValidResult {
+                fn valid(&self) -> nidrs::valid::validator::ValidResult {
+                    use nidrs::valid::validator::Rule;
                     use nidrs::valid::ruleset;
                     use nidrs::valid::ruleset::*;
+                    let v = &self.name;
                     Email
                         .valid(
-                            &self.name,
+                            v,
                             "name",
                             Some("age must be greater than 0".to_string()),
                         )?;
-                    Number::default().max(12).min(0).valid(&self.age, "age", None)?;
+                    let v = &self.age;
+                    Number::default().max(12).min(0).valid(v, "age", None)?;
                     return Ok(());
                 }
             }
@@ -2235,14 +3093,14 @@ fn main() {
     app.block();
 }
 pub mod import {
-    pub use crate::modules::conf::service::ConfService;
-    pub use crate::modules::log::interceptor::LogInterceptor;
     pub use crate::app::service::AppService;
-    pub use crate::app::controller::AppController;
-    pub use crate::modules::conf::options::ConfOptions;
-    pub use crate::modules::user::controller::UserController;
-    pub use crate::modules::user::service::UserService;
+    pub use crate::modules::log::interceptor::LogInterceptor;
     pub use crate::modules::log::service::LogService;
+    pub use crate::modules::conf::service::ConfService;
+    pub use crate::modules::conf::options::ConfOptions;
+    pub use crate::modules::user::service::UserService;
+    pub use crate::modules::user::controller::UserController;
+    pub use crate::app::controller::AppController;
 }
 struct CurrentUser {
     pub id: u64,

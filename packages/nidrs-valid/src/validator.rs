@@ -3,7 +3,7 @@ use std::fmt;
 
 pub type ValidResult = Result<(), ValidError>;
 
-pub trait Rule<T>: Default {
+pub trait Rule<T> {
     fn valid(&self, value: T, field_path: &str, message: Option<String>) -> ValidResult;
     fn example(&self) -> Vec<Value>;
 }

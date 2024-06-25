@@ -1,8 +1,8 @@
-use nidrs::externs::axum::{
+use nidrs::{externs::axum::{
     body::Body,
     http::{header, StatusCode},
     response::{IntoResponse, Response},
-};
+}, valid_macro::dto};
 use nidrs::externs::serde::{Deserialize, Serialize};
 use nidrs::externs::serde_json;
 
@@ -29,3 +29,30 @@ impl IntoResponse for Status {
         res
     }
 }
+
+// #[derive(Serialize, Deserialize, Debug)]
+#[dto]
+pub struct A {
+    #[rule(Email)]
+    pub hello: String,
+
+    #[rule(Valid(v))]
+    pub hello2: B,
+}
+
+// #[derive(Serialize, Deserialize, Debug)]
+#[dto]
+pub struct B {
+    pub hello2: String,
+}
+
+
+// #[derive(Serialize, Deserialize, Debug)]
+#[dto]
+pub enum ArgDto {
+    A(A),
+    B(B),
+}
+
+#[dto]
+pub struct ArgWrapDto(pub ArgDto);

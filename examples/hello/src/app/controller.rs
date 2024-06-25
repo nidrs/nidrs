@@ -7,12 +7,12 @@ use nidrs::{version, Inject, Meta};
 
 use crate::AppResult;
 
-use super::{dto::Status, service::AppService};
+use super::{dto::{ArgDto, Status}, service::AppService};
 
 // #[uses(LogInterceptor)]
 #[version("v1")]
 #[meta(role = "admin", auth = "true")]
-#[meta(nidrs::datasets::DisableDefaultPrefix(true))]
+// #[meta(nidrs::datasets::DisableDefaultPrefix(true))]
 #[controller()]
 pub struct AppController {
     app_service: Inject<AppService>,
@@ -50,7 +50,7 @@ impl AppController {
 
     // #[uses(LogInterceptor)]
     #[post("/hello")]
-    pub async fn post_hello_world(&self, Query(q): Query<HashMap<String, String>>, Json(j): Json<serde_json::Value>) -> AppResult<String> {
+    pub async fn post_hello_world(&self, Query(q): Query<HashMap<String, String>>, Json(j): Json<ArgDto>) -> AppResult<String> {
         println!("Query {:?}", q);
         println!("Json {:?}", j);
 
