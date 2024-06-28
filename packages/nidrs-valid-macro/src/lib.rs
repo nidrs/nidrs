@@ -77,6 +77,10 @@ pub fn validate_derive(input: TokenStream) -> TokenStream {
                 #(#validations)*
                 return Ok(());
             }
+
+            fn example(&self) -> Vec<serde_json::Value> {
+                vec![]
+            }
         }
     };
 

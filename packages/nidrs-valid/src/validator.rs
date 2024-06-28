@@ -21,4 +21,5 @@ impl fmt::Display for ValidError {
 
 pub trait Validator {
     fn valid(&self) -> ValidResult;
+    fn example(&self) -> Vec<Value>;
 }

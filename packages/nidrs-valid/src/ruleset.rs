@@ -67,7 +67,6 @@ impl Rule<&i32> for Number {
     }
 }
 
-
 pub struct Valid<'a, T: Validator>(pub &'a T);
 
 impl<'a, T: Validator> Rule<&T> for Valid<'a, T> {
@@ -75,6 +74,6 @@ impl<'a, T: Validator> Rule<&T> for Valid<'a, T> {
         self.0.valid()
     }
     fn example(&self) -> Vec<Value> {
-        vec![]
+        self.0.example()
     }
 }
