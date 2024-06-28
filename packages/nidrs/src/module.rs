@@ -1,7 +1,11 @@
 use nidrs_extern::{
     axum,
     tokio::signal,
-    utoipa::{self, OpenApi},
+    utoipa::{
+        self,
+        openapi::{Components, Info, OpenApiBuilder, Paths},
+        OpenApi,
+    },
     utoipa_rapidoc::RapiDoc,
     utoipa_redoc::{Redoc, Servable},
     utoipa_swagger_ui::SwaggerUi,
@@ -122,15 +126,17 @@ impl<T: Module> NidrsFactory<T> {
 
         #[derive(OpenApi)]
         #[openapi()]
-        struct ApiDoc;
+        struct ApiDoc {}
+
+        let api: OpenApiBuilder = ApiDoc::openapi().into();
+        let api =
+            api.info(Info::new("Nidrs API", self.module_ctx.defaults.default_version)).paths(Paths::f()).components(Some(Components::new())).build();
 
         self.router = self
             .router
             .merge(sub_router)
-            .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
-            .merge(Redoc::with_url("/redoc", ApiDoc::openapi()))
-            // There is no need to create `RapiDoc::with_openapi` because the OpenApi is served
-            // via SwaggerUi instead we only make rapidoc to point to the existing doc.
+            .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api.clone()))
+            .merge(Redoc::with_url("/redoc", api.clone()))
             .merge(RapiDoc::new("/api-docs/openapi.json").path("/rapidoc"));
 
         self
