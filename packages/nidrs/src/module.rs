@@ -129,8 +129,11 @@ impl<T: Module> NidrsFactory<T> {
         struct ApiDoc {}
 
         let api: OpenApiBuilder = ApiDoc::openapi().into();
-        let api =
-            api.info(Info::new("Nidrs API", self.module_ctx.defaults.default_version)).paths(Paths::f()).components(Some(Components::new())).build();
+        let api = api
+            .info(Info::new("Nidrs API", self.module_ctx.defaults.default_version))
+            .paths(Paths::new())
+            .components(Some(Components::new()))
+            .build();
 
         self.router = self
             .router
