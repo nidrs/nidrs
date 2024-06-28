@@ -1,3 +1,4 @@
+use axum::Json;
 use serde_json::Value;
 use std::fmt;
 
@@ -22,4 +23,24 @@ impl fmt::Display for ValidError {
 pub trait Validator {
     fn valid(&self) -> ValidResult;
     fn example(&self) -> Vec<Value>;
+}
+
+impl<T: Validator> Validator for Json<T> {
+    fn valid(&self) -> ValidResult {
+        self.0.valid()
+    }
+
+    fn example(&self) -> Vec<Value> {
+        self.0.example()
+    }
+}
+
+impl Validator for axum::body::Body {
+    fn valid(&self) -> ValidResult {
+        Ok(())
+    }
+
+    fn example(&self) -> Vec<Value> {
+        vec![]
+    }
 }

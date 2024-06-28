@@ -1126,6 +1126,7 @@ dependencies = [
 name = "nidrs-valid"
 version = "0.0.1"
 dependencies = [
+ "axum",
  "nidrs-valid-macro",
  "serde",
  "serde_json",
