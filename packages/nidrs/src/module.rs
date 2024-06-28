@@ -1,6 +1,10 @@
 use nidrs_extern::{
-    axum::{self},
+    axum,
     tokio::signal,
+    utoipa::{self, OpenApi},
+    utoipa_rapidoc::RapiDoc,
+    utoipa_redoc::{Redoc, Servable},
+    utoipa_swagger_ui::SwaggerUi,
 };
 use nidrs_extern::{datasets::RouterPath, tokio};
 use std::{
@@ -115,7 +119,20 @@ impl<T: Module> NidrsFactory<T> {
         for router in self.module_ctx.routers.iter() {
             sub_router = sub_router.merge((self.router_hook)(router.clone()));
         }
-        self.router = self.router.merge(sub_router);
+
+        #[derive(OpenApi)]
+        #[openapi()]
+        struct ApiDoc;
+
+        self.router = self
+            .router
+            .merge(sub_router)
+            .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
+            .merge(Redoc::with_url("/redoc", ApiDoc::openapi()))
+            // There is no need to create `RapiDoc::with_openapi` because the OpenApi is served
+            // via SwaggerUi instead we only make rapidoc to point to the existing doc.
+            .merge(RapiDoc::new("/api-docs/openapi.json").path("/rapidoc"));
+
         self
     }
 

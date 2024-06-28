@@ -9,6 +9,11 @@ pub use serde_json;
 pub use thiserror;
 pub use tokio;
 pub use tower;
+pub use utoipa;
+pub use utoipa_rapidoc;
+pub use utoipa_redoc;
+pub use utoipa_scalar;
+pub use utoipa_swagger_ui;
 
 pub mod datasets;
 pub mod meta;
