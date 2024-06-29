@@ -1,5 +1,5 @@
 use proc_macro::TokenStream;
-use proc_macro2::{Span, TokenStream as TokenStream2};
+use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
 use syn::{parse::Parse, parse_macro_input, punctuated::Punctuated, Data, DeriveInput, Expr, Meta};
 

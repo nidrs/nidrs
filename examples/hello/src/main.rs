@@ -35,6 +35,10 @@ fn main() {
             )
         );
 
+        if let Some(v) = router_wrap.meta.get_data::<nidrs::datasets::RouterScheme>() {
+            println!("RouterScheme {:?}", v.value().0);
+        }
+
         if router_wrap.match_router_path("/**") {
             println!("match /");
             router_wrap.router.layer(

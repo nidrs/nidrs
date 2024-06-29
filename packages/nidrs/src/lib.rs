@@ -15,6 +15,8 @@ pub use controller::*;
 pub mod module;
 pub use module::*;
 
+pub mod shared;
+
 pub use nidrs_extern::datasets;
 pub use nidrs_extern::meta::*;
 

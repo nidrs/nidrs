@@ -112,3 +112,15 @@ impl RouterFullPath {
         &self.0
     }
 }
+
+pub struct RouterScheme(pub (&'static str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>));
+
+impl RouterScheme {
+    pub fn value(&self) -> &(&'static str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>) {
+        &self.0
+    }
+
+    pub fn from_dto_type<T: utoipa::ToSchema<'static>>() -> Self {
+        RouterScheme(T::schema())
+    }
+}

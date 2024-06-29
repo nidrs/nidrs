@@ -1,13 +1,13 @@
-use std::{fmt::Debug, usize::MAX};
+use std::fmt::Debug;
 
 use nidrs::macros::interceptor;
 use nidrs::{
-    externs::axum::{body::to_bytes, extract::FromRequest, http::Response, response::IntoResponse},
+    externs::axum::{extract::FromRequest, response::IntoResponse},
     valid::validator::Validator,
 };
-use nidrs::{AnyResponse, Inject, InterCtx, Interceptor, IntoAnyResponse, StateCtx};
+use nidrs::{AnyResponse, InterCtx, Interceptor, IntoAnyResponse, StateCtx};
 
-use crate::{AppResult, CurrentUser};
+use crate::AppResult;
 
 #[interceptor()]
 pub struct UserInterceptor {}

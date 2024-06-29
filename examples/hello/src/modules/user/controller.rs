@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use nidrs::{externs::axum::extract::Query, post, valid::validator::Validator};
+use nidrs::{externs::axum::extract::Query, meta, post};
 use nidrs::{
     macros::{controller, get},
     uses,
@@ -27,6 +27,7 @@ impl UserController {
         Ok(self.user_service.extract().get_hello_world2())
     }
 
+    #[meta(nidrs::datasets::RouterScheme::from_dto_type::<CreateUserDto>())]
     #[uses(UserInterceptor)]
     #[post("/")]
     pub async fn create_user(&self, dto: Json<CreateUserDto>) -> AppResult<String> {

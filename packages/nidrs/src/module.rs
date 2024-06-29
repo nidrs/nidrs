@@ -1,10 +1,14 @@
 use nidrs_extern::{
     axum,
+    datasets::{self, RouterScheme},
     tokio::signal,
     utoipa::{
         self,
-        openapi::{Components, Info, OpenApiBuilder, Paths},
-        OpenApi,
+        openapi::{
+            path::{OperationBuilder, PathItemBuilder},
+            request_body::RequestBodyBuilder,
+            Components, ContentBuilder, Info, OpenApiBuilder, PathsBuilder,
+        },
     },
     utoipa_rapidoc::RapiDoc,
     utoipa_redoc::{Redoc, Servable},
@@ -124,14 +128,42 @@ impl<T: Module> NidrsFactory<T> {
             sub_router = sub_router.merge((self.router_hook)(router.clone()));
         }
 
-        #[derive(OpenApi)]
-        #[openapi()]
-        struct ApiDoc {}
+        let mut paths = PathsBuilder::new().build();
 
-        let api: OpenApiBuilder = ApiDoc::openapi().into();
-        let api = api
+        for router in self.module_ctx.routers.iter() {
+            let path = router.meta.get_data::<datasets::RouterFullPath>().unwrap().value();
+            let method = router.meta.get_data::<datasets::RouterMethod>().unwrap().value();
+            let path_type = match method {
+                "post" => utoipa::openapi::PathItemType::Post,
+                "put" => utoipa::openapi::PathItemType::Put,
+                "delete" => utoipa::openapi::PathItemType::Delete,
+                "patch" => utoipa::openapi::PathItemType::Patch,
+                "options" => utoipa::openapi::PathItemType::Options,
+                "head" => utoipa::openapi::PathItemType::Head,
+                "trace" => utoipa::openapi::PathItemType::Trace,
+                "connect" => utoipa::openapi::PathItemType::Connect,
+                _ => utoipa::openapi::PathItemType::Get,
+            };
+            let content = if let Some(router_scheme) = router.meta.get_data::<RouterScheme>() {
+                ContentBuilder::new().schema(router_scheme.value().1.clone()).build()
+            } else {
+                ContentBuilder::new().build()
+            };
+            let path_item = PathItemBuilder::new()
+                .operation(
+                    path_type,
+                    OperationBuilder::new()
+                        .description(path.into())
+                        .request_body(Some(RequestBodyBuilder::new().content("application/json", content).build()))
+                        .build(),
+                )
+                .build();
+            paths.paths.insert(path.into(), path_item);
+        }
+
+        let api = OpenApiBuilder::new()
             .info(Info::new("Nidrs API", self.module_ctx.defaults.default_version))
-            .paths(Paths::new())
+            .paths(paths)
             .components(Some(Components::new()))
             .build();
 
@@ -141,6 +173,10 @@ impl<T: Module> NidrsFactory<T> {
             .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api.clone()))
             .merge(Redoc::with_url("/redoc", api.clone()))
             .merge(RapiDoc::new("/api-docs/openapi.json").path("/rapidoc"));
+
+        nidrs_macro::log!("Swagger UI on {}", format!("http://0.0.0.0:{}/swagger-ui", self.port));
+        nidrs_macro::log!("Rapidoc UI on {}", format!("http://0.0.0.0:{}/rapidoc", self.port));
+        nidrs_macro::log!("Redoc UI on {}", format!("http://0.0.0.0:{}/redoc", self.port));
 
         self
     }
@@ -376,7 +412,7 @@ impl RouterWrap {
         let glob = nidrs_extern::globset::Glob::new(matcher);
         match glob {
             Ok(glob) => {
-                let path = self.meta.get_data::<RouterPath>().unwrap().value();
+                let path: &str = self.meta.get_data::<RouterPath>().unwrap().value();
                 glob.compile_matcher().is_match(path)
             }
             Err(err) => {

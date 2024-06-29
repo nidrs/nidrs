@@ -1,10 +1,13 @@
-use nidrs::{externs::axum::{
-    body::Body,
-    http::{header, StatusCode},
-    response::{IntoResponse, Response},
-}, valid_macro::dto};
 use nidrs::externs::serde::{Deserialize, Serialize};
 use nidrs::externs::serde_json;
+use nidrs::{
+    externs::axum::{
+        body::Body,
+        http::{header, StatusCode},
+        response::{IntoResponse, Response},
+    },
+    valid_macro::dto,
+};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Status {
@@ -45,7 +48,6 @@ pub struct A {
 pub struct B {
     pub hello2: String,
 }
-
 
 // #[derive(Serialize, Deserialize, Debug)]
 #[dto]

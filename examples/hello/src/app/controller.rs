@@ -1,13 +1,15 @@
 use std::collections::HashMap;
 
 use nidrs::externs::axum::{extract::Query, response::AppendHeaders, Json};
-use nidrs::externs::serde_json;
 use nidrs::macros::{controller, get, meta, post};
 use nidrs::{version, Inject, Meta};
 
 use crate::AppResult;
 
-use super::{dto::{ArgDto, Status}, service::AppService};
+use super::{
+    dto::{ArgDto, Status},
+    service::AppService,
+};
 
 // #[uses(LogInterceptor)]
 #[version("v1")]
