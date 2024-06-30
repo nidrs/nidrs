@@ -1,6 +1,6 @@
 use nidrs_extern::{
     axum,
-    datasets::{self, RouterScheme},
+    datasets::{self, RouterBodyScheme},
     tokio::signal,
     utoipa::{
         self,
@@ -144,7 +144,7 @@ impl<T: Module> NidrsFactory<T> {
                 "connect" => utoipa::openapi::PathItemType::Connect,
                 _ => utoipa::openapi::PathItemType::Get,
             };
-            let content = if let Some(router_scheme) = router.meta.get_data::<RouterScheme>() {
+            let content = if let Some(router_scheme) = router.meta.get_data::<RouterBodyScheme>() {
                 ContentBuilder::new().schema(router_scheme.value().1.clone()).build()
             } else {
                 ContentBuilder::new().build()

@@ -27,7 +27,7 @@ impl UserController {
         Ok(self.user_service.extract().get_hello_world2())
     }
 
-    #[meta(nidrs::datasets::RouterScheme::from_dto_type::<CreateUserDto>())]
+    #[meta(nidrs::datasets::RouterBodyScheme::from_dto_type::<CreateUserDto>())]
     #[uses(UserInterceptor)]
     #[post("/")]
     pub async fn create_user(&self, dto: Json<CreateUserDto>) -> AppResult<String> {
