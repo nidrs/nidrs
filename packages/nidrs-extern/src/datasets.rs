@@ -120,7 +120,7 @@ impl RouterBodyScheme {
         &self.0
     }
 
-    pub fn from_dto_type<T: utoipa::ToSchema<'static>>() -> Self {
+    pub fn from_type<T: utoipa::ToSchema<'static>>() -> Self {
         RouterBodyScheme(T::schema())
     }
 }
