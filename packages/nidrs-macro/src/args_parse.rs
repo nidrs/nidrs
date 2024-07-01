@@ -6,6 +6,7 @@ use syn::{
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
     spanned::Spanned,
+    token::{Paren, Token},
     Expr, ExprCall, FieldValue, Ident, ItemFn, ItemStruct, LitBool, Member, Token,
 };
 use syn_serde::json;
@@ -80,6 +81,10 @@ pub struct ModuleArgs {
 
 impl Parse for ModuleArgs {
     fn parse(input: ParseStream) -> syn::Result<Self> {
+        // skip the ident
+        // eg: module({}) skip the module
+        // input.peek(Token!["module"]);
+
         let content;
         let _ = syn::braced!(content in input);
 
@@ -161,6 +166,91 @@ impl Parse for ModuleArgs {
         // nidrs_macro::log!("{:?}", parse_args_map);
 
         Ok(ModuleArgs { imports, controllers, services, exports, interceptors })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ModuleOptions {
+    pub imports: Vec<TokenStream2>,
+    pub controllers: Vec<TokenStream2>,
+    pub services: Vec<TokenStream2>,
+    pub exports: Vec<TokenStream2>,
+    pub interceptors: Vec<TokenStream2>,
+}
+
+impl Parse for ModuleOptions {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        // eg: module({ ... })
+
+        let ident: Ident = input.parse()?;
+
+        let content_parenthesized;
+        let _ = syn::parenthesized!(content_parenthesized in input);
+
+        let content;
+        let _ = syn::braced!(content in content_parenthesized);
+
+        let mut fields: Punctuated<FieldValue, Token![,]> = Punctuated::new();
+
+        while !content.is_empty() {
+            fields.push(content.parse()?);
+            if content.is_empty() {
+                break;
+            }
+            let punct: Token![,] = content.parse()?;
+            fields.push_punct(punct);
+        }
+
+        let mut imports = Vec::new();
+        let mut controllers = Vec::new();
+        let mut services = Vec::new();
+        let mut exports = Vec::new();
+        let mut interceptors = Vec::new();
+
+        fields.iter().for_each(|field| {
+            if let Member::Named(field_ident) = &field.member {
+                match field_ident.to_string().as_str() {
+                    "imports" => {
+                        if let syn::Expr::Array(array) = &field.expr {
+                            array.elems.iter().for_each(|elem| {
+                                imports.push(elem.to_token_stream());
+                            });
+                        }
+                    }
+                    "controllers" => {
+                        if let syn::Expr::Array(array) = &field.expr {
+                            array.elems.iter().for_each(|elem| {
+                                controllers.push(elem.to_token_stream());
+                            });
+                        }
+                    }
+                    "services" => {
+                        if let syn::Expr::Array(array) = &field.expr {
+                            array.elems.iter().for_each(|elem| {
+                                services.push(elem.to_token_stream());
+                            });
+                        }
+                    }
+                    "exports" => {
+                        if let syn::Expr::Array(array) = &field.expr {
+                            array.elems.iter().for_each(|elem| {
+                                exports.push(elem.to_token_stream());
+                            });
+                        }
+                    }
+                    "interceptors" => {
+                        if let syn::Expr::Array(array) = &field.expr {
+                            array.elems.iter().for_each(|elem| {
+                                interceptors.push(elem.to_token_stream());
+                            });
+                        }
+                    }
+                    _ => (),
+                }
+            }
+        });
+
+        Ok(ModuleOptions { imports, controllers, services, exports, interceptors })
     }
 }
 

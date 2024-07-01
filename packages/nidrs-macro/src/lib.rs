@@ -3,13 +3,7 @@
 extern crate proc_macro;
 
 use std::{
-    any::Any,
-    borrow::BorrowMut,
-    cell::RefCell,
-    collections::HashMap,
-    ops::Add,
-    str::FromStr,
-    sync::{Arc, Mutex},
+    any::Any, borrow::BorrowMut, cell::RefCell, collections::HashMap, ops::Add, path, str::FromStr, sync::{Arc, Mutex}
 };
 
 use nidrs_extern::datasets::ServiceType;
@@ -35,6 +29,7 @@ mod import_path;
 mod meta_parse;
 mod utils;
 
+static CURRENT_MODULE: Mutex<Option<CurrentModule>> = Mutex::new(None);
 static CURRENT_CONTROLLER: Mutex<Option<ControllerMeta>> = Mutex::new(None);
 static ROUTES: Lazy<Mutex<HashMap<String, HashMap<String, RouteMeta>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<ControllerName, HashMap<RouteName, RouteMeta>>
 static CURRENT_SERVICE: Mutex<Option<ServiceMeta>> = Mutex::new(None);
@@ -42,6 +37,12 @@ static EVENTS: Lazy<Mutex<HashMap<String, Vec<(String, String)>>>> = Lazy::new(|
 static INTERS: Lazy<Mutex<HashMap<String, Vec<String>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<ServiceName, Vec<InterName>>
 
 static DEFAULT_INTERS: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(vec![]));
+
+
+
+struct CurrentModule {
+    options: String,
+}
 
 #[derive(Debug, Clone)]
 struct RouteMeta {
@@ -116,6 +117,40 @@ pub fn trace(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
+
+    {
+        let call_site = Span::call_site();
+        let binding = call_site.source_file().path();
+        let call_site_str = binding.to_string_lossy();
+        let call_site_line = call_site.start().line();
+        let path_buf = path::PathBuf::from(call_site_str.to_string());
+        let path_buf = path_buf.parent().unwrap().to_path_buf().join("mod.rs");
+        if path_buf.is_file() {
+            let mod_content = std::fs::read_to_string(&path_buf).unwrap();
+            // println!("// post {:?}", path_buf);
+            // println!("// mod.rs {:?}", mod_content);
+            let content_ast = syn::parse_file(&mod_content).unwrap();
+            for item in content_ast.items {
+                if let syn::Item::Struct(item_module) = item {
+                    // println!("// mod {:#?}", item_module);
+                    for attr in item_module.attrs.iter() {
+                        let attr_path = attr.meta.path();
+                        let attr_path = attr_path.segments.iter().map(|seg| seg.ident.to_string()).collect::<Vec<String>>();
+                        if attr_path.contains(&"module".to_string()) {
+                            let module_options = attr.meta.to_token_stream();
+                            // let module_options = syn::parse2::<ModuleOptions>(module_options).unwrap();
+                            // println!("// module parser {:?}", module_options);
+                            CURRENT_MODULE.lock().unwrap().replace(CurrentModule { options: module_options.to_string() });
+
+                            // println!("// module parser {:#?}", attr.meta);
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
     // 解析宏的参数
     let path = if args.is_empty() {
         "".to_string()
@@ -668,6 +703,7 @@ fn gen_controller_register_tokens(module_name: String, services: Vec<TokenStream
             let (def_inter_tokens, handler) = gen_handler_tokens(&module_name, route, &controller_name, route_name);
     
             quote! {
+                {
                 let t_controller = ctx.get_controller::<controller::#controller_ident>(#module_name, #controller_name);
 
                 #def_inter_tokens
@@ -690,6 +726,7 @@ fn gen_controller_register_tokens(module_name: String, services: Vec<TokenStream
                     nidrs::externs::axum::routing::#method_ident(#handler),
                 );
                 ctx.routers.push(nidrs::RouterWrap{ router: router, meta: route_meta.clone() });
+                }
             }
         }).collect::<Vec<TokenStream2>>();
 
