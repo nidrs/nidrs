@@ -22,6 +22,7 @@ use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatTyp
 
 mod args_parse;
 use args_parse::*;
+mod global;
 
 use crate::meta_parse::MetaValue;
 
@@ -29,7 +30,9 @@ mod import_path;
 mod meta_parse;
 mod utils;
 
-static CURRENT_MODULE: Mutex<Option<CurrentModule>> = Mutex::new(None);
+// static CURRENT_MODULE3: Mutex<Option<&mut CurrentModule>> = Mutex::new(None);
+static mut CURRENT_MODULE: Option<&mut CurrentModule> = None;
+
 static CURRENT_CONTROLLER: Mutex<Option<ControllerMeta>> = Mutex::new(None);
 static ROUTES: Lazy<Mutex<HashMap<String, HashMap<String, RouteMeta>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<ControllerName, HashMap<RouteName, RouteMeta>>
 static CURRENT_SERVICE: Mutex<Option<ServiceMeta>> = Mutex::new(None);
@@ -41,7 +44,8 @@ static DEFAULT_INTERS: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(vec![]
 
 
 struct CurrentModule {
-    options: String,
+    options: ModuleOptions,
+    msg: String,
 }
 
 #[derive(Debug, Clone)]
@@ -138,9 +142,23 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
                         let attr_path = attr_path.segments.iter().map(|seg| seg.ident.to_string()).collect::<Vec<String>>();
                         if attr_path.contains(&"module".to_string()) {
                             let module_options = attr.meta.to_token_stream();
-                            // let module_options = syn::parse2::<ModuleOptions>(module_options).unwrap();
+                            let module_options = syn::parse2::<ModuleOptions>(module_options).unwrap();
                             // println!("// module parser {:?}", module_options);
-                            CURRENT_MODULE.lock().unwrap().replace(CurrentModule { options: module_options.to_string() });
+                            // CURRENT_MODULE2.set(CurrentModule { options: module_options.clone(), msg: "ss".to_string() });
+                            
+                            // unsafe { 
+                            //     let t = Box::leak(Box::new(CurrentModule { options: module_options.clone(), msg: "ss".to_string() }));
+                            //     CURRENT_MODULE = Some(t);
+                            // };
+
+                            // unsafe {
+                            //     CURRENT_MODULE.as_mut().unwrap().msg = "ss2".to_string();
+                            // };
+                            
+                            // unsafe {
+                                // println!("// module parser {:?}", CURRENT_MODULE.as_ref().unwrap().msg);
+                            // }
+                            
 
                             // println!("// module parser {:#?}", attr.meta);
                         }
