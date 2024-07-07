@@ -3,7 +3,14 @@
 extern crate proc_macro;
 
 use std::{
-    any::Any, borrow::BorrowMut, cell::RefCell, collections::HashMap, ops::Add, path, str::FromStr, sync::{Arc, Mutex}
+    any::Any,
+    borrow::BorrowMut,
+    cell::RefCell,
+    collections::HashMap,
+    ops::Add,
+    path,
+    str::FromStr,
+    sync::{Arc, Mutex},
 };
 
 use nidrs_extern::datasets::ServiceType;
@@ -26,12 +33,12 @@ mod global;
 
 use crate::meta_parse::MetaValue;
 
+mod g_current_module;
 mod import_path;
 mod meta_parse;
 mod utils;
 
 // static CURRENT_MODULE3: Mutex<Option<&mut CurrentModule>> = Mutex::new(None);
-static mut CURRENT_MODULE: Option<&mut CurrentModule> = None;
 
 static CURRENT_CONTROLLER: Mutex<Option<ControllerMeta>> = Mutex::new(None);
 static ROUTES: Lazy<Mutex<HashMap<String, HashMap<String, RouteMeta>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<ControllerName, HashMap<RouteName, RouteMeta>>
@@ -40,13 +47,6 @@ static EVENTS: Lazy<Mutex<HashMap<String, Vec<(String, String)>>>> = Lazy::new(|
 static INTERS: Lazy<Mutex<HashMap<String, Vec<String>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<ServiceName, Vec<InterName>>
 
 static DEFAULT_INTERS: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(vec![]));
-
-
-
-struct CurrentModule {
-    options: ModuleOptions,
-    msg: String,
-}
 
 #[derive(Debug, Clone)]
 struct RouteMeta {
@@ -121,53 +121,7 @@ pub fn trace(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
-
-    {
-        let call_site = Span::call_site();
-        let binding = call_site.source_file().path();
-        let call_site_str = binding.to_string_lossy();
-        let call_site_line = call_site.start().line();
-        let path_buf = path::PathBuf::from(call_site_str.to_string());
-        let path_buf = path_buf.parent().unwrap().to_path_buf().join("mod.rs");
-        if path_buf.is_file() {
-            let mod_content = std::fs::read_to_string(&path_buf).unwrap();
-            // println!("// post {:?}", path_buf);
-            // println!("// mod.rs {:?}", mod_content);
-            let content_ast = syn::parse_file(&mod_content).unwrap();
-            for item in content_ast.items {
-                if let syn::Item::Struct(item_module) = item {
-                    // println!("// mod {:#?}", item_module);
-                    for attr in item_module.attrs.iter() {
-                        let attr_path = attr.meta.path();
-                        let attr_path = attr_path.segments.iter().map(|seg| seg.ident.to_string()).collect::<Vec<String>>();
-                        if attr_path.contains(&"module".to_string()) {
-                            let module_options = attr.meta.to_token_stream();
-                            let module_options = syn::parse2::<ModuleOptions>(module_options).unwrap();
-                            // println!("// module parser {:?}", module_options);
-                            // CURRENT_MODULE2.set(CurrentModule { options: module_options.clone(), msg: "ss".to_string() });
-                            
-                            // unsafe { 
-                            //     let t = Box::leak(Box::new(CurrentModule { options: module_options.clone(), msg: "ss".to_string() }));
-                            //     CURRENT_MODULE = Some(t);
-                            // };
-
-                            // unsafe {
-                            //     CURRENT_MODULE.as_mut().unwrap().msg = "ss2".to_string();
-                            // };
-                            
-                            // unsafe {
-                                // println!("// module parser {:?}", CURRENT_MODULE.as_ref().unwrap().msg);
-                            // }
-                            
-
-                            // println!("// module parser {:#?}", attr.meta);
-                        }
-                    }
-                }
-            }
-        }
-
-    }
+    g_current_module::begin_mod();
 
     // 解析宏的参数
     let path = if args.is_empty() {
@@ -286,6 +240,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     EVENTS.lock().unwrap().clear();
     INTERS.lock().unwrap().clear();
     meta_parse::clear();
+    g_current_module::end_mod();
 
     return TokenStream::from(quote! {
         #[derive(Default)]
@@ -348,6 +303,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
+    g_current_module::begin_mod();
     let func = parse_macro_input!(input as ItemStruct);
     let func_ident = func.ident.clone();
     CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta { name: func.ident.to_string() });
@@ -375,6 +331,7 @@ pub fn __injectable_derive(args: TokenStream, input: TokenStream) -> TokenStream
 
 #[proc_macro_attribute]
 pub fn interceptor(args: TokenStream, input: TokenStream) -> TokenStream {
+    g_current_module::begin_mod();
     let func = parse_macro_input!(input as ItemStruct);
     let func_ident = func.ident.clone();
     CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta { name: func.ident.to_string() });

@@ -81,10 +81,7 @@ pub struct ModuleArgs {
 
 impl Parse for ModuleArgs {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        // skip the ident
-        // eg: module({}) skip the module
-        // input.peek(Token!["module"]);
-
+        // eg: imports,exports,...
         let content;
         let _ = syn::braced!(content in input);
 
@@ -146,24 +143,7 @@ impl Parse for ModuleArgs {
                     _ => (),
                 }
             }
-            // println!("{}", json::to_string_pretty(field));
-            // println!("{}", json::to_string_pretty(field));
-            // let field_ident = field.ident.clone().unwrap().to_string();
-            // match field {
-
-            // }
         });
-
-        // parse_args_map.iter().for_each(|(k, v)| match k.as_str() {
-        //     "imports" => imports = v.clone(),
-        //     "controllers" => controllers = v.clone(),
-        //     "services" => services = v.clone(),
-        //     "exports" => exports = v.clone(),
-        //     "interceptors" => interceptors = v.clone(),
-        //     _ => {}
-        // });
-
-        // nidrs_macro::log!("{:?}", parse_args_map);
 
         Ok(ModuleArgs { imports, controllers, services, exports, interceptors })
     }
@@ -187,70 +167,31 @@ impl Parse for ModuleOptions {
         let content_parenthesized;
         let _ = syn::parenthesized!(content_parenthesized in input);
 
-        let content;
-        let _ = syn::braced!(content in content_parenthesized);
+        ModuleArgs::parse(&content_parenthesized).map(|args| args.into())
+    }
+}
 
-        let mut fields: Punctuated<FieldValue, Token![,]> = Punctuated::new();
-
-        while !content.is_empty() {
-            fields.push(content.parse()?);
-            if content.is_empty() {
-                break;
-            }
-            let punct: Token![,] = content.parse()?;
-            fields.push_punct(punct);
+impl From<ModuleOptions> for ModuleArgs {
+    fn from(args: ModuleOptions) -> Self {
+        ModuleArgs {
+            imports: args.imports,
+            controllers: args.controllers,
+            services: args.services,
+            exports: args.exports,
+            interceptors: args.interceptors,
         }
+    }
+}
 
-        let mut imports = Vec::new();
-        let mut controllers = Vec::new();
-        let mut services = Vec::new();
-        let mut exports = Vec::new();
-        let mut interceptors = Vec::new();
-
-        fields.iter().for_each(|field| {
-            if let Member::Named(field_ident) = &field.member {
-                match field_ident.to_string().as_str() {
-                    "imports" => {
-                        if let syn::Expr::Array(array) = &field.expr {
-                            array.elems.iter().for_each(|elem| {
-                                imports.push(elem.to_token_stream());
-                            });
-                        }
-                    }
-                    "controllers" => {
-                        if let syn::Expr::Array(array) = &field.expr {
-                            array.elems.iter().for_each(|elem| {
-                                controllers.push(elem.to_token_stream());
-                            });
-                        }
-                    }
-                    "services" => {
-                        if let syn::Expr::Array(array) = &field.expr {
-                            array.elems.iter().for_each(|elem| {
-                                services.push(elem.to_token_stream());
-                            });
-                        }
-                    }
-                    "exports" => {
-                        if let syn::Expr::Array(array) = &field.expr {
-                            array.elems.iter().for_each(|elem| {
-                                exports.push(elem.to_token_stream());
-                            });
-                        }
-                    }
-                    "interceptors" => {
-                        if let syn::Expr::Array(array) = &field.expr {
-                            array.elems.iter().for_each(|elem| {
-                                interceptors.push(elem.to_token_stream());
-                            });
-                        }
-                    }
-                    _ => (),
-                }
-            }
-        });
-
-        Ok(ModuleOptions { imports, controllers, services, exports, interceptors })
+impl Into<ModuleOptions> for ModuleArgs {
+    fn into(self) -> ModuleOptions {
+        ModuleOptions {
+            imports: self.imports,
+            controllers: self.controllers,
+            services: self.services,
+            exports: self.exports,
+            interceptors: self.interceptors,
+        }
     }
 }
 
@@ -277,6 +218,34 @@ impl Parse for InterceptorArgs {
         } else {
             Err(syn::Error::new(input.span(), "Invalid interceptor"))
         }
+    }
+}
+
+#[derive(Clone)]
+pub struct DefaultUsesOptions {
+    pub args: Vec<TokenStream2>,
+}
+
+impl Parse for DefaultUsesOptions {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        // eg: default_uses(xxx)
+        let ident: Ident = input.parse()?;
+
+        let content;
+        let _ = syn::parenthesized!(content in input);
+
+        let mut fields: Punctuated<Expr, Token![,]> = Punctuated::new();
+
+        while !content.is_empty() {
+            fields.push(content.parse()?);
+            if content.is_empty() {
+                break;
+            }
+            let punct: Token![,] = content.parse()?;
+            fields.push_punct(punct);
+        }
+
+        Ok(DefaultUsesOptions { args: fields.iter().map(|field| field.to_token_stream()).collect() })
     }
 }
 
