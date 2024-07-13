@@ -126,7 +126,7 @@ impl Meta {
         self.map.iter()
     }
 
-    pub fn item_mut(&mut self) -> std::collections::hash_map::IterMut<String, Box<dyn Any + Send + Sync>> {
+    pub fn iter_mut(&mut self) -> std::collections::hash_map::IterMut<String, Box<dyn Any + Send + Sync>> {
         self.map.iter_mut()
     }
 
