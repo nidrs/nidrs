@@ -143,6 +143,7 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemStruct);
 
     let ident = func.ident.clone();
+    let ident_name = ident.to_string();
 
     import_path::push_path(&func.ident.to_string());
 
@@ -152,7 +153,7 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
 
     TokenStream::from(quote! {
         #[nidrs::meta(nidrs::datasets::ServiceType::Controller)]
-        #[nidrs::meta(nidrs::datasets::ServiceName(stringify!(#ident)))]
+        #[nidrs::meta(nidrs::datasets::ServiceName(#ident_name))]
         #[nidrs::meta(nidrs::datasets::ControllerPath(#path))]
         #[nidrs::macros::__controller_derive]
         #func
@@ -161,6 +162,7 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn __controller_derive(args: TokenStream, input: TokenStream) -> TokenStream {
+    // println!("__controller_derive {:?}", meta_parse::get_meta_value("METADATA:nidrs::datasets::ServiceName"));
     __service_derive(ServiceType::Controller, input)
 }
 
@@ -433,11 +435,11 @@ pub fn default_uses(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
-    let raw_input = TokenStream2::from(input.clone());
+    // let raw_input = TokenStream2::from(input.clone());
     let args = parse_macro_input!(args as MetaArgs);
-    let func = parse_macro_input!(input as InterceptorArgs);
+    // let func = parse_macro_input!(input as InterceptorArgs);
 
-    println!("// meta {:?} {:?}", func.ident.to_string(), args.kv.keys());
+    // println!("// meta {:?} {:?}", func.ident.to_string(), args.kv.keys());
 
     meta_parse::collect(args);
     // if let TokenType::Struct(_) = func.typ {
@@ -446,9 +448,7 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     //     println!("meta {} {:?}", func_name, p.to_token_stream().to_string());
     // }
 
-    return TokenStream::from(quote! {
-        #raw_input
-    });
+    return input;
 }
 
 #[proc_macro]
