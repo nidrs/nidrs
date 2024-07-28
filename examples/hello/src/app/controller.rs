@@ -44,11 +44,11 @@ impl AppController {
     }
 
     // #[uses(LogInterceptor)]
-    #[get("/hello2")]
-    pub async fn get_hello_world2(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<String> {
-        println!("Query {:?}", q);
-        Ok(self.app_service.get_hello_world())
-    }
+    // #[get("/hello2")]
+    // pub async fn get_hello_world2(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<String> {
+    //     println!("Query {:?}", q);
+    //     Ok(self.app_service.get_hello_world())
+    // }
 
     // #[uses(LogInterceptor)]
     #[post("/hello")]

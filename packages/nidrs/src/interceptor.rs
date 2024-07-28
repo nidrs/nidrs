@@ -11,10 +11,10 @@ use std::{fmt::Debug, future::Future};
 
 use crate::{AppError, AppResult, Service, StateCtx};
 
-pub trait InterceptorService: Service {}
+pub trait Interceptor: Service {}
 
 /// P 和 R 是可以配置的
-pub trait Interceptor<B: axum::extract::FromRequest<StateCtx>, P> {
+pub trait InterceptorHandler<B: axum::extract::FromRequest<StateCtx>, P> {
     type R;
 
     fn interceptor<F, H>(&self, ctx: InterCtx<B>, handler: H) -> impl Future<Output = AppResult<Self::R>>

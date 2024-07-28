@@ -263,7 +263,7 @@ mod tests {
     fn test_args_parse() {
         let t = quote::quote! {
             {
-                imports: [ControllerService, InterceptorService::for_root()],
+                imports: [Controller, Interceptor::for_root()],
                 services: [ServiceA, ServiceB],
             }
         };

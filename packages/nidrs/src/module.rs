@@ -33,8 +33,8 @@ pub trait Module {
 }
 
 pub struct DynamicModule {
-    pub services: HashMap<&'static str, Box<dyn Any>>,
-    pub exports: Vec<&'static str>,
+    pub services: HashMap<String, Box<dyn Any>>,
+    pub exports: Vec<String>,
 }
 
 impl Default for DynamicModule {
@@ -48,7 +48,7 @@ impl DynamicModule {
         DynamicModule { services: HashMap::new(), exports: Vec::new() }
     }
 
-    pub fn provider(mut self, service: (&'static str, Box<dyn Any>)) -> Self {
+    pub fn provider(mut self, service: (String, Box<dyn Any>)) -> Self {
         self.services.insert(service.0, service.1);
         self
     }
@@ -61,7 +61,7 @@ impl DynamicModule {
 
     pub fn export<T: Service + 'static>(mut self, service: T) -> Self {
         let (name, service) = provider(service);
-        self.services.insert(name, service);
+        self.services.insert(name.clone(), service);
         self.exports.push(name);
         self
     }
@@ -133,7 +133,7 @@ impl<T: Module> NidrsFactory<T> {
         for router in self.module_ctx.routers.iter() {
             let path = router.meta.get_data::<datasets::RouterFullPath>().unwrap().value();
             let method = router.meta.get_data::<datasets::RouterMethod>().unwrap().value();
-            let path_type = match method {
+            let path_type = match method.as_str() {
                 "post" => utoipa::openapi::PathItemType::Post,
                 "put" => utoipa::openapi::PathItemType::Put,
                 "delete" => utoipa::openapi::PathItemType::Delete,
@@ -431,7 +431,7 @@ mod tests {
     fn test_nidrs_factory() {
         use std::any::Any;
 
-        trait ControllerService: Any {
+        trait Controller: Any {
             fn handle_request(&self);
             // 定义一个方法，用于将 `&self` 转换为 `&dyn Any`
             fn as_any(&self) -> &dyn Any;
@@ -441,7 +441,7 @@ mod tests {
             pub name: String,
         };
 
-        impl ControllerService for ConcreteService {
+        impl Controller for ConcreteService {
             fn handle_request(&self) {
                 println!("Handling request...");
             }
@@ -452,11 +452,11 @@ mod tests {
         }
 
         fn main() {
-            let service: Arc<dyn ControllerService> = Arc::new(ConcreteService { name: "hello".to_string() });
+            let service: Arc<dyn Controller> = Arc::new(ConcreteService { name: "hello".to_string() });
 
             service.handle_request();
 
-            let service_ref: &dyn ControllerService = service.as_ref();
+            let service_ref: &dyn Controller = service.as_ref();
             let service_any: &dyn Any = service_ref.as_any();
 
             if let Some(concrete) = service_any.downcast_ref::<ConcreteService>() {

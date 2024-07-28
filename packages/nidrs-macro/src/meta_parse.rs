@@ -20,6 +20,7 @@ pub enum Metadata {
 
 #[derive(Debug, Clone)]
 pub enum MetaValue {
+    None,
     String(String),
     Bool(bool),
     Int(i64),

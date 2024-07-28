@@ -1,5 +1,5 @@
 mod app;
-mod modules;
+// mod modules;
 mod shared;
 
 use std::time::Duration;

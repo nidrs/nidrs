@@ -31,7 +31,7 @@ mod app {
                 AppController { app_service: ::core::default::Default::default() }
             }
         }
-        impl nidrs::ControllerService for AppController {}
+        impl nidrs::Controller for AppController {}
         impl nidrs::Service for AppController {
             fn inject(&self, ctx: nidrs::ModuleCtx, module_name: &str) -> nidrs::ModuleCtx {
                 let service = ctx.get_service::<AppService>(&module_name, "AppService");
@@ -43,7 +43,7 @@ mod app {
             fn __meta() -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
                 meta.set("service_name".to_string(), "AppController");
-                meta.set("service_type".to_string(), "ControllerService");
+                meta.set("service_type".to_string(), "Controller");
                 meta
             }
         }
@@ -324,7 +324,7 @@ mod app {
     }
     impl nidrs::Module for AppModule {
         fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
-            use nidrs::{ControllerService, ImplMeta, InterCtx, Interceptor, InterceptorService, ModuleCtx, Service, StateCtx};
+            use nidrs::{Controller, ImplMeta, InterCtx, Interceptor, Interceptor, ModuleCtx, Service, StateCtx};
             if ctx.modules.contains_key("AppModule") {
                 return ctx;
             }
@@ -1579,7 +1579,7 @@ mod modules {
                     UserController { user_service: ::core::default::Default::default() }
                 }
             }
-            impl nidrs::ControllerService for UserController {}
+            impl nidrs::Controller for UserController {}
             impl nidrs::Service for UserController {
                 fn inject(&self, ctx: nidrs::ModuleCtx, module_name: &str) -> nidrs::ModuleCtx {
                     let service = ctx.get_service::<UserService>(&module_name, "UserService");
@@ -1591,7 +1591,7 @@ mod modules {
                 fn __meta() -> nidrs::Meta {
                     let mut meta = nidrs::Meta::new();
                     meta.set("service_name".to_string(), "UserController");
-                    meta.set("service_type".to_string(), "ControllerService");
+                    meta.set("service_type".to_string(), "Controller");
                     meta
                 }
             }
@@ -1670,7 +1670,7 @@ mod modules {
         }
         impl nidrs::Module for UserModule {
             fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
-                use nidrs::{ControllerService, ImplMeta, InterCtx, Interceptor, InterceptorService, ModuleCtx, Service, StateCtx};
+                use nidrs::{Controller, ImplMeta, InterCtx, Interceptor, Interceptor, ModuleCtx, Service, StateCtx};
                 if ctx.modules.contains_key("UserModule") {
                     return ctx;
                 }
@@ -1799,7 +1799,7 @@ mod interceptors {
                 JsonInterceptor {}
             }
         }
-        impl nidrs::InterceptorService for JsonInterceptor {}
+        impl nidrs::Interceptor for JsonInterceptor {}
         impl nidrs::Service for JsonInterceptor {
             fn inject(&self, ctx: nidrs::ModuleCtx, module_name: &str) -> nidrs::ModuleCtx {
                 ctx
@@ -1809,7 +1809,7 @@ mod interceptors {
             fn __meta() -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
                 meta.set("service_name".to_string(), "JsonInterceptor");
-                meta.set("service_type".to_string(), "InterceptorService");
+                meta.set("service_type".to_string(), "Interceptor");
                 meta
             }
         }

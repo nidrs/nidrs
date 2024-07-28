@@ -1,6 +1,6 @@
 use crate::Service;
 
-pub trait ControllerService: Service {}
+pub trait Controller: Service {}
 
 pub fn template_format<T: IntoIterator<Item = (&'static str, &'static str)>>(path: &str, map: T) -> String {
     let mut path = path.to_string();

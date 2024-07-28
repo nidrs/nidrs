@@ -7,6 +7,11 @@ use crate::{DefaultUsesOptions, ModuleOptions};
 
 static CURRENT_MODULE: Mutex<Option<CurrentModule>> = Mutex::new(None);
 
+struct CurrentController {
+    name: String,
+    path: String,
+}
+
 #[derive(Clone, Debug)]
 struct CurrentModule {
     pub name: String,
@@ -17,6 +22,7 @@ struct CurrentModule {
     pub interceptors: Vec<String>,
 
     pub default_uses: Vec<String>,
+    // pub current_controller: CurrentController,
 }
 
 impl From<ModuleOptions> for CurrentModule {

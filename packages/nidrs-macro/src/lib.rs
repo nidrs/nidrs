@@ -33,6 +33,7 @@ mod global;
 
 use crate::meta_parse::MetaValue;
 
+mod cmeta;
 mod g_current_module;
 mod import_path;
 mod meta_parse;
@@ -152,9 +153,9 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
     ROUTES.lock().unwrap().insert(ident.to_string(), HashMap::new());
 
     TokenStream::from(quote! {
-        #[nidrs::meta(nidrs::datasets::ServiceType::Controller)]
-        #[nidrs::meta(nidrs::datasets::ServiceName(#ident_name))]
-        #[nidrs::meta(nidrs::datasets::ControllerPath(#path))]
+        #[nidrs::meta(nidrs::datasets::ServiceType::from("Controller"))]
+        #[nidrs::meta(nidrs::datasets::ServiceName::from(#ident_name))]
+        #[nidrs::meta(nidrs::datasets::ControllerPath::from(#path))]
         #[nidrs::macros::__controller_derive]
         #func
     })
@@ -250,7 +251,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
         impl nidrs::Module for #ident {
             fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx{
-                use nidrs::{Service, ControllerService, InterceptorService, InterCtx, Interceptor, ModuleCtx, StateCtx, ImplMeta};
+                use nidrs::{Service, Controller, Interceptor, InterCtx, InterceptorHandler, ModuleCtx, StateCtx, ImplMeta};
                 if ctx.modules.contains_key(stringify!(#ident)) {
                     return ctx;
                 }
@@ -296,7 +297,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
                 let mut meta = nidrs::Meta::new();
                 #module_meta_tokens
                 // meta.set("module_name".to_string(), stringify!(#ident));
-                meta.set_data(nidrs::datasets::ModuleName(stringify!(#ident)));
+                meta.set_data(nidrs::datasets::ModuleName::from(stringify!(#ident)));
                 meta
             }
         }
@@ -319,8 +320,8 @@ pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
     import_path::push_path(&func.ident.to_string());
 
     return TokenStream::from(quote! {
-        #[nidrs::meta(nidrs::datasets::ServiceType::Service)]
-        #[nidrs::meta(nidrs::datasets::ServiceName(stringify!(#func_ident)))]
+        #[nidrs::meta(nidrs::datasets::ServiceType::from("Service"))]
+        #[nidrs::meta(nidrs::datasets::ServiceName::from(stringify!(#func_ident)))]
         #[nidrs::macros::__injectable_derive]
         #func
     });
@@ -341,8 +342,8 @@ pub fn interceptor(args: TokenStream, input: TokenStream) -> TokenStream {
     import_path::push_path(&func.ident.to_string());
 
     return TokenStream::from(quote! {
-        #[nidrs::meta(nidrs::datasets::ServiceType::Interceptor)]
-        #[nidrs::meta(nidrs::datasets::ServiceName(stringify!(#func_ident)))]
+        #[nidrs::meta(nidrs::datasets::ServiceType::from("Interceptor"))]
+        #[nidrs::meta(nidrs::datasets::ServiceName::from(stringify!(#func_ident)))]
         #[nidrs::macros::__interceptor_derive]
         #func
     });
@@ -435,18 +436,14 @@ pub fn default_uses(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
-    // let raw_input = TokenStream2::from(input.clone());
+    let targs = args.clone();
+    let cmeta = parse_macro_input!(targs as cmeta::CMeta);
+    cmeta::CMeta::collect(cmeta);
     let args = parse_macro_input!(args as MetaArgs);
-    // let func = parse_macro_input!(input as InterceptorArgs);
 
     // println!("// meta {:?} {:?}", func.ident.to_string(), args.kv.keys());
 
     meta_parse::collect(args);
-    // if let TokenType::Struct(_) = func.typ {
-
-    // } else if  let TokenType::Fn(p) = func.typ {
-    //     println!("meta {} {:?}", func_name, p.to_token_stream().to_string());
-    // }
 
     return input;
 }
@@ -534,7 +531,7 @@ pub fn disable_default_prefix(args: TokenStream, input: TokenStream) -> TokenStr
     let raw_input = TokenStream2::from(input.clone());
 
     return TokenStream::from(quote! {
-        #[nidrs::macros::meta(nidrs::datasets::DisableDefaultPrefix(true))]
+        #[nidrs::macros::meta(nidrs::datasets::DisableDefaultPrefix::from(true))]
         #raw_input
     });
 }
@@ -544,7 +541,7 @@ pub fn global(args: TokenStream, input: TokenStream) -> TokenStream {
     let raw_input = TokenStream2::from(input.clone());
 
     return TokenStream::from(quote! {
-        #[nidrs::macros::meta(nidrs::datasets::Global(true))]
+        #[nidrs::macros::meta(nidrs::datasets::Global::from(true))]
         #raw_input
     });
 }
@@ -627,9 +624,9 @@ fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
     controller.insert(name.clone(), route);
 
     TokenStream::from(quote! {
-        #[nidrs::meta(nidrs::datasets::RouterName(stringify!(#ident)))]
-        #[nidrs::meta(nidrs::datasets::RouterMethod(#method))]
-        #[nidrs::meta(nidrs::datasets::RouterPath(#path))]
+        #[nidrs::meta(nidrs::datasets::RouterName::from(stringify!(#ident)))]
+        #[nidrs::meta(nidrs::datasets::RouterMethod::from(#method))]
+        #[nidrs::meta(nidrs::datasets::RouterPath::from(#path))]
         #[nidrs::__route_derive]
         #func
     })
@@ -639,9 +636,11 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemFn);
     let meta_tokens: TokenStream2 = meta_parse::build_tokens();
     meta_parse::clear_meta();
-    let meta_fn_ident = syn::Ident::new(format!("__meta_{}", func.sig.ident.to_string()).as_str(), Span::call_site().into());
+    let meta_fn_ident = syn::Ident::new(format!("__meta_{}", func.sig.ident.to_string()).as_str(), func.span().clone());
 
     println!("// route_derive {:?}", func.sig.ident.to_string());
+
+    let route_fn_ident = syn::Ident::new(format!("__route_{}", func.sig.ident.to_string()).as_str(), func.span().clone());
 
     TokenStream::from(quote! {
         #func
@@ -651,6 +650,28 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
             #meta_tokens
             meta
         }
+
+        pub fn #route_fn_ident(mut ctx: nidrs::ModuleCtx)->nidrs::ModuleCtx{
+
+            // let router = nidrs::externs::axum::Router::new()
+            //     .route(
+            //         &path,
+            //         nidrs::externs::axum::routing::get(|p1| async move {
+            //             let mut t_meta = nidrs::Meta::new();
+            //             t_meta.extend(meta);
+            //             let p0 = t_meta;
+            //             t_controller.get_hello_world(p0, p1).await
+            //         }),
+            //     );
+            // ctx.routers
+            //     .push(nidrs::RouterWrap {
+            //         router: router,
+            //         meta: route_meta.clone(),
+            //     });
+
+            ctx
+        }
+
     })
 }
 
@@ -724,7 +745,7 @@ fn gen_handler_tokens(module_name: &str, route: &RouteMeta, controller_name: &St
     // meta handle
 
     let handler = if inter_ids.is_empty() {
-        let mut def_func_args = route.func_args.clone();
+        let mut def_func_args: Vec<String> = route.func_args.clone();
         let meta_tokens = if route.is_meta {
             // 移除第一个
             def_func_args.remove(0);
