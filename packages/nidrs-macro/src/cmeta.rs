@@ -45,9 +45,10 @@ impl From<Expr> for MetaData {
                 if let Expr::Path(path) = *call_path.func.clone() {
                     let paths = path.path.segments.iter().map(|s| s.ident.to_string()).collect::<Vec<String>>();
                     let k = paths[paths.len() - 2].clone();
+                    let v = call_path.args.first().expect("[cmeta.MetaData.from] call_path.args.first").clone();
                     key = CMetaKey::String(k);
-
-                    // value = CMetaValue::from(value)
+                    // println!("v: {}", v.to_token_stream().to_string());
+                    value = CMetaValue::from(v);
                 }
             }
             _ => todo!(),

@@ -195,10 +195,10 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(args as ModuleArgs);
     let func = parse_macro_input!(input as ItemStruct);
     let ident = func.ident.clone();
-    let module_name = ident.to_string();
+    let ident_name = ident.to_string();
 
-    let controller_register_tokens = gen_controller_register_tokens(module_name.clone(), args.controllers.clone());
-    let service_register_tokens = gen_service_register_tokens(module_name.clone(), args.services.clone());
+    let controller_register_tokens = gen_controller_register_tokens(ident_name.clone(), args.controllers.clone());
+    let service_register_tokens = gen_service_register_tokens(ident_name.clone(), args.services.clone());
     let defaults_interceptors = DEFAULT_INTERS
         .lock()
         .unwrap()
@@ -209,10 +209,10 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
         })
         .collect::<Vec<TokenStream2>>();
     let interceptor_register_tokens = gen_interceptor_register_tokens(
-        module_name.clone(),
+        ident_name.clone(),
         utils::merge_vec(args.interceptors.clone(), utils::merge_vec(defaults_interceptors, inters_to_vec_tokens())),
     );
-    let (import_names_tokens, imports_register_tokens) = gen_imports_register_tokens(module_name.clone(), args.imports.clone());
+    let (import_names_tokens, imports_register_tokens) = gen_imports_register_tokens(ident_name.clone(), args.imports.clone());
     let imports_register_names = args.imports.clone().iter().map(|import_tokens| import_tokens.to_string()).collect::<Vec<String>>();
     let exports_names: Vec<String> = args.exports.clone().iter().map(|export_tokens| export_tokens.to_string()).collect::<Vec<String>>();
     let exports_names_tokens = exports_names
@@ -227,12 +227,12 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
         Vec::from([#(#exports_names_tokens),*])
     });
 
-    let services_dep_inject_tokens: TokenStream2 = gen_dep_inject_tokens("get_service", module_name.clone(), args.services.clone());
-    let controller_dep_inject_tokens = gen_dep_inject_tokens("get_controller", module_name.clone(), args.controllers.clone());
-    let interceptor_dep_inject_tokens = gen_dep_inject_tokens("get_interceptor", module_name.clone(), args.interceptors.clone());
+    let services_dep_inject_tokens: TokenStream2 = gen_dep_inject_tokens("get_service", ident_name.clone(), args.services.clone());
+    let controller_dep_inject_tokens = gen_dep_inject_tokens("get_controller", ident_name.clone(), args.controllers.clone());
+    let interceptor_dep_inject_tokens = gen_dep_inject_tokens("get_interceptor", ident_name.clone(), args.interceptors.clone());
 
-    let trigger_on_module_init_tokens: TokenStream2 = gen_events_trigger_tokens(module_name.clone(), "on_module_init");
-    let trigger_on_module_destroy_tokens = gen_events_trigger_tokens(module_name.clone(), "on_module_destroy");
+    let trigger_on_module_init_tokens: TokenStream2 = gen_events_trigger_tokens(ident_name.clone(), "on_module_init");
+    let trigger_on_module_destroy_tokens = gen_events_trigger_tokens(ident_name.clone(), "on_module_destroy");
 
     let module_meta_tokens = meta_parse::build_tokens();
     let is_global_tokens = if let Some(MetaValue::Bool(bool)) = meta_parse::get_meta_value("Global") { bool } else { false };
@@ -252,14 +252,14 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
         impl nidrs::Module for #ident {
             fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx{
                 use nidrs::{Service, Controller, Interceptor, InterCtx, InterceptorHandler, ModuleCtx, StateCtx, ImplMeta};
-                if ctx.modules.contains_key(stringify!(#ident)) {
+                if ctx.modules.contains_key(#ident_name) {
                     return ctx;
                 }
-                nidrs_macro::log!("Registering module {}.", stringify!(#ident));
-                ctx.modules.insert(stringify!(#ident).to_string(), Box::new(self));
-                ctx.imports.insert(#module_name.to_string(), #import_names_tokens);
+                nidrs_macro::log!("Registering module {}.", #ident_name);
+                ctx.modules.insert(#ident_name.to_string(), Box::new(self));
+                ctx.imports.insert(#ident_name.to_string(), #import_names_tokens);
                 // ctx.exports.insert(#module_name.to_string(), #exports_names_tokens);
-                ctx.append_exports(#module_name, #exports_names_tokens, #is_global_tokens);
+                ctx.append_exports(#ident_name, #exports_names_tokens, #is_global_tokens);
 
                 // {
                     #interceptor_register_tokens
@@ -288,7 +288,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
             fn destroy(&self, ctx: &nidrs::ModuleCtx){
                 #trigger_on_module_destroy_tokens
-                nidrs::log!("Destroying module {}.", stringify!(#ident));
+                nidrs::log!("Destroying module {}.", #ident_name);
             }
         }
 
@@ -296,8 +296,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
             fn __meta() -> nidrs::Meta {
                 let mut meta = nidrs::Meta::new();
                 #module_meta_tokens
-                // meta.set("module_name".to_string(), stringify!(#ident));
-                meta.set_data(nidrs::datasets::ModuleName::from(stringify!(#ident)));
+                meta.set_data(nidrs::datasets::ModuleName::from(#ident_name));
                 meta
             }
         }
@@ -309,7 +308,8 @@ pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
     g_current_module::begin_mod();
     let func = parse_macro_input!(input as ItemStruct);
     let func_ident = func.ident.clone();
-    CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta { name: func.ident.to_string() });
+    let func_ident_name = func.ident.to_string();
+    CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta { name: func_ident_name.clone() });
 
     let call_site = Span::call_site();
     let binding = call_site.source_file().path();
@@ -317,11 +317,11 @@ pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
     let call_site_line = call_site.start().line();
 
     // println!("// injectable {}", func.ident.to_string());
-    import_path::push_path(&func.ident.to_string());
+    import_path::push_path(&func_ident_name.clone());
 
     return TokenStream::from(quote! {
         #[nidrs::meta(nidrs::datasets::ServiceType::from("Service"))]
-        #[nidrs::meta(nidrs::datasets::ServiceName::from(stringify!(#func_ident)))]
+        #[nidrs::meta(nidrs::datasets::ServiceName::from(#func_ident_name))]
         #[nidrs::macros::__injectable_derive]
         #func
     });
@@ -337,13 +337,14 @@ pub fn interceptor(args: TokenStream, input: TokenStream) -> TokenStream {
     g_current_module::begin_mod();
     let func = parse_macro_input!(input as ItemStruct);
     let func_ident = func.ident.clone();
-    CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta { name: func.ident.to_string() });
+    let func_ident_name = func.ident.to_string();
+    CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta { name: func_ident_name.clone() });
 
-    import_path::push_path(&func.ident.to_string());
+    import_path::push_path(&func_ident_name.clone());
 
     return TokenStream::from(quote! {
         #[nidrs::meta(nidrs::datasets::ServiceType::from("Interceptor"))]
-        #[nidrs::meta(nidrs::datasets::ServiceName::from(stringify!(#func_ident)))]
+        #[nidrs::meta(nidrs::datasets::ServiceName::from(#func_ident_name))]
         #[nidrs::macros::__interceptor_derive]
         #func
     });
@@ -587,6 +588,7 @@ fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
 
     let vis = func.vis.clone();
     let ident = func.sig.ident.clone();
+    let ident_name = ident.to_string();
     let mut pindex = 0;
     let mut is_body = false;
     let mut is_meta = false;
@@ -624,7 +626,7 @@ fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
     controller.insert(name.clone(), route);
 
     TokenStream::from(quote! {
-        #[nidrs::meta(nidrs::datasets::RouterName::from(stringify!(#ident)))]
+        #[nidrs::meta(nidrs::datasets::RouterName::from(#ident_name))]
         #[nidrs::meta(nidrs::datasets::RouterMethod::from(#method))]
         #[nidrs::meta(nidrs::datasets::RouterPath::from(#path))]
         #[nidrs::__route_derive]
