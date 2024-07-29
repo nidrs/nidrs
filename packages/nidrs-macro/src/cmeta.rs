@@ -6,7 +6,8 @@ use proc_macro::{token_stream, TokenStream};
 use quote::ToTokens;
 use syn::{parse::Parse, punctuated::Punctuated, Expr, ExprCall, PatPath};
 
-static CMETA: Lazy<Mutex<Option<CMeta>>> = Lazy::new(|| Mutex::new(None));
+static CMETA_STACK: Lazy<Mutex<Option<CMeta>>> = Lazy::new(|| Mutex::new(None));
+// static CMETA_CURRENT: Lazy<Mutex<Option<CMeta>>> = Lazy::new(|| Mutex::new(None));
 
 #[derive(Debug, Clone)]
 pub struct MetaData {
@@ -168,6 +169,14 @@ impl Into<Expr> for MetaData {
 // }
 
 #[derive(Debug, Clone)]
+pub enum CMetaLevel {
+    Global,
+    Module,
+    Service,
+    Handler,
+}
+
+#[derive(Debug, Clone)]
 pub enum CMetaKey {
     String(String),
     None,
@@ -227,17 +236,74 @@ impl CMeta {
     }
 
     pub fn collect(mut cmeta: CMeta) {
-        let mut opt_cm: Option<CMeta> = CMETA.lock().unwrap().take();
+        let mut current = CMETA_STACK.lock().unwrap();
+        if let Some(mut current) = current.as_mut() {
+            current.merge(cmeta);
+        } else {
+            *current = Some(cmeta);
+        }
+        println!("CMETA: {:?}", current);
+    }
+
+    pub fn level() -> Option<CMetaLevel> {
+        let stack = CMETA_STACK.lock().unwrap();
+        if let Some(cm) = &*stack {
+            if cm.data.contains_key("level") {
+                if let CMetaValue::String(level) = &cm.data["level"] {
+                    match level.as_str() {
+                        "global" => return Some(CMetaLevel::Global),
+                        "module" => return Some(CMetaLevel::Module),
+                        "service" => return Some(CMetaLevel::Service),
+                        "handler" => return Some(CMetaLevel::Handler),
+                        _ => return None,
+                    }
+                }
+            }
+        }
+        return None;
+    }
+
+    pub fn push(level: CMetaLevel) {
+        let mut cmeta = CMeta::new();
+        cmeta.set(
+            "level",
+            match level {
+                CMetaLevel::Global => CMetaValue::String("global".into()),
+                CMetaLevel::Module => CMetaValue::String("module".into()),
+                CMetaLevel::Service => CMetaValue::String("service".into()),
+                CMetaLevel::Handler => CMetaValue::String("handler".into()),
+            },
+        );
+        let mut stack = CMETA_STACK.lock().unwrap();
+        let mut opt_cm: Option<CMeta> = stack.take();
         if let Some(mut cm) = opt_cm {
             cmeta.extends(cm);
         }
-        *CMETA.lock().unwrap() = Some(cmeta);
+        *stack = Some(cmeta);
+    }
 
-        println!("CMETA: {:?}", *CMETA.lock().unwrap());
+    pub fn pop() {
+        let mut opt_cm: Option<CMeta> = CMETA_STACK.lock().unwrap().take();
+        if let Some(mut cm) = opt_cm {
+            let mut tail = cm.tail();
+            if let Some(mut t) = tail {
+                *CMETA_STACK.lock().unwrap() = Some(*t);
+            }
+        }
+    }
+
+    pub fn merge(&mut self, cmeta: CMeta) {
+        for (k, v) in cmeta.data.iter() {
+            self.data.insert(k.clone(), v.clone());
+        }
     }
 
     pub fn extends(&mut self, cmeta: CMeta) {
         self.extends = Some(Box::new(cmeta));
+    }
+
+    pub fn tail(&mut self) -> Option<Box<CMeta>> {
+        return self.extends.take();
     }
 
     pub fn set<K: Into<String>, V: Into<CMetaValue>>(&mut self, key: K, value: V) {

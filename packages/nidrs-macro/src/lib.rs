@@ -19,12 +19,12 @@ use proc_macro::{Ident, Span, TokenStream};
 use proc_macro2::TokenStream as TokenStream2;
 use proc_macro2::{Punct, TokenTree};
 use quote::{quote, ToTokens};
-use syn::punctuated::Punctuated;
 use syn::{
     meta,
     parse::{Parse, ParseStream},
     parse_str, Expr, ExprArray, ExprCall, PatPath, Stmt, Token,
 };
+use syn::{parse, punctuated::Punctuated};
 use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatType, Type};
 
 mod args_parse;
@@ -437,16 +437,25 @@ pub fn default_uses(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
+    let raw = input.clone();
+    let fun = parse_macro_input!(input as InterceptorArgs);
+
     let targs = args.clone();
     let cmeta = parse_macro_input!(targs as cmeta::CMeta);
     cmeta::CMeta::collect(cmeta);
+    // if let TokenType::Struct(_) = &fun.typ {
+    //     cmeta::CMeta::push(cmeta::CMetaLevel::Service);
+    // } else if let TokenType::Fn(_) = &fun.typ {
+    //     cmeta::CMeta::push(cmeta::CMetaLevel::Handler);
+    // }
+
     let args = parse_macro_input!(args as MetaArgs);
 
     // println!("// meta {:?} {:?}", func.ident.to_string(), args.kv.keys());
 
     meta_parse::collect(args);
 
-    return input;
+    return raw;
 }
 
 #[proc_macro]
