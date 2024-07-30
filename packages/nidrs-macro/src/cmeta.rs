@@ -243,7 +243,7 @@ impl CMeta {
     }
 
     pub fn collect(mut cmeta: CMeta) {
-        println!("CMETA: {:?}", cmeta.keys());
+        println!("  CMETA: {:?}", cmeta.keys());
         let mut current = CMETA_STACK.lock().unwrap();
         if let Some(mut current) = current.as_mut() {
             current.merge(cmeta);
