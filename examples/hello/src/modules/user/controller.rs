@@ -8,18 +8,18 @@ use nidrs::{
 use nidrs::{AppResult, Inject};
 use nidrs_extern::axum::Json;
 
-use crate::modules::log::service::LogService;
+// use crate::modules::log::service::LogService;
 
 use super::{dto::CreateUserDto, service::UserService};
 
 #[controller("/user")]
 pub struct UserController {
     user_service: Inject<UserService>,
-    log_service: Inject<LogService>,
+    // log_service: Inject<LogService>,
 }
 
 impl UserController {
-    #[uses(UserInterceptor)]
+    // #[uses(UserInterceptor)]
     #[get("/hello")]
     pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<String> {
         println!("Query {:?}", q);
@@ -27,8 +27,8 @@ impl UserController {
         Ok(self.user_service.extract().get_hello_world2())
     }
 
-    #[meta(nidrs::datasets::RouterBodyScheme::from_type::<CreateUserDto>())]
-    #[uses(UserInterceptor)]
+    // #[meta(nidrs::datasets::RouterBodyScheme::from_type::<CreateUserDto>())]
+    // #[uses(UserInterceptor)]
     #[post("/")]
     pub async fn create_user(&self, dto: Json<CreateUserDto>) -> AppResult<String> {
         Ok(self.user_service.extract().get_hello_world2())

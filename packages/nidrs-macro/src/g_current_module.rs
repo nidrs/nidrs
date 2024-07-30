@@ -1,4 +1,7 @@
-use std::{path, sync::Mutex};
+use std::{
+    path::{self, PathBuf},
+    sync::Mutex,
+};
 
 use proc_macro::Span;
 use quote::ToTokens;
@@ -6,14 +9,15 @@ use quote::ToTokens;
 use crate::{DefaultUsesOptions, ModuleOptions};
 
 static CURRENT_MODULE: Mutex<Option<CurrentModule>> = Mutex::new(None);
+static CURRENT_MODPATH: Mutex<Option<PathBuf>> = Mutex::new(None);
 
-struct CurrentController {
+pub struct CurrentController {
     name: String,
     path: String,
 }
 
 #[derive(Clone, Debug)]
-struct CurrentModule {
+pub struct CurrentModule {
     pub name: String,
     pub imports: Vec<String>,
     pub controllers: Vec<String>,
@@ -65,12 +69,8 @@ pub fn begin_mod() {
     if let Some(_) = get() {
         return;
     }
-    let call_site = Span::call_site();
-    let binding = call_site.source_file().path();
-    let call_site_str = binding.to_string_lossy();
-    let call_site_line = call_site.start().line();
-    let path_buf = path::PathBuf::from(call_site_str.to_string());
-    let path_buf = path_buf.parent().expect("[10000] parent error").to_path_buf().join("mod.rs");
+    let path_buf = get_current_mod_path();
+    CURRENT_MODPATH.lock().unwrap().replace(path_buf.clone());
     if path_buf.is_file() {
         let mod_content = std::fs::read_to_string(&path_buf).expect("[10001] read file error");
         // println!("// post {:?}", path_buf);
@@ -108,4 +108,27 @@ pub fn end_mod() {
     let mut current_module = CURRENT_MODULE.lock().unwrap();
     // println!("end mod {}", current_module.as_ref().unwrap().name);
     *current_module = None;
+}
+
+pub fn get_current_mod_path() -> PathBuf {
+    let call_site = Span::call_site();
+    let binding = call_site.source_file().path();
+    let call_site_str = binding.to_string_lossy();
+    let call_site_line = call_site.start().line();
+    let path_buf = path::PathBuf::from(call_site_str.to_string());
+    let path_buf = path_buf.parent().expect("[10000] parent error").to_path_buf().join("mod.rs");
+    path_buf
+}
+
+pub fn check_mod() {
+    let path_buf = get_current_mod_path();
+    let mut current_modpath = { CURRENT_MODPATH.lock().unwrap().clone() };
+    if let Some(current_modpath) = current_modpath {
+        if path_buf != *current_modpath {
+            end_mod();
+            begin_mod();
+        }
+    } else {
+        begin_mod();
+    }
 }

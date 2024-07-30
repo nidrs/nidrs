@@ -176,6 +176,7 @@ fn __service_derive(service_type: ServiceType, input: TokenStream) -> TokenStrea
 
     meta_parse::stash();
 
+
     TokenStream::from(quote! {
         #[derive(Default)]
         #func
@@ -440,9 +441,63 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     let raw = input.clone();
     let fun = parse_macro_input!(input as InterceptorArgs);
 
+    g_current_module::check_mod();
+
+    let  level = cmeta::CMeta::get_level();
+    
+    if let None = level {
+        cmeta::init_app_meta();
+        cmeta::init_module_meta();
+    }
+
+    let level = cmeta::CMeta::get_level();
+    
+    if let TokenType::Struct(item) = &fun.typ {
+        let cur_mod = g_current_module::get();
+        if let Some(cur_mod) = cur_mod {
+            let level_mod = cmeta::CMeta::get_stack_level("module");
+            if let Some(cmeta::CMetaValue::String(name)) = &level_mod {
+                if &cur_mod.name != name {
+                    let deep = cmeta::CMeta::get_deep();
+                    let loop_deep = deep - 1;
+                    for _ in 0..loop_deep {
+                        cmeta::CMeta::pop();
+                    }
+
+                    cmeta::CMeta::push(cmeta::CMetaLevel::Module(cur_mod.name.clone()));
+                    cmeta::CMeta::push(cmeta::CMetaLevel::Service(item.ident.to_string()));
+                }
+            }
+        }
+
+        let level = cmeta::CMeta::get_level();
+        if let Some(cmeta::CMetaLevel::Service(name)) = level {
+            if item.ident.to_string() != name {
+                cmeta::CMeta::pop();
+                cmeta::CMeta::push(cmeta::CMetaLevel::Service(item.ident.to_string()));
+            }
+        } else if let Some(cmeta::CMetaLevel::Handler(name)) = level {
+            cmeta::CMeta::pop();
+            cmeta::CMeta::pop();
+            cmeta::CMeta::push(cmeta::CMetaLevel::Service(item.ident.to_string()));
+        } else{
+            cmeta::CMeta::push(cmeta::CMetaLevel::Service(item.ident.to_string()));
+        }
+    }else if let TokenType::Fn(item) = &fun.typ {
+        if let Some(cmeta::CMetaLevel::Handler(name)) = level {
+            if item.sig.ident.to_string() != name {
+                cmeta::CMeta::pop();
+                cmeta::CMeta::push(cmeta::CMetaLevel::Handler(item.sig.ident.to_string()));
+            }
+        }else{
+            cmeta::CMeta::push(cmeta::CMetaLevel::Handler(item.sig.ident.to_string()));
+        }
+    }
+
     let targs = args.clone();
     let cmeta = parse_macro_input!(targs as cmeta::CMeta);
     cmeta::CMeta::collect(cmeta);
+
     // if let TokenType::Struct(_) = &fun.typ {
     //     cmeta::CMeta::push(cmeta::CMetaLevel::Service);
     // } else if let TokenType::Fn(_) = &fun.typ {
@@ -558,6 +613,7 @@ pub fn global(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn main(args: TokenStream, input: TokenStream) -> TokenStream {
+    cmeta::CMeta::pop();
     let func = parse_macro_input!(input as ItemFn);
     let ident = func.sig.ident.clone();
 

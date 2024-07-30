@@ -6,6 +6,8 @@ use proc_macro::{token_stream, TokenStream};
 use quote::ToTokens;
 use syn::{parse::Parse, punctuated::Punctuated, Expr, ExprCall, PatPath};
 
+use crate::g_current_module;
+
 static CMETA_STACK: Lazy<Mutex<Option<CMeta>>> = Lazy::new(|| Mutex::new(None));
 // static CMETA_CURRENT: Lazy<Mutex<Option<CMeta>>> = Lazy::new(|| Mutex::new(None));
 
@@ -45,9 +47,14 @@ impl From<Expr> for MetaData {
             Expr::Call(call_path) => {
                 if let Expr::Path(path) = *call_path.func.clone() {
                     let paths = path.path.segments.iter().map(|s| s.ident.to_string()).collect::<Vec<String>>();
-                    let k = paths[paths.len() - 2].clone();
+                    let k1 = paths[paths.len() - 1].clone();
+                    if k1 == "from" {
+                        let k = paths[paths.len() - 2].clone();
+                        key = CMetaKey::String(k);
+                    } else {
+                        key = CMetaKey::String(k1);
+                    }
                     let v = call_path.args.first().expect("[cmeta.MetaData.from] call_path.args.first").clone();
-                    key = CMetaKey::String(k);
                     // println!("v: {}", v.to_token_stream().to_string());
                     value = CMetaValue::from(v);
                 }
@@ -170,10 +177,10 @@ impl Into<Expr> for MetaData {
 
 #[derive(Debug, Clone)]
 pub enum CMetaLevel {
-    Global,
-    Module,
-    Service,
-    Handler,
+    Global(String),
+    Module(String),
+    Service(String),
+    Handler(String),
 }
 
 #[derive(Debug, Clone)]
@@ -236,42 +243,55 @@ impl CMeta {
     }
 
     pub fn collect(mut cmeta: CMeta) {
+        println!("CMETA: {:?}", cmeta.keys());
         let mut current = CMETA_STACK.lock().unwrap();
         if let Some(mut current) = current.as_mut() {
             current.merge(cmeta);
         } else {
             *current = Some(cmeta);
         }
-        println!("CMETA: {:?}", current);
     }
 
-    pub fn level() -> Option<CMetaLevel> {
+    pub fn get_level() -> Option<CMetaLevel> {
         let stack = CMETA_STACK.lock().unwrap();
-        if let Some(cm) = &*stack {
-            if cm.data.contains_key("level") {
-                if let CMetaValue::String(level) = &cm.data["level"] {
-                    match level.as_str() {
-                        "global" => return Some(CMetaLevel::Global),
-                        "module" => return Some(CMetaLevel::Module),
-                        "service" => return Some(CMetaLevel::Service),
-                        "handler" => return Some(CMetaLevel::Handler),
-                        _ => return None,
-                    }
-                }
-            }
+        if let Some(cmeta) = stack.as_ref() {
+            return cmeta.level();
+        }
+        return None;
+    }
+
+    pub fn get_deep() -> usize {
+        let stack = CMETA_STACK.lock().unwrap();
+        if let Some(cmeta) = stack.as_ref() {
+            return cmeta.deep();
+        }
+        return 0;
+    }
+
+    pub fn get_stack_level<K: Into<String>>(key: K) -> Option<CMetaValue> {
+        let stack = CMETA_STACK.lock().unwrap();
+        if let Some(cmeta) = stack.as_ref() {
+            return cmeta.get(key).cloned();
         }
         return None;
     }
 
     pub fn push(level: CMetaLevel) {
+        println!(">>Push: {:?} -- [{:?}]", level, CMeta::get_stack_level("module"));
+
         let mut cmeta = CMeta::new();
         cmeta.set(
-            "level",
             match level {
-                CMetaLevel::Global => CMetaValue::String("global".into()),
-                CMetaLevel::Module => CMetaValue::String("module".into()),
-                CMetaLevel::Service => CMetaValue::String("service".into()),
-                CMetaLevel::Handler => CMetaValue::String("handler".into()),
+                CMetaLevel::Global(_) => "global",
+                CMetaLevel::Module(_) => "module",
+                CMetaLevel::Service(_) => "service",
+                CMetaLevel::Handler(_) => "handler",
+            },
+            match level {
+                CMetaLevel::Global(name) => CMetaValue::String(name),
+                CMetaLevel::Module(name) => CMetaValue::String(name),
+                CMetaLevel::Service(name) => CMetaValue::String(name),
+                CMetaLevel::Handler(name) => CMetaValue::String(name),
             },
         );
         let mut stack = CMETA_STACK.lock().unwrap();
@@ -285,6 +305,7 @@ impl CMeta {
     pub fn pop() {
         let mut opt_cm: Option<CMeta> = CMETA_STACK.lock().unwrap().take();
         if let Some(mut cm) = opt_cm {
+            println!("<< Pop: {:?} {:?}\n", cm.level(), cm.keys());
             let mut tail = cm.tail();
             if let Some(mut t) = tail {
                 *CMETA_STACK.lock().unwrap() = Some(*t);
@@ -322,6 +343,57 @@ impl CMeta {
             panic!("[cmeta.CMeta.set_data] unknown");
         }
     }
+
+    pub fn get<K: Into<String>>(&self, key: K) -> Option<&CMetaValue> {
+        let key = key.into();
+        let c = self.data.get(&key);
+
+        if let Some(c) = c {
+            return Some(c);
+        }
+
+        if let Some(extends) = &self.extends {
+            return extends.get(&key);
+        }
+
+        return None;
+    }
+
+    pub fn keys(&self) -> Vec<String> {
+        let mut ret_keys = self.data.keys().map(|k| k.clone()).collect::<Vec<String>>();
+
+        if let Some(extends) = &self.extends {
+            let res = extends.keys();
+            ret_keys.extend(res);
+        }
+
+        //排序 + 去重
+        // ret_keys.sort();
+        ret_keys.dedup();
+
+        ret_keys
+    }
+
+    pub fn level(&self) -> Option<CMetaLevel> {
+        if let Some(CMetaValue::String(name)) = self.get("handler") {
+            return Some(CMetaLevel::Handler(name.clone()));
+        } else if let Some(CMetaValue::String(name)) = self.get("service") {
+            return Some(CMetaLevel::Service(name.clone()));
+        } else if let Some(CMetaValue::String(name)) = self.get("module") {
+            return Some(CMetaLevel::Module(name.clone()));
+        } else if let Some(CMetaValue::String(name)) = self.get("global") {
+            return Some(CMetaLevel::Global(name.clone()));
+        }
+        return None;
+    }
+
+    pub fn deep(&self) -> usize {
+        let mut deep = 1;
+        if let Some(extends) = &self.extends {
+            deep += extends.deep();
+        }
+        return deep;
+    }
 }
 
 impl Parse for CMeta {
@@ -346,4 +418,13 @@ impl Parse for CMeta {
         });
         Ok(cmeta)
     }
+}
+
+pub fn init_app_meta() {
+    CMeta::push(CMetaLevel::Global("app".to_string()));
+}
+
+pub fn init_module_meta() {
+    let mod_opts = g_current_module::get().expect("[cmeta.init_module_meta] get current module error");
+    CMeta::push(CMetaLevel::Module(mod_opts.name));
 }
