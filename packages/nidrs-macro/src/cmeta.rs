@@ -425,6 +425,8 @@ pub fn init_app_meta() {
 }
 
 pub fn init_module_meta() {
-    let mod_opts = g_current_module::get().expect("[cmeta.init_module_meta] get current module error");
-    CMeta::push(CMetaLevel::Module(mod_opts.name));
+    let mod_opts = g_current_module::get();
+    if let Some(mod_opts) = mod_opts {
+        CMeta::push(CMetaLevel::Module(mod_opts.name));
+    }
 }
