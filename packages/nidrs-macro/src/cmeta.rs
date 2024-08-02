@@ -6,7 +6,10 @@ use proc_macro::{token_stream, TokenStream};
 use quote::ToTokens;
 use syn::{parse::Parse, punctuated::Punctuated, Expr, ExprCall, PatPath};
 
-use crate::g_current_module;
+use crate::{
+    app_parse::{get_current_app_path, parse_main_macro_args},
+    g_current_module,
+};
 
 static CMETA_STACK: Lazy<Mutex<Option<CMeta>>> = Lazy::new(|| Mutex::new(None));
 // static CMETA_CURRENT: Lazy<Mutex<Option<CMeta>>> = Lazy::new(|| Mutex::new(None));
@@ -422,6 +425,21 @@ impl Parse for CMeta {
 
 pub fn init_app_meta() {
     CMeta::push(CMetaLevel::Global("app".to_string()));
+    let cmeta = CMeta::new();
+    if let Some(app_path) = get_current_app_path() {
+        println!("init_app_meta: {:?} {:?}", app_path, app_path.exists());
+        let app = std::fs::read_to_string(app_path).expect("[10001] read file error");
+        let app_ast = syn::parse_file(&app).expect("[10002] parse file error");
+        for item in app_ast.items.iter() {
+            if let syn::Item::Fn(item_fn) = item {
+                if let Some(args) = parse_main_macro_args(item_fn) {
+                    println!("item: {:?}", item);
+                    println!("args: {:?}", args);
+                }
+            }
+        }
+    }
+    CMeta::collect(cmeta)
 }
 
 pub fn init_module_meta() {

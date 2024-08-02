@@ -38,6 +38,7 @@ mod g_current_module;
 mod import_path;
 mod meta_parse;
 mod utils;
+mod app_parse;
 
 // static CURRENT_MODULE3: Mutex<Option<&mut CurrentModule>> = Mutex::new(None);
 
