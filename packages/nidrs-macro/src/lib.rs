@@ -33,12 +33,12 @@ mod global;
 
 use crate::meta_parse::MetaValue;
 
+mod app_parse;
 mod cmeta;
 mod g_current_module;
 mod import_path;
 mod meta_parse;
 mod utils;
-mod app_parse;
 
 // static CURRENT_MODULE3: Mutex<Option<&mut CurrentModule>> = Mutex::new(None);
 
@@ -177,7 +177,6 @@ fn __service_derive(service_type: ServiceType, input: TokenStream) -> TokenStrea
 
     meta_parse::stash();
 
-
     TokenStream::from(quote! {
         #[derive(Default)]
         #func
@@ -236,7 +235,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     let trigger_on_module_init_tokens: TokenStream2 = gen_events_trigger_tokens(ident_name.clone(), "on_module_init");
     let trigger_on_module_destroy_tokens = gen_events_trigger_tokens(ident_name.clone(), "on_module_destroy");
 
-    let module_meta_tokens = meta_parse::build_tokens();
+    let module_meta_tokens = cmeta::CMeta::build_tokens();
     let is_global_tokens = if let Some(MetaValue::Bool(bool)) = meta_parse::get_meta_value("Global") { bool } else { false };
     println!("// module {:?}", ident.to_string());
 
@@ -296,10 +295,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
         impl nidrs::ImplMeta for #ident{
             fn __meta() -> nidrs::Meta {
-                let mut meta = nidrs::Meta::new();
                 #module_meta_tokens
-                meta.set_data(nidrs::datasets::ModuleName::from(#ident_name));
-                meta
             }
         }
     });
@@ -444,15 +440,15 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
 
     g_current_module::check_mod();
 
-    let  level = cmeta::CMeta::get_level();
-    
+    let level = cmeta::CMeta::get_level();
+
     if let None = level {
         cmeta::init_app_meta();
         cmeta::init_module_meta();
     }
 
     let level = cmeta::CMeta::get_level();
-    
+
     if let TokenType::Struct(item) = &fun.typ {
         let cur_mod = g_current_module::get();
         if let Some(cur_mod) = cur_mod {
@@ -481,16 +477,16 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
             cmeta::CMeta::pop();
             cmeta::CMeta::pop();
             cmeta::CMeta::push(cmeta::CMetaLevel::Service(item.ident.to_string()));
-        } else{
+        } else {
             cmeta::CMeta::push(cmeta::CMetaLevel::Service(item.ident.to_string()));
         }
-    }else if let TokenType::Fn(item) = &fun.typ {
+    } else if let TokenType::Fn(item) = &fun.typ {
         if let Some(cmeta::CMetaLevel::Handler(name)) = level {
             if item.sig.ident.to_string() != name {
                 cmeta::CMeta::pop();
                 cmeta::CMeta::push(cmeta::CMetaLevel::Handler(item.sig.ident.to_string()));
             }
-        }else{
+        } else {
             cmeta::CMeta::push(cmeta::CMetaLevel::Handler(item.sig.ident.to_string()));
         }
     }
@@ -631,7 +627,7 @@ pub fn main(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
-    let path = if args.is_empty() {
+    let path: String = if args.is_empty() {
         "".to_string()
     } else {
         let args = parse_macro_input!(args as syn::Expr);
@@ -702,7 +698,7 @@ fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
 
 fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemFn);
-    let meta_tokens: TokenStream2 = meta_parse::build_tokens();
+    // let meta_tokens: TokenStream2 = meta_parse::build_tokens();
     meta_parse::clear_meta();
     let meta_fn_ident = syn::Ident::new(format!("__meta_{}", func.sig.ident.to_string()).as_str(), func.span().clone());
 
@@ -710,16 +706,19 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let route_fn_ident = syn::Ident::new(format!("__route_{}", func.sig.ident.to_string()).as_str(), func.span().clone());
 
+    let meta_tokens = cmeta::CMeta::build_tokens();
+
+    // println!("Tokens {}", meta_tokens.to_string());
+
     TokenStream::from(quote! {
         #func
 
         pub fn #meta_fn_ident(&self)->nidrs::Meta{
-            let mut meta = nidrs::Meta::new();
             #meta_tokens
-            meta
         }
 
         pub fn #route_fn_ident(mut ctx: nidrs::ModuleCtx)->nidrs::ModuleCtx{
+
 
             // let router = nidrs::externs::axum::Router::new()
             //     .route(
@@ -1159,7 +1158,7 @@ fn gen_service_inject_tokens(service_type: ServiceType, func: &ItemStruct) -> To
         }
     };
 
-    let meta_tokens = meta_parse::build_tokens();
+    let meta_tokens = cmeta::CMeta::build_tokens();
 
     let inject_tokens = TokenStream2::from(quote! {
         #middle_tokens
@@ -1172,9 +1171,7 @@ fn gen_service_inject_tokens(service_type: ServiceType, func: &ItemStruct) -> To
 
         impl nidrs::ImplMeta for #service_name_ident{
             fn __meta() -> nidrs::Meta {
-                let mut meta = nidrs::Meta::new();
                 #meta_tokens
-                meta
             }
         }
     });

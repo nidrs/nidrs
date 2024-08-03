@@ -3,8 +3,9 @@ use std::{any::Any, collections::HashMap, sync::Mutex};
 use nidrs_extern::datasets::{self, get_meta_key, get_meta_key_by_ref, MetaKey};
 use once_cell::sync::Lazy;
 use proc_macro::{token_stream, TokenStream};
+use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
-use syn::{parse::Parse, punctuated::Punctuated, Expr, ExprCall, PatPath};
+use syn::{ext, parse::Parse, punctuated::Punctuated, Expr, ExprCall, PatPath};
 
 use crate::{
     app_parse::{get_current_app_path, parse_main_macro_args},
@@ -234,6 +235,39 @@ impl From<Expr> for CMetaValue {
     }
 }
 
+impl Into<Expr> for CMetaValue {
+    fn into(self) -> Expr {
+        match self {
+            CMetaValue::String(s) => syn::parse_str(&format!("\"{}\"", s)).expect("[cmeta.CMetaValue.into] parse string error"),
+            CMetaValue::Bool(b) => syn::parse_str(&format!("{}", b)).expect("[cmeta.CMetaValue.into] parse bool error"),
+            CMetaValue::Int(i) => syn::parse_str(&format!("{}", i)).expect("[cmeta.CMetaValue.into] parse int error"),
+            CMetaValue::Float(f) => syn::parse_str(&format!("{}", f)).expect("[cmeta.CMetaValue.into] parse float error"),
+            CMetaValue::Array(arr) => {
+                let mut items: Vec<Expr> = Vec::new();
+                for item in arr.iter() {
+                    items.push(item.clone().into());
+                }
+                syn::parse_str(&format!("[{}]", items.iter().map(|i| i.to_token_stream().to_string()).collect::<Vec<String>>().join(", ")))
+                    .expect("[cmeta.CMetaValue.into] parse array error")
+            }
+            CMetaValue::Object(obj) => {
+                let mut items = Vec::new();
+                for (k, v) in obj.iter() {
+                    let k = syn::Ident::new(&k, proc_macro2::Span::call_site());
+                    let v: Expr = v.clone().into();
+                    items.push(quote::quote! {
+                        #k: #v
+                    });
+                }
+                syn::parse_str(&format!("{{ {} }}", items.iter().map(|i| i.to_token_stream().to_string()).collect::<Vec<String>>().join(", ")))
+                    .expect("[cmeta.CMetaValue.into] parse object error")
+            }
+            CMetaValue::MetaData(meta) => meta.into(),
+            CMetaValue::None => syn::parse_str("").expect("[cmeta.CMetaValue.into] parse none error"),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct CMeta {
     data: HashMap<String, CMetaValue>,
@@ -246,7 +280,7 @@ impl CMeta {
     }
 
     pub fn collect(mut cmeta: CMeta) {
-        println!("  CMETA: {:?}", cmeta.keys());
+        println!("//  CMETA: {:?}", cmeta.keys());
         let mut current = CMETA_STACK.lock().unwrap();
         if let Some(mut current) = current.as_mut() {
             current.merge(cmeta);
@@ -280,7 +314,7 @@ impl CMeta {
     }
 
     pub fn push(level: CMetaLevel) {
-        println!(">>Push: {:?} -- [{:?}]", level, CMeta::get_stack_level("module"));
+        println!("// >>Push: {:?} -- [{:?}]", level, CMeta::get_stack_level("module"));
 
         let mut cmeta = CMeta::new();
         cmeta.set(
@@ -308,12 +342,26 @@ impl CMeta {
     pub fn pop() {
         let mut opt_cm: Option<CMeta> = CMETA_STACK.lock().unwrap().take();
         if let Some(mut cm) = opt_cm {
-            println!("<< Pop: {:?} {:?}\n", cm.level(), cm.keys());
+            println!("// << Pop: {:?} {:?}\n", cm.level(), cm.keys());
             let mut tail = cm.tail();
             if let Some(mut t) = tail {
                 *CMETA_STACK.lock().unwrap() = Some(*t);
             }
         }
+    }
+
+    pub fn build_tokens() -> TokenStream2 {
+        let stack = CMETA_STACK.lock().unwrap();
+        if let Some(cmeta) = stack.as_ref() {
+            let tokens = cmeta.to_tokens();
+
+            return quote::quote! {
+                let mut meta = nidrs::Meta::new();
+                #tokens
+                meta
+            };
+        }
+        return quote::quote! {};
     }
 
     pub fn merge(&mut self, cmeta: CMeta) {
@@ -367,12 +415,12 @@ impl CMeta {
 
         if let Some(extends) = &self.extends {
             let res = extends.keys();
-            ret_keys.extend(res);
+            for k in res.iter() {
+                if !ret_keys.contains(k) {
+                    ret_keys.push(k.clone());
+                }
+            }
         }
-
-        //排序 + 去重
-        // ret_keys.sort();
-        ret_keys.dedup();
 
         ret_keys
     }
@@ -397,6 +445,29 @@ impl CMeta {
         }
         return deep;
     }
+
+    pub fn to_tokens(&self) -> TokenStream2 {
+        let mut items = Vec::new();
+        let keys = self.keys();
+        // println!("to_tokens: {:?}", keys);
+        for k in keys.iter() {
+            let v = self.get(k).expect("[cmeta.CMeta.to_tokens] get value error");
+            let tokens: Expr = v.clone().into();
+            if let CMetaValue::MetaData(_) = &v {
+                items.push(quote::quote! {
+                    meta.set_data(#tokens);
+                });
+            } else {
+                items.push(quote::quote! {
+                    meta.set(#k, #tokens);
+                });
+            }
+        }
+        let cmeta = quote::quote! {
+            #(#items)*
+        };
+        cmeta
+    }
 }
 
 impl Parse for CMeta {
@@ -415,7 +486,7 @@ impl Parse for CMeta {
             } else if let syn::Expr::Call(_) = item {
                 cmeta.set_data(item.clone());
             } else {
-                println!("metaArgs {:?}", item);
+                println!("// metaArgs {:?}", item);
                 panic!("Invalid argument");
             }
         });
@@ -427,14 +498,14 @@ pub fn init_app_meta() {
     CMeta::push(CMetaLevel::Global("app".to_string()));
     let cmeta = CMeta::new();
     if let Some(app_path) = get_current_app_path() {
-        println!("init_app_meta: {:?} {:?}", app_path, app_path.exists());
+        println!("// init_app_meta: {:?} {:?}", app_path, app_path.exists());
         let app = std::fs::read_to_string(app_path).expect("[10001] read file error");
         let app_ast = syn::parse_file(&app).expect("[10002] parse file error");
         for item in app_ast.items.iter() {
             if let syn::Item::Fn(item_fn) = item {
                 if let Some(args) = parse_main_macro_args(item_fn) {
-                    println!("item: {:?}", item);
-                    println!("args: {:?}", args);
+                    // println!("item: {:?}", item);
+                    // println!("args: {:?}", args);
                 }
             }
         }
