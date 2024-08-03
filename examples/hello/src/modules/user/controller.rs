@@ -23,7 +23,7 @@ impl UserController {
     #[get("/hello")]
     pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<String> {
         println!("Query {:?}", q);
-        self.log_service.log("hello");
+        // self.log_service.log("hello");
         Ok(self.user_service.extract().get_hello_world2())
     }
 

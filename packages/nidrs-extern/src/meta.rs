@@ -117,8 +117,13 @@ impl Meta {
         self
     }
 
-    pub fn extend(&mut self, meta: Arc<Meta>) -> &mut Self {
+    pub fn extend_ref(&mut self, meta: Arc<Meta>) -> &mut Self {
         self.extend = Some(meta);
+        self
+    }
+
+    pub fn extend(&mut self, meta: Meta) -> &mut Self {
+        self.extend = Some(Arc::new(meta));
         self
     }
 
@@ -330,7 +335,7 @@ mod tests {
 
         let arc_meta2 = Arc::new(meta2);
 
-        meta1.extend(arc_meta2);
+        meta1.extend_ref(arc_meta2);
 
         assert_eq!(*meta1.get::<i32>("a").unwrap(), 1);
         assert_eq!(*meta1.get::<&str>("b").unwrap(), "2");
