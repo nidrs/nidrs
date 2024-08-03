@@ -495,14 +495,7 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     let cmeta = parse_macro_input!(targs as cmeta::CMeta);
     cmeta::CMeta::collect(cmeta);
 
-    // if let TokenType::Struct(_) = &fun.typ {
-    //     cmeta::CMeta::push(cmeta::CMetaLevel::Service);
-    // } else if let TokenType::Fn(_) = &fun.typ {
-    //     cmeta::CMeta::push(cmeta::CMetaLevel::Handler);
-    // }
-
     let args = parse_macro_input!(args as MetaArgs);
-
     // println!("// meta {:?} {:?}", func.ident.to_string(), args.kv.keys());
 
     meta_parse::collect(args);
