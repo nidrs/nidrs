@@ -1,10 +1,7 @@
 use std::collections::HashMap;
 
-use nidrs::{externs::axum::extract::Query, meta, post};
-use nidrs::{
-    macros::{controller, get},
-    uses,
-};
+use nidrs::macros::{controller, get};
+use nidrs::{externs::axum::extract::Query, post};
 use nidrs::{AppResult, Inject};
 use nidrs_extern::axum::Json;
 
