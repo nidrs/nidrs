@@ -165,6 +165,15 @@ impl Into<Expr> for CMetaValue {
     }
 }
 
+impl Into<String> for CMetaValue {
+    fn into(self) -> String {
+        if let CMetaValue::String(s) = self {
+            return s;
+        }
+        panic!("Invalid type");
+    }
+}
+
 #[derive(Debug)]
 pub struct CMeta {
     data: HashMap<String, CMetaValue>,
@@ -202,7 +211,7 @@ impl CMeta {
         return 0;
     }
 
-    pub fn get_stack_level<K: Into<String>>(key: K) -> Option<CMetaValue> {
+    pub fn get_stack<K: Into<String>>(key: K) -> Option<CMetaValue> {
         let stack = CMETA_STACK.lock().unwrap();
         if let Some(cmeta) = stack.as_ref() {
             return cmeta.get(key).cloned();
@@ -211,7 +220,7 @@ impl CMeta {
     }
 
     pub fn push(level: CMetaLevel) {
-        println!("// >>Push: {:?} -- [{:?}]", level, CMeta::get_stack_level("module"));
+        println!("// >>Push: {:?} -- [{:?}]", level, CMeta::get_stack("module"));
 
         let mut cmeta = CMeta::new();
         cmeta.set(

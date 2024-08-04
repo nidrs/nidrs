@@ -22,7 +22,7 @@ use std::{
     time::Duration,
 };
 
-use crate::{provider, AppResult, Meta, Service};
+use crate::{provider, shared::otr, template_format, AppResult, Meta, Service};
 
 static GLOBALS_KEY: &str = "Globals";
 
@@ -398,6 +398,19 @@ impl ModuleCtx {
             }
         }
         success
+    }
+
+    pub fn get_router_info(&self, meta: &Meta) -> AppResult<String> {
+        let router_path = otr(meta.get_data::<datasets::RouterPath>(), "meta not nidrs::datasets::RouterPath value")?.value();
+        let version = *meta.get::<&str>("version").unwrap_or(&self.defaults.default_version);
+        let disable_default_prefix = meta.get_data::<datasets::DisableDefaultPrefix>().unwrap_or(&datasets::DisableDefaultPrefix(false)).value();
+        let full_path = if disable_default_prefix {
+            router_path.to_string()
+        } else {
+            template_format(&format!("{}{}", self.defaults.default_prefix, router_path), [("version", version)])
+        };
+
+        Ok(full_path)
     }
 }
 

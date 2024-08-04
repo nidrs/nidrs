@@ -13,6 +13,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use cmeta::CMetaValue;
 use nidrs_extern::datasets::ServiceType;
 use once_cell::sync::Lazy;
 use proc_macro::{Ident, Span, TokenStream};
@@ -452,7 +453,7 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     if let TokenType::Struct(item) = &fun.typ {
         let cur_mod = g_current_module::get();
         if let Some(cur_mod) = cur_mod {
-            let level_mod = cmeta::CMeta::get_stack_level("module");
+            let level_mod = cmeta::CMeta::get_stack("module");
             if let Some(cmeta::CMetaValue::String(name)) = &level_mod {
                 if &cur_mod.name != name {
                     let deep = cmeta::CMeta::get_deep();
@@ -693,15 +694,23 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemFn);
     // let meta_tokens: TokenStream2 = meta_parse::build_tokens();
     meta_parse::clear_meta();
+
     let meta_fn_ident = syn::Ident::new(format!("__meta_{}", func.sig.ident.to_string()).as_str(), func.span().clone());
 
     println!("// route_derive {:?}", func.sig.ident.to_string());
 
     let route_fn_ident = syn::Ident::new(format!("__route_{}", func.sig.ident.to_string()).as_str(), func.span().clone());
+    let route_fn_name = route_fn_ident.to_string();
+
+    let route_method = if let Some(CMetaValue::MetaData(method)) = cmeta::CMeta::get_stack("RouterMethod") {
+        let m: String = method.value().into();
+        syn::Ident::new(&m, func.span().clone())
+    } else {
+        panic!("[route_derive] {} RouterMethod not found", route_fn_name);
+    };
+    let route_method_name = route_method.to_string();
 
     let meta_tokens = cmeta::CMeta::build_tokens();
-
-    // println!("Tokens {}", meta_tokens.to_string());
 
     TokenStream::from(quote! {
         #func
@@ -710,7 +719,21 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
             #meta_tokens
         }
 
-        pub fn #route_fn_ident(mut ctx: nidrs::ModuleCtx)->nidrs::ModuleCtx{
+        pub fn #route_fn_ident(&self, mut ctx: nidrs::ModuleCtx)->nidrs::ModuleCtx{
+
+            let mut meta = self.#meta_fn_ident();
+
+            let router_info = ctx.get_router_info(&meta);
+
+            if let Err(e) = router_info {
+                panic!("[{}] {:?}", #route_fn_name,  e);
+            }
+
+            let full_path = router_info.unwrap();
+
+            nidrs_macro::log!("Registering router '{} {}'.", #route_method_name, full_path);
+
+            meta.set_data(nidrs::datasets::RouterFullPath(full_path.clone()));
 
 
             // let router = nidrs::externs::axum::Router::new()
@@ -819,7 +842,7 @@ fn gen_handler_tokens(module_name: &str, route: &RouteMeta, controller_name: &St
         quote! {
             |#def_func_args| async move {
                 let mut t_meta = nidrs::Meta::new();
-                t_meta.extend(meta);
+                t_meta.extend_ref(meta);
                 #meta_tokens
                 t_controller.#route_name(#func_args).await
             }
@@ -834,7 +857,7 @@ fn gen_handler_tokens(module_name: &str, route: &RouteMeta, controller_name: &St
         quote! {
             |parts, #def_func_args| async move {
                 let mut t_meta = nidrs::Meta::new();
-                t_meta.extend(meta);
+                t_meta.extend_ref(meta);
                 #def_clone_inter_tokens
             }
         }

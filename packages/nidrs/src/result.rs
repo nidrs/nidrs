@@ -21,6 +21,9 @@ pub enum AppError {
     #[error(transparent)]
     ValidError(#[from] ValidError),
 
+    #[error("Compilation Error")]
+    CompilationError(String),
+
     #[error(transparent)]
     Exception(#[from] Exception),
 }
