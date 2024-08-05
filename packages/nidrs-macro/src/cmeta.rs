@@ -165,9 +165,9 @@ impl Into<Expr> for CMetaValue {
     }
 }
 
-impl Into<String> for CMetaValue {
-    fn into(self) -> String {
-        if let CMetaValue::String(s) = self {
+impl From<CMetaValue> for String {
+    fn from(v: CMetaValue) -> String {
+        if let CMetaValue::String(s) = v {
             return s;
         }
         panic!("Invalid type");
@@ -217,6 +217,18 @@ impl CMeta {
             return cmeta.get(key).cloned();
         }
         return None;
+    }
+
+    pub fn get_stack_data<K: Into<String>, R>(key: K) -> Option<R>
+    where
+        R: From<CMetaValue>,
+    {
+        if let Some(CMetaValue::MetaData(v)) = CMeta::get_stack(key) {
+            Some(v.value().into())
+        } else {
+            // panic!("[route_derive] {} RouterMethod not found", route_fn_name);
+            None
+        }
     }
 
     pub fn push(level: CMetaLevel) {

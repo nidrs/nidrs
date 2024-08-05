@@ -702,13 +702,9 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
     let route_fn_ident = syn::Ident::new(format!("__route_{}", func.sig.ident.to_string()).as_str(), func.span().clone());
     let route_fn_name = route_fn_ident.to_string();
 
-    let route_method = if let Some(CMetaValue::MetaData(method)) = cmeta::CMeta::get_stack("RouterMethod") {
-        let m: String = method.value().into();
-        syn::Ident::new(&m, func.span().clone())
-    } else {
-        panic!("[route_derive] {} RouterMethod not found", route_fn_name);
-    };
-    let route_method_name = route_method.to_string();
+    let route_method_name: String =
+        cmeta::CMeta::get_stack_data("RouterMethod").expect(&format!("[route_derive] {} RouterMethod not found", route_fn_name));
+    let route_method = syn::Ident::new(&route_method_name, func.span().clone());
 
     let meta_tokens = cmeta::CMeta::build_tokens();
 
@@ -734,6 +730,8 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
             nidrs_macro::log!("Registering router '{} {}'.", #route_method_name, full_path);
 
             meta.set_data(nidrs::datasets::RouterFullPath(full_path.clone()));
+
+            // let t_controller =
 
 
             // let router = nidrs::externs::axum::Router::new()
