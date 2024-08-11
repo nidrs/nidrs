@@ -694,7 +694,7 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemFn);
     // let meta_tokens: TokenStream2 = meta_parse::build_tokens();
     meta_parse::clear_meta();
-
+    let fn_ident = func.sig.ident.clone();
     let meta_fn_ident = syn::Ident::new(format!("__meta_{}", func.sig.ident.to_string()).as_str(), func.span().clone());
 
     println!("// route_derive {:?}", func.sig.ident.to_string());
@@ -708,6 +708,47 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let meta_tokens = cmeta::CMeta::build_tokens();
 
+    let mut pindex = 0;
+    let mut body_token = quote! {};
+    let mut meta_token = quote! {};
+    let mut axum_args = vec![];
+    let mut func_args = vec![];
+    func.sig.inputs.iter().for_each(|arg| match arg {
+        FnArg::Typed(PatType { pat, ty, .. }) => {
+            // let pat = pat.to_token_stream();
+            // println!(">> route_derive {:?} {:?}", pat.to_token_stream().to_string(), ty.to_token_stream().to_string());
+            let pat = format!("p{}", pindex);
+            let pat_ident = syn::Ident::new(&pat, Span::call_site().into());
+            pindex += 1;
+            let ty = ty.to_token_stream();
+            if ty.to_string().contains("Json") {
+                body_token = quote! {};
+                axum_args.push(pat_ident.clone());
+            } else if ty.to_string().contains("Meta") {
+                let pat_ident_t = pat_ident.clone();
+                meta_token = quote! {
+                    let mut #pat_ident_t = nidrs::Meta::new();
+                    #pat_ident_t.extend_ref(meta);
+                };
+            } else {
+                axum_args.push(pat_ident.clone());
+            }
+            func_args.push(quote! {
+                #pat_ident
+            })
+        }
+        _ => (),
+    });
+
+    let func_args = TokenStream2::from(quote! {
+        #(#func_args),*
+    });
+    let axum_args = TokenStream2::from(quote! {
+        #(#axum_args),*
+    });
+
+    // println!(" route_derive {:?} {:?}", func.sig.ident.to_string(), func_args);
+
     TokenStream::from(quote! {
         #func
 
@@ -716,6 +757,8 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
         }
 
         pub fn #route_fn_ident(&self, mut ctx: nidrs::ModuleCtx)->nidrs::ModuleCtx{
+            use nidrs::externs::axum::{extract::Query, Json};
+            use serde_json::Value;
 
             let mut meta = self.#meta_fn_ident();
 
@@ -731,24 +774,27 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
 
             meta.set_data(nidrs::datasets::RouterFullPath(full_path.clone()));
 
-            // let t_controller =
+            let module_name = meta.get::<&str>("module").unwrap();
+            let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
 
-
-            // let router = nidrs::externs::axum::Router::new()
-            //     .route(
-            //         &path,
-            //         nidrs::externs::axum::routing::get(|p1| async move {
-            //             let mut t_meta = nidrs::Meta::new();
-            //             t_meta.extend(meta);
-            //             let p0 = t_meta;
-            //             t_controller.get_hello_world(p0, p1).await
-            //         }),
-            //     );
-            // ctx.routers
-            //     .push(nidrs::RouterWrap {
-            //         router: router,
-            //         meta: route_meta.clone(),
-            //     });
+            let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
+            let meta = std::sync::Arc::new(meta);
+            let t_meta = meta.clone();
+            let router = nidrs::externs::axum::Router::new()
+                .route(
+                    &full_path,
+                    // nidrs::externs::axum::routing::get(|state: nidrs::externs::axum::extract::State<nidrs::StateCtx>, req: nidrs::externs::axum::extract::Request| async move {
+                    nidrs::externs::axum::routing::get(|#axum_args| async move {
+                        #meta_token
+                        t_controller.#fn_ident(#func_args).await
+                        // return String::from("ok");
+                    }),
+                );
+            ctx.routers
+                .push(nidrs::RouterWrap {
+                    router: router,
+                    meta: t_meta,
+                });
 
             ctx
         }
