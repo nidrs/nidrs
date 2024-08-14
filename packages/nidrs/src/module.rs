@@ -400,7 +400,7 @@ impl ModuleCtx {
         success
     }
 
-    pub fn get_router_info(&self, meta: &Meta) -> AppResult<String> {
+    pub fn get_router_full(&self, meta: &Meta) -> AppResult<String> {
         let controller_path = otr(meta.get_data::<datasets::ControllerPath>(), "meta not nidrs::datasets::ControllerPath value")?.value();
         let router_path = otr(meta.get_data::<datasets::RouterPath>(), "meta not nidrs::datasets::RouterPath value")?.value();
         let version = *meta.get::<&str>("version").unwrap_or(&self.defaults.default_version);

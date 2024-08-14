@@ -762,7 +762,7 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
 
             let mut meta = self.#meta_fn_ident();
 
-            let router_info = ctx.get_router_info(&meta);
+            let router_info = ctx.get_router_full(&meta);
 
             if let Err(e) = router_info {
                 panic!("[{}] {:?}", #route_fn_name,  e);
