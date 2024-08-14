@@ -199,7 +199,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     let ident = func.ident.clone();
     let ident_name = ident.to_string();
 
-    let controller_register_tokens = gen_controller_register_tokens(ident_name.clone(), args.controllers.clone());
+    let controller_register_tokens = gen_controller_register_tokens_v2(ident_name.clone(), args.controllers.clone());
     let service_register_tokens = gen_service_register_tokens(ident_name.clone(), args.services.clone());
     let defaults_interceptors = DEFAULT_INTERS
         .lock()
@@ -770,7 +770,7 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
 
             let full_path = router_info.unwrap();
 
-            nidrs_macro::log!("Registering router '{} {}'.", #route_method_name, full_path);
+            nidrs_macro::log!("Registering router '{} {}'.", #route_method_name.to_uppercase(), full_path);
 
             meta.set_data(nidrs::datasets::RouterFullPath(full_path.clone()));
 
@@ -802,6 +802,44 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
     })
 }
 
+fn gen_controller_register_tokens_v2(module_name: String, services: Vec<TokenStream2>) -> TokenStream2 {
+    let binding = CURRENT_CONTROLLER.lock().unwrap();
+    if let None = binding.as_ref() {
+        return TokenStream2::new();
+    }
+    let current_controller = binding.as_ref().unwrap();
+    let controller_path = current_controller.path.clone();
+    let controller_tokens: Vec<TokenStream2>= services.iter().map(|controller_token| {
+        let controller_name = controller_token.to_string();
+        let binding = ROUTES.lock().unwrap();
+        let controller = binding.get(&controller_name).unwrap();
+        let controller_ident = syn::Ident::new(&controller_name, Span::call_site().into());
+        let router_path = controller.iter().map(|(name, route)| {
+            let route_ident = syn::Ident::new(&format!(
+                "__route_{}",
+                name
+            ), Span::call_site().into());
+       
+            quote! {
+                // {
+                let t_controller = ctx.get_controller::<controller::#controller_ident>(#module_name, #controller_name);
+
+                ctx = t_controller.#route_ident(ctx);
+            }
+        }).collect::<Vec<TokenStream2>>();
+
+        quote! {
+            if ctx.register_controller(#module_name, #controller_name, Box::new(std::sync::Arc::new(controller::#controller_ident::default()))) {
+                #(#router_path)*
+            }
+        }
+    }).collect::<Vec<TokenStream2>>();
+    let controller_tokens = TokenStream2::from(quote! {
+        #(#controller_tokens)*
+    });
+    return controller_tokens;
+}
+
 fn gen_controller_register_tokens(module_name: String, services: Vec<TokenStream2>) -> TokenStream2 {
     let binding = CURRENT_CONTROLLER.lock().unwrap();
     if let None = binding.as_ref() {
@@ -809,7 +847,7 @@ fn gen_controller_register_tokens(module_name: String, services: Vec<TokenStream
     }
     let current_controller = binding.as_ref().unwrap();
     let controller_path = current_controller.path.clone();
-    let controller_tokens= services.iter().map(|controller_token| {
+    let controller_tokens: Vec<TokenStream2>= services.iter().map(|controller_token| {
         let controller_name = controller_token.to_string();
         let binding = ROUTES.lock().unwrap();
         let controller = binding.get(&controller_name).unwrap();
