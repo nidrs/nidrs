@@ -2,16 +2,19 @@ use std::{
     any::{Any, TypeId},
     collections::{HashMap, HashSet},
     fmt::Debug,
+    ops::Deref,
     sync::Arc,
 };
 
+use axum::{async_trait, extract::FromRequestParts};
+
 #[derive(Default)]
-pub struct Meta {
+pub struct InnerMeta {
     map: HashMap<String, Box<dyn Any + Send + Sync>>,
-    extend: Option<Arc<Meta>>,
+    extend: Option<Meta>,
 }
 
-impl Debug for Meta {
+impl Debug for InnerMeta {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut keys = self.map.keys().collect::<HashSet<&String>>();
         if let Some(p) = &self.extend {
@@ -22,9 +25,9 @@ impl Debug for Meta {
     }
 }
 
-impl Meta {
+impl InnerMeta {
     pub fn new() -> Self {
-        Meta { map: HashMap::new(), extend: None }
+        InnerMeta { map: HashMap::new(), extend: None }
     }
 
     pub fn inner(&self) -> &HashMap<String, Box<dyn Any + Send + Sync>> {
@@ -33,7 +36,7 @@ impl Meta {
 
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
-        Meta { map: HashMap::with_capacity(capacity), extend: None }
+        InnerMeta { map: HashMap::with_capacity(capacity), extend: None }
     }
 
     pub fn capacity(&self) -> usize {
@@ -110,20 +113,20 @@ impl Meta {
         self.remove(&type_key::<V>())
     }
 
-    pub fn merge(&mut self, meta: Meta) -> &mut Self {
+    pub fn merge(&mut self, meta: InnerMeta) -> &mut Self {
         for (k, v) in meta.map {
             self.map.insert(k, v);
         }
         self
     }
 
-    pub fn extend_ref(&mut self, meta: Arc<Meta>) -> &mut Self {
+    pub fn extend_ref(&mut self, meta: Meta) -> &mut Self {
         self.extend = Some(meta);
         self
     }
 
-    pub fn extend(&mut self, meta: Meta) -> &mut Self {
-        self.extend = Some(Arc::new(meta));
+    pub fn extend(&mut self, meta: InnerMeta) -> &mut Self {
+        self.extend = Some(meta.into());
         self
     }
 
@@ -157,19 +160,62 @@ impl Meta {
     }
 }
 
+#[derive(Default, Debug, Clone)]
+pub struct Meta(pub Arc<InnerMeta>);
+
+impl Meta {
+    pub fn new(meta: InnerMeta) -> Self {
+        Meta(Arc::new(meta))
+    }
+}
+
+impl From<Arc<InnerMeta>> for Meta {
+    fn from(meta: Arc<InnerMeta>) -> Self {
+        Meta(meta)
+    }
+}
+
+impl From<InnerMeta> for Meta {
+    fn from(meta: InnerMeta) -> Self {
+        Meta(Arc::new(meta))
+    }
+}
+
+impl Deref for Meta {
+    type Target = InnerMeta;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[async_trait]
+impl<S> FromRequestParts<S> for Meta {
+    type Rejection = ();
+
+    async fn from_request_parts(parts: &mut axum::http::request::Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let arc_meta = parts.extensions.get::<Meta>().cloned();
+
+        match arc_meta {
+            Some(meta) => Ok(meta),
+            None => Ok(Meta::default()),
+        }
+    }
+}
+
 pub fn type_key<T: 'static>() -> String {
     format!("{:?}", TypeId::of::<T>())
 }
 
 pub trait ImplMeta {
-    fn __meta() -> Meta;
+    fn __meta() -> InnerMeta;
 }
 
-pub fn get_meta<T: ImplMeta>(_t: Arc<T>) -> Meta {
+pub fn get_meta<T: ImplMeta>(_t: Arc<T>) -> InnerMeta {
     T::__meta()
 }
 
-pub fn get_meta_by_type<T: ImplMeta>() -> Meta {
+pub fn get_meta_by_type<T: ImplMeta>() -> InnerMeta {
     T::__meta()
 }
 
@@ -193,7 +239,7 @@ mod tests {
         #[derive(Debug, PartialEq, Eq)]
         struct TupleData(i32, String);
 
-        let mut meta = Meta::new();
+        let mut meta = InnerMeta::new();
         meta.set_data(TestEnum::A);
         meta.set_data(TestData { name: "test".to_string() });
         meta.set_data(TupleData(1, "tuple".to_string()));
@@ -214,7 +260,7 @@ mod tests {
 
     #[test]
     fn test_meta() {
-        let mut meta = Meta::new();
+        let mut meta = InnerMeta::new();
         meta.set("a", 1);
         meta.set("b", "2");
         meta.set("c", 3.0);
@@ -242,7 +288,7 @@ mod tests {
 
     #[test]
     fn test_mut_meta() {
-        let mut meta = Meta::new();
+        let mut meta = InnerMeta::new();
         meta.set("a", 1);
         meta.set("b", "2");
         meta.set("c", 3.0);
@@ -281,7 +327,7 @@ mod tests {
 
     #[test]
     fn test_meta_merge() {
-        let mut meta1 = Meta::new();
+        let mut meta1 = InnerMeta::new();
         meta1.set("a", 1);
         meta1.set("b", "2");
         meta1.set("c", 3.0);
@@ -295,7 +341,7 @@ mod tests {
         meta1.set("k", vec![vec![1.0, 2.0], vec![3.0, 4.0]]);
         meta1.set("l", vec![vec!["1".to_string(), "2".to_string()], vec!["3".to_string(), "4".to_string()]]);
 
-        let mut meta2 = Meta::new();
+        let mut meta2 = InnerMeta::new();
         meta2.set("e", vec![2, 3, 4]);
         meta2.set("f", vec!["2", "3", "4"]);
         meta2.set("g", vec![2.0, 3.0, 4.0]);
@@ -319,7 +365,7 @@ mod tests {
 
     #[test]
     fn test_meta_extend() {
-        let mut meta1 = Meta::new();
+        let mut meta1 = InnerMeta::new();
         meta1.set("a", 1);
         meta1.set("b", "2");
         meta1.set("c", 3.0);
@@ -328,14 +374,14 @@ mod tests {
         meta1.set("f", vec!["1", "2", "3"]);
         meta1.set("g", vec![1.0, 2.0, 3.0]);
 
-        let mut meta2 = Meta::new();
+        let mut meta2 = InnerMeta::new();
         meta2.set("e", vec![2, 3, 4]);
         meta2.set("i", vec![vec![2, 3], vec![4, 5]]);
         meta2.set("j", vec![vec!["2", "3"], vec!["4", "5"]]);
 
         let arc_meta2 = Arc::new(meta2);
 
-        meta1.extend_ref(arc_meta2);
+        meta1.extend_ref(arc_meta2.into());
 
         assert_eq!(*meta1.get::<i32>("a").unwrap(), 1);
         assert_eq!(*meta1.get::<&str>("b").unwrap(), "2");

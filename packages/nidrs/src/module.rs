@@ -1,6 +1,7 @@
 use nidrs_extern::{
     axum,
     datasets::{self, RouterBodyScheme},
+    meta::Meta,
     tokio::signal,
     utoipa::{
         self,
@@ -22,7 +23,7 @@ use std::{
     time::Duration,
 };
 
-use crate::{provider, shared::otr, template_format, AppResult, Meta, Service};
+use crate::{provider, shared::otr, template_format, AppResult, InnerMeta, Service};
 
 static GLOBALS_KEY: &str = "Globals";
 
@@ -400,7 +401,7 @@ impl ModuleCtx {
         success
     }
 
-    pub fn get_router_full(&self, meta: &Meta) -> AppResult<String> {
+    pub fn get_router_full(&self, meta: &InnerMeta) -> AppResult<String> {
         let controller_path = otr(meta.get_data::<datasets::ControllerPath>(), "meta not nidrs::datasets::ControllerPath value")?.value();
         let router_path = otr(meta.get_data::<datasets::RouterPath>(), "meta not nidrs::datasets::RouterPath value")?.value();
         let version = *meta.get::<&str>("version").unwrap_or(&self.defaults.default_version);
@@ -418,7 +419,13 @@ impl ModuleCtx {
 #[derive(Debug, Clone)]
 pub struct RouterWrap {
     pub router: axum::Router<StateCtx>,
-    pub meta: Arc<Meta>,
+    pub meta: Meta,
+}
+
+impl RouterWrap {
+    pub fn new(router: axum::Router<StateCtx>, meta: Meta) -> Self {
+        RouterWrap { router, meta }
+    }
 }
 
 impl RouterWrap {

@@ -295,7 +295,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
         }
 
         impl nidrs::ImplMeta for #ident{
-            fn __meta() -> nidrs::Meta {
+            fn __meta() -> nidrs::InnerMeta {
                 #module_meta_tokens
             }
         }
@@ -659,7 +659,7 @@ fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
                 let ty = ty.to_token_stream();
                 if ty.to_string().contains("Json") {
                     is_body = true;
-                } else if ty.to_string().contains("Meta") {
+                } else if ty.to_string().contains("InnerMeta") {
                     is_meta = true;
                 }
                 let pat = format!("p{}", pindex);
@@ -724,12 +724,12 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
             if ty.to_string().contains("Json") {
                 body_token = quote! {};
                 axum_args.push(pat_ident.clone());
-            } else if ty.to_string().contains("Meta") {
-                let pat_ident_t = pat_ident.clone();
-                meta_token = quote! {
-                    let mut #pat_ident_t = nidrs::Meta::new();
-                    #pat_ident_t.extend_ref(meta);
-                };
+            // } else if ty.to_string().contains("InnerMeta") {
+            //     let pat_ident_t = pat_ident.clone();
+            //     meta_token = quote! {
+            //         let mut #pat_ident_t = nidrs::InnerMeta::new();
+            //         #pat_ident_t.extend_ref(t_meta);
+            //     };
             } else {
                 axum_args.push(pat_ident.clone());
             }
@@ -752,12 +752,13 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
     TokenStream::from(quote! {
         #func
 
-        pub fn #meta_fn_ident(&self)->nidrs::Meta{
+        pub fn #meta_fn_ident(&self)->nidrs::InnerMeta{
             #meta_tokens
         }
 
         pub fn #route_fn_ident(&self, mut ctx: nidrs::ModuleCtx)->nidrs::ModuleCtx{
             use nidrs::externs::axum::{extract::Query, Json};
+            use nidrs::externs::meta::{InnerMeta, Meta};
             use serde_json::Value;
 
             let mut meta = self.#meta_fn_ident();
@@ -778,8 +779,8 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
             let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
 
             let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
-            let meta = std::sync::Arc::new(meta);
-            let t_meta = meta.clone();
+            let meta = Meta::new(meta);
+            // let t_meta = meta.clone();
             let router = nidrs::externs::axum::Router::new()
                 .route(
                     &full_path,
@@ -789,12 +790,10 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
                         t_controller.#fn_ident(#func_args).await
                         // return String::from("ok");
                     }),
-                );
+                )
+                .layer(nidrs::externs::axum::Extension(meta.clone()));
             ctx.routers
-                .push(nidrs::RouterWrap {
-                    router: router,
-                    meta: t_meta,
-                });
+                .push(nidrs::RouterWrap::new(router, meta));
 
             ctx
         }
@@ -923,7 +922,7 @@ fn gen_handler_tokens(module_name: &str, route: &RouteMeta, controller_name: &St
         let def_func_args = str_args_to_indent(def_func_args);
         quote! {
             |#def_func_args| async move {
-                let mut t_meta = nidrs::Meta::new();
+                let mut t_meta = nidrs::InnerMeta::new();
                 t_meta.extend_ref(meta);
                 #meta_tokens
                 t_controller.#route_name(#func_args).await
@@ -938,7 +937,7 @@ fn gen_handler_tokens(module_name: &str, route: &RouteMeta, controller_name: &St
         let def_func_args = str_args_to_indent(def_func_args);
         quote! {
             |parts, #def_func_args| async move {
-                let mut t_meta = nidrs::Meta::new();
+                let mut t_meta = nidrs::InnerMeta::new();
                 t_meta.extend_ref(meta);
                 #def_clone_inter_tokens
             }
@@ -1268,7 +1267,7 @@ fn gen_service_inject_tokens(service_type: ServiceType, func: &ItemStruct) -> To
         }
 
         impl nidrs::ImplMeta for #service_name_ident{
-            fn __meta() -> nidrs::Meta {
+            fn __meta() -> nidrs::InnerMeta {
                 #meta_tokens
             }
         }

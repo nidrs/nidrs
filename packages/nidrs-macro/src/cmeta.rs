@@ -274,7 +274,7 @@ impl CMeta {
             let tokens = cmeta.to_tokens();
 
             return quote::quote! {
-                let mut meta = nidrs::Meta::new();
+                let mut meta = nidrs::InnerMeta::new();
                 #tokens
                 meta
             };

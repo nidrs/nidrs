@@ -3,7 +3,7 @@ use nidrs_extern::axum::{
     body::{Body, Bytes},
     response::Response,
 };
-use nidrs_extern::meta::Meta;
+use nidrs_extern::meta::InnerMeta;
 use nidrs_extern::serde;
 use nidrs_extern::serde::Serialize;
 use nidrs_extern::serde_json;
@@ -91,7 +91,7 @@ where
 
 #[derive(Debug)]
 pub struct InterCtx<B: axum::extract::FromRequest<StateCtx>> {
-    pub meta: Meta,
+    pub meta: InnerMeta,
     pub parts: axum::http::request::Parts,
     pub body: B,
 }

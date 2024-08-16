@@ -9,7 +9,7 @@
 // >>Push: Module("AppModule") -- [None]
 // >>Push: Service("AppController") -- [Some(String("AppModule"))]
 //  CMETA: ["version"]
-//  CMETA: ["auth", "role"]
+//  CMETA: ["role", "auth"]
 // controller AppController []
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
@@ -25,16 +25,16 @@
 //  CMETA: ["RouterPath"]
 // route_derive "get_hello_world"
 // route post /hello None Some(String("v1"))
-// << Pop: Some(Handler("get_hello_world")) ["RouterPath", "version", "RouterName", "handler", "arr", "DisableDefaultPrefix", "RouterMethod", "role", "ServiceType", "service", "ControllerPath", "ServiceName", "auth", "module", "global"]
+// << Pop: Some(Handler("get_hello_world")) ["RouterPath", "arr", "RouterName", "DisableDefaultPrefix", "handler", "version", "RouterMethod", "ControllerPath", "service", "role", "auth", "ServiceName", "ServiceType", "module", "global"]
 
 // >>Push: Handler("post_hello_world") -- [Some(String("AppModule"))]
 //  CMETA: ["RouterName"]
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "post_hello_world"
-// << Pop: Some(Handler("post_hello_world")) ["RouterMethod", "handler", "RouterPath", "RouterName", "role", "ServiceType", "service", "ControllerPath", "ServiceName", "version", "auth", "module", "global"]
+// << Pop: Some(Handler("post_hello_world")) ["RouterMethod", "handler", "RouterName", "RouterPath", "ControllerPath", "service", "role", "auth", "version", "ServiceName", "ServiceType", "module", "global"]
 
-// << Pop: Some(Service("AppController")) ["role", "ServiceType", "service", "ControllerPath", "ServiceName", "version", "auth", "module", "global"]
+// << Pop: Some(Service("AppController")) ["ControllerPath", "service", "role", "auth", "version", "ServiceName", "ServiceType", "module", "global"]
 
 // >>Push: Service("AppService") -- [Some(String("AppModule"))]
 //  CMETA: ["ServiceType"]
@@ -59,23 +59,23 @@
 //  CMETA: ["RouterPath"]
 // route_derive "get_hello_world"
 // route post / None None
-// << Pop: Some(Handler("get_hello_world")) ["RouterName", "RouterPath", "handler", "RouterMethod", "ServiceType", "service", "ServiceName", "ControllerPath", "module", "global"]
+// << Pop: Some(Handler("get_hello_world")) ["handler", "RouterName", "RouterMethod", "RouterPath", "service", "ServiceName", "ControllerPath", "ServiceType", "module", "global"]
 
 // >>Push: Handler("create_user") -- [Some(String("UserModule"))]
 //  CMETA: ["RouterName"]
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "create_user"
-// << Pop: Some(Handler("create_user")) ["RouterPath", "RouterMethod", "handler", "RouterName", "ServiceType", "service", "ServiceName", "ControllerPath", "module", "global"]
+// << Pop: Some(Handler("create_user")) ["RouterPath", "handler", "RouterName", "RouterMethod", "service", "ServiceName", "ControllerPath", "ServiceType", "module", "global"]
 
-// << Pop: Some(Service("UserController")) ["ServiceType", "service", "ServiceName", "ControllerPath", "module", "global"]
+// << Pop: Some(Service("UserController")) ["service", "ServiceName", "ControllerPath", "ServiceType", "module", "global"]
 
 // >>Push: Service("UserService") -- [Some(String("UserModule"))]
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "UserService"
 // module "UserModule"
-// << Pop: Some(Service("UserService")) ["service", "ServiceName", "ServiceType", "module", "global"]
+// << Pop: Some(Service("UserService")) ["ServiceName", "ServiceType", "service", "module", "global"]
 #![feature(prelude_import)]
 #[prelude_import]
 use std::prelude::rust_2021::*;
@@ -112,15 +112,15 @@ mod app {
             }
         }
         impl nidrs::ImplMeta for AppController {
-            fn __meta() -> nidrs::Meta {
-                let mut meta = nidrs::Meta::new();
-                meta.set("role", "admin");
-                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
-                meta.set("service", "AppController");
+            fn __meta() -> nidrs::InnerMeta {
+                let mut meta = nidrs::InnerMeta::new();
                 meta.set_data(nidrs::datasets::ControllerPath::from(""));
-                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
-                meta.set("version", "v1");
+                meta.set("service", "AppController");
+                meta.set("role", "admin");
                 meta.set("auth", "true");
+                meta.set("version", "v1");
+                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
+                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -149,27 +149,28 @@ mod app {
                     Status { db: "ok".to_string(), redis: "ok".to_string() },
                 ))
             }
-            pub fn __meta_get_hello_world(&self) -> nidrs::Meta {
-                let mut meta = nidrs::Meta::new();
+            pub fn __meta_get_hello_world(&self) -> nidrs::InnerMeta {
+                let mut meta = nidrs::InnerMeta::new();
                 meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
-                meta.set("version", "v2");
-                meta.set_data(nidrs::datasets::RouterName::from("get_hello_world"));
-                meta.set("handler", "get_hello_world");
                 meta.set("arr", ["user"]);
+                meta.set_data(nidrs::datasets::RouterName::from("get_hello_world"));
                 meta.set_data(nidrs::datasets::DisableDefaultPrefix(false));
+                meta.set("handler", "get_hello_world");
+                meta.set("version", "v2");
                 meta.set_data(nidrs::datasets::RouterMethod::from("get"));
-                meta.set("role", "admin");
-                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
-                meta.set("service", "AppController");
                 meta.set_data(nidrs::datasets::ControllerPath::from(""));
-                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
+                meta.set("service", "AppController");
+                meta.set("role", "admin");
                 meta.set("auth", "true");
+                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
+                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
             }
             pub fn __route_get_hello_world(&self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
                 use nidrs::externs::axum::{extract::Query, Json};
+                use nidrs::externs::meta::{InnerMeta, Meta};
                 use serde_json::Value;
                 let mut meta = self.__meta_get_hello_world();
                 let router_info = ctx.get_router_full(&meta);
@@ -189,17 +190,12 @@ mod app {
                 let module_name = meta.get::<&str>("module").unwrap();
                 let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
                 let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
-                let meta = std::sync::Arc::new(meta);
+                let meta = Meta::new(meta);
                 let t_meta = meta.clone();
-                let router = nidrs::externs::axum::Router::new().route(
-                    &full_path,
-                    nidrs::externs::axum::routing::get(|p1| async move {
-                        let mut p0 = nidrs::Meta::new();
-                        p0.extend_ref(meta);
-                        t_controller.get_hello_world(p0, p1).await
-                    }),
-                );
-                ctx.routers.push(nidrs::RouterWrap { router: router, meta: t_meta });
+                let router = nidrs::externs::axum::Router::new()
+                    .route(&full_path, nidrs::externs::axum::routing::get(|p0, p1| async move { t_controller.get_hello_world(p0, p1).await }))
+                    .layer(nidrs::externs::axum::Extension(meta.clone()));
+                ctx.routers.push(nidrs::RouterWrap::new(router, meta));
                 ctx
             }
             pub async fn post_hello_world(&self, Query(q): Query<HashMap<String, String>>, Json(j): Json<ArgDto>) -> AppResult<String> {
@@ -211,25 +207,26 @@ mod app {
                 };
                 Ok("Hello, World2!".to_string())
             }
-            pub fn __meta_post_hello_world(&self) -> nidrs::Meta {
-                let mut meta = nidrs::Meta::new();
+            pub fn __meta_post_hello_world(&self) -> nidrs::InnerMeta {
+                let mut meta = nidrs::InnerMeta::new();
                 meta.set_data(nidrs::datasets::RouterMethod::from("post"));
                 meta.set("handler", "post_hello_world");
-                meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
                 meta.set_data(nidrs::datasets::RouterName::from("post_hello_world"));
-                meta.set("role", "admin");
-                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
-                meta.set("service", "AppController");
+                meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
                 meta.set_data(nidrs::datasets::ControllerPath::from(""));
-                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
-                meta.set("version", "v1");
+                meta.set("service", "AppController");
+                meta.set("role", "admin");
                 meta.set("auth", "true");
+                meta.set("version", "v1");
+                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
+                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
             }
             pub fn __route_post_hello_world(&self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
                 use nidrs::externs::axum::{extract::Query, Json};
+                use nidrs::externs::meta::{InnerMeta, Meta};
                 use serde_json::Value;
                 let mut meta = self.__meta_post_hello_world();
                 let router_info = ctx.get_router_full(&meta);
@@ -249,11 +246,12 @@ mod app {
                 let module_name = meta.get::<&str>("module").unwrap();
                 let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
                 let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
-                let meta = std::sync::Arc::new(meta);
+                let meta = Meta::new(meta);
                 let t_meta = meta.clone();
                 let router = nidrs::externs::axum::Router::new()
-                    .route(&full_path, nidrs::externs::axum::routing::get(|p0, p1| async move { t_controller.post_hello_world(p0, p1).await }));
-                ctx.routers.push(nidrs::RouterWrap { router: router, meta: t_meta });
+                    .route(&full_path, nidrs::externs::axum::routing::get(|p0, p1| async move { t_controller.post_hello_world(p0, p1).await }))
+                    .layer(nidrs::externs::axum::Extension(meta.clone()));
+                ctx.routers.push(nidrs::RouterWrap::new(router, meta));
                 ctx
             }
         }
@@ -1061,8 +1059,8 @@ mod app {
             }
         }
         impl nidrs::ImplMeta for AppService {
-            fn __meta() -> nidrs::Meta {
-                let mut meta = nidrs::Meta::new();
+            fn __meta() -> nidrs::InnerMeta {
+                let mut meta = nidrs::InnerMeta::new();
                 meta.set("service", "AppService");
                 meta.set_data(nidrs::datasets::ServiceName::from("AppService"));
                 meta.set_data(nidrs::datasets::ServiceType::from("Service"));
@@ -1105,9 +1103,9 @@ mod app {
             ctx.append_exports("AppModule", Vec::from(["AppService"]), false);
             if ctx.register_controller("AppModule", "AppController", Box::new(std::sync::Arc::new(controller::AppController::default()))) {
                 let t_controller = ctx.get_controller::<controller::AppController>("AppModule", "AppController");
-                ctx = t_controller.__route_post_hello_world(ctx);
-                let t_controller = ctx.get_controller::<controller::AppController>("AppModule", "AppController");
                 ctx = t_controller.__route_get_hello_world(ctx);
+                let t_controller = ctx.get_controller::<controller::AppController>("AppModule", "AppController");
+                ctx = t_controller.__route_post_hello_world(ctx);
             }
             let svc = std::sync::Arc::new(AppService::default());
             ctx.register_service("AppModule", "AppService", Box::new(svc));
@@ -1140,8 +1138,8 @@ mod app {
         }
     }
     impl nidrs::ImplMeta for AppModule {
-        fn __meta() -> nidrs::Meta {
-            let mut meta = nidrs::Meta::new();
+        fn __meta() -> nidrs::InnerMeta {
+            let mut meta = nidrs::InnerMeta::new();
             meta.set("service", "AppService");
             meta.set_data(nidrs::datasets::ServiceName::from("AppService"));
             meta.set_data(nidrs::datasets::ServiceType::from("Service"));
@@ -1180,12 +1178,12 @@ mod modules {
                 }
             }
             impl nidrs::ImplMeta for UserController {
-                fn __meta() -> nidrs::Meta {
-                    let mut meta = nidrs::Meta::new();
-                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                fn __meta() -> nidrs::InnerMeta {
+                    let mut meta = nidrs::InnerMeta::new();
                     meta.set("service", "UserController");
                     meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
                     meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
+                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
@@ -1198,22 +1196,23 @@ mod modules {
                     };
                     Ok(self.user_service.extract().get_hello_world2())
                 }
-                pub fn __meta_get_hello_world(&self) -> nidrs::Meta {
-                    let mut meta = nidrs::Meta::new();
-                    meta.set_data(nidrs::datasets::RouterName::from("get_hello_world"));
-                    meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
+                pub fn __meta_get_hello_world(&self) -> nidrs::InnerMeta {
+                    let mut meta = nidrs::InnerMeta::new();
                     meta.set("handler", "get_hello_world");
+                    meta.set_data(nidrs::datasets::RouterName::from("get_hello_world"));
                     meta.set_data(nidrs::datasets::RouterMethod::from("get"));
-                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                    meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
                     meta.set("service", "UserController");
                     meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
                     meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
+                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
                 }
                 pub fn __route_get_hello_world(&self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
                     use nidrs::externs::axum::{extract::Query, Json};
+                    use nidrs::externs::meta::{InnerMeta, Meta};
                     use serde_json::Value;
                     let mut meta = self.__meta_get_hello_world();
                     let router_info = ctx.get_router_full(&meta);
@@ -1233,32 +1232,34 @@ mod modules {
                     let module_name = meta.get::<&str>("module").unwrap();
                     let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
                     let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
-                    let meta = std::sync::Arc::new(meta);
+                    let meta = Meta::new(meta);
                     let t_meta = meta.clone();
                     let router = nidrs::externs::axum::Router::new()
-                        .route(&full_path, nidrs::externs::axum::routing::get(|p0| async move { t_controller.get_hello_world(p0).await }));
-                    ctx.routers.push(nidrs::RouterWrap { router: router, meta: t_meta });
+                        .route(&full_path, nidrs::externs::axum::routing::get(|p0| async move { t_controller.get_hello_world(p0).await }))
+                        .layer(nidrs::externs::axum::Extension(meta.clone()));
+                    ctx.routers.push(nidrs::RouterWrap::new(router, meta));
                     ctx
                 }
                 pub async fn create_user(&self, dto: Json<CreateUserDto>) -> AppResult<String> {
                     Ok(self.user_service.extract().get_hello_world2())
                 }
-                pub fn __meta_create_user(&self) -> nidrs::Meta {
-                    let mut meta = nidrs::Meta::new();
+                pub fn __meta_create_user(&self) -> nidrs::InnerMeta {
+                    let mut meta = nidrs::InnerMeta::new();
                     meta.set_data(nidrs::datasets::RouterPath::from("/"));
-                    meta.set_data(nidrs::datasets::RouterMethod::from("post"));
                     meta.set("handler", "create_user");
                     meta.set_data(nidrs::datasets::RouterName::from("create_user"));
-                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                    meta.set_data(nidrs::datasets::RouterMethod::from("post"));
                     meta.set("service", "UserController");
                     meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
                     meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
+                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
                 }
                 pub fn __route_create_user(&self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
                     use nidrs::externs::axum::{extract::Query, Json};
+                    use nidrs::externs::meta::{InnerMeta, Meta};
                     use serde_json::Value;
                     let mut meta = self.__meta_create_user();
                     let router_info = ctx.get_router_full(&meta);
@@ -1278,11 +1279,12 @@ mod modules {
                     let module_name = meta.get::<&str>("module").unwrap();
                     let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
                     let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
-                    let meta = std::sync::Arc::new(meta);
+                    let meta = Meta::new(meta);
                     let t_meta = meta.clone();
                     let router = nidrs::externs::axum::Router::new()
-                        .route(&full_path, nidrs::externs::axum::routing::get(|p0| async move { t_controller.create_user(p0).await }));
-                    ctx.routers.push(nidrs::RouterWrap { router: router, meta: t_meta });
+                        .route(&full_path, nidrs::externs::axum::routing::get(|p0| async move { t_controller.create_user(p0).await }))
+                        .layer(nidrs::externs::axum::Extension(meta.clone()));
+                    ctx.routers.push(nidrs::RouterWrap::new(router, meta));
                     ctx
                 }
             }
@@ -1527,11 +1529,11 @@ mod modules {
                 }
             }
             impl nidrs::ImplMeta for UserService {
-                fn __meta() -> nidrs::Meta {
-                    let mut meta = nidrs::Meta::new();
-                    meta.set("service", "UserService");
+                fn __meta() -> nidrs::InnerMeta {
+                    let mut meta = nidrs::InnerMeta::new();
                     meta.set_data(nidrs::datasets::ServiceName::from("UserService"));
                     meta.set_data(nidrs::datasets::ServiceType::from("Service"));
+                    meta.set("service", "UserService");
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
@@ -1579,9 +1581,9 @@ mod modules {
                 ctx.append_exports("UserModule", Vec::from(["UserService"]), false);
                 if ctx.register_controller("UserModule", "UserController", Box::new(std::sync::Arc::new(controller::UserController::default()))) {
                     let t_controller = ctx.get_controller::<controller::UserController>("UserModule", "UserController");
-                    ctx = t_controller.__route_get_hello_world(ctx);
-                    let t_controller = ctx.get_controller::<controller::UserController>("UserModule", "UserController");
                     ctx = t_controller.__route_create_user(ctx);
+                    let t_controller = ctx.get_controller::<controller::UserController>("UserModule", "UserController");
+                    ctx = t_controller.__route_get_hello_world(ctx);
                 }
                 let svc = std::sync::Arc::new(UserService::default());
                 ctx.register_service("UserModule", "UserService", Box::new(svc));
@@ -1614,11 +1616,11 @@ mod modules {
             }
         }
         impl nidrs::ImplMeta for UserModule {
-            fn __meta() -> nidrs::Meta {
-                let mut meta = nidrs::Meta::new();
-                meta.set("service", "UserService");
+            fn __meta() -> nidrs::InnerMeta {
+                let mut meta = nidrs::InnerMeta::new();
                 meta.set_data(nidrs::datasets::ServiceName::from("UserService"));
                 meta.set_data(nidrs::datasets::ServiceType::from("Service"));
+                meta.set("service", "UserService");
                 meta.set("module", "UserModule");
                 meta.set("global", "app");
                 meta
