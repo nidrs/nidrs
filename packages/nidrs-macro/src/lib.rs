@@ -7,6 +7,7 @@ use std::{
     borrow::BorrowMut,
     cell::RefCell,
     collections::HashMap,
+    f64::consts::E,
     ops::Add,
     path,
     str::FromStr,
@@ -399,14 +400,31 @@ pub fn uses(args: TokenStream, input: TokenStream) -> TokenStream {
             }
         })
         .collect::<Vec<String>>();
-    if let TokenType::Fn(_) = input_type.typ {
-        let controller_name = CURRENT_CONTROLLER.lock().unwrap().as_ref().unwrap().name.clone();
-        let hook_name = controller_name + ":" + &used_ident.to_string();
-        INTERS.lock().unwrap().entry(hook_name).or_insert(vec![]).append(&mut inter_names.clone());
-    } else if let TokenType::Struct(_) = input_type.typ {
-        INTERS.lock().unwrap().entry(used_ident.to_string()).or_insert(vec![]).append(&mut inter_names.clone());
+    // if let TokenType::Fn(_) = input_type.typ {
+    //     let controller_name = CURRENT_CONTROLLER.lock().unwrap().as_ref().unwrap().name.clone();
+    //     let hook_name = controller_name + ":" + &used_ident.to_string();
+    //     INTERS.lock().unwrap().entry(hook_name).or_insert(vec![]).append(&mut inter_names.clone());
+    // } else if let TokenType::Struct(_) = input_type.typ {
+    //     INTERS.lock().unwrap().entry(used_ident.to_string()).or_insert(vec![]).append(&mut inter_names.clone());
+    // }
+    let expand = if let TokenType::Fn(item) = input_type.typ {
+        quote! {
+            #[nidrs::meta(method_uses = [#(#inter_names),*])]
+        }
+    } else if let TokenType::Struct(item) = input_type.typ {
+        quote! {
+            #[nidrs::meta(service_uses = [#(#inter_names),*])]
+        }
+    } else {
+        panic!("Invalid argument");
+    };
+    println!("// uses {:?}", inter_names);
+    let input = TokenStream2::from(input);
+    return quote! {
+        #expand
+        #input
     }
-    return input;
+    .into();
 }
 
 #[proc_macro_attribute]
@@ -747,6 +765,51 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
         #(#axum_args),*
     });
 
+    let service_uses = cmeta::CMeta::get_stack("service_uses");
+
+    let interceptor_uses_expand = if let Some(cmeta::CMetaValue::Array(arr)) = service_uses {
+        println!("// route_derive service_uses {:?}", arr);
+
+        let inter_tokens = arr.iter().map(|inter| {
+            if let CMetaValue::String(inter) = inter {
+                let inter_ident = syn::Ident::new(inter, Span::call_site().into());
+                // quote! {
+                //     let inter = ctx.get_interceptor::<inter::#inter_ident>(module_name, inter_name);
+                //     let res = inter.intercept(req, next).await;
+                //     if let Ok(res) = res {
+                //         Ok(res.into_response())
+                //     } else {
+                //         Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+                //     }
+                // }
+                quote! {
+                    .layer(axum::middleware::from_fn({
+                        let inter = ctx.get_interceptor::<#inter_ident>(module_name, #inter);
+                        move |req: axum::extract::Request, next: axum::middleware::Next| {
+                            let inter = std::sync::Arc::clone(&inter);
+                            async move {
+                                let res = inter.intercept(req, next).await;
+                                if let Ok(res) = res {
+                                    Ok(res.into_response())
+                                } else {
+                                    Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+                                }
+                            }
+                        }
+                    }))
+                }
+            } else {
+                quote! {}
+            }
+        });
+
+        TokenStream2::from(quote! {
+            #(#inter_tokens)*
+        })
+    } else {
+        quote! {}
+    };
+
     // println!(" route_derive {:?} {:?}", func.sig.ident.to_string(), func_args);
 
     TokenStream::from(quote! {
@@ -757,8 +820,11 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
         }
 
         pub fn #route_fn_ident(&self, mut ctx: nidrs::ModuleCtx)->nidrs::ModuleCtx{
+            use nidrs::externs::axum;
+            use axum::response::IntoResponse;
             use nidrs::externs::axum::{extract::Query, Json};
             use nidrs::externs::meta::{InnerMeta, Meta};
+            use nidrs::Interceptor;
             use serde_json::Value;
 
             let mut meta = self.#meta_fn_ident();
@@ -775,11 +841,11 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
 
             meta.set_data(nidrs::datasets::RouterFullPath(full_path.clone()));
 
+            let meta = Meta::new(meta);
             let module_name = meta.get::<&str>("module").unwrap();
             let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
 
             let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
-            let meta = Meta::new(meta);
             // let t_meta = meta.clone();
             let router = nidrs::externs::axum::Router::new()
                 .route(
@@ -791,7 +857,9 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
                         // return String::from("ok");
                     }),
                 )
-                .layer(nidrs::externs::axum::Extension(meta.clone()));
+                .layer(nidrs::externs::axum::Extension(meta.clone()))
+                #interceptor_uses_expand
+                ;
             ctx.routers
                 .push(nidrs::RouterWrap::new(router, meta));
 
@@ -808,31 +876,34 @@ fn gen_controller_register_tokens_v2(module_name: String, services: Vec<TokenStr
     }
     let current_controller = binding.as_ref().unwrap();
     let controller_path = current_controller.path.clone();
-    let controller_tokens: Vec<TokenStream2>= services.iter().map(|controller_token| {
-        let controller_name = controller_token.to_string();
-        let binding = ROUTES.lock().unwrap();
-        let controller = binding.get(&controller_name).unwrap();
-        let controller_ident = syn::Ident::new(&controller_name, Span::call_site().into());
-        let router_path = controller.iter().map(|(name, route)| {
-            let route_ident = syn::Ident::new(&format!(
-                "__route_{}",
-                name
-            ), Span::call_site().into());
-       
+    let controller_tokens: Vec<TokenStream2> = services
+        .iter()
+        .map(|controller_token| {
+            let controller_name = controller_token.to_string();
+            let binding = ROUTES.lock().unwrap();
+            let controller = binding.get(&controller_name).unwrap();
+            let controller_ident = syn::Ident::new(&controller_name, Span::call_site().into());
+            let router_path = controller
+                .iter()
+                .map(|(name, route)| {
+                    let route_ident = syn::Ident::new(&format!("__route_{}", name), Span::call_site().into());
+
+                    quote! {
+                        // {
+                        let t_controller = ctx.get_controller::<controller::#controller_ident>(#module_name, #controller_name);
+
+                        ctx = t_controller.#route_ident(ctx);
+                    }
+                })
+                .collect::<Vec<TokenStream2>>();
+
             quote! {
-                // {
-                let t_controller = ctx.get_controller::<controller::#controller_ident>(#module_name, #controller_name);
-
-                ctx = t_controller.#route_ident(ctx);
+                if ctx.register_controller(#module_name, #controller_name, Box::new(std::sync::Arc::new(controller::#controller_ident::default()))) {
+                    #(#router_path)*
+                }
             }
-        }).collect::<Vec<TokenStream2>>();
-
-        quote! {
-            if ctx.register_controller(#module_name, #controller_name, Box::new(std::sync::Arc::new(controller::#controller_ident::default()))) {
-                #(#router_path)*
-            }
-        }
-    }).collect::<Vec<TokenStream2>>();
+        })
+        .collect::<Vec<TokenStream2>>();
     let controller_tokens = TokenStream2::from(quote! {
         #(#controller_tokens)*
     });
@@ -1201,6 +1272,7 @@ fn gen_dep_inject_tokens(con: &str, module_name: String, services: Vec<TokenStre
 
 fn gen_service_inject_tokens(service_type: ServiceType, func: &ItemStruct) -> TokenStream2 {
     let is_service = service_type == ServiceType::Service;
+    let is_interceptor = service_type == ServiceType::Interceptor;
     let service_type_indent = syn::Ident::new(service_type.into(), Span::call_site().into());
     let service_name_ident = func.ident.clone();
 
@@ -1247,7 +1319,7 @@ fn gen_service_inject_tokens(service_type: ServiceType, func: &ItemStruct) -> To
     } else {
         vec![]
     };
-    let middle_tokens = if is_service {
+    let middle_tokens = if is_service || is_interceptor {
         quote! {}
     } else {
         quote! {

@@ -1,3 +1,5 @@
+use nidrs_extern::axum::extract::Request;
+use nidrs_extern::axum::middleware::Next;
 use nidrs_extern::axum::{self, http::StatusCode, response::IntoResponse};
 use nidrs_extern::axum::{
     body::{Body, Bytes},
@@ -11,7 +13,9 @@ use std::{fmt::Debug, future::Future};
 
 use crate::{AppError, AppResult, Service, StateCtx};
 
-pub trait Interceptor: Service {}
+pub trait Interceptor: Service {
+    fn intercept(&self, req: Request, next: Next) -> impl std::future::Future<Output = AppResult<impl IntoResponse>> + Send;
+}
 
 /// P 和 R 是可以配置的
 pub trait InterceptorHandler<B: axum::extract::FromRequest<StateCtx>, P> {

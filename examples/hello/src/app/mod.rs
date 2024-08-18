@@ -3,6 +3,7 @@ use nidrs::macros::module;
 pub mod controller;
 pub mod dto;
 pub mod exception;
+pub mod interceptor;
 pub mod service;
 
 // use crate::modules::conf::ConfModule;
@@ -10,6 +11,7 @@ pub mod service;
 // use crate::modules::log::LogModule;
 use crate::modules::user::UserModule;
 use controller::AppController;
+use interceptor::AppInterceptor;
 use service::AppService;
 
 // #[default_uses(LogInterceptor)]
@@ -21,7 +23,7 @@ use service::AppService;
     //     LogModule,
         UserModule,
     ],
-    // interceptors: [LogInterceptor],
+    interceptors: [AppInterceptor],
     controllers: [AppController],
     services: [AppService],
     exports: [AppService],

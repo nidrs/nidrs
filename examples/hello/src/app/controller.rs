@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
+use super::interceptor::AppInterceptor;
 use nidrs::externs::axum::{extract::Query, response::AppendHeaders, Json};
 use nidrs::macros::{controller, get, meta, post};
-use nidrs::{version, Inject, Meta};
+use nidrs::{uses, version, Inject, Meta};
 
 use crate::AppResult;
 
@@ -11,7 +12,7 @@ use super::{
     service::AppService,
 };
 
-// #[uses(LogInterceptor)]
+#[uses(AppInterceptor)]
 #[version("v1")]
 #[meta(role = "admin", auth = "true")]
 // #[meta(nidrs::datasets::DisableDefaultPrefix(true))]
