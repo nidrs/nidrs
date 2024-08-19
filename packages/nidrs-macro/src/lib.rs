@@ -44,7 +44,6 @@ mod utils;
 
 // static CURRENT_MODULE3: Mutex<Option<&mut CurrentModule>> = Mutex::new(None);
 
-static CURRENT_CONTROLLER: Mutex<Option<ControllerMeta>> = Mutex::new(None);
 static ROUTES: Lazy<Mutex<HashMap<String, Vec<String>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<ControllerName, Vec<RouteName>>
 static CURRENT_SERVICE: Mutex<Option<ServiceMeta>> = Mutex::new(None);
 static EVENTS: Lazy<Mutex<HashMap<String, Vec<(String, String)>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<EventName, Vec<(ServiceName,FName)>>
@@ -151,7 +150,6 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
     import_path::push_path(&func.ident.to_string());
 
     println!("// controller {} {:?}", ident.to_string(), func.attrs);
-    CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta { name: ident.to_string(), path: path.clone() });
     ROUTES.lock().unwrap().insert(ident.to_string(), Vec::new());
 
     TokenStream::from(quote! {
@@ -240,7 +238,6 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     let is_global_tokens = if let Some(MetaValue::Bool(bool)) = meta_parse::get_meta_value("Global") { bool } else { false };
     println!("// module {:?}", ident.to_string());
 
-    CURRENT_CONTROLLER.lock().unwrap().take();
     ROUTES.lock().unwrap().clear();
     EVENTS.lock().unwrap().clear();
     meta_parse::clear();
@@ -653,8 +650,11 @@ fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
     let ident = func.sig.ident.clone();
     let ident_name = ident.to_string();
 
-    let mut binding = ROUTES.lock().unwrap();
-    let controller = binding.get_mut(&CURRENT_CONTROLLER.lock().unwrap().as_ref().unwrap().name).unwrap();
+    let current_controller_name: String =
+        cmeta::CMeta::get_stack_data("ServiceName").expect(&format!("[route] {} ServiceName not found", ident_name));
+
+    let mut routes = ROUTES.lock().unwrap();
+    let controller = routes.get_mut(&current_controller_name).unwrap();
     controller.push(ident_name.clone());
 
     TokenStream::from(quote! {
@@ -828,12 +828,6 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 fn expand_controller_register(module_name: String, services: Vec<TokenStream2>) -> TokenStream2 {
-    let binding = CURRENT_CONTROLLER.lock().unwrap();
-    if let None = binding.as_ref() {
-        return TokenStream2::new();
-    }
-    let current_controller = binding.as_ref().unwrap();
-    let controller_path = current_controller.path.clone();
     let controller_tokens: Vec<TokenStream2> = services
         .iter()
         .map(|controller_token| {
