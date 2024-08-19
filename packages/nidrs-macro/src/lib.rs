@@ -45,7 +45,7 @@ mod utils;
 // static CURRENT_MODULE3: Mutex<Option<&mut CurrentModule>> = Mutex::new(None);
 
 static CURRENT_CONTROLLER: Mutex<Option<ControllerMeta>> = Mutex::new(None);
-static ROUTES: Lazy<Mutex<HashMap<String, HashMap<String, RouteMeta>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<ControllerName, HashMap<RouteName, RouteMeta>>
+static ROUTES: Lazy<Mutex<HashMap<String, Vec<String>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<ControllerName, Vec<RouteName>>
 static CURRENT_SERVICE: Mutex<Option<ServiceMeta>> = Mutex::new(None);
 static EVENTS: Lazy<Mutex<HashMap<String, Vec<(String, String)>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<EventName, Vec<(ServiceName,FName)>>
 
@@ -152,7 +152,7 @@ pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
 
     println!("// controller {} {:?}", ident.to_string(), func.attrs);
     CURRENT_CONTROLLER.lock().unwrap().replace(ControllerMeta { name: ident.to_string(), path: path.clone() });
-    ROUTES.lock().unwrap().insert(ident.to_string(), HashMap::new());
+    ROUTES.lock().unwrap().insert(ident.to_string(), Vec::new());
 
     TokenStream::from(quote! {
         #[nidrs::meta(nidrs::datasets::ServiceType::from("Controller"))]
@@ -650,46 +650,12 @@ fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
     println!("// route {} {} {:?} {:?}", method, path, meta_parse::get_meta_value("controller_router_path"), meta_parse::get_meta_value("version"));
     let func = parse_macro_input!(input as ItemFn);
 
-    let name = func.sig.ident.to_string();
-
-    let vis = func.vis.clone();
     let ident = func.sig.ident.clone();
     let ident_name = ident.to_string();
-    let mut pindex = 0;
-    let mut is_body = false;
-    let mut is_meta = false;
-
-    let func_args = func
-        .sig
-        .inputs
-        .iter()
-        .map(|arg| match arg {
-            FnArg::Typed(PatType { pat, ty, .. }) => {
-                // let pat = pat.to_token_stream();
-                let ty = ty.to_token_stream();
-                if ty.to_string().contains("Json") {
-                    is_body = true;
-                } else if ty.to_string().contains("InnerMeta") {
-                    is_meta = true;
-                }
-                let pat = format!("p{}", pindex);
-                let pat_indent = syn::Ident::new(&pat, Span::call_site().into());
-                pindex += 1;
-                quote! {
-                    #pat_indent
-                }
-            }
-            _ => quote! {},
-        })
-        .map(|arg| arg.to_string())
-        .filter(|v| !v.is_empty())
-        .collect::<Vec<String>>();
-
-    let route = RouteMeta { method: method.to_string(), path: path.clone(), name: name.clone(), func_args, is_body, is_meta };
 
     let mut binding = ROUTES.lock().unwrap();
     let controller = binding.get_mut(&CURRENT_CONTROLLER.lock().unwrap().as_ref().unwrap().name).unwrap();
-    controller.insert(name.clone(), route);
+    controller.push(ident_name.clone());
 
     TokenStream::from(quote! {
         #[nidrs::meta(nidrs::datasets::RouterName::from(#ident_name))]
@@ -877,7 +843,7 @@ fn expand_controller_register(module_name: String, services: Vec<TokenStream2>) 
             let controller_ident = syn::Ident::new(&controller_name, Span::call_site().into());
             let router_path = controller
                 .iter()
-                .map(|(name, route)| {
+                .map(|name| {
                     let route_ident = syn::Ident::new(&format!("__route_{}", name), Span::call_site().into());
 
                     quote! {
