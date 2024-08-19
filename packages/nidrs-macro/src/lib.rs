@@ -37,7 +37,7 @@ use crate::meta_parse::MetaValue;
 
 mod app_parse;
 mod cmeta;
-mod g_current_module;
+mod current_module;
 mod import_path;
 mod meta_parse;
 mod utils;
@@ -119,7 +119,7 @@ pub fn trace(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
-    g_current_module::begin_mod();
+    current_module::begin_mod();
 
     // 解析宏的参数
     let path = if args.is_empty() {
@@ -237,7 +237,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     ROUTES.lock().unwrap().clear();
     EVENTS.lock().unwrap().clear();
     meta_parse::clear();
-    g_current_module::end_mod();
+    current_module::end_mod();
 
     return TokenStream::from(quote! {
         #[derive(Default)]
@@ -296,7 +296,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
-    g_current_module::begin_mod();
+    current_module::begin_mod();
     let func = parse_macro_input!(input as ItemStruct);
     let func_ident = func.ident.clone();
     let func_ident_name = func.ident.to_string();
@@ -324,7 +324,7 @@ pub fn __injectable_derive(args: TokenStream, input: TokenStream) -> TokenStream
 
 #[proc_macro_attribute]
 pub fn interceptor(args: TokenStream, input: TokenStream) -> TokenStream {
-    g_current_module::begin_mod();
+    current_module::begin_mod();
     let func = parse_macro_input!(input as ItemStruct);
     let func_ident = func.ident.clone();
     let func_ident_name = func.ident.to_string();
@@ -446,7 +446,7 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     let raw = input.clone();
     let fun = parse_macro_input!(input as InterceptorArgs);
 
-    g_current_module::check_mod();
+    current_module::check_mod();
 
     let level = cmeta::CMeta::get_level();
 
@@ -458,7 +458,7 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     let level = cmeta::CMeta::get_level();
 
     if let TokenType::Struct(item) = &fun.typ {
-        let cur_mod = g_current_module::get();
+        let cur_mod = current_module::get();
         if let Some(cur_mod) = cur_mod {
             let level_mod = cmeta::CMeta::get_stack("module");
             if let Some(cmeta::CMetaValue::String(name)) = &level_mod {

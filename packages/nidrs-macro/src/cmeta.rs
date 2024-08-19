@@ -9,7 +9,7 @@ use syn::{ext, parse::Parse, punctuated::Punctuated, Expr, ExprCall, PatPath};
 
 use crate::{
     app_parse::{get_current_app_path, parse_main_macro_args},
-    g_current_module,
+    current_module,
 };
 
 static CMETA_STACK: Lazy<Mutex<Option<CMeta>>> = Lazy::new(|| Mutex::new(None));
@@ -432,7 +432,7 @@ pub fn init_app_meta() {
 }
 
 pub fn init_module_meta() {
-    let mod_opts = g_current_module::get();
+    let mod_opts = current_module::get();
     if let Some(mod_opts) = mod_opts {
         CMeta::push(CMetaLevel::Module(mod_opts.name));
     }
