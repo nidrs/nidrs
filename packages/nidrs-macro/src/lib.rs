@@ -42,12 +42,8 @@ mod import_path;
 mod meta_parse;
 mod utils;
 
-// static CURRENT_MODULE3: Mutex<Option<&mut CurrentModule>> = Mutex::new(None);
-
 static ROUTES: Lazy<Mutex<HashMap<String, Vec<String>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<ControllerName, Vec<RouteName>>
-static CURRENT_SERVICE: Mutex<Option<ServiceMeta>> = Mutex::new(None);
 static EVENTS: Lazy<Mutex<HashMap<String, Vec<(String, String)>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<EventName, Vec<(ServiceName,FName)>>
-
 static DEFAULT_INTERS: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(vec![]));
 
 #[derive(Debug, Clone)]
@@ -304,7 +300,6 @@ pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemStruct);
     let func_ident = func.ident.clone();
     let func_ident_name = func.ident.to_string();
-    CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta { name: func_ident_name.clone() });
 
     let call_site = Span::call_site();
     let binding = call_site.source_file().path();
@@ -333,7 +328,6 @@ pub fn interceptor(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemStruct);
     let func_ident = func.ident.clone();
     let func_ident_name = func.ident.to_string();
-    CURRENT_SERVICE.lock().unwrap().replace(ServiceMeta { name: func_ident_name.clone() });
 
     import_path::push_path(&func_ident_name.clone());
 
@@ -355,9 +349,12 @@ pub fn on_module_init(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemFn);
 
     let ident = func.sig.ident.clone();
-    let current_service = CURRENT_SERVICE.lock().unwrap().clone();
+    let name = ident.to_string();
 
-    EVENTS.lock().unwrap().entry("on_module_init".to_string()).or_insert(vec![]).push((current_service.unwrap().name, ident.to_string()));
+    let current_service_name: String =
+        cmeta::CMeta::get_stack_data("ServiceName").expect(&format!("[on_module_init] {} ServiceName not found", name));
+
+    EVENTS.lock().unwrap().entry("on_module_init".to_string()).or_insert(vec![]).push((current_service_name, name));
 
     return TokenStream::from(quote! {
         #func
@@ -369,9 +366,12 @@ pub fn on_module_destroy(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemFn);
 
     let ident = func.sig.ident.clone();
-    let current_service = CURRENT_SERVICE.lock().unwrap().clone();
+    let name = ident.to_string();
 
-    EVENTS.lock().unwrap().entry("on_module_destroy".to_string()).or_insert(vec![]).push((current_service.unwrap().name, ident.to_string()));
+    let current_service_name: String =
+        cmeta::CMeta::get_stack_data("ServiceName").expect(&format!("[on_module_init] {} ServiceName not found", name));
+
+    EVENTS.lock().unwrap().entry("on_module_destroy".to_string()).or_insert(vec![]).push((current_service_name, name));
 
     return TokenStream::from(quote! {
         #func
