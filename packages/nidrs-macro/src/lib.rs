@@ -31,6 +31,7 @@ use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatTyp
 
 mod args_parse;
 use args_parse::*;
+use utils::merge_uses;
 mod global;
 
 use crate::meta_parse::MetaValue;
@@ -723,50 +724,31 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
         #(#axum_args),*
     });
 
-    let service_uses = cmeta::CMeta::get_stack("service_uses");
+    let service_uses = merge_uses(["method_uses", "service_uses"]);
 
-    let interceptor_uses_expand = if let Some(cmeta::CMetaValue::Array(arr)) = service_uses {
-        println!("// route_derive service_uses {:?}", arr);
+    let interceptor_uses_expand = service_uses
+        .iter()
+        .map(|inter| {
+            let inter_ident = syn::Ident::new(inter, Span::call_site().into());
 
-        let inter_tokens = arr.iter().map(|inter| {
-            if let CMetaValue::String(inter) = inter {
-                let inter_ident = syn::Ident::new(inter, Span::call_site().into());
-                // quote! {
-                //     let inter = ctx.get_interceptor::<inter::#inter_ident>(module_name, inter_name);
-                //     let res = inter.intercept(req, next).await;
-                //     if let Ok(res) = res {
-                //         Ok(res.into_response())
-                //     } else {
-                //         Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
-                //     }
-                // }
-                quote! {
-                    .layer(axum::middleware::from_fn({
-                        let inter = ctx.get_interceptor::<#inter_ident>(module_name, #inter);
-                        move |req: axum::extract::Request, next: axum::middleware::Next| {
-                            let inter = std::sync::Arc::clone(&inter);
-                            async move {
-                                let res = inter.intercept(req, next).await;
-                                if let Ok(res) = res {
-                                    Ok(res.into_response())
-                                } else {
-                                    Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
-                                }
+            quote! {
+                .layer(axum::middleware::from_fn({
+                    let inter = ctx.get_interceptor::<#inter_ident>(module_name, #inter);
+                    move |req: axum::extract::Request, next: axum::middleware::Next| {
+                        let inter = std::sync::Arc::clone(&inter);
+                        async move {
+                            let res = inter.intercept(req, next).await;
+                            if let Ok(res) = res {
+                                Ok(res.into_response())
+                            } else {
+                                Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
                             }
                         }
-                    }))
-                }
-            } else {
-                quote! {}
+                    }
+                }))
             }
-        });
-
-        TokenStream2::from(quote! {
-            #(#inter_tokens)*
         })
-    } else {
-        quote! {}
-    };
+        .collect::<Vec<TokenStream2>>();
 
     // println!(" route_derive {:?} {:?}", func.sig.ident.to_string(), func_args);
 
@@ -816,7 +798,7 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
                     }),
                 )
                 .layer(nidrs::externs::axum::Extension(meta.clone()))
-                #interceptor_uses_expand
+                #(#interceptor_uses_expand)*;
                 ;
             ctx.routers
                 .push(nidrs::RouterWrap::new(router, meta));
