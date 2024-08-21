@@ -9,6 +9,19 @@ use std::collections::HashMap;
 /// parse:
 ///   fm.parse("$(1, 2, 3)");
 ///
+///
+
+// #[args(Module)]
+pub struct ModuleArgs(def::Object<ModuleSubObj>);
+
+// #[args_object]
+pub struct ModuleSubObj {
+    pub imports: def::Array<def::Ident>,
+    pub interceptors: def::Array<def::Ident>,
+    pub controllers: def::Array<def::Ident>,
+    pub services: def::Array<def::Ident>,
+    pub exports: def::Array<def::Ident>,
+}
 
 pub struct Formal {
     pub defs: Vec<ArgDef>,
@@ -86,6 +99,22 @@ pub enum ArgType {
     String,
     Object(HashMap<String, ArgValue>),
     Array(Vec<ArgValue>),
+}
+
+pub mod def {
+    use super::*;
+    pub struct Null;
+    pub struct Ident;
+    pub struct Int(f32);
+    pub struct Float;
+    pub struct Bool;
+    pub struct String;
+    pub struct Object<Item> {
+        pub props: Item,
+    }
+    pub struct Array<Item> {
+        pub items: Item,
+    }
 }
 
 fn expr_fix(input: &str) -> String {
