@@ -59,9 +59,7 @@ impl<Item> IntoArgType for Object<Item> {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Array<Item> {
-    pub items: Item,
-}
+pub struct Array<Item>(pub Vec<Item>);
 impl<Item> IntoArgType for Array<Item> {
     fn into_arg_type() -> Type {
         Type::Array(vec![])

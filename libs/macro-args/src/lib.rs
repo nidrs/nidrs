@@ -33,6 +33,11 @@ mod tests {
                 return Ok(rt);
             }
 
+            let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F4(otr(args.get(0))?.try_into()?)));
+            if let Ok(rt) = r {
+                return Ok(rt);
+            }
+
             Err(Error::new(proc_macro2::Span::call_site(), "Invalid args"))
         }
     }

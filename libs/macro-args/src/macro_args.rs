@@ -88,3 +88,34 @@ impl TryInto<def::Ident> for &Value {
         }
     }
 }
+impl TryInto<def::Ident> for Value {
+    type Error = Error;
+
+    fn try_into(self) -> Result<def::Ident, Self::Error> {
+        match self {
+            Value::Ident(i) => Ok(def::Ident(i.clone())),
+            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Int")),
+        }
+    }
+}
+
+impl<Item> TryInto<def::Array<Item>> for &Value
+where
+    Item: TryInto<Item, Error = Error>,
+{
+    type Error = Error;
+
+    fn try_into(self) -> Result<def::Array<Item>, Self::Error> {
+        match self {
+            Value::Array(arr) => {
+                let mut res = vec![];
+                for item in arr {
+                    let item: Item = item.try_into()?;
+                    res.push(item);
+                }
+                Ok(def::Array(res))
+            }
+            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Array")),
+        }
+    }
+}
