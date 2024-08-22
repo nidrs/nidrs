@@ -60,6 +60,7 @@ remote = "github.com"
 repository = "nidrs"
 owner = "nidrs"
 authors = [
+  { signature = "Lydanne", username = "Lyda" },
   { signature = "WumaCoder", username = "WumaCoder" },
   { signature = "刘欢", username = "WumaCoder" },
 ]
@@ -72,3 +73,4 @@ nidrs-extern = { path = "packages/nidrs-extern" }
 nidrs-macro = { path = "packages/nidrs-macro" }
 nidrs-diesel = { path = "packages/nidrs-diesel" }
 nidrs = { path = "packages/nidrs" }
+macro_args = { path = "libs/macro_args" }
