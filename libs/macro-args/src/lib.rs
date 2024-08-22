@@ -18,22 +18,22 @@ mod tests {
 
     impl ModuleArgs {
         pub fn parse(args: Vec<Value>) -> Result<Self, Error> {
-            let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F1(otr(args.get(0))?.try_into()?, otr(args.get(1))?.try_into()?)));
+            let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F1(otr(args.first())?.try_into()?, otr(args.get(1))?.try_into()?)));
             if let Ok(rt) = r {
                 return Ok(rt);
             }
 
-            let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F2(otr(args.get(0))?.try_into()?)));
+            let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F2(otr(args.first())?.try_into()?)));
             if let Ok(rt) = r {
                 return Ok(rt);
             }
 
-            let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F3(otr(args.get(0))?.try_into()?)));
+            let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F3(otr(args.first())?.try_into()?)));
             if let Ok(rt) = r {
                 return Ok(rt);
             }
 
-            let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F4(otr(args.get(0))?.try_into()?)));
+            let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F4(otr(args.first())?.try_into()?)));
             if let Ok(rt) = r {
                 return Ok(rt);
             }
@@ -107,5 +107,18 @@ mod tests {
         println!("{:?}", res);
 
         assert_eq!(res, ModuleArgs::F3(def::Ident("Hello".to_string())));
+    }
+
+    #[test]
+    fn test_formal_f4() {
+        let f = Formal::new();
+
+        let args = f.parse("F([Ident1, Ident2])").unwrap();
+        println!("{:?}", args);
+
+        let res = ModuleArgs::parse(args).unwrap();
+        println!("{:?}", res);
+
+        assert_eq!(res, ModuleArgs::F4(def::Array(vec![def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())])));
     }
 }

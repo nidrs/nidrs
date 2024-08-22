@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use def::{IntoArgType, Type};
+use def::Type;
 use syn::Error;
 
 pub mod def;
@@ -30,6 +30,27 @@ impl Formal {
                     }
                     _ => {}
                 },
+                syn::Expr::Array(array) => {
+                    let mut arr = vec![];
+                    for item in array.elems {
+                        match item {
+                            syn::Expr::Lit(lit) => match lit.lit {
+                                syn::Lit::Int(int) => {
+                                    arr.push(Value::Int(int.base10_parse::<i32>().unwrap()));
+                                }
+                                syn::Lit::Str(str) => {
+                                    arr.push(Value::String(str.value()));
+                                }
+                                _ => {}
+                            },
+                            syn::Expr::Path(path) => {
+                                arr.push(Value::Ident(path.path.segments[0].ident.to_string()));
+                            }
+                            _ => {}
+                        }
+                    }
+                    res.push(Value::Array(arr));
+                }
                 syn::Expr::Path(path) => {
                     res.push(Value::Ident(path.path.segments[0].ident.to_string()));
                 }
@@ -51,7 +72,7 @@ pub struct DefArgument {
 
 impl DefArgument {
     pub fn new(arg_type: Type, desc: &str, required: bool, default: Option<Value>) -> Self {
-        DefArgument { arg_type: arg_type, desc: desc.to_string(), required: required, default }
+        DefArgument { arg_type, desc: desc.to_string(), required, default }
     }
 }
 
@@ -67,41 +88,9 @@ pub enum Value {
     Array(Vec<Value>),
 }
 
-impl TryInto<def::Int> for &Value {
-    type Error = Error;
-
-    fn try_into(self) -> Result<def::Int, Self::Error> {
-        match self {
-            Value::Int(i) => Ok(def::Int(*i)),
-            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Int")),
-        }
-    }
-}
-
-impl TryInto<def::Ident> for &Value {
-    type Error = Error;
-
-    fn try_into(self) -> Result<def::Ident, Self::Error> {
-        match self {
-            Value::Ident(i) => Ok(def::Ident(i.clone())),
-            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Int")),
-        }
-    }
-}
-impl TryInto<def::Ident> for Value {
-    type Error = Error;
-
-    fn try_into(self) -> Result<def::Ident, Self::Error> {
-        match self {
-            Value::Ident(i) => Ok(def::Ident(i.clone())),
-            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Int")),
-        }
-    }
-}
-
 impl<Item> TryInto<def::Array<Item>> for &Value
 where
-    Item: TryInto<Item, Error = Error>,
+    Item: TryFrom<Self, Error = Error>,
 {
     type Error = Error;
 

@@ -7,7 +7,7 @@ pub(crate) fn expr_fix(input: &str) -> String {
         if let Some(next) = next {
             if next == '{' && !cur.is_alphabetic() {
                 output.push(cur);
-                output.push_str("O")
+                output.push('O')
             } else {
                 output.push(cur);
             }
