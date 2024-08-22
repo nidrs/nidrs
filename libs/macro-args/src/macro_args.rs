@@ -1,166 +1,90 @@
 use std::collections::HashMap;
 
-///
-/// data:
-///   vec = [Arg::Int(None), Arg::Int(None), Arg::Int(None)];
-/// def:
-///   co = `$(t1: Int, t2: Int)`;
-///   fm = Formal::define().arg(Arg::Int(None), "参数 1", true);
-/// parse:
-///   fm.parse("$(1, 2, 3)");
-///
-///
+use def::{IntoArgType, Type};
+use syn::Error;
 
-// #[args(Module)]
-pub enum ModuleArgs {
-    F1(def::Object<ModuleSubObj>),
-    F2(def::Int, def::Object<ModuleSubObj>),
-}
+pub mod def;
+pub mod utils;
 
-// #[args_object]
-pub struct ModuleSubObj {
-    pub imports: def::Array<def::Ident>,
-    pub interceptors: def::Array<def::Ident>,
-    pub controllers: def::Array<def::Ident>,
-    pub services: def::Array<def::Ident>,
-    pub exports: def::Array<def::Ident>,
-}
-
-pub struct Formal {
-    pub defs: Vec<ArgDef>,
-}
+pub struct Formal {}
 
 impl Formal {
     pub fn new() -> Self {
-        Formal { defs: vec![] }
+        Formal {}
     }
 
-    pub fn def(mut self, arg: ArgType, desc: &str, required: bool) -> Self {
-        self.defs.push(ArgDef::new(arg, desc, required));
-        self
-    }
-
-    pub fn parse(&self, input: &str) -> Vec<ArgValue> {
-        let mut res: Vec<ArgValue> = vec![];
-        let input = expr_fix(input);
+    pub fn parse(&self, input: &str) -> Result<Vec<Value>, Error> {
+        let mut res: Vec<Value> = vec![];
+        let input = utils::expr_fix(input);
         let expr = syn::parse_str::<syn::ExprCall>(&input).unwrap();
-        println!("{:#?}", expr.args);
+        // println!("{:#?}", expr.args);
 
         for arg in expr.args {
             match arg {
                 syn::Expr::Lit(lit) => match lit.lit {
                     syn::Lit::Int(int) => {
-                        res.push(ArgValue::Int(int.base10_parse::<i32>().unwrap()));
+                        res.push(Value::Int(int.base10_parse::<i32>().unwrap()));
                     }
                     syn::Lit::Str(str) => {
-                        res.push(ArgValue::String(str.value()));
+                        res.push(Value::String(str.value()));
                     }
                     _ => {}
                 },
                 syn::Expr::Path(path) => {
-                    res.push(ArgValue::Ident(path.path.segments[0].ident.to_string()));
+                    res.push(Value::Ident(path.path.segments[0].ident.to_string()));
                 }
                 _ => {}
             }
         }
 
-        res
-    }
-}
-
-pub struct ArgDef {
-    pub arg_type: ArgType,
-    pub desc: String,
-    pub required: bool,
-}
-
-impl ArgDef {
-    pub fn new(arg_type: ArgType, desc: &str, required: bool) -> Self {
-        ArgDef { arg_type: arg_type, desc: desc.to_string(), required: required }
+        Ok(res)
     }
 }
 
 #[derive(Debug)]
-pub enum ArgValue {
+pub struct DefArgument {
+    pub arg_type: Type,
+    pub desc: String,
+    pub required: bool,
+    pub default: Option<Value>,
+}
+
+impl DefArgument {
+    pub fn new(arg_type: Type, desc: &str, required: bool, default: Option<Value>) -> Self {
+        DefArgument { arg_type: arg_type, desc: desc.to_string(), required: required, default }
+    }
+}
+
+#[derive(Debug)]
+pub enum Value {
     Null,
     Ident(String),
     Int(i32),
     Float(f32),
     Bool(bool),
     String(String),
-    Object(HashMap<String, ArgValue>),
-    Array(Vec<ArgValue>),
+    Object(HashMap<String, Value>),
+    Array(Vec<Value>),
 }
 
-#[derive(Debug)]
-pub enum ArgType {
-    Null,
-    Ident,
-    Int,
-    Float,
-    Bool,
-    String,
-    Object(HashMap<String, ArgValue>),
-    Array(Vec<ArgValue>),
-}
+impl TryInto<def::Int> for &Value {
+    type Error = Error;
 
-pub mod def {
-    use super::*;
-    pub struct Null;
-    pub struct Ident;
-    pub struct Int(f32);
-    pub struct Float;
-    pub struct Bool;
-    pub struct String;
-    pub struct Object<Item> {
-        pub props: Item,
-    }
-    pub struct Array<Item> {
-        pub items: Item,
-    }
-}
-
-fn expr_fix(input: &str) -> String {
-    let mut peek = input.chars().peekable();
-    let mut output = String::new();
-
-    while let Some(cur) = peek.next() {
-        let next = peek.peek().copied();
-        if let Some(next) = next {
-            if next == '{' && !cur.is_alphabetic() {
-                output.push(cur);
-                output.push_str("O")
-            } else {
-                output.push(cur);
-            }
-        } else {
-            output.push(cur);
+    fn try_into(self) -> Result<def::Int, Self::Error> {
+        match self {
+            Value::Int(i) => Ok(def::Int(*i)),
+            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Int")),
         }
     }
-
-    output
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+impl TryInto<def::Ident> for &Value {
+    type Error = Error;
 
-    #[test]
-    fn test_formal() {
-        // F(Int, Int, Int)
-        // F(Int)
-        // F(Module({ a: Int, b: Int }))
-        let mut fm = Formal::new().def(ArgType::Ident, "参数 1", true);
-        // fm.parse("F(Object{ a: Int, b: Optional(Int) }, Array(Int))");
-        let value = fm.parse("F(Test)");
-        println!("{:?}", value);
-        // assert_eq!(format!("{:?}", fm.args), format!("{:?}", vec![Arg::Int(Some(1)), Arg::Int(Some(2)), Arg::Int(Some(3))]));
-    }
-
-    #[test]
-    fn test_expr_fix() {
-        let input = "F(1, 2, { a: { b:2 } })";
-        let output = expr_fix(input);
-        assert_eq!(output, "F(1, 2, O{ a: O{ b:2 } })");
+    fn try_into(self) -> Result<def::Ident, Self::Error> {
+        match self {
+            Value::Ident(i) => Ok(def::Ident(i.clone())),
+            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Int")),
+        }
     }
 }
