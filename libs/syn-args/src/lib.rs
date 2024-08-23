@@ -17,6 +17,7 @@ mod tests {
         F3(def::Ident),
         F4(def::Array<def::Ident>),
         F5(def::Object<ModuleSubObj>),
+        F6(def::Array<def::Object<ModuleSubObj>>),
     }
 
     impl ModuleArgs {
@@ -42,6 +43,11 @@ mod tests {
             }
 
             let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F5(otr(args.first())?.try_into()?)));
+            if let Ok(rt) = r {
+                return Ok(rt);
+            }
+
+            let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F6(otr(args.first())?.try_into()?)));
             if let Ok(rt) = r {
                 return Ok(rt);
             }
@@ -145,6 +151,25 @@ mod tests {
             ModuleArgs::F5(def::Object(ModuleSubObj {
                 imports: def::Array(vec![def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())])
             }))
+        );
+    }
+
+    #[test]
+    fn test_formal_f6() {
+        let f = Formal::new();
+
+        let args = f.parse("F([{ imports: [Ident1, Ident2] }, { imports: [Ident3, Ident4] }])").unwrap();
+        println!("{:?}", args);
+
+        let res = ModuleArgs::parse(args).unwrap();
+        println!("{:?}", res);
+
+        assert_eq!(
+            res,
+            ModuleArgs::F6(def::Array(vec![
+                def::Object(ModuleSubObj { imports: def::Array(vec![def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())]) }),
+                def::Object(ModuleSubObj { imports: def::Array(vec![def::Ident("Ident3".to_string()), def::Ident("Ident4".to_string())]) })
+            ]))
         );
     }
 }

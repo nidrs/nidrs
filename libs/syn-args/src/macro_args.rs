@@ -1,7 +1,6 @@
 use std::{collections::HashMap, fmt::Debug};
 
 use quote::ToTokens;
-// use def::Type;
 use syn::Error;
 
 pub mod def;
@@ -21,112 +20,56 @@ impl Formal {
         // println!("{:#?}", expr.args);
 
         for arg in expr.args {
-            match arg {
-                syn::Expr::Lit(lit) => match lit.lit {
-                    syn::Lit::Int(int) => {
-                        let v = int.base10_parse::<i32>().unwrap();
-                        res.push(Value::Int(def::Int(v)));
-                    }
-                    syn::Lit::Str(str) => {
-                        let v = str.value();
-                        res.push(Value::String(def::String(v)));
-                    }
-                    _ => {}
-                },
-                syn::Expr::Path(path) => {
-                    res.push(Value::Ident(def::Ident(path.path.segments[0].ident.to_string())));
-                }
-                syn::Expr::Array(array) => {
-                    let mut arr = vec![];
-                    for item in array.elems {
-                        match item {
-                            syn::Expr::Lit(lit) => match lit.lit {
-                                syn::Lit::Int(int) => {
-                                    let v = int.base10_parse::<i32>().unwrap();
-                                    arr.push(Value::Int(def::Int(v)));
-                                }
-                                syn::Lit::Str(str) => {
-                                    let v = str.value();
-                                    arr.push(Value::String(def::String(v)));
-                                }
-                                _ => {}
-                            },
-                            syn::Expr::Path(path) => {
-                                arr.push(Value::Ident(def::Ident(path.path.segments[0].ident.to_string())));
-                            }
-                            _ => {}
-                        }
-                    }
-                    res.push(Value::Array(def::Array(arr)));
-                }
-                syn::Expr::Struct(struct_expr) => {
-                    let mut obj = HashMap::new();
-                    for field in struct_expr.fields {
-                        let key = field.member.to_token_stream().to_string();
-                        match field.expr {
-                            syn::Expr::Lit(lit) => match lit.lit {
-                                syn::Lit::Int(int) => {
-                                    let v = int.base10_parse::<i32>().unwrap();
-                                    obj.insert(key, Value::Int(def::Int(v)));
-                                }
-                                syn::Lit::Str(str) => {
-                                    let v = str.value();
-                                    obj.insert(key, Value::String(def::String(v)));
-                                }
-                                _ => {}
-                            },
-                            syn::Expr::Path(path) => {
-                                obj.insert(key, Value::Ident(def::Ident(path.path.segments[0].ident.to_string())));
-                            }
-                            syn::Expr::Array(array) => {
-                                let mut arr = vec![];
-                                for item in array.elems {
-                                    match item {
-                                        syn::Expr::Lit(lit) => match lit.lit {
-                                            syn::Lit::Int(int) => {
-                                                let v = int.base10_parse::<i32>().unwrap();
-                                                arr.push(Value::Int(def::Int(v)));
-                                            }
-                                            syn::Lit::Str(str) => {
-                                                let v = str.value();
-                                                arr.push(Value::String(def::String(v)));
-                                            }
-                                            _ => {}
-                                        },
-                                        syn::Expr::Path(path) => {
-                                            arr.push(Value::Ident(def::Ident(path.path.segments[0].ident.to_string())));
-                                        }
-                                        _ => {}
-                                    }
-                                }
-                                obj.insert(key, Value::Array(def::Array(arr)));
-                            }
-                            _ => {}
-                        }
-                    }
-                    res.push(Value::Object(def::Object(obj)));
-                }
-                _ => {}
-            }
+            let value = recursive_parsing(&arg);
+            res.push(value);
         }
 
         Ok(res)
     }
 }
 
-// #[derive(Debug)]
-// pub struct DefArgument {
-//     pub arg_type: Type,
-//     pub desc: String,
-//     pub required: bool,
-//     pub default: Option<Value>,
-// }
-
-// impl DefArgument {
-//     pub fn new(arg_type: Type, desc: &str, required: bool, default: Option<Value>) -> Self {
-//         DefArgument { arg_type, desc: desc.to_string(), required, default }
-//     }
-// }
+pub fn recursive_parsing(input: &syn::Expr) -> Value {
+    match input {
+        syn::Expr::Lit(lit) => match &lit.lit {
+            syn::Lit::Int(int) => {
+                let v = int.base10_parse::<i32>().unwrap();
+                Value::Int(def::Int(v))
+            }
+            syn::Lit::Str(str) => {
+                let v = str.value();
+                Value::String(def::String(v))
+            }
+            syn::Lit::Float(float) => {
+                let v = float.base10_parse::<f32>().unwrap();
+                Value::Float(def::Float(v))
+            }
+            syn::Lit::Bool(bool) => {
+                let v = bool.value;
+                Value::Bool(def::Bool(v))
+            }
+            _ => Value::Null,
+        },
+        syn::Expr::Path(path) => Value::Ident(def::Ident(path.path.segments[0].ident.to_string())),
+        syn::Expr::Array(array) => {
+            let mut arr = vec![];
+            for item in array.elems.iter() {
+                let item = recursive_parsing(item);
+                arr.push(item);
+            }
+            Value::Array(def::Array(arr))
+        }
+        syn::Expr::Struct(struct_expr) => {
+            let mut obj = HashMap::new();
+            for field in struct_expr.fields.iter() {
+                let key = field.member.to_token_stream().to_string();
+                let value = recursive_parsing(&field.expr);
+                obj.insert(key, value);
+            }
+            Value::Object(def::Object(obj))
+        }
+        _ => Value::Null,
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum Value {
