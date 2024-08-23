@@ -2,7 +2,6 @@ mod macro_args;
 
 #[cfg(test)]
 mod tests {
-    use def::Object;
     use syn::Error;
     use utils::{ewc, otr};
 
@@ -66,14 +65,14 @@ mod tests {
         // pub exports: def::Array<def::Ident>,
     }
 
-    impl TryFrom<&Value> for Object<ModuleSubObj> {
+    impl TryFrom<&Value> for def::Object<ModuleSubObj> {
         type Error = Error;
 
         fn try_from(value: &Value) -> Result<Self, Self::Error> {
             match value {
                 Value::Object(obj) => {
                     let imports = obj.0.get("imports").ok_or(Error::new(proc_macro2::Span::call_site(), "Expected imports"))?.try_into()?;
-                    Ok(Object(ModuleSubObj { imports }))
+                    Ok(def::Object(ModuleSubObj { imports }))
                 }
                 _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected ModuleSubObj")),
             }
