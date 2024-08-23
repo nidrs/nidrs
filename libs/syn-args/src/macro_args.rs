@@ -104,19 +104,33 @@ where
     }
 }
 
-impl TryInto<def::Object<HashMap<String, Value>>> for &Value {
+impl TryFrom<&Value> for def::Object<HashMap<String, Value>> {
     type Error = Error;
 
-    fn try_into(self) -> Result<def::Object<HashMap<String, Value>>, Self::Error> {
-        match self {
-            Value::Object(v) => {
+    fn try_from(value: &Value) -> Result<Self, Self::Error> {
+        match value {
+            Value::Object(obj) => {
                 let mut res = HashMap::new();
-                for (k, v) in v.0.iter() {
+                for (k, v) in obj.0.iter() {
                     res.insert(k.clone(), v.clone());
                 }
                 Ok(def::Object(res))
             }
-            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Object")),
+            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected ModuleSubObj")),
         }
     }
 }
+
+// impl<T> TryFrom<&Value> for def::Object<T> {
+//     type Error = Error;
+
+//     fn try_from(value: &Value) -> Result<Self, Self::Error> {
+//         match value {
+//             Value::Object(obj) => {
+//                 let imports = obj.0.get("imports").ok_or(Error::new(proc_macro2::Span::call_site(), "Expected imports"))?.try_into()?;
+//                 Ok(def::Object(ModuleSubObj { imports }))
+//             }
+//             _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected ModuleSubObj")),
+//         }
+//     }
+// }
