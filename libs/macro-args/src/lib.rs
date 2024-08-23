@@ -2,7 +2,9 @@ mod macro_args;
 
 #[cfg(test)]
 mod tests {
+    use def::Object;
     use syn::Error;
+    use utils::{ewc, otr};
 
     use crate::macro_args::*;
 
@@ -14,6 +16,7 @@ mod tests {
         F2(def::Int),
         F3(def::Ident),
         F4(def::Array<def::Ident>),
+        F5(def::Object<ModuleSubObj>),
     }
 
     impl ModuleArgs {
@@ -38,33 +41,38 @@ mod tests {
                 return Ok(rt);
             }
 
+            let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F5(otr(args.first())?.try_into()?)));
+            if let Ok(rt) = r {
+                return Ok(rt);
+            }
+
             Err(Error::new(proc_macro2::Span::call_site(), "Invalid args"))
         }
     }
 
-    fn otr<T>(opt: Option<T>) -> Result<T, Error> {
-        match opt {
-            Some(val) => Ok(val),
-            None => Err(Error::new(proc_macro2::Span::call_site(), "Invalid args")),
+    // #[args_object]
+    #[derive(Debug, PartialEq)]
+    pub struct ModuleSubObj {
+        pub imports: def::Array<def::Ident>,
+        // pub interceptors: def::Array<def::Ident>,
+        // pub controllers: def::Array<def::Ident>,
+        // pub services: def::Array<def::Ident>,
+        // pub exports: def::Array<def::Ident>,
+    }
+
+    impl TryFrom<&Value> for Object<ModuleSubObj> {
+        type Error = Error;
+
+        fn try_from(value: &Value) -> Result<Self, Self::Error> {
+            match value {
+                Value::Object(obj) => {
+                    let imports = obj.0.get("imports").ok_or(Error::new(proc_macro2::Span::call_site(), "Expected imports"))?.try_into()?;
+                    Ok(Object(ModuleSubObj { imports }))
+                }
+                _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected ModuleSubObj")),
+            }
         }
     }
-
-    fn ewc<F, T, E>(callback: F) -> Result<T, E>
-    where
-        F: FnOnce() -> Result<T, E>,
-    {
-        // 调用闭包并返回结果
-        callback()
-    }
-
-    // #[args_object]
-    // pub struct ModuleSubObj {
-    //     pub imports: def::Array<def::Ident>,
-    //     pub interceptors: def::Array<def::Ident>,
-    //     pub controllers: def::Array<def::Ident>,
-    //     pub services: def::Array<def::Ident>,
-    //     pub exports: def::Array<def::Ident>,
-    // }
 
     #[test]
     fn test_formal_f1() {
@@ -120,5 +128,23 @@ mod tests {
         println!("{:?}", res);
 
         assert_eq!(res, ModuleArgs::F4(def::Array(vec![def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())])));
+    }
+
+    #[test]
+    fn test_formal_f5() {
+        let f = Formal::new();
+
+        let args = f.parse("F({ imports: [Ident1, Ident2] })").unwrap();
+        println!("{:?}", args);
+
+        let res = ModuleArgs::parse(args).unwrap();
+        println!("{:?}", res);
+
+        assert_eq!(
+            res,
+            ModuleArgs::F5(def::Object(ModuleSubObj {
+                imports: def::Array(vec![def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())])
+            }))
+        );
     }
 }

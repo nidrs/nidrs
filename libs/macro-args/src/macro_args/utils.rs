@@ -1,3 +1,5 @@
+use syn::Error;
+
 pub(crate) fn expr_fix(input: &str) -> String {
     let mut peek = input.chars().peekable();
     let mut output = String::new();
@@ -17,6 +19,21 @@ pub(crate) fn expr_fix(input: &str) -> String {
     }
 
     output
+}
+
+pub fn otr<T>(opt: Option<T>) -> Result<T, Error> {
+    match opt {
+        Some(val) => Ok(val),
+        None => Err(Error::new(proc_macro2::Span::call_site(), "Invalid args")),
+    }
+}
+
+pub fn ewc<F, T, E>(callback: F) -> Result<T, E>
+where
+    F: FnOnce() -> Result<T, E>,
+{
+    // 调用闭包并返回结果
+    callback()
 }
 
 #[cfg(test)]
