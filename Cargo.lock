@@ -1973,7 +1973,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "syn-args"
+name = "syn-args-derive"
 version = "0.1.0"
 dependencies = [
  "anyhow",
