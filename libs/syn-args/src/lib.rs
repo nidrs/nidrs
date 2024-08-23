@@ -1,10 +1,23 @@
+use macro_impl::impl_args_parse;
+use proc_macro::TokenStream;
+
 mod macro_args;
+mod macro_impl;
+mod traits;
+
+#[proc_macro_derive(ArgsParse)]
+pub fn args_parse_derive(input: TokenStream) -> TokenStream {
+    let ast = syn::parse(input).unwrap();
+    impl_args_parse(&ast)
+}
 
 #[cfg(test)]
 mod tests {
     use syn::Error;
+    use traits::ArgsParser;
     use utils::{ewc, otr};
 
+    use super::*;
     use crate::macro_args::*;
 
     // #[args(Module)]
@@ -19,8 +32,8 @@ mod tests {
         F6(def::Array<def::Object<ModuleSubObj>>),
     }
 
-    impl ModuleArgs {
-        pub fn parse(args: Vec<Value>) -> Result<Self, Error> {
+    impl ArgsParser for ModuleArgs {
+        fn parse(args: Vec<Value>) -> Result<Self, Error> {
             let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F1(otr(args.first())?.try_into()?, otr(args.get(1))?.try_into()?)));
             if let Ok(rt) = r {
                 return Ok(rt);
