@@ -1974,17 +1974,26 @@ dependencies = [
 
 [[package]]
 name = "syn-args"
-version = "0.1.0"
-
-[[package]]
-name = "syn-args-derive"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "once_cell",
  "proc-macro2",
  "quote",
  "syn 2.0.75",
+ "syn-serde",
+]
+
+[[package]]
+name = "syn-args-derive"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "once_cell",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.75",
+ "syn-args",
  "syn-serde",
 ]
 
