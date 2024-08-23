@@ -73,4 +73,6 @@ nidrs-extern = { path = "packages/nidrs-extern" }
 nidrs-macro = { path = "packages/nidrs-macro" }
 nidrs-diesel = { path = "packages/nidrs-diesel" }
 nidrs = { path = "packages/nidrs" }
-macro_args = { path = "libs/macro_args" }
+syn-args = { path = "libs/syn-args" }
+syn-args-derive = { path = "libs/syn-args-derive" }
+
