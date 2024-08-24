@@ -4,11 +4,7 @@ use super::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Null;
-// impl IntoArgType for Null {
-//     fn into_arg_type() -> Type {
-//         Type::Null
-//     }
-// }
+
 impl TryFrom<&Value> for Null {
     type Error = Error;
 
@@ -22,11 +18,7 @@ impl TryFrom<&Value> for Null {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Ident(pub std::string::String);
-// impl IntoArgType for Ident {
-//     fn into_arg_type() -> Type {
-//         Type::Ident
-//     }
-// }
+
 impl TryFrom<&Value> for Ident {
     type Error = Error;
 
@@ -38,13 +30,23 @@ impl TryFrom<&Value> for Ident {
     }
 }
 
+impl Deref for Ident {
+    type Target = std::string::String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Ident {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Int(pub i32);
-// impl IntoArgType for Int {
-//     fn into_arg_type() -> Type {
-//         Type::Int
-//     }
-// }
+
 impl TryFrom<&Value> for Int {
     type Error = Error;
 
@@ -56,13 +58,23 @@ impl TryFrom<&Value> for Int {
     }
 }
 
+impl Deref for Int {
+    type Target = i32;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Int {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Float(pub f32);
-// impl IntoArgType for Float {
-//     fn into_arg_type() -> Type {
-//         Type::Float
-//     }
-// }
+
 impl TryFrom<&Value> for Float {
     type Error = Error;
 
@@ -74,13 +86,23 @@ impl TryFrom<&Value> for Float {
     }
 }
 
+impl Deref for Float {
+    type Target = f32;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Float {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Bool(pub bool);
-// impl IntoArgType for Bool {
-//     fn into_arg_type() -> Type {
-//         Type::Bool
-//     }
-// }
+
 impl TryFrom<&Value> for Bool {
     type Error = Error;
 
@@ -92,13 +114,23 @@ impl TryFrom<&Value> for Bool {
     }
 }
 
+impl Deref for Bool {
+    type Target = bool;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Bool {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct String(pub std::string::String);
-// impl IntoArgType for String {
-//     fn into_arg_type() -> Type {
-//         Type::String
-//     }
-// }
+
 impl TryFrom<&Value> for String {
     type Error = Error;
 
@@ -110,13 +142,36 @@ impl TryFrom<&Value> for String {
     }
 }
 
+impl Deref for String {
+    type Target = std::string::String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for String {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Object<T>(pub T);
-// impl<Item> IntoArgType for Object<Item> {
-//     fn into_arg_type() -> Type {
-//         Type::Object(HashMap::new())
-//     }
-// }
+
+impl<T> Deref for Object<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T> DerefMut for Object<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Array<Item>(pub Vec<Item>);
@@ -134,25 +189,3 @@ impl<Item> DerefMut for Array<Item> {
         &mut self.0
     }
 }
-
-// impl<Item> IntoArgType for Array<Item> {
-//     fn into_arg_type() -> Type {
-//         Type::Array(vec![])
-//     }
-// }
-
-// pub trait IntoArgType {
-//     fn into_arg_type() -> Type;
-// }
-
-// #[derive(Debug)]
-// pub enum Type {
-//     Null,
-//     Ident,
-//     Int,
-//     Float,
-//     Bool,
-//     String,
-//     Object(HashMap<std::string::String, Value>),
-//     Array(Vec<Value>),
-// }
