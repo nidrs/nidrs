@@ -8,6 +8,12 @@ pub mod utils;
 
 pub struct Formal {}
 
+impl Default for Formal {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Formal {
     pub fn new() -> Self {
         Formal {}
