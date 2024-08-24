@@ -1974,7 +1974,7 @@ dependencies = [
 
 [[package]]
 name = "syn-args"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "proc-macro2",
@@ -1985,7 +1985,7 @@ dependencies = [
 
 [[package]]
 name = "syn-args-derive"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "proc-macro2",
  "quote",
