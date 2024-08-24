@@ -1,6 +1,5 @@
 use syn::Error;
-use syn_args::{def, ArgsParse, Formal};
-use syn_args_derive::ArgsParse;
+use syn_args::{def, derive::ArgsParse, ArgsParse, Formal};
 
 #[derive(Debug, PartialEq, ArgsParse)]
 pub enum ModuleArgs {

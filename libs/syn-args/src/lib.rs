@@ -1,6 +1,7 @@
 mod macro_args;
 mod traits;
 pub use macro_args::*;
+pub use syn_args_derive as derive;
 pub use traits::*;
 
 #[cfg(test)]
