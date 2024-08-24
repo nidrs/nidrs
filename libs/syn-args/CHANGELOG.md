@@ -12,6 +12,32 @@ All notable changes to this project will be documented in this file. See [conven
 - 创建 syn-args 库 - (ff1d663) - WumaCoder
 - 实现宏展开 - (90f445d) - WumaCoder
 #### Miscellaneous Chores
+- **(version)** syn-args-v0.1.0 - (532233d) - *Lyda*
+- **(version)** syn-args-v0.1.0 - (975e029) - *Lyda*
+- Update syn-args library category to "development-tools" - (2ca6516) - Lyda
+- Update syn-args and syn-args-derive libraries to v0.1.0 - (c54827d) - Lyda
+#### Refactoring
+- Update syn-args library to latest version and add syn-args-derive documentation - (3f887ab) - Lyda
+- Remove unused import in traits.rs - (c820c56) - Lyda
+- 优化 API 和实现 - (8b892b6) - Lyda
+- Update syn-args library to version 0.0.1 and syn-args-derive to version 0.0.1 - (58ed8e4) - WumaCoder
+- 修改名称 - (bc2dde7) - WumaCoder
+- Update TryFrom implementation for Object<ModuleSubObj> in syn-args library - (c04c8cc) - WumaCoder
+- 支持递归处理 - (0f14437) - WumaCoder
+- 修复项目名称 - (8f94b71) - WumaCoder
+
+- - -
+
+## syn-args-v0.1.0 - 2024-08-24
+#### Features
+- 添加 syn-args-derive 和 syn-args 库的文档 - (bd078ee) - Lyda
+- 完成 syn-args 库开发 - (a000497) - Lyda
+- 为默认的类型实现 Deref - (7324a52) - Lyda
+- 完成 parse 解析 - (50b41ad) - Lyda
+- 添加 ModuleArgs 解析方法和测试 - (892c43f) - WumaCoder
+- 创建 syn-args 库 - (ff1d663) - WumaCoder
+- 实现宏展开 - (90f445d) - WumaCoder
+#### Miscellaneous Chores
 - **(version)** syn-args-v0.1.0 - (975e029) - *Lyda*
 - Update syn-args library category to "development-tools" - (2ca6516) - Lyda
 - Update syn-args and syn-args-derive libraries to v0.1.0 - (c54827d) - Lyda
