@@ -1,7 +1,7 @@
 use crate::macro_args::Value;
 use syn::Error;
 
-pub trait ArgsParser
+pub trait ArgsParse
 where
     Self: Sized,
 {

@@ -4,7 +4,7 @@ pub mod traits;
 #[cfg(test)]
 mod tests {
     use syn::Error;
-    use traits::ArgsParser;
+    use traits::ArgsParse;
     use utils::{ewc, otr};
 
     use super::*;
@@ -22,34 +22,34 @@ mod tests {
         F6(def::Array<def::Object<ModuleSubObj>>),
     }
 
-    impl ArgsParser for ModuleArgs {
+    impl ArgsParse for ModuleArgs {
         fn parse(args: Vec<Value>) -> Result<Self, Error> {
-            let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F1(otr(args.first())?.try_into()?, otr(args.get(1))?.try_into()?)));
+            let r = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F1(otr(args.first())?.try_into()?, otr(args.get(1))?.try_into()?)));
             if let Ok(rt) = r {
                 return Ok(rt);
             }
 
-            let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F2(otr(args.first())?.try_into()?)));
+            let r = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F2(otr(args.first())?.try_into()?)));
             if let Ok(rt) = r {
                 return Ok(rt);
             }
 
-            let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F3(otr(args.first())?.try_into()?)));
+            let r = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F3(otr(args.first())?.try_into()?)));
             if let Ok(rt) = r {
                 return Ok(rt);
             }
 
-            let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F4(otr(args.first())?.try_into()?)));
+            let r = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F4(otr(args.first())?.try_into()?)));
             if let Ok(rt) = r {
                 return Ok(rt);
             }
 
-            let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F5(otr(args.first())?.try_into()?)));
+            let r = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F5(otr(args.first())?.try_into()?)));
             if let Ok(rt) = r {
                 return Ok(rt);
             }
 
-            let r: Result<ModuleArgs, anyhow::Error> = ewc(|| Ok(ModuleArgs::F6(otr(args.first())?.try_into()?)));
+            let r = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F6(otr(args.first())?.try_into()?)));
             if let Ok(rt) = r {
                 return Ok(rt);
             }

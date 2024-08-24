@@ -1977,24 +1977,19 @@ name = "syn-args"
 version = "0.0.1"
 dependencies = [
  "anyhow",
- "once_cell",
  "proc-macro2",
  "quote",
  "syn 2.0.75",
- "syn-serde",
+ "syn-args-derive",
 ]
 
 [[package]]
 name = "syn-args-derive"
 version = "0.0.1"
 dependencies = [
- "anyhow",
- "once_cell",
  "proc-macro2",
  "quote",
  "syn 2.0.75",
- "syn-args",
- "syn-serde",
 ]
 
 [[package]]

@@ -1,4 +1,4 @@
-use proc_macro::TokenStream;
+use proc_macro2::TokenStream;
 use quote::quote;
 use syn::DeriveInput;
 
@@ -18,16 +18,17 @@ pub fn impl_args_parse(args: &DeriveInput) -> TokenStream {
             let mut variant_fields_name = vec![];
             let mut variant_fields_type = vec![];
             let mut variant_fields_value = vec![];
-
+            let mut i: usize = 0;
             for field in &variant.fields {
                 let field_name = &field.ident;
                 let field_type = &field.ty;
-                let field_value = quote! { otr(args.first())?.try_into()? };
+                let field_value = quote! { otr(args.get(#i))?.try_into()? };
 
                 variant_fields.push(quote! { #field_name: #field_type });
                 variant_fields_name.push(field_name);
                 variant_fields_type.push(field_type);
                 variant_fields_value.push(field_value);
+                i += 1;
             }
 
             fields.push(quote! { #variant_name(#(#variant_fields),*) });
@@ -48,21 +49,20 @@ pub fn impl_args_parse(args: &DeriveInput) -> TokenStream {
             let field_name = &variant_fields[j];
             let field_value = &variant_fields_value[j];
 
-            match_arm.push(quote! { #field_name: #field_value });
+            match_arm.push(quote! {
+                #field_value
+            });
         }
 
         match_arms.push(quote! {
-            #name::#variant_name(#(#match_arm),*) => {
-                let r: Result<#name, anyhow::Error> = ewc(|| Ok(#name::#variant_name(#(#match_arm),*)));
-                if let Ok(rt) = r {
-                    return Ok(rt);
-                }
+            if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(#name::#variant_name(#(#match_arm),*))) {
+                return Ok(rt);
             }
         });
     }
 
     let expanded = quote! {
-        impl #impl_generics ArgsParseImpl for #name #ty_generics #where_clause {
+        impl #impl_generics syn_args::traits::ArgsParse for #name #ty_generics #where_clause {
             fn parse(args: Vec<Value>) -> Result<Self, Error> {
                 #(#match_arms)*
 
@@ -71,5 +71,53 @@ pub fn impl_args_parse(args: &DeriveInput) -> TokenStream {
           }
     };
 
-    expanded.into()
+    expanded
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_impl_args_parse() {
+        let input = syn::parse_quote! {
+            enum ModuleArgs {
+                F1(def::Int, def::Int),
+                F2(def::Int),
+                F3(def::Ident),
+                F4(def::Array<def::Ident>),
+                F5(ModuleSubObj),
+                F6(def::Array<ModuleSubObj>),
+            }
+        };
+
+        let expected = quote! {
+        impl syn_args::traits::ArgsParse for ModuleArgs {
+            fn parse(args: Vec<Value>) -> Result<Self, Error> {
+                if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F1(otr(args.get(0usize))?.try_into()?, otr(args.get(1usize))?.try_into()?))) {
+                    return Ok(rt);
+                }
+                if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F2(otr(args.get(0usize))?.try_into()?))) {
+                    return Ok(rt);
+                }
+                if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F3(otr(args.get(0usize))?.try_into()?))) {
+                    return Ok(rt);
+                }
+                if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F4(otr(args.get(0usize))?.try_into()?))) {
+                    return Ok(rt);
+                }
+                if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F5(otr(args.get(0usize))?.try_into()?))) {
+                    return Ok(rt);
+                }
+                if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F6(otr(args.get(0usize))?.try_into()?))) {
+                    return Ok(rt);
+                }
+                Err(Error::new(proc_macro2::Span::call_site(), "Invalid args"))
+            }
+        }
+                };
+
+        let result = impl_args_parse(&input);
+        assert_eq!(result.to_string(), expected.to_string());
+    }
 }
