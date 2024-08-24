@@ -1,13 +1,6 @@
 use syn::Error;
-use syn_args::traits::ArgsParse;
-use syn_args::{
-    macro_args::{def, utils, Formal, Value},
-    traits,
-};
+use syn_args::{def, ArgsParse, Formal};
 use syn_args_derive::ArgsParse;
-use utils::{ewc, otr};
-
-// #[args(Module)]
 
 #[derive(Debug, PartialEq, ArgsParse)]
 pub enum ModuleArgs {
@@ -19,28 +12,13 @@ pub enum ModuleArgs {
     F6(def::Array<ModuleSubObj>),
 }
 
-// #[args_object]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, ArgsParse)]
 pub struct ModuleSubObj {
     pub imports: def::Array<def::Ident>,
     // pub interceptors: def::Array<def::Ident>,
     // pub controllers: def::Array<def::Ident>,
     // pub services: def::Array<def::Ident>,
     // pub exports: def::Array<def::Ident>,
-}
-
-impl TryFrom<&Value> for ModuleSubObj {
-    type Error = Error;
-
-    fn try_from(value: &Value) -> Result<Self, Self::Error> {
-        match value {
-            Value::Object(obj) => {
-                let imports = obj.0.get("imports").ok_or(Error::new(proc_macro2::Span::call_site(), "Expected imports"))?.try_into()?;
-                Ok(ModuleSubObj { imports })
-            }
-            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected ModuleSubObj")),
-        }
-    }
 }
 
 fn test_formal_f1() {

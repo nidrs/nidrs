@@ -126,17 +126,3 @@ impl TryFrom<&Value> for def::Object<HashMap<String, Value>> {
         }
     }
 }
-
-// impl<T> TryFrom<&Value> for def::Object<T> {
-//     type Error = Error;
-
-//     fn try_from(value: &Value) -> Result<Self, Self::Error> {
-//         match value {
-//             Value::Object(obj) => {
-//                 let imports = obj.0.get("imports").ok_or(Error::new(proc_macro2::Span::call_site(), "Expected imports"))?.try_into()?;
-//                 Ok(def::Object(ModuleSubObj { imports }))
-//             }
-//             _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected ModuleSubObj")),
-//         }
-//     }
-// }

@@ -1,5 +1,7 @@
-pub mod macro_args;
-pub mod traits;
+mod macro_args;
+mod traits;
+pub use macro_args::*;
+pub use traits::*;
 
 #[cfg(test)]
 mod tests {
@@ -8,7 +10,6 @@ mod tests {
     use utils::{ewc, otr};
 
     use super::*;
-    use crate::macro_args::*;
 
     // #[args(Module)]
 
@@ -88,13 +89,11 @@ mod tests {
         type Error = Error;
 
         fn try_from(value: &Value) -> Result<Self, Self::Error> {
-            match value {
-                Value::Object(obj) => {
-                    let imports = obj.0.get("imports").ok_or(Error::new(proc_macro2::Span::call_site(), "Expected imports"))?.try_into()?;
-                    Ok(ModuleSubObj { imports })
-                }
-                _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected ModuleSubObj")),
+            if let Value::Object(v) = value {
+                return Ok(ModuleSubObj { imports: otr(v.get("imports"))?.try_into()? });
             }
+
+            Err(Error::new(proc_macro2::Span::call_site(), "Expected ModuleSubObj"))
         }
     }
 
