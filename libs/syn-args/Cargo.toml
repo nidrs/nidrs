@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Lydanne <wumacoder@gmail.com>"]
 description = "syn-args is a library for parsing function arguments."
 keywords = ["syn-args", "syn"]
-categories = ["utilities"]
+categories = ["development-tools"]
 
 edition.workspace = true
 homepage.workspace = true
