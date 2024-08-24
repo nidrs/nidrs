@@ -12,8 +12,7 @@ cargo add syn-args
 
 ```rs
 use syn::Error;
-use syn_args::{def, ArgsParse, Formal};
-use syn_args_derive::ArgsParse;
+use syn_args::{def, derive::ArgsParse, ArgsParse, Formal};
 
 #[derive(Debug, PartialEq, ArgsParse)]
 pub enum ModuleArgs {
@@ -24,6 +23,7 @@ pub enum ModuleArgs {
     F5(ModuleSubObj),
     F6(def::Array<ModuleSubObj>),
 }
+
 
 #[derive(Debug, PartialEq, ArgsParse)]
 pub struct ModuleSubObj {
