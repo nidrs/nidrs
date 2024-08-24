@@ -61,27 +61,42 @@ impl ::core::cmp::PartialEq for ModuleArgs {
             }
     }
 }
-impl syn_args::traits::ArgsParse for ModuleArgs {
-    fn parse(args: Vec<Value>) -> Result<Self, Error> {
-        if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F1(otr(args.get(0usize))?.try_into()?, otr(args.get(1usize))?.try_into()?))) {
-            return Ok(rt);
-        }
-        if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F2(otr(args.get(0usize))?.try_into()?))) {
-            return Ok(rt);
-        }
-        if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F3(otr(args.get(0usize))?.try_into()?))) {
-            return Ok(rt);
-        }
-        if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F4(otr(args.get(0usize))?.try_into()?))) {
-            return Ok(rt);
-        }
-        if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F5(otr(args.get(0usize))?.try_into()?))) {
-            return Ok(rt);
-        }
-        if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F6(otr(args.get(0usize))?.try_into()?))) {
-            return Ok(rt);
+impl TryFrom<&syn_args::macro_args::Value> for ModuleArgs {
+    type Error = Error;
+    fn try_from(v: &Value) -> Result<Self, Error> {
+        if let Value::Array(args) = v {
+            if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F1(otr(args.get(0usize))?.try_into()?, otr(args.get(1usize))?.try_into()?)))
+            {
+                return Ok(rt);
+            }
+            if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F2(otr(args.get(0usize))?.try_into()?))) {
+                return Ok(rt);
+            }
+            if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F3(otr(args.get(0usize))?.try_into()?))) {
+                return Ok(rt);
+            }
+            if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F4(otr(args.get(0usize))?.try_into()?))) {
+                return Ok(rt);
+            }
+            if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F5(otr(args.get(0usize))?.try_into()?))) {
+                return Ok(rt);
+            }
+            if let Ok(rt) = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F6(otr(args.get(0usize))?.try_into()?))) {
+                return Ok(rt);
+            }
         }
         Err(Error::new(proc_macro2::Span::call_site(), "Invalid args"))
+    }
+}
+impl TryFrom<syn_args::macro_args::Value> for ModuleArgs {
+    type Error = Error;
+    fn try_from(v: Value) -> Result<Self, Error> {
+        ModuleArgs::try_from(&v)
+    }
+}
+impl syn_args::traits::ArgsParse for ModuleArgs {
+    fn parse(input: &str) -> Result<Self, Error> {
+        syn_args::macro_args::Formal::new().parse(input)?.try_into()
     }
 }
 pub struct ModuleSubObj {
@@ -121,7 +136,7 @@ fn test_formal_f1() {
     {
         ::std::io::_print(format_args!("{0:?}\n", args));
     };
-    let res = ModuleArgs::parse(args).unwrap();
+    let res = ModuleArgs::try_from(&args).unwrap();
     {
         ::std::io::_print(format_args!("{0:?}\n", res));
     };
@@ -140,7 +155,7 @@ fn test_formal_f2() {
     {
         ::std::io::_print(format_args!("{0:?}\n", args));
     };
-    let res = ModuleArgs::parse(args).unwrap();
+    let res = ModuleArgs::try_from(&args).unwrap();
     {
         ::std::io::_print(format_args!("{0:?}\n", res));
     };
@@ -154,12 +169,7 @@ fn test_formal_f2() {
     };
 }
 fn test_formal_f3() {
-    let f = Formal::new();
-    let args = f.parse("F(Hello)").unwrap();
-    {
-        ::std::io::_print(format_args!("{0:?}\n", args));
-    };
-    let res = ModuleArgs::parse(args).unwrap();
+    let res = ModuleArgs::parse("F(Hello)").unwrap();
     {
         ::std::io::_print(format_args!("{0:?}\n", res));
     };
@@ -173,12 +183,7 @@ fn test_formal_f3() {
     };
 }
 fn test_formal_f4() {
-    let f = Formal::new();
-    let args = f.parse("F([Ident1, Ident2])").unwrap();
-    {
-        ::std::io::_print(format_args!("{0:?}\n", args));
-    };
-    let res = ModuleArgs::parse(args).unwrap();
+    let res = ModuleArgs::parse("F([Ident1, Ident2])").unwrap();
     {
         ::std::io::_print(format_args!("{0:?}\n", res));
     };
@@ -198,12 +203,7 @@ fn test_formal_f4() {
     };
 }
 fn test_formal_f5() {
-    let f = Formal::new();
-    let args = f.parse("F({ imports: [Ident1, Ident2] })").unwrap();
-    {
-        ::std::io::_print(format_args!("{0:?}\n", args));
-    };
-    let res = ModuleArgs::parse(args).unwrap();
+    let res = ModuleArgs::parse("F({ imports: [Ident1, Ident2] })").unwrap();
     {
         ::std::io::_print(format_args!("{0:?}\n", res));
     };
@@ -225,12 +225,7 @@ fn test_formal_f5() {
     };
 }
 fn test_formal_f6() {
-    let f = Formal::new();
-    let args = f.parse("F([{ imports: [Ident1, Ident2] }, { imports: [Ident3, Ident4] }])").unwrap();
-    {
-        ::std::io::_print(format_args!("{0:?}\n", args));
-    };
-    let res = ModuleArgs::parse(args).unwrap();
+    let res = ModuleArgs::parse("F([{ imports: [Ident1, Ident2] }, { imports: [Ident3, Ident4] }])").unwrap();
     {
         ::std::io::_print(format_args!("{0:?}\n", res));
     };

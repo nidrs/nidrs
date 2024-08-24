@@ -52,7 +52,7 @@ fn test_formal_f1() {
     // let args = f.parse("F(Hello)").unwrap();
     println!("{:?}", args);
 
-    let res = ModuleArgs::parse(args).unwrap();
+    let res = ModuleArgs::try_from(&args).unwrap();
     println!("{:?}", res);
 
     assert_eq!(res, ModuleArgs::F1(def::Int(1), def::Int(3)));
@@ -65,55 +65,34 @@ fn test_formal_f2() {
     // let args = f.parse("F(Hello)").unwrap();
     println!("{:?}", args);
 
-    let res = ModuleArgs::parse(args).unwrap();
+    let res = ModuleArgs::try_from(&args).unwrap();
     println!("{:?}", res);
 
     assert_eq!(res, ModuleArgs::F2(def::Int(1)));
 }
 
 fn test_formal_f3() {
-    let f = Formal::new();
-
-    let args = f.parse("F(Hello)").unwrap();
-    println!("{:?}", args);
-
-    let res = ModuleArgs::parse(args).unwrap();
+    let res = ModuleArgs::parse("F(Hello)").unwrap();
     println!("{:?}", res);
 
     assert_eq!(res, ModuleArgs::F3(def::Ident("Hello".to_string())));
 }
 
 fn test_formal_f4() {
-    let f = Formal::new();
-
-    let args = f.parse("F([Ident1, Ident2])").unwrap();
-    println!("{:?}", args);
-
-    let res = ModuleArgs::parse(args).unwrap();
+    let res = ModuleArgs::parse("F([Ident1, Ident2])").unwrap();
     println!("{:?}", res);
 
     assert_eq!(res, ModuleArgs::F4(def::Array(vec![def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())])));
 }
-
 fn test_formal_f5() {
-    let f = Formal::new();
-
-    let args = f.parse("F({ imports: [Ident1, Ident2] })").unwrap();
-    println!("{:?}", args);
-
-    let res = ModuleArgs::parse(args).unwrap();
+    let res = ModuleArgs::parse("F({ imports: [Ident1, Ident2] })").unwrap();
     println!("{:?}", res);
 
     assert_eq!(res, ModuleArgs::F5(ModuleSubObj { imports: def::Array(vec![def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())]) }));
 }
 
 fn test_formal_f6() {
-    let f = Formal::new();
-
-    let args = f.parse("F([{ imports: [Ident1, Ident2] }, { imports: [Ident3, Ident4] }])").unwrap();
-    println!("{:?}", args);
-
-    let res = ModuleArgs::parse(args).unwrap();
+    let res = ModuleArgs::parse("F([{ imports: [Ident1, Ident2] }, { imports: [Ident3, Ident4] }])").unwrap();
     println!("{:?}", res);
 
     assert_eq!(
@@ -124,7 +103,6 @@ fn test_formal_f6() {
         ]))
     );
 }
-
 fn main() {
     test_formal_f1();
     test_formal_f2();

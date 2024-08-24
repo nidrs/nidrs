@@ -62,13 +62,26 @@ pub fn impl_args_parse(args: &DeriveInput) -> TokenStream {
     }
 
     let expanded = quote! {
-        impl #impl_generics syn_args::traits::ArgsParse for #name #ty_generics #where_clause {
-            fn parse(args: Vec<Value>) -> Result<Self, Error> {
-                #(#match_arms)*
-
+        impl #impl_generics TryFrom<&syn_args::macro_args::Value> for #name #ty_generics #where_clause {
+            type Error = Error;
+            fn try_from(v: &Value) -> Result<Self, Error> {
+                if let Value::Array(args) = v {
+                    #(#match_arms)*
+                }
                 Err(Error::new(proc_macro2::Span::call_site(), "Invalid args"))
             }
-          }
+        }
+        impl #impl_generics TryFrom<syn_args::macro_args::Value> for #name #ty_generics #where_clause {
+            type Error = Error;
+            fn try_from(v: Value) -> Result<Self, Error> {
+                #name::try_from(&v)
+            }
+        }
+        impl #impl_generics syn_args::traits::ArgsParse for #name #ty_generics #where_clause {
+            fn parse(input: &str) -> Result<Self, Error> {
+                 syn_args::macro_args::Formal::new().parse(input)?.try_into()
+            }
+        }
     };
 
     expanded

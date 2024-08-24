@@ -1,3 +1,5 @@
+use std::ops::{Deref, DerefMut};
+
 use super::*;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -118,6 +120,20 @@ pub struct Object<T>(pub T);
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Array<Item>(pub Vec<Item>);
+
+impl<Item> Deref for Array<Item> {
+    type Target = Vec<Item>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<Item> DerefMut for Array<Item> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
 // impl<Item> IntoArgType for Array<Item> {
 //     fn into_arg_type() -> Type {

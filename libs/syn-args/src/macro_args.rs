@@ -13,7 +13,7 @@ impl Formal {
         Formal {}
     }
 
-    pub fn parse(&self, input: &str) -> Result<Vec<Value>, Error> {
+    pub fn parse(&self, input: &str) -> Result<Value, Error> {
         let mut res: Vec<Value> = vec![];
         let input = utils::expr_fix(input);
         let expr = syn::parse_str::<syn::ExprCall>(&input).unwrap();
@@ -24,7 +24,7 @@ impl Formal {
             res.push(value);
         }
 
-        Ok(res)
+        Ok(Value::Array(def::Array(res)))
     }
 }
 

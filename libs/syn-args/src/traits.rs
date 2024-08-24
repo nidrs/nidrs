@@ -5,5 +5,5 @@ pub trait ArgsParse
 where
     Self: Sized,
 {
-    fn parse(args: Vec<Value>) -> Result<Self, Error>;
+    fn parse(input: &str) -> Result<Self, Error>;
 }
