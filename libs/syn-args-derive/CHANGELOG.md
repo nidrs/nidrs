@@ -9,6 +9,24 @@ All notable changes to this project will be documented in this file. See [conven
 - 完成 parse 解析 - (50b41ad) - Lyda
 - 添加 ModuleArgs 解析方法和测试 - (892c43f) - WumaCoder
 #### Miscellaneous Chores
+- **(version)** syn-args-derive-v0.1.0 - (0c8c87a) - *Lyda*
+- **(version)** syn-args-derive-v0.1.0 - (00568d8) - *Lyda*
+- Update syn-args library category to "development-tools" - (2ca6516) - Lyda
+- Update syn-args and syn-args-derive libraries to v0.1.0 - (c54827d) - Lyda
+#### Refactoring
+- 优化 API 和实现 - (8b892b6) - Lyda
+- Update syn-args library to version 0.0.1 and syn-args-derive to version 0.0.1 - (58ed8e4) - WumaCoder
+- 修改名称 - (bc2dde7) - WumaCoder
+
+- - -
+
+## syn-args-derive-v0.1.0 - 2024-08-24
+#### Features
+- 添加 syn-args-derive 和 syn-args 库的文档 - (bd078ee) - Lyda
+- 完成 syn-args 库开发 - (a000497) - Lyda
+- 完成 parse 解析 - (50b41ad) - Lyda
+- 添加 ModuleArgs 解析方法和测试 - (892c43f) - WumaCoder
+#### Miscellaneous Chores
 - **(version)** syn-args-derive-v0.1.0 - (00568d8) - *Lyda*
 - Update syn-args and syn-args-derive libraries to v0.1.0 - (c54827d) - Lyda
 #### Refactoring
