@@ -18,7 +18,6 @@ monorepo_version_separator = "-"
 pre_package_bump_hooks = [
     "echo 'upgrading {{package}}' to {{version}}",
     "cargo set-version {{version}} -p {{package}}",
-    "cargo set workspace.dependencies.{{package}}.version  '{{version}}'"
 ]
 post_package_bump_hooks = [
     "echo 'package {{package}}'",
