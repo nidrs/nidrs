@@ -62,6 +62,26 @@ fn test_formal_f6() {
         ]))
     );
 }
+fn test_formal_f6_3() {
+    let res = ModuleArgs::parse("F([{ imports: [Ident1, Ident2], global: true, sub: { value: true } }, { imports: [Ident3, Ident4] }])").unwrap();
+    println!("{:?}", res);
+
+    assert_eq!(
+        res,
+        ModuleArgs::F6(def::Array(vec![
+            ModuleSubObj {
+                imports: def::Array(vec![def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())]),
+                global: def::Option(Some(Box::new(def::Bool(true)))),
+                sub: def::Option(Some(Box::new(Sub { value: def::Bool(true) })))
+            },
+            ModuleSubObj {
+                imports: def::Array(vec![def::Ident("Ident3".to_string()), def::Ident("Ident4".to_string())]),
+                global: def::Option(None),
+                sub: def::Option(None)
+            }
+        ]))
+    );
+}
 fn main() {
     test_formal_f3();
     test_formal_f4();
@@ -70,6 +90,8 @@ fn main() {
 }
 
 ```
+
+> [more examples ...](https://github.com/nidrs/nidrs/blob/main/libs/syn-args/examples/test.rs)
 
 ## About
 

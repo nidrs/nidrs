@@ -99,7 +99,6 @@ mod tests {
         }
     }
 
-    // #[args_object]
     #[derive(Debug, PartialEq)]
     pub struct ModuleSubObj {
         pub global: def::Option<def::Bool>,

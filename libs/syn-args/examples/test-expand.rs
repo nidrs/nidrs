@@ -11,7 +11,6 @@
 use std::prelude::rust_2021::*;
 #[macro_use]
 extern crate std;
-use syn::Error;
 use syn_args::{def, derive::ArgsParse, ArgsParse, Formal};
 pub enum ModuleArgs {
     F1(def::Int, def::Int),
@@ -20,6 +19,7 @@ pub enum ModuleArgs {
     F4(def::Array<def::Ident>),
     F5(ModuleSubObj),
     F6(def::Array<ModuleSubObj>),
+    F7(SubWrap),
 }
 #[automatically_derived]
 impl ::core::fmt::Debug for ModuleArgs {
@@ -32,6 +32,7 @@ impl ::core::fmt::Debug for ModuleArgs {
             ModuleArgs::F4(__self_0) => ::core::fmt::Formatter::debug_tuple_field1_finish(f, "F4", &__self_0),
             ModuleArgs::F5(__self_0) => ::core::fmt::Formatter::debug_tuple_field1_finish(f, "F5", &__self_0),
             ModuleArgs::F6(__self_0) => ::core::fmt::Formatter::debug_tuple_field1_finish(f, "F6", &__self_0),
+            ModuleArgs::F7(__self_0) => ::core::fmt::Formatter::debug_tuple_field1_finish(f, "F7", &__self_0),
         }
     }
 }
@@ -51,6 +52,7 @@ impl ::core::cmp::PartialEq for ModuleArgs {
                 (ModuleArgs::F4(__self_0), ModuleArgs::F4(__arg1_0)) => *__self_0 == *__arg1_0,
                 (ModuleArgs::F5(__self_0), ModuleArgs::F5(__arg1_0)) => *__self_0 == *__arg1_0,
                 (ModuleArgs::F6(__self_0), ModuleArgs::F6(__arg1_0)) => *__self_0 == *__arg1_0,
+                (ModuleArgs::F7(__self_0), ModuleArgs::F7(__arg1_0)) => *__self_0 == *__arg1_0,
                 _ => unsafe { ::core::intrinsics::unreachable() },
             }
     }
@@ -77,6 +79,9 @@ impl TryFrom<&syn_args::Value> for ModuleArgs {
                 return Ok(rt);
             }
             if let Ok(rt) = syn_args::utils::ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F6(syn_args::utils::otr(v.get(0usize))?.try_into()?))) {
+                return Ok(rt);
+            }
+            if let Ok(rt) = syn_args::utils::ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F7(syn_args::utils::otr(v.get(0usize))?.try_into()?))) {
                 return Ok(rt);
             }
         }
@@ -106,13 +111,15 @@ impl TryFrom<syn_args::Transform<'_>> for ModuleArgs {
     }
 }
 pub struct ModuleSubObj {
+    pub global: def::Option<def::Bool>,
     pub imports: def::Array<def::Ident>,
+    pub sub: def::Option<Sub>,
 }
 #[automatically_derived]
 impl ::core::fmt::Debug for ModuleSubObj {
     #[inline]
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        ::core::fmt::Formatter::debug_struct_field1_finish(f, "ModuleSubObj", "imports", &&self.imports)
+        ::core::fmt::Formatter::debug_struct_field3_finish(f, "ModuleSubObj", "global", &self.global, "imports", &self.imports, "sub", &&self.sub)
     }
 }
 #[automatically_derived]
@@ -121,14 +128,18 @@ impl ::core::marker::StructuralPartialEq for ModuleSubObj {}
 impl ::core::cmp::PartialEq for ModuleSubObj {
     #[inline]
     fn eq(&self, other: &ModuleSubObj) -> bool {
-        self.imports == other.imports
+        self.global == other.global && self.imports == other.imports && self.sub == other.sub
     }
 }
 impl TryFrom<&syn_args::Value> for ModuleSubObj {
     type Error = syn::Error;
     fn try_from(v: &syn_args::Value) -> Result<Self, Self::Error> {
         if let syn_args::Value::Object(_) = v {
-            return Ok(ModuleSubObj { imports: syn_args::Transform::new(v, "imports").try_into()? });
+            return Ok(ModuleSubObj {
+                global: syn_args::Transform::new(v, "global").try_into()?,
+                imports: syn_args::Transform::new(v, "imports").try_into()?,
+                sub: syn_args::Transform::new(v, "sub").try_into()?,
+            });
         }
         Err(Self::Error::new(proc_macro2::Span::call_site(), "Invalid args"))
     }
@@ -145,6 +156,107 @@ impl syn_args::ArgsParse for ModuleSubObj {
     }
 }
 impl TryFrom<syn_args::Transform<'_>> for ModuleSubObj {
+    type Error = syn::Error;
+    fn try_from(value: syn_args::Transform) -> Result<Self, Self::Error> {
+        if let syn_args::Value::Object(obj) = value.value {
+            if let Some(v) = obj.get(value.key) {
+                return Ok(v.try_into()?);
+            }
+        }
+        Err(Self::Error::new(proc_macro2::Span::call_site(), "Expected SubWrap"))
+    }
+}
+pub struct Sub {
+    pub value: def::Bool,
+}
+#[automatically_derived]
+impl ::core::fmt::Debug for Sub {
+    #[inline]
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        ::core::fmt::Formatter::debug_struct_field1_finish(f, "Sub", "value", &&self.value)
+    }
+}
+#[automatically_derived]
+impl ::core::marker::StructuralPartialEq for Sub {}
+#[automatically_derived]
+impl ::core::cmp::PartialEq for Sub {
+    #[inline]
+    fn eq(&self, other: &Sub) -> bool {
+        self.value == other.value
+    }
+}
+impl TryFrom<&syn_args::Value> for Sub {
+    type Error = syn::Error;
+    fn try_from(v: &syn_args::Value) -> Result<Self, Self::Error> {
+        if let syn_args::Value::Object(_) = v {
+            return Ok(Sub { value: syn_args::Transform::new(v, "value").try_into()? });
+        }
+        Err(Self::Error::new(proc_macro2::Span::call_site(), "Invalid args"))
+    }
+}
+impl TryFrom<syn_args::Value> for Sub {
+    type Error = syn::Error;
+    fn try_from(v: syn_args::Value) -> Result<Self, Self::Error> {
+        Sub::try_from(&v)
+    }
+}
+impl syn_args::ArgsParse for Sub {
+    fn parse(input: &str) -> Result<Self, syn::Error> {
+        syn_args::Formal::new().parse(input)?.try_into()
+    }
+}
+impl TryFrom<syn_args::Transform<'_>> for Sub {
+    type Error = syn::Error;
+    fn try_from(value: syn_args::Transform) -> Result<Self, Self::Error> {
+        if let syn_args::Value::Object(obj) = value.value {
+            if let Some(v) = obj.get(value.key) {
+                return Ok(v.try_into()?);
+            }
+        }
+        Err(Self::Error::new(proc_macro2::Span::call_site(), "Expected SubWrap"))
+    }
+}
+pub struct SubWrap {
+    pub s1: Sub,
+    pub s2: Sub,
+}
+#[automatically_derived]
+impl ::core::fmt::Debug for SubWrap {
+    #[inline]
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        ::core::fmt::Formatter::debug_struct_field2_finish(f, "SubWrap", "s1", &self.s1, "s2", &&self.s2)
+    }
+}
+#[automatically_derived]
+impl ::core::marker::StructuralPartialEq for SubWrap {}
+#[automatically_derived]
+impl ::core::cmp::PartialEq for SubWrap {
+    #[inline]
+    fn eq(&self, other: &SubWrap) -> bool {
+        self.s1 == other.s1 && self.s2 == other.s2
+    }
+}
+impl TryFrom<&syn_args::Value> for SubWrap {
+    type Error = syn::Error;
+    fn try_from(v: &syn_args::Value) -> Result<Self, Self::Error> {
+        if let syn_args::Value::Object(_) = v {
+            return Ok(SubWrap { s1: syn_args::Transform::new(v, "s1").try_into()?, s2: syn_args::Transform::new(v, "s2").try_into()? });
+        }
+        Err(Self::Error::new(proc_macro2::Span::call_site(), "Invalid args"))
+    }
+}
+impl TryFrom<syn_args::Value> for SubWrap {
+    type Error = syn::Error;
+    fn try_from(v: syn_args::Value) -> Result<Self, Self::Error> {
+        SubWrap::try_from(&v)
+    }
+}
+impl syn_args::ArgsParse for SubWrap {
+    fn parse(input: &str) -> Result<Self, syn::Error> {
+        syn_args::Formal::new().parse(input)?.try_into()
+    }
+}
+impl TryFrom<syn_args::Transform<'_>> for SubWrap {
     type Error = syn::Error;
     fn try_from(value: syn_args::Transform) -> Result<Self, Self::Error> {
         if let syn_args::Value::Object(obj) = value.value {
@@ -239,6 +351,8 @@ fn test_formal_f5() {
                 #[rustc_box]
                 ::alloc::boxed::Box::new([def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())]),
             )),
+            global: def::Option(None),
+            sub: def::Option(None),
         }),
     ) {
         (left_val, right_val) => {
@@ -264,16 +378,108 @@ fn test_formal_f6() {
                         #[rustc_box]
                         ::alloc::boxed::Box::new([def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())]),
                     )),
+                    global: def::Option(None),
+                    sub: def::Option(None),
                 },
                 ModuleSubObj {
                     imports: def::Array(<[_]>::into_vec(
                         #[rustc_box]
                         ::alloc::boxed::Box::new([def::Ident("Ident3".to_string()), def::Ident("Ident4".to_string())]),
                     )),
+                    global: def::Option(None),
+                    sub: def::Option(None),
                 },
             ]),
         ))),
     ) {
+        (left_val, right_val) => {
+            if !(*left_val == *right_val) {
+                let kind = ::core::panicking::AssertKind::Eq;
+                ::core::panicking::assert_failed(kind, &*left_val, &*right_val, ::core::option::Option::None);
+            }
+        }
+    };
+}
+fn test_formal_f6_2() {
+    let res = ModuleArgs::parse("F([{ imports: [Ident1, Ident2], global: true }, { imports: [Ident3, Ident4] }])").unwrap();
+    {
+        ::std::io::_print(format_args!("{0:?}\n", res));
+    };
+    match (
+        &res,
+        &ModuleArgs::F6(def::Array(<[_]>::into_vec(
+            #[rustc_box]
+            ::alloc::boxed::Box::new([
+                ModuleSubObj {
+                    imports: def::Array(<[_]>::into_vec(
+                        #[rustc_box]
+                        ::alloc::boxed::Box::new([def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())]),
+                    )),
+                    global: def::Option(Some(Box::new(def::Bool(true)))),
+                    sub: def::Option(None),
+                },
+                ModuleSubObj {
+                    imports: def::Array(<[_]>::into_vec(
+                        #[rustc_box]
+                        ::alloc::boxed::Box::new([def::Ident("Ident3".to_string()), def::Ident("Ident4".to_string())]),
+                    )),
+                    global: def::Option(None),
+                    sub: def::Option(None),
+                },
+            ]),
+        ))),
+    ) {
+        (left_val, right_val) => {
+            if !(*left_val == *right_val) {
+                let kind = ::core::panicking::AssertKind::Eq;
+                ::core::panicking::assert_failed(kind, &*left_val, &*right_val, ::core::option::Option::None);
+            }
+        }
+    };
+}
+fn test_formal_f6_3() {
+    let res = ModuleArgs::parse("F([{ imports: [Ident1, Ident2], global: true, sub: { value: true } }, { imports: [Ident3, Ident4] }])").unwrap();
+    {
+        ::std::io::_print(format_args!("{0:?}\n", res));
+    };
+    match (
+        &res,
+        &ModuleArgs::F6(def::Array(<[_]>::into_vec(
+            #[rustc_box]
+            ::alloc::boxed::Box::new([
+                ModuleSubObj {
+                    imports: def::Array(<[_]>::into_vec(
+                        #[rustc_box]
+                        ::alloc::boxed::Box::new([def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())]),
+                    )),
+                    global: def::Option(Some(Box::new(def::Bool(true)))),
+                    sub: def::Option(Some(Box::new(Sub { value: def::Bool(true) }))),
+                },
+                ModuleSubObj {
+                    imports: def::Array(<[_]>::into_vec(
+                        #[rustc_box]
+                        ::alloc::boxed::Box::new([def::Ident("Ident3".to_string()), def::Ident("Ident4".to_string())]),
+                    )),
+                    global: def::Option(None),
+                    sub: def::Option(None),
+                },
+            ]),
+        ))),
+    ) {
+        (left_val, right_val) => {
+            if !(*left_val == *right_val) {
+                let kind = ::core::panicking::AssertKind::Eq;
+                ::core::panicking::assert_failed(kind, &*left_val, &*right_val, ::core::option::Option::None);
+            }
+        }
+    };
+}
+fn test_formal_f7() {
+    let res = ModuleArgs::parse("F({ s1: { value: false }, s2: { value: true } })").unwrap();
+    {
+        ::std::io::_print(format_args!("{0:?}\n", res));
+    };
+    match (&res, &ModuleArgs::F7(SubWrap { s1: Sub { value: def::Bool(false) }, s2: Sub { value: def::Bool(true) } })) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -289,5 +495,8 @@ fn main() {
     test_formal_f4();
     test_formal_f5();
     test_formal_f6();
+    test_formal_f6_2();
+    test_formal_f6_3();
+    test_formal_f7();
 }
 extern crate alloc;
