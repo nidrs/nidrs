@@ -85,6 +85,7 @@ pub enum Value {
     Float(def::Float),
     Bool(def::Bool),
     String(def::String),
+    Option(def::Option<Value>),
     Object(def::Object<HashMap<String, Value>>),
     Array(def::Array<Value>),
 }
@@ -122,7 +123,18 @@ impl TryFrom<&Value> for def::Object<HashMap<String, Value>> {
                 }
                 Ok(def::Object(res))
             }
-            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected ModuleSubObj")),
+            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Object")),
+        }
+    }
+}
+
+impl TryFrom<&Value> for def::Option<Value> {
+    type Error = Error;
+
+    fn try_from(value: &Value) -> Result<Self, Self::Error> {
+        match value {
+            Value::Option(opt) => Ok(opt.clone()),
+            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Option")),
         }
     }
 }

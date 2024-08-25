@@ -12,8 +12,7 @@ use std::prelude::rust_2021::*;
 #[macro_use]
 extern crate std;
 use syn::Error;
-use syn_args::{def, ArgsParse, Formal};
-use syn_args_derive::ArgsParse;
+use syn_args::{def, derive::ArgsParse, ArgsParse, Formal};
 pub enum ModuleArgs {
     F1(def::Int, def::Int),
     F2(def::Int),
@@ -57,8 +56,8 @@ impl ::core::cmp::PartialEq for ModuleArgs {
     }
 }
 impl TryFrom<&syn_args::Value> for ModuleArgs {
-    type Error = Error;
-    fn try_from(v: &syn_args::Value) -> Result<Self, Error> {
+    type Error = syn::Error;
+    fn try_from(v: &syn_args::Value) -> Result<Self, Self::Error> {
         if let syn_args::Value::Array(v) = v {
             if let Ok(rt) = syn_args::utils::ewc::<_, _, anyhow::Error>(|| {
                 Ok(ModuleArgs::F1(syn_args::utils::otr(v.get(0usize))?.try_into()?, syn_args::utils::otr(v.get(1usize))?.try_into()?))
@@ -81,18 +80,29 @@ impl TryFrom<&syn_args::Value> for ModuleArgs {
                 return Ok(rt);
             }
         }
-        Err(Error::new(proc_macro2::Span::call_site(), "Invalid args"))
+        Err(Self::Error::new(proc_macro2::Span::call_site(), "Invalid args"))
     }
 }
 impl TryFrom<syn_args::Value> for ModuleArgs {
-    type Error = Error;
-    fn try_from(v: syn_args::Value) -> Result<Self, Error> {
+    type Error = syn::Error;
+    fn try_from(v: syn_args::Value) -> Result<Self, Self::Error> {
         ModuleArgs::try_from(&v)
     }
 }
 impl syn_args::ArgsParse for ModuleArgs {
-    fn parse(input: &str) -> Result<Self, Error> {
+    fn parse(input: &str) -> Result<Self, syn::Error> {
         syn_args::Formal::new().parse(input)?.try_into()
+    }
+}
+impl TryFrom<syn_args::Transform<'_>> for ModuleArgs {
+    type Error = syn::Error;
+    fn try_from(value: syn_args::Transform) -> Result<Self, Self::Error> {
+        if let syn_args::Value::Object(obj) = value.value {
+            if let Some(v) = obj.get(value.key) {
+                return Ok(v.try_into()?);
+            }
+        }
+        Err(Self::Error::new(proc_macro2::Span::call_site(), "Expected SubWrap"))
     }
 }
 pub struct ModuleSubObj {
@@ -115,23 +125,34 @@ impl ::core::cmp::PartialEq for ModuleSubObj {
     }
 }
 impl TryFrom<&syn_args::Value> for ModuleSubObj {
-    type Error = Error;
-    fn try_from(v: &syn_args::Value) -> Result<Self, Error> {
-        if let syn_args::Value::Object(v) = v {
-            return Ok(ModuleSubObj { imports: syn_args::utils::otr(v.get("imports"))?.try_into()? });
+    type Error = syn::Error;
+    fn try_from(v: &syn_args::Value) -> Result<Self, Self::Error> {
+        if let syn_args::Value::Object(_) = v {
+            return Ok(ModuleSubObj { imports: syn_args::Transform::new(v, "imports").try_into()? });
         }
-        Err(Error::new(proc_macro2::Span::call_site(), "Invalid args"))
+        Err(Self::Error::new(proc_macro2::Span::call_site(), "Invalid args"))
     }
 }
 impl TryFrom<syn_args::Value> for ModuleSubObj {
-    type Error = Error;
-    fn try_from(v: syn_args::Value) -> Result<Self, Error> {
+    type Error = syn::Error;
+    fn try_from(v: syn_args::Value) -> Result<Self, Self::Error> {
         ModuleSubObj::try_from(&v)
     }
 }
 impl syn_args::ArgsParse for ModuleSubObj {
-    fn parse(input: &str) -> Result<Self, Error> {
+    fn parse(input: &str) -> Result<Self, syn::Error> {
         syn_args::Formal::new().parse(input)?.try_into()
+    }
+}
+impl TryFrom<syn_args::Transform<'_>> for ModuleSubObj {
+    type Error = syn::Error;
+    fn try_from(value: syn_args::Transform) -> Result<Self, Self::Error> {
+        if let syn_args::Value::Object(obj) = value.value {
+            if let Some(v) = obj.get(value.key) {
+                return Ok(v.try_into()?);
+            }
+        }
+        Err(Self::Error::new(proc_macro2::Span::call_site(), "Expected SubWrap"))
     }
 }
 fn test_formal_f1() {

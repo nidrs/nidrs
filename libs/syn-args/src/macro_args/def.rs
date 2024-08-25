@@ -1,5 +1,7 @@
 use std::ops::{Deref, DerefMut};
 
+use crate::Transform;
+
 use super::*;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -13,6 +15,20 @@ impl TryFrom<&Value> for Null {
             Value::Null => Ok(Null),
             _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Ident")),
         }
+    }
+}
+
+impl<'a> TryInto<def::Null> for Transform<'a> {
+    type Error = Error;
+
+    fn try_into(self) -> Result<def::Null, Self::Error> {
+        if let Value::Object(obj) = self.value {
+            if let Some(Value::Null) = obj.get(self.key) {
+                return Ok(def::Null);
+            }
+        }
+
+        Err(Error::new(proc_macro2::Span::call_site(), "Expected Null"))
     }
 }
 
@@ -44,6 +60,20 @@ impl DerefMut for Ident {
     }
 }
 
+impl<'a> TryInto<def::Ident> for Transform<'a> {
+    type Error = Error;
+
+    fn try_into(self) -> Result<def::Ident, Self::Error> {
+        if let Value::Object(obj) = self.value {
+            if let Some(Value::Ident(v)) = obj.get(self.key) {
+                return Ok(v.clone());
+            }
+        }
+
+        Err(Error::new(proc_macro2::Span::call_site(), "Expected Ident"))
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Int(pub i32);
 
@@ -69,6 +99,20 @@ impl Deref for Int {
 impl DerefMut for Int {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
+    }
+}
+
+impl<'a> TryInto<def::Int> for Transform<'a> {
+    type Error = Error;
+
+    fn try_into(self) -> Result<def::Int, Self::Error> {
+        if let Value::Object(obj) = self.value {
+            if let Some(Value::Int(v)) = obj.get(self.key) {
+                return Ok(v.clone());
+            }
+        }
+
+        Err(Error::new(proc_macro2::Span::call_site(), "Expected Int"))
     }
 }
 
@@ -100,6 +144,20 @@ impl DerefMut for Float {
     }
 }
 
+impl<'a> TryInto<def::Float> for Transform<'a> {
+    type Error = Error;
+
+    fn try_into(self) -> Result<def::Float, Self::Error> {
+        if let Value::Object(obj) = self.value {
+            if let Some(Value::Float(v)) = obj.get(self.key) {
+                return Ok(v.clone());
+            }
+        }
+
+        Err(Error::new(proc_macro2::Span::call_site(), "Expected Float"))
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Bool(pub bool);
 
@@ -125,6 +183,20 @@ impl Deref for Bool {
 impl DerefMut for Bool {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
+    }
+}
+
+impl<'a> TryInto<def::Bool> for Transform<'a> {
+    type Error = Error;
+
+    fn try_into(self) -> Result<def::Bool, Self::Error> {
+        if let Value::Object(obj) = self.value {
+            if let Some(Value::Bool(v)) = obj.get(self.key) {
+                return Ok(v.clone());
+            }
+        }
+
+        Err(Error::new(proc_macro2::Span::call_site(), "Expected Bool"))
     }
 }
 
@@ -156,6 +228,55 @@ impl DerefMut for String {
     }
 }
 
+impl<'a> TryInto<def::String> for Transform<'a> {
+    type Error = Error;
+
+    fn try_into(self) -> Result<def::String, Self::Error> {
+        if let Value::Object(obj) = self.value {
+            if let Some(Value::String(v)) = obj.get(self.key) {
+                return Ok(v.clone());
+            }
+        }
+
+        Err(Error::new(proc_macro2::Span::call_site(), "Expected String"))
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Option<T>(pub std::option::Option<Box<T>>);
+
+impl<T> Deref for Option<T> {
+    type Target = std::option::Option<Box<T>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T> DerefMut for Option<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl<'a, T> TryFrom<Transform<'a>> for def::Option<T>
+where
+    T: TryFrom<&'a Value, Error = Error>,
+{
+    type Error = Error;
+
+    fn try_from(value: Transform<'a>) -> Result<Self, Self::Error> {
+        if let Value::Object(obj) = value.value {
+            if let Some(v) = obj.get(value.key) {
+                return Ok(Self(Some(Box::new(T::try_from(v)?))));
+            } else {
+                return Ok(Self(None));
+            }
+        }
+        Err(Error::new(proc_macro2::Span::call_site(), "Expected Array"))
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Object<T>(pub T);
 
@@ -173,6 +294,23 @@ impl<T> DerefMut for Object<T> {
     }
 }
 
+impl<'a, T> TryInto<def::Object<T>> for Transform<'a>
+where
+    T: TryFrom<&'a Value, Error = Error>,
+{
+    type Error = Error;
+
+    fn try_into(self) -> Result<def::Object<T>, Self::Error> {
+        if let Value::Object(obj) = self.value {
+            if let Some(v) = obj.get(self.key) {
+                return Ok(def::Object(T::try_from(v)?));
+            }
+        }
+
+        Err(Error::new(proc_macro2::Span::call_site(), "Expected Object"))
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Array<Item>(pub Vec<Item>);
 
@@ -187,5 +325,22 @@ impl<Item> Deref for Array<Item> {
 impl<Item> DerefMut for Array<Item> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
+    }
+}
+
+impl<'a, T> TryInto<def::Array<T>> for Transform<'a>
+where
+    T: TryFrom<&'a Value, Error = Error>,
+{
+    type Error = Error;
+
+    fn try_into(self) -> Result<def::Array<T>, Self::Error> {
+        if let Value::Object(obj) = self.value {
+            if let Some(Value::Array(arr)) = obj.get(self.key) {
+                return Ok(def::Array(arr.iter().map(|v| T::try_from(v)).collect::<Result<Vec<T>, Self::Error>>()?));
+            }
+        }
+
+        Err(Error::new(proc_macro2::Span::call_site(), "Expected Array"))
     }
 }

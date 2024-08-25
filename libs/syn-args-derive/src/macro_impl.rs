@@ -56,14 +56,6 @@ pub fn impl_args_parse(args: &DeriveInput) -> TokenStream {
             }
         };
     } else if let syn::Data::Struct(data) = &args.data {
-        // if let syn_args::Value::Object(v) = value {
-        //     return Ok(
-        //         ModuleSubObj {
-        //             imports: v.get("imports").ok_or(Error::new(proc_macro2::Span::call_site(), "Expected imports"))?.try_into()?,
-        //         }
-        //     );
-        //  }
-
         let mut variant_fields_name = vec![];
         let mut variant_fields_type = vec![];
         let mut variant_fields_value = vec![];
@@ -72,7 +64,7 @@ pub fn impl_args_parse(args: &DeriveInput) -> TokenStream {
             let field_ident = field.ident.as_ref().unwrap();
             let field_name = field_ident.to_string();
             let field_type = &field.ty;
-            let field_value = quote! { #field_ident: syn_args::utils::otr(v.get(#field_name))?.try_into()? };
+            let field_value = quote! { #field_ident:  syn_args::Transform::new(v, #field_name).try_into()? };
 
             variant_fields_name.push(field_name);
             variant_fields_type.push(field_type);
@@ -80,7 +72,7 @@ pub fn impl_args_parse(args: &DeriveInput) -> TokenStream {
         }
 
         core_expand = quote! {
-            if let syn_args::Value::Object(v) = v {
+            if let syn_args::Value::Object(_) = v {
                 return Ok(
                     #name {
                         #(#variant_fields_value),*
@@ -92,21 +84,34 @@ pub fn impl_args_parse(args: &DeriveInput) -> TokenStream {
 
     let expanded = quote! {
         impl #impl_generics TryFrom<&syn_args::Value> for #name #ty_generics #where_clause {
-            type Error = Error;
-            fn try_from(v: &syn_args::Value) -> Result<Self, Error> {
+            type Error = syn::Error;
+            fn try_from(v: &syn_args::Value) -> Result<Self, Self::Error> {
                 #core_expand
-                Err(Error::new(proc_macro2::Span::call_site(), "Invalid args"))
+                Err(Self::Error::new(proc_macro2::Span::call_site(), "Invalid args"))
             }
         }
         impl #impl_generics TryFrom<syn_args::Value> for #name #ty_generics #where_clause {
-            type Error = Error;
-            fn try_from(v: syn_args::Value) -> Result<Self, Error> {
+            type Error = syn::Error;
+            fn try_from(v: syn_args::Value) -> Result<Self, Self::Error> {
                 #name::try_from(&v)
             }
         }
         impl #impl_generics syn_args::ArgsParse for #name #ty_generics #where_clause {
-            fn parse(input: &str) -> Result<Self, Error> {
+            fn parse(input: &str) -> Result<Self, syn::Error> {
                  syn_args::Formal::new().parse(input)?.try_into()
+            }
+        }
+        impl #impl_generics TryFrom<syn_args::Transform<'_>> for #name #ty_generics #where_clause  {
+            type Error = syn::Error;
+
+            fn try_from(value: syn_args::Transform) -> Result<Self, Self::Error> {
+                if let syn_args::Value::Object(obj) = value.value {
+                    if let Some(v) = obj.get(value.key) {
+                        return Ok(v.try_into()?);
+                    }
+                }
+
+                Err(Self::Error::new(proc_macro2::Span::call_site(), "Expected SubWrap"))
             }
         }
     };
@@ -133,8 +138,8 @@ mod tests {
 
         let expected = quote! {
             impl TryFrom<&syn_args::Value> for ModuleArgs {
-                type Error = Error;
-                fn try_from(v: &syn_args::Value) -> Result<Self, Error> {
+                type Error = syn::Error;
+                fn try_from(v: &syn_args::Value) -> Result<Self, Self::Error> {
                     if let syn_args::Value::Array(v) = v {
                         if let Ok(rt) = syn_args::utils::ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F1(syn_args::utils::otr(v.get(0usize))?.try_into()?, syn_args::utils::otr(v.get(1usize))?.try_into()?))) {
                             return Ok(rt);
@@ -159,16 +164,30 @@ mod tests {
                 }
             }
             impl TryFrom<syn_args::Value> for ModuleArgs {
-                type Error = Error;
-                fn try_from(v: syn_args::Value) -> Result<Self, Error> {
+                type Error = syn::Error;
+                fn try_from(v: syn_args::Value) -> Result<Self, Self::Error> {
                     ModuleArgs::try_from(&v)
                 }
             }
             impl syn_args::ArgsParse for ModuleArgs {
-                fn parse(input: &str) -> Result<Self, Error> {
+                fn parse(input: &str) -> Result<Self, syn::Error> {
                     syn_args::Formal::new().parse(input)?.try_into()
                 }
             }
+            impl TryFrom<syn_args::Transform<'_>> for Sub {
+                type Error = syn::Error;
+
+                fn try_from(value: syn_args::Transform) -> Result<Self, Self::Error> {
+                    if let syn_args::Value::Object(obj) = value.value {
+                        if let Some(v) = obj.get(value.key) {
+                            return Ok(v.try_into()?);
+                        }
+                    }
+
+                    Err(syn::Error::new(proc_macro2::Span::call_site(), "Expected SubWrap"))
+                }
+            }
+
         };
 
         let result = impl_args_parse(&input);
