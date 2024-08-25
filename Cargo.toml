@@ -16,4 +16,4 @@ nidrs-diesel = { path = "packages/nidrs-diesel", version = "0.0.3" }
 nidrs-valid = { path = "packages/nidrs-valid", version = "0.0.1" }
 nidrs-valid-macro = { path = "packages/nidrs-valid-macro", version = "0.0.1" }
 syn-args = { path = "libs/syn-args", version = "0.2.0" }
-syn-args-derive = { path = "libs/syn-args-derive", version = "0.2.0" }
+syn-args-derive = { path = "libs/syn-args-derive", version = "0.2.1" }
