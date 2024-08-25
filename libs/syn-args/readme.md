@@ -96,3 +96,5 @@ fn main() {
 ## About
 
 MIT
+
+[Read ChangeLog](https://github.com/nidrs/nidrs/blob/main/libs/syn-args/CHANGELOG.md)
