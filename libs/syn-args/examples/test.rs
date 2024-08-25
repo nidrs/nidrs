@@ -1,4 +1,3 @@
-use syn::Error;
 use syn_args::{def, derive::ArgsParse, ArgsParse, Formal};
 
 #[derive(Debug, PartialEq, ArgsParse)]
