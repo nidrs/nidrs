@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## syn-args-derive-v0.2.1 - 2024-08-25
+#### Bug Fixes
+- **(syn-args)** 版本修复 - (f02d543) - *Lyda*
+
+- - -
+
 ## syn-args-derive-v0.2.0 - 2024-08-25
 #### Features
 - **(syn-args)** 支持 def::Option 类型 - (04883be) - *Lyda*
