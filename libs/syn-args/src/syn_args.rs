@@ -15,6 +15,12 @@ pub struct SynArgs {
     pub value: Value,
 }
 
+impl SynArgs {
+    pub fn arguments<T: TryFrom<Value, Error = syn::Error>>(self) -> Result<T, syn::Error> {
+        T::try_from(self.value)
+    }
+}
+
 impl Parse for SynArgs {
     fn parse(input: ParseStream<'_>) -> syn::Result<Self> {
         let mut res: Vec<Value> = vec![];
@@ -55,14 +61,6 @@ impl Parse for SynArgs {
         }
 
         Ok(SynArgs { value: Value::Array(def::Array(res)) })
-    }
-}
-
-impl Deref for SynArgs {
-    type Target = Value;
-
-    fn deref(&self) -> &Self::Target {
-        &self.value
     }
 }
 
