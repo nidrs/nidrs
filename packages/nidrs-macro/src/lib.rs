@@ -31,6 +31,7 @@ use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatTyp
 
 mod args_parse;
 use args_parse::*;
+use syn_args::SynArgs;
 use utils::merge_uses;
 mod global;
 
@@ -184,6 +185,13 @@ fn __service_derive(service_type: ServiceType, input: TokenStream) -> TokenStrea
 #[proc_macro_attribute]
 pub fn __route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
     return route_derive(args, input);
+}
+
+#[proc_macro_attribute]
+pub fn module2(args: TokenStream, input: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(args as SynArgs);
+    println!("// module2 {:?}", args.value);
+    return input;
 }
 
 #[proc_macro_attribute]
