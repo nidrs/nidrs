@@ -302,7 +302,7 @@ where
                 return Ok(Self(None));
             }
         }
-        Err(Error::new(proc_macro2::Span::call_site(), "Expected Array"))
+        Err(Error::new(proc_macro2::Span::call_site(), "Expected Option"))
     }
 }
 

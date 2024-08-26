@@ -29,6 +29,7 @@ mod tests {
         F5(ModuleSubObj),
         F6(def::Array<ModuleSubObj>),
         F7(SubWrap),
+        F8(T1),
     }
 
     impl TryFrom<&Value> for ModuleArgs {
@@ -65,6 +66,10 @@ mod tests {
                     return Ok(rt);
                 }
                 let r = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F7(otr(args.first())?.try_into()?)));
+                if let Ok(rt) = r {
+                    return Ok(rt);
+                }
+                let r = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F8(otr(args.first())?.try_into()?)));
                 if let Ok(rt) = r {
                     return Ok(rt);
                 }
@@ -200,6 +205,23 @@ mod tests {
             }
 
             Err(Error::new(proc_macro2::Span::call_site(), "Expected SubWrap"))
+        }
+    }
+
+    #[derive(Debug, PartialEq)]
+    struct T1 {
+        pub controllers: def::Option<def::Array<def::PathIdent>>,
+    }
+
+    impl TryFrom<&Value> for T1 {
+        type Error = Error;
+
+        fn try_from(value: &Value) -> Result<Self, Self::Error> {
+            if let Value::Object(_) = value {
+                return Ok(T1 { controllers: Transform::new(value, "controllers").try_into()? });
+            }
+
+            Err(Error::new(proc_macro2::Span::call_site(), "Expected T1"))
         }
     }
 
@@ -343,5 +365,18 @@ mod tests {
         println!("{:?}", res);
 
         assert_eq!(res, ModuleArgs::F7(SubWrap { s1: Sub { value: def::Bool(false) }, s2: Sub { value: def::Bool(true) } }));
+    }
+
+    #[test]
+    fn test_formal_f8() {
+        let res = ModuleArgs::parse("F({ controllers: [Ident1, Ident2] })").unwrap();
+        println!("{:?}", res);
+
+        assert_eq!(
+            res,
+            ModuleArgs::F8(T1 {
+                controllers: def::Option(Some(Box::new(def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]))))
+            })
+        );
     }
 }

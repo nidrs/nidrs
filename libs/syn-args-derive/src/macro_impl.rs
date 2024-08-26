@@ -87,7 +87,7 @@ pub fn impl_args_parse(args: &DeriveInput) -> TokenStream {
             type Error = syn::Error;
             fn try_from(v: &syn_args::Value) -> Result<Self, Self::Error> {
                 #core_expand
-                Err(Self::Error::new(proc_macro2::Span::call_site(), "Invalid args"))
+                Err(Self::Error::new(proc_macro2::Span::call_site(), format!("Invalid args try_from {}", stringify!(#name))))
             }
         }
         impl #impl_generics TryFrom<syn_args::Value> for #name #ty_generics #where_clause {

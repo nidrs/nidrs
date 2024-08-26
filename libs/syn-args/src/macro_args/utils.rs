@@ -24,7 +24,7 @@ pub(crate) fn expr_fix(input: &str) -> String {
 pub fn otr<T>(opt: Option<T>) -> Result<T, Error> {
     match opt {
         Some(val) => Ok(val),
-        None => Err(Error::new(proc_macro2::Span::call_site(), "Invalid args")),
+        None => Err(Error::new(proc_macro2::Span::call_site(), "Invalid args otr")),
     }
 }
 

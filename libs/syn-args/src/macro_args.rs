@@ -94,18 +94,39 @@ pub enum Value {
     Array(def::Array<Value>),
 }
 
-impl<Item> TryInto<def::Array<Item>> for &Value
-where
-    Item: TryFrom<Self, Error = Error>,
-{
-    type Error = Error;
+// impl<Item> TryInto<def::Array<Item>> for &Value
+// where
+//     Item: TryFrom<Self, Error = Error>,
+// {
+//     type Error = Error;
 
-    fn try_into(self) -> Result<def::Array<Item>, Self::Error> {
-        match self {
+//     fn try_into(self) -> Result<def::Array<Item>, Self::Error> {
+//         match self {
+//             Value::Array(arr) => {
+//                 let mut res = vec![];
+//                 for item in arr.0.iter() {
+//                     let item: Item = item.try_into()?;
+//                     res.push(item);
+//                 }
+//                 Ok(def::Array(res))
+//             }
+//             _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Array")),
+//         }
+//     }
+// }
+
+impl<'a, Item> TryFrom<&'a Value> for def::Array<Item>
+where
+    Item: TryFrom<&'a Value, Error = syn::Error>,
+{
+    type Error = syn::Error;
+
+    fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
+        match value {
             Value::Array(arr) => {
                 let mut res = vec![];
-                for item in arr.0.iter() {
-                    let item: Item = item.try_into()?;
+                for v in arr.0.iter() {
+                    let item: Item = Item::try_from(v)?;
                     res.push(item);
                 }
                 Ok(def::Array(res))
