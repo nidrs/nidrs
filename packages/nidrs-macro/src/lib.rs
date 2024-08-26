@@ -38,6 +38,7 @@ mod global;
 use crate::meta_parse::MetaValue;
 
 mod app_parse;
+mod args;
 mod cmeta;
 mod current_module;
 mod import_path;
@@ -188,15 +189,14 @@ pub fn __route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
-pub fn module2(args: TokenStream, input: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(args as SynArgs);
-    println!("// module2 {:?}", args.value);
-    return input;
-}
-
-#[proc_macro_attribute]
 pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     // 解析宏的参数
+    {
+        let args = args.clone();
+        let args: args::ModuleArgs = parse_macro_input!(args as SynArgs).arguments().expect("Invalid argument");
+        println!("// module2 {:?}", args);
+    }
+
     let args = parse_macro_input!(args as ModuleArgs);
     let func = parse_macro_input!(input as ItemStruct);
     let ident = func.ident.clone();

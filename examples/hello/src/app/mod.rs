@@ -1,4 +1,4 @@
-use nidrs::{macros::module, module2};
+use nidrs::macros::module;
 
 pub mod controller;
 pub mod dto;
@@ -15,19 +15,6 @@ use interceptor::AppInterceptor;
 use service::AppService;
 
 // #[default_uses(LogInterceptor)]
-#[module2({
-    imports: [
-    //     ConfModule::for_root(ConfOptions{
-    //         log_level: "info".to_string(),
-    //     }),
-    //     LogModule,
-        UserModule,
-    ],
-    interceptors: [AppInterceptor],
-    controllers: [AppController],
-    services: [AppService],
-    exports: [AppService],
-})]
 #[module({
     imports: [
     //     ConfModule::for_root(ConfOptions{
