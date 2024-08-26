@@ -1,8 +1,10 @@
 mod macro_args;
+mod syn_args;
 mod traits;
 mod transform;
 
 pub use macro_args::*;
+pub use syn_args::*;
 pub use syn_args_derive as derive;
 pub use traits::*;
 pub use transform::*;
@@ -329,6 +331,14 @@ mod tests {
     }
     #[test]
     fn test_formal_f7() {
+        let res = ModuleArgs::parse("F({ s1: { value: false }, s2: { value: true } })").unwrap();
+        println!("{:?}", res);
+
+        assert_eq!(res, ModuleArgs::F7(SubWrap { s1: Sub { value: def::Bool(false) }, s2: Sub { value: def::Bool(true) } }));
+    }
+
+    #[test]
+    fn test_tokens_formal_f7() {
         let res = ModuleArgs::parse("F({ s1: { value: false }, s2: { value: true } })").unwrap();
         println!("{:?}", res);
 

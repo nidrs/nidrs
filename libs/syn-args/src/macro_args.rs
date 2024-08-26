@@ -36,25 +36,7 @@ impl Formal {
 
 pub fn recursive_parsing(input: &syn::Expr) -> Value {
     match input {
-        syn::Expr::Lit(lit) => match &lit.lit {
-            syn::Lit::Int(int) => {
-                let v = int.base10_parse::<i32>().unwrap();
-                Value::Int(def::Int(v))
-            }
-            syn::Lit::Str(str) => {
-                let v = str.value();
-                Value::String(def::String(v))
-            }
-            syn::Lit::Float(float) => {
-                let v = float.base10_parse::<f32>().unwrap();
-                Value::Float(def::Float(v))
-            }
-            syn::Lit::Bool(bool) => {
-                let v = bool.value;
-                Value::Bool(def::Bool(v))
-            }
-            _ => Value::Null,
-        },
+        syn::Expr::Lit(lit) => recursive_lit(&lit.lit),
         syn::Expr::Path(path) => Value::Ident(def::Ident(path.path.segments[0].ident.to_string())),
         syn::Expr::Array(array) => {
             let mut arr = vec![];
@@ -72,6 +54,28 @@ pub fn recursive_parsing(input: &syn::Expr) -> Value {
                 obj.insert(key, value);
             }
             Value::Object(def::Object(obj))
+        }
+        _ => Value::Null,
+    }
+}
+
+pub fn recursive_lit(lit: &syn::Lit) -> Value {
+    match lit {
+        syn::Lit::Int(int) => {
+            let v = int.base10_parse::<i32>().unwrap();
+            Value::Int(def::Int(v))
+        }
+        syn::Lit::Str(str) => {
+            let v = str.value();
+            Value::String(def::String(v))
+        }
+        syn::Lit::Float(float) => {
+            let v = float.base10_parse::<f32>().unwrap();
+            Value::Float(def::Float(v))
+        }
+        syn::Lit::Bool(bool) => {
+            let v = bool.value;
+            Value::Bool(def::Bool(v))
         }
         _ => Value::Null,
     }
