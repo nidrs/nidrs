@@ -1,7 +1,4 @@
-use std::ops::Deref;
-
 use proc_macro2::Group;
-use quote::ToTokens;
 use syn::{
     parse::{Parse, ParseStream},
     token::{Brace, Paren},
@@ -41,7 +38,7 @@ impl Parse for SynArgs {
                 res.push(recursive_lit(&lit));
             } else if content.peek(Ident) {
                 let ident = content.parse::<Path>()?;
-                res.push(Value::Ident(def::Ident(ident.to_token_stream().to_string())));
+                res.push(Value::PathIdent(def::PathIdent(ident)));
             } else if content.peek(Brace) {
                 let group: Group = content.parse()?;
 
@@ -102,18 +99,24 @@ mod tests {
     #[test]
     fn test_syn_args2() {
         let args = syn::parse_str::<SynArgs>("(Test, MY::TEST)").unwrap();
-        assert_eq!(format!("{:?}", args.value), "Array(Array([Ident(Ident(\"Test\")), Ident(Ident(\"MY :: TEST\"))]))");
+        assert_eq!(format!("{:?}", args.value), "Array(Array([PathIdent(PathIdent(\"Test\")), PathIdent(PathIdent(\"MY :: TEST\"))]))");
     }
 
     #[test]
     fn test_syn_args3() {
         let args = syn::parse_str::<SynArgs>("([Test, MY::TEST])").unwrap();
-        assert_eq!(format!("{:?}", args.value), "Array(Array([Array(Array([Ident(Ident(\"Test\")), Ident(Ident(\"MY\"))]))]))");
+        assert_eq!(
+            format!("{:?}", args.value),
+            "Array(Array([Array(Array([PathIdent(PathIdent(\"Test\")), PathIdent(PathIdent(\"MY :: TEST\"))]))]))"
+        );
     }
 
     #[test]
     fn test_syn_args3_no_parenthesized() {
         let args = syn::parse_str::<SynArgs>("[Test, MY::TEST]").unwrap();
-        assert_eq!(format!("{:?}", args.value), "Array(Array([Array(Array([Ident(Ident(\"Test\")), Ident(Ident(\"MY\"))]))]))");
+        assert_eq!(
+            format!("{:?}", args.value),
+            "Array(Array([Array(Array([PathIdent(PathIdent(\"Test\")), PathIdent(PathIdent(\"MY :: TEST\"))]))]))"
+        );
     }
 }

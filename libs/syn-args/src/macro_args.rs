@@ -37,7 +37,7 @@ impl Formal {
 pub fn recursive_parsing(input: &syn::Expr) -> Value {
     match input {
         syn::Expr::Lit(lit) => recursive_lit(&lit.lit),
-        syn::Expr::Path(path) => Value::Ident(def::Ident(path.path.segments[0].ident.to_string())),
+        syn::Expr::Path(path) => Value::PathIdent(def::PathIdent(path.path.clone())),
         syn::Expr::Array(array) => {
             let mut arr = vec![];
             for item in array.elems.iter() {
@@ -84,7 +84,7 @@ pub fn recursive_lit(lit: &syn::Lit) -> Value {
 #[derive(Debug, Clone)]
 pub enum Value {
     Null,
-    Ident(def::Ident),
+    PathIdent(def::PathIdent),
     Int(def::Int),
     Float(def::Float),
     Bool(def::Bool),

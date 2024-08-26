@@ -15,8 +15,8 @@ use syn_args::{def, derive::ArgsParse, ArgsParse, Formal};
 pub enum ModuleArgs {
     F1(def::Int, def::Int),
     F2(def::Int),
-    F3(def::Ident),
-    F4(def::Array<def::Ident>),
+    F3(def::PathIdent),
+    F4(def::Array<def::PathIdent>),
     F5(ModuleSubObj),
     F6(def::Array<ModuleSubObj>),
     F7(SubWrap),
@@ -112,7 +112,7 @@ impl TryFrom<syn_args::Transform<'_>> for ModuleArgs {
 }
 pub struct ModuleSubObj {
     pub global: def::Option<def::Bool>,
-    pub imports: def::Array<def::Ident>,
+    pub imports: def::Array<def::PathIdent>,
     pub sub: def::Option<Sub>,
 }
 #[automatically_derived]
@@ -310,7 +310,7 @@ fn test_formal_f3() {
     {
         ::std::io::_print(format_args!("{0:?}\n", res));
     };
-    match (&res, &ModuleArgs::F3(def::Ident("Hello".to_string()))) {
+    match (&res, &ModuleArgs::F3(def::PathIdent::from("Hello"))) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -328,7 +328,7 @@ fn test_formal_f4() {
         &res,
         &ModuleArgs::F4(def::Array(<[_]>::into_vec(
             #[rustc_box]
-            ::alloc::boxed::Box::new([def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())]),
+            ::alloc::boxed::Box::new([def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
         ))),
     ) {
         (left_val, right_val) => {
@@ -349,7 +349,7 @@ fn test_formal_f5() {
         &ModuleArgs::F5(ModuleSubObj {
             imports: def::Array(<[_]>::into_vec(
                 #[rustc_box]
-                ::alloc::boxed::Box::new([def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())]),
+                ::alloc::boxed::Box::new([def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
             )),
             global: def::Option(None),
             sub: def::Option(None),
@@ -376,7 +376,7 @@ fn test_formal_f6() {
                 ModuleSubObj {
                     imports: def::Array(<[_]>::into_vec(
                         #[rustc_box]
-                        ::alloc::boxed::Box::new([def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())]),
+                        ::alloc::boxed::Box::new([def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
                     )),
                     global: def::Option(None),
                     sub: def::Option(None),
@@ -384,7 +384,7 @@ fn test_formal_f6() {
                 ModuleSubObj {
                     imports: def::Array(<[_]>::into_vec(
                         #[rustc_box]
-                        ::alloc::boxed::Box::new([def::Ident("Ident3".to_string()), def::Ident("Ident4".to_string())]),
+                        ::alloc::boxed::Box::new([def::PathIdent::from("Ident3"), def::PathIdent::from("Ident4")]),
                     )),
                     global: def::Option(None),
                     sub: def::Option(None),
@@ -413,7 +413,7 @@ fn test_formal_f6_2() {
                 ModuleSubObj {
                     imports: def::Array(<[_]>::into_vec(
                         #[rustc_box]
-                        ::alloc::boxed::Box::new([def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())]),
+                        ::alloc::boxed::Box::new([def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
                     )),
                     global: def::Option(Some(Box::new(def::Bool(true)))),
                     sub: def::Option(None),
@@ -421,7 +421,7 @@ fn test_formal_f6_2() {
                 ModuleSubObj {
                     imports: def::Array(<[_]>::into_vec(
                         #[rustc_box]
-                        ::alloc::boxed::Box::new([def::Ident("Ident3".to_string()), def::Ident("Ident4".to_string())]),
+                        ::alloc::boxed::Box::new([def::PathIdent::from("Ident3"), def::PathIdent::from("Ident4")]),
                     )),
                     global: def::Option(None),
                     sub: def::Option(None),
@@ -450,7 +450,7 @@ fn test_formal_f6_3() {
                 ModuleSubObj {
                     imports: def::Array(<[_]>::into_vec(
                         #[rustc_box]
-                        ::alloc::boxed::Box::new([def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())]),
+                        ::alloc::boxed::Box::new([def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
                     )),
                     global: def::Option(Some(Box::new(def::Bool(true)))),
                     sub: def::Option(Some(Box::new(Sub { value: def::Bool(true) }))),
@@ -458,7 +458,7 @@ fn test_formal_f6_3() {
                 ModuleSubObj {
                     imports: def::Array(<[_]>::into_vec(
                         #[rustc_box]
-                        ::alloc::boxed::Box::new([def::Ident("Ident3".to_string()), def::Ident("Ident4".to_string())]),
+                        ::alloc::boxed::Box::new([def::PathIdent::from("Ident3"), def::PathIdent::from("Ident4")]),
                     )),
                     global: def::Option(None),
                     sub: def::Option(None),
@@ -488,6 +488,20 @@ fn test_formal_f7() {
         }
     };
 }
+fn test_tokens_formal_f7() {
+    let res = ModuleArgs::parse("F({ s1: { value: false }, s2: { value: true } })").unwrap();
+    {
+        ::std::io::_print(format_args!("{0:?}\n", res));
+    };
+    match (&res, &ModuleArgs::F7(SubWrap { s1: Sub { value: def::Bool(false) }, s2: Sub { value: def::Bool(true) } })) {
+        (left_val, right_val) => {
+            if !(*left_val == *right_val) {
+                let kind = ::core::panicking::AssertKind::Eq;
+                ::core::panicking::assert_failed(kind, &*left_val, &*right_val, ::core::option::Option::None);
+            }
+        }
+    };
+}
 fn main() {
     test_formal_f1();
     test_formal_f2();
@@ -498,5 +512,6 @@ fn main() {
     test_formal_f6_2();
     test_formal_f6_3();
     test_formal_f7();
+    test_tokens_formal_f7();
 }
 extern crate alloc;

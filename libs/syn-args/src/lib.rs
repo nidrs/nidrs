@@ -24,8 +24,8 @@ mod tests {
     pub enum ModuleArgs {
         F1(def::Int, def::Int),
         F2(def::Int),
-        F3(def::Ident),
-        F4(def::Array<def::Ident>),
+        F3(def::PathIdent),
+        F4(def::Array<def::PathIdent>),
         F5(ModuleSubObj),
         F6(def::Array<ModuleSubObj>),
         F7(SubWrap),
@@ -104,7 +104,7 @@ mod tests {
     #[derive(Debug, PartialEq)]
     pub struct ModuleSubObj {
         pub global: def::Option<def::Bool>,
-        pub imports: def::Array<def::Ident>,
+        pub imports: def::Array<def::PathIdent>,
         pub sub: def::Option<Sub>,
     }
 
@@ -238,7 +238,7 @@ mod tests {
         let res = ModuleArgs::parse("F(Hello)").unwrap();
         println!("{:?}", res);
 
-        assert_eq!(res, ModuleArgs::F3(def::Ident("Hello".to_string())));
+        assert_eq!(res, ModuleArgs::F3(def::PathIdent::from("Hello")));
     }
 
     #[test]
@@ -246,7 +246,7 @@ mod tests {
         let res = ModuleArgs::parse("F([Ident1, Ident2])").unwrap();
         println!("{:?}", res);
 
-        assert_eq!(res, ModuleArgs::F4(def::Array(vec![def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())])));
+        assert_eq!(res, ModuleArgs::F4(def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")])));
     }
 
     #[test]
@@ -257,7 +257,7 @@ mod tests {
         assert_eq!(
             res,
             ModuleArgs::F5(ModuleSubObj {
-                imports: def::Array(vec![def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())]),
+                imports: def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
                 global: def::Option(None),
                 sub: def::Option(None)
             })
@@ -273,12 +273,12 @@ mod tests {
             res,
             ModuleArgs::F6(def::Array(vec![
                 ModuleSubObj {
-                    imports: def::Array(vec![def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())]),
+                    imports: def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
                     global: def::Option(None),
                     sub: def::Option(None)
                 },
                 ModuleSubObj {
-                    imports: def::Array(vec![def::Ident("Ident3".to_string()), def::Ident("Ident4".to_string())]),
+                    imports: def::Array(vec![def::PathIdent::from("Ident3"), def::PathIdent::from("Ident4")]),
                     global: def::Option(None),
                     sub: def::Option(None)
                 }
@@ -295,12 +295,12 @@ mod tests {
             res,
             ModuleArgs::F6(def::Array(vec![
                 ModuleSubObj {
-                    imports: def::Array(vec![def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())]),
+                    imports: def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
                     global: def::Option(Some(Box::new(def::Bool(true)))),
                     sub: def::Option(None)
                 },
                 ModuleSubObj {
-                    imports: def::Array(vec![def::Ident("Ident3".to_string()), def::Ident("Ident4".to_string())]),
+                    imports: def::Array(vec![def::PathIdent::from("Ident3"), def::PathIdent::from("Ident4")]),
                     global: def::Option(None),
                     sub: def::Option(None)
                 }
@@ -317,12 +317,12 @@ mod tests {
             res,
             ModuleArgs::F6(def::Array(vec![
                 ModuleSubObj {
-                    imports: def::Array(vec![def::Ident("Ident1".to_string()), def::Ident("Ident2".to_string())]),
+                    imports: def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
                     global: def::Option(Some(Box::new(def::Bool(true)))),
                     sub: def::Option(Some(Box::new(Sub { value: def::Bool(true) })))
                 },
                 ModuleSubObj {
-                    imports: def::Array(vec![def::Ident("Ident3".to_string()), def::Ident("Ident4".to_string())]),
+                    imports: def::Array(vec![def::PathIdent::from("Ident3"), def::PathIdent::from("Ident4")]),
                     global: def::Option(None),
                     sub: def::Option(None)
                 }
