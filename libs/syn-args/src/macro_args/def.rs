@@ -32,4 +32,3 @@ mod int;
 pub use int::*;
 
 mod native;
-pub use native::*;
