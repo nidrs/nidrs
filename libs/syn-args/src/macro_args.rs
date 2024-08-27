@@ -34,6 +34,19 @@ impl Formal {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum Value {
+    Null,
+    PathIdent(def::PathIdent),
+    Int(def::Int),
+    Float(def::Float),
+    Bool(def::Bool),
+    String(def::String),
+    Option(def::Option<Box<Value>>),
+    Object(def::Object<Value>),
+    Array(def::Array<Value>),
+}
+
 pub fn recursive_parsing(input: &syn::Expr) -> Value {
     match input {
         syn::Expr::Lit(lit) => recursive_lit(&lit.lit),
@@ -79,17 +92,4 @@ pub fn recursive_lit(lit: &syn::Lit) -> Value {
         }
         _ => Value::Null,
     }
-}
-
-#[derive(Debug, Clone)]
-pub enum Value {
-    Null,
-    PathIdent(def::PathIdent),
-    Int(def::Int),
-    Float(def::Float),
-    Bool(def::Bool),
-    String(def::String),
-    Option(def::Option<Value>),
-    Object(def::Object<HashMap<String, Value>>),
-    Array(def::Array<Value>),
 }

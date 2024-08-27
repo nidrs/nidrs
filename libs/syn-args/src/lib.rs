@@ -18,8 +18,6 @@ mod tests {
 
     use super::*;
 
-    // #[args(Module)]
-
     #[derive(Debug, PartialEq)]
     pub enum ModuleArgs {
         F1(def::Int, def::Int),
@@ -318,7 +316,7 @@ mod tests {
             ModuleArgs::F6(def::Array(vec![
                 ModuleSubObj {
                     imports: def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
-                    global: def::Option(Some(Box::new(def::Bool(true)))),
+                    global: def::Option(Some(def::Bool(true))),
                     sub: def::Option(None)
                 },
                 ModuleSubObj {
@@ -340,8 +338,8 @@ mod tests {
             ModuleArgs::F6(def::Array(vec![
                 ModuleSubObj {
                     imports: def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
-                    global: def::Option(Some(Box::new(def::Bool(true)))),
-                    sub: def::Option(Some(Box::new(Sub { value: def::Bool(true) })))
+                    global: def::Option(Some(def::Bool(true))),
+                    sub: def::Option(Some(Sub { value: def::Bool(true) }))
                 },
                 ModuleSubObj {
                     imports: def::Array(vec![def::PathIdent::from("Ident3"), def::PathIdent::from("Ident4")]),
@@ -374,9 +372,17 @@ mod tests {
 
         assert_eq!(
             res,
-            ModuleArgs::F8(T1 {
-                controllers: def::Option(Some(Box::new(def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]))))
-            })
+            ModuleArgs::F8(T1 { controllers: def::Option(Some(def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]))) })
         );
+    }
+
+    #[test]
+    fn test_value_p1() {
+        let f = Formal::new();
+
+        let args = f.parse("F(1, { a:1, b:2 })").unwrap();
+        println!("{:?}", args);
+
+        assert_eq!(format!("{:?}", args), "Array(Array([Int(Int(1)), Object(Object({\"a\": Int(Int(1)), \"b\": Int(Int(2))}))]))");
     }
 }

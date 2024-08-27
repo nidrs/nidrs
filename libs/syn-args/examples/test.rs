@@ -9,6 +9,7 @@ pub enum ModuleArgs {
     F5(ModuleSubObj),
     F6(def::Array<ModuleSubObj>),
     F7(SubWrap),
+    F8(T1),
 }
 
 #[derive(Debug, PartialEq, ArgsParse)]
@@ -27,6 +28,11 @@ pub struct Sub {
 pub struct SubWrap {
     pub s1: Sub,
     pub s2: Sub,
+}
+
+#[derive(Debug, PartialEq, ArgsParse)]
+struct T1 {
+    pub controllers: def::Option<def::Array<def::PathIdent>>,
 }
 
 fn test_formal_f1() {
@@ -115,7 +121,7 @@ fn test_formal_f6_2() {
         ModuleArgs::F6(def::Array(vec![
             ModuleSubObj {
                 imports: def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
-                global: def::Option(Some(Box::new(def::Bool(true)))),
+                global: def::Option(Some(def::Bool(true))),
                 sub: def::Option(None)
             },
             ModuleSubObj {
@@ -136,8 +142,8 @@ fn test_formal_f6_3() {
         ModuleArgs::F6(def::Array(vec![
             ModuleSubObj {
                 imports: def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
-                global: def::Option(Some(Box::new(def::Bool(true)))),
-                sub: def::Option(Some(Box::new(Sub { value: def::Bool(true) })))
+                global: def::Option(Some(def::Bool(true))),
+                sub: def::Option(Some(Sub { value: def::Bool(true) }))
             },
             ModuleSubObj {
                 imports: def::Array(vec![def::PathIdent::from("Ident3"), def::PathIdent::from("Ident4")]),
@@ -162,6 +168,24 @@ fn test_tokens_formal_f7() {
     assert_eq!(res, ModuleArgs::F7(SubWrap { s1: Sub { value: def::Bool(false) }, s2: Sub { value: def::Bool(true) } }));
 }
 
+fn test_formal_f8() {
+    let res = ModuleArgs::parse("F({ controllers: [Ident1, Ident2] })").unwrap();
+    println!("{:?}", res);
+
+    assert_eq!(
+        res,
+        ModuleArgs::F8(T1 { controllers: def::Option(Some(def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]))) })
+    );
+}
+
+fn test_value_p1() {
+    let f = Formal::new();
+
+    let args = f.parse("F(1, { a:1, b:2 })").unwrap();
+    println!("{:?}", args);
+
+    assert_eq!(format!("{:?}", args), "Array(Array([Int(Int(1)), Object(Object({\"a\": Int(Int(1)), \"b\": Int(Int(2))}))]))");
+}
 fn main() {
     test_formal_f1();
     test_formal_f2();
@@ -173,4 +197,6 @@ fn main() {
     test_formal_f6_3();
     test_formal_f7();
     test_tokens_formal_f7();
+    test_formal_f8();
+    test_value_p1();
 }
