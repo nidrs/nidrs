@@ -10,9 +10,9 @@ pub enum ModuleArgs {
 
 #[derive(Debug, Clone, ArgsParse)]
 pub struct ModuleOptions {
-    pub imports: def::Option<def::Array<def::PathIdent>>,
-    pub controllers: def::Option<def::Array<def::PathIdent>>,
-    pub services: def::Option<def::Array<def::PathIdent>>,
-    pub exports: def::Option<def::Array<def::PathIdent>>,
-    pub interceptors: def::Option<def::Array<def::PathIdent>>,
+    pub imports: def::Array<def::PathIdent>,
+    pub controllers: def::Array<def::PathIdent>,
+    pub services: def::Array<def::PathIdent>,
+    pub exports: def::Array<def::PathIdent>,
+    pub interceptors: def::Array<def::PathIdent>,
 }

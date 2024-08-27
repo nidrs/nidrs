@@ -3,6 +3,13 @@ use super::*;
 #[derive(Debug, PartialEq, Clone)]
 pub struct Array<Item>(pub Vec<Item>);
 
+impl<T> Array<T> {
+    pub fn merge(mut self, b: Array<T>) -> Self {
+        self.0.extend(b.0);
+        self
+    }
+}
+
 impl<Item> Deref for Array<Item> {
     type Target = Vec<Item>;
 
@@ -27,6 +34,8 @@ where
         if let Value::Object(obj) = self.value {
             if let Some(Value::Array(arr)) = obj.get(self.key) {
                 return Ok(def::Array(arr.iter().map(|v| T::try_from(v)).collect::<Result<Vec<T>, Self::Error>>()?));
+            } else {
+                return Ok(def::Array(Vec::new()));
             }
         }
 

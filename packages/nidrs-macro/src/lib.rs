@@ -194,7 +194,7 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     let module_options = {
         let args = args.clone();
         let args: args::ModuleArgs = parse_macro_input!(args as SynArgs).arguments().expect("Invalid argument");
-        println!("// module2 {:?}", args);
+        // println!("// module2 {:?}", args);
         if let args::ModuleArgs::F1(options) = args {
             options
         } else {
@@ -202,47 +202,25 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
         }
     };
 
-    let args = parse_macro_input!(args as ModuleArgs);
     let func = parse_macro_input!(input as ItemStruct);
     let ident = func.ident.clone();
     let ident_name = ident.to_string();
 
     let controller_register_tokens = expand_controller_register(ident_name.clone(), &module_options.controllers);
-    let service_register_tokens = expand_service_register_tokens(ident_name.clone(), args.services.clone());
-    let defaults_interceptors = DEFAULT_INTERS
-        .lock()
-        .unwrap()
-        .clone()
-        .iter()
-        .map(|inter| {
-            return syn::Ident::new(inter, Span::call_site().into()).to_token_stream();
-        })
-        .collect::<Vec<TokenStream2>>();
-    let interceptor_register_tokens = gen_interceptor_register_tokens(
-        ident_name.clone(),
-        utils::merge_vec(args.interceptors.clone(), utils::merge_vec(defaults_interceptors, vec![])),
-    );
-    let (import_names_tokens, imports_register_tokens) = gen_imports_register_tokens(ident_name.clone(), args.imports.clone());
-    let imports_register_names = args.imports.clone().iter().map(|import_tokens| import_tokens.to_string()).collect::<Vec<String>>();
-    let exports_names: Vec<String> = args.exports.clone().iter().map(|export_tokens| export_tokens.to_string()).collect::<Vec<String>>();
-    let exports_names_tokens = exports_names
-        .iter()
-        .map(|export_name| {
-            quote! {
-                #export_name
-            }
-        })
-        .collect::<Vec<TokenStream2>>();
-    let exports_names_tokens = TokenStream2::from(quote! {
-        Vec::from([#(#exports_names_tokens),*])
-    });
+    let service_register_tokens = expand_service_register(ident_name.clone(), &module_options.services);
 
-    let services_dep_inject_tokens: TokenStream2 = gen_dep_inject_tokens("get_service", ident_name.clone(), args.services.clone());
-    let controller_dep_inject_tokens = gen_dep_inject_tokens("get_controller", ident_name.clone(), args.controllers.clone());
-    let interceptor_dep_inject_tokens = gen_dep_inject_tokens("get_interceptor", ident_name.clone(), args.interceptors.clone());
+    let all_interceptors = merge_defaults_interceptors(module_options.interceptors.clone());
+    let interceptor_register_tokens = expand_interceptor_register(ident_name.clone(), &all_interceptors);
+    let (import_names_tokens, imports_register_tokens) = expand_imports_register(ident_name.clone(), &module_options.imports);
+    // let imports_register_names = args.imports.clone().iter().map(|import_tokens| import_tokens.to_string()).collect::<Vec<String>>();
+    let exports_names_tokens = expand_exports_append(&module_options.exports);
 
-    let trigger_on_module_init_tokens: TokenStream2 = gen_events_trigger_tokens(ident_name.clone(), "on_module_init");
-    let trigger_on_module_destroy_tokens = gen_events_trigger_tokens(ident_name.clone(), "on_module_destroy");
+    let services_dep_inject_tokens: TokenStream2 = expand_dep_inject("get_service", ident_name.clone(), &module_options.services);
+    let controller_dep_inject_tokens = expand_dep_inject("get_controller", ident_name.clone(), &module_options.controllers);
+    let interceptor_dep_inject_tokens = expand_dep_inject("get_interceptor", ident_name.clone(), &module_options.interceptors);
+
+    let trigger_on_module_init_tokens: TokenStream2 = expand_events_trigger(ident_name.clone(), "on_module_init");
+    let trigger_on_module_destroy_tokens = expand_events_trigger(ident_name.clone(), "on_module_destroy");
 
     let module_meta_tokens = cmeta::CMeta::build_tokens();
     let is_global_tokens = if let Some(MetaValue::Bool(bool)) = meta_parse::get_meta_value("Global") { bool } else { false };
@@ -306,6 +284,39 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
             }
         }
     });
+}
+
+fn expand_exports_append(exports: &def::Array<def::PathIdent>) -> TokenStream2 {
+    let exports_names: Vec<String> = exports.iter().map(|export_tokens| export_tokens.to_string()).collect::<Vec<String>>();
+    let exports_names_tokens = exports_names
+        .iter()
+        .map(|export_name| {
+            quote! {
+                #export_name
+            }
+        })
+        .collect::<Vec<TokenStream2>>();
+    let exports_names_tokens = TokenStream2::from(quote! {
+        Vec::from([#(#exports_names_tokens),*])
+    });
+    exports_names_tokens
+}
+
+fn merge_defaults_interceptors(interceptors: def::Array<def::PathIdent>) -> def::Array<def::PathIdent> {
+    let defaults_interceptors = def::Array(
+        DEFAULT_INTERS
+            .lock()
+            .unwrap()
+            .clone()
+            .iter()
+            .map(|inter| {
+                return inter.as_str().into();
+            })
+            .collect::<Vec<def::PathIdent>>(),
+    );
+
+    let all_interceptors = defaults_interceptors.merge(interceptors);
+    all_interceptors
 }
 
 #[proc_macro_attribute]
@@ -822,11 +833,7 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
     })
 }
 
-fn expand_controller_register(module_name: String, services: &def::Option<def::Array<def::PathIdent>>) -> TokenStream2 {
-    if services.is_none() {
-        return TokenStream2::new();
-    }
-    let services = services.as_ref().unwrap();
+fn expand_controller_register(module_name: String, services: &def::Array<def::PathIdent>) -> TokenStream2 {
     let controller_tokens: Vec<TokenStream2> = services
         .iter()
         .map(|controller_token| {
@@ -861,12 +868,12 @@ fn expand_controller_register(module_name: String, services: &def::Option<def::A
     return controller_tokens;
 }
 
-fn expand_service_register_tokens(module_name: String, services: Vec<TokenStream2>) -> TokenStream2 {
+fn expand_service_register(module_name: String, services: &def::Array<def::PathIdent>) -> TokenStream2 {
     let service_tokens = services
         .iter()
         .map(|service_tokens| {
             let service_name = service_tokens.to_string();
-            let service_ident = service_tokens;
+            let service_ident = service_tokens.to_token_stream();
 
             quote! {
                 let svc = std::sync::Arc::new(#service_ident::default());
@@ -881,13 +888,13 @@ fn expand_service_register_tokens(module_name: String, services: Vec<TokenStream
     return service_tokens;
 }
 
-fn gen_interceptor_register_tokens(module_name: String, services: Vec<TokenStream2>) -> TokenStream2 {
+fn expand_interceptor_register(module_name: String, services: &def::Array<def::PathIdent>) -> TokenStream2 {
     // println!("// gen_interceptor_register_tokens {} {:?}", module_name, services);
     let interceptor_tokens = services
         .iter()
         .map(|interceptor_token| {
             let interceptor_name = interceptor_token.to_string();
-            let interceptor_ident = interceptor_token;
+            let interceptor_ident = interceptor_token.to_token_stream();
             let import_interceptor_tokens = import_path::gen_import_tokens(&interceptor_name);
             quote! {
                 ctx.register_interceptor(#module_name, #interceptor_name, Box::new(std::sync::Arc::new(#import_interceptor_tokens::default())));
@@ -900,14 +907,15 @@ fn gen_interceptor_register_tokens(module_name: String, services: Vec<TokenStrea
     return interceptor_tokens;
 }
 
-fn gen_imports_register_tokens(module_name: String, imports: Vec<TokenStream2>) -> (TokenStream2, TokenStream2) {
+fn expand_imports_register(module_name: String, imports: &def::Array<def::PathIdent>) -> (TokenStream2, TokenStream2) {
     let mut import_names = vec![];
     let imports = imports
         .iter()
         .map(|import_tokens| {
             let import_name = import_tokens.to_string();
+            let import_tokens = import_tokens.to_token_stream();
 
-            let import_call = syn::parse2::<ExprCall>(import_tokens.clone());
+            let import_call = syn::parse2::<ExprCall>(import_tokens.to_token_stream());
             if let Ok(import_call) = import_call {
                 if let Expr::Path(path) = import_call.func.as_ref() {
                     let module_ident = path.path.segments.first().unwrap().ident.clone();
@@ -954,13 +962,13 @@ fn gen_imports_register_tokens(module_name: String, imports: Vec<TokenStream2>) 
     return (import_names, imports);
 }
 
-fn gen_dep_inject_tokens(con: &str, module_name: String, services: Vec<TokenStream2>) -> TokenStream2 {
+fn expand_dep_inject(con: &str, module_name: String, services: &def::Array<def::PathIdent>) -> TokenStream2 {
     let con_ident = syn::Ident::new(con, Span::call_site().into());
     let controller_tokens = services
         .iter()
         .map(|tokens| {
             let controller_name = tokens.to_string();
-            let controller_ident = tokens;
+            let controller_ident = tokens.to_token_stream();
 
             quote! {
                 let t = ctx.#con_ident::<#controller_ident>(#module_name, #controller_name);
@@ -1053,7 +1061,7 @@ fn gen_service_inject_tokens(service_type: ServiceType, func: &ItemStruct) -> To
     return inject_tokens;
 }
 
-fn gen_events_trigger_tokens(module_name: String, event_name: &str) -> TokenStream2 {
+fn expand_events_trigger(module_name: String, event_name: &str) -> TokenStream2 {
     // let event_name_ident = syn::Ident::new(event_name, Span::call_site().into());
     let binding = EVENTS.lock().unwrap();
     let on_module_event = binding.get(event_name);
