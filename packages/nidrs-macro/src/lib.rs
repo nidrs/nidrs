@@ -31,7 +31,7 @@ use syn::{parse_macro_input, spanned::Spanned, FnArg, ItemFn, ItemStruct, PatTyp
 
 mod args_parse;
 use args_parse::*;
-use syn_args::SynArgs;
+use syn_args::{def, SynArgs};
 use utils::merge_uses;
 mod global;
 
@@ -191,18 +191,23 @@ pub fn __route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
     // 解析宏的参数
-    {
+    let module_options = {
         let args = args.clone();
         let args: args::ModuleArgs = parse_macro_input!(args as SynArgs).arguments().expect("Invalid argument");
         println!("// module2 {:?}", args);
-    }
+        if let args::ModuleArgs::F1(options) = args {
+            options
+        } else {
+            panic!("Invalid argument");
+        }
+    };
 
     let args = parse_macro_input!(args as ModuleArgs);
     let func = parse_macro_input!(input as ItemStruct);
     let ident = func.ident.clone();
     let ident_name = ident.to_string();
 
-    let controller_register_tokens = expand_controller_register(ident_name.clone(), args.controllers.clone());
+    let controller_register_tokens = expand_controller_register(ident_name.clone(), &module_options.controllers);
     let service_register_tokens = expand_service_register_tokens(ident_name.clone(), args.services.clone());
     let defaults_interceptors = DEFAULT_INTERS
         .lock()
@@ -817,13 +822,17 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
     })
 }
 
-fn expand_controller_register(module_name: String, services: Vec<TokenStream2>) -> TokenStream2 {
+fn expand_controller_register(module_name: String, services: &def::Option<def::Array<def::PathIdent>>) -> TokenStream2 {
+    if services.is_none() {
+        return TokenStream2::new();
+    }
+    let services = services.as_ref().unwrap();
     let controller_tokens: Vec<TokenStream2> = services
         .iter()
         .map(|controller_token| {
             let controller_name = controller_token.to_string();
             let binding = ROUTES.lock().unwrap();
-            let controller = binding.get(&controller_name).unwrap();
+            let controller: &Vec<String> = binding.get(&controller_name).unwrap();
             let controller_ident = syn::Ident::new(&controller_name, Span::call_site().into());
             let router_path = controller
                 .iter()
