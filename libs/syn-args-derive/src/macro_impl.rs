@@ -78,14 +78,6 @@ pub fn impl_args_parse(args: &DeriveInput) -> TokenStream {
                         #(#variant_fields_value),*
                     }
                 );
-            } else if let syn_args::Value::Array(v) = v {
-                if v.len() == 1 {
-                    return Ok(
-                        #name {
-                            #(#variant_fields_name: syn_args::utils::otr(v.first())?.try_into()?),*
-                        }
-                    );
-                }
             }
         };
     }

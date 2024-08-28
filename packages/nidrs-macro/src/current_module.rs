@@ -6,7 +6,7 @@ use std::{
 use proc_macro::Span;
 use quote::ToTokens;
 
-use crate::{args, DefaultUsesOptions, ModuleOptions};
+use crate::{DefaultUsesOptions, ModuleOptions};
 
 static CURRENT_MODULE: Mutex<Option<CurrentModule>> = Mutex::new(None);
 static CURRENT_MODPATH: Mutex<Option<PathBuf>> = Mutex::new(None);
@@ -86,9 +86,6 @@ pub fn begin_mod() {
                         let attr_path = attr_path.segments.iter().map(|seg| seg.ident.to_string()).collect::<Vec<String>>();
                         if attr_path.contains(&"module".to_string()) {
                             let module_args = attr.meta.to_token_stream();
-                            println!("mod.rs {:?}", module_args.to_string());
-                            let mut t: args::ModuleOptions = syn::parse2::<syn_args::SynArgs>(module_args.clone()).unwrap().arguments().unwrap();
-                            println!("begin mod {:#?}", t);
                             let mut module_args: CurrentModule = syn::parse2::<ModuleOptions>(module_args).unwrap().into();
                             module_args.name = item_module.ident.to_string();
                             module_args.default_uses = default_uses.clone();
