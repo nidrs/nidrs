@@ -81,7 +81,8 @@ pub fn proc_attribute(_: TokenStream, input: TokenStream) -> TokenStream {
         // println!("args_member: {}", args_member);
 
         quote! {
-            fn #fn_ident(args: proc_macro::TokenStream, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+            #[proc_macro_attribute]
+            pub fn #fn_ident(args: proc_macro::TokenStream, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                 use syn_args::anyhow;
                 use syn_args::derive::ArgsParse;
                 use syn_args::ArgsParse;
