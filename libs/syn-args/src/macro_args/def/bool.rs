@@ -35,6 +35,8 @@ impl<'a> TryInto<def::Bool> for Transform<'a> {
         if let Value::Object(obj) = self.value {
             if let Some(Value::Bool(v)) = obj.get(self.key) {
                 return Ok(v.clone());
+            } else {
+                return Ok(def::Bool(false));
             }
         }
 
