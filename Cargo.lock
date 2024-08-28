@@ -2032,6 +2032,7 @@ name = "syn-args-derive"
 version = "0.2.1"
 dependencies = [
  "insta",
+ "once_cell",
  "proc-macro2",
  "quote",
  "syn 2.0.75",

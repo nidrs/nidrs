@@ -3,6 +3,7 @@ mod syn_args;
 mod traits;
 mod transform;
 
+pub use anyhow;
 pub use macro_args::*;
 pub use syn_args::*;
 pub use syn_args_derive as derive;
