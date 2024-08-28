@@ -3,8 +3,7 @@ use std::{collections::HashMap, sync::Mutex};
 use macro_impl::impl_args_parse;
 use once_cell::sync::Lazy;
 use proc_macro::TokenStream;
-use quote::{quote, ToTokens};
-use syn::{Fields, FieldsUnnamed, Variant};
+use quote::quote;
 
 mod macro_impl;
 
@@ -106,5 +105,5 @@ pub fn proc_attribute(_: TokenStream, input: TokenStream) -> TokenStream {
             #input
         }
     };
-    return expended.into();
+    expended.into()
 }
