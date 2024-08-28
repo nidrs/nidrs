@@ -122,6 +122,14 @@ mod tests {
                     global: Transform::new(value, "global").try_into()?,
                     sub: Transform::new(value, "sub").try_into()?,
                 });
+            } else if let Value::Array(v) = value {
+                if let Some(v) = v.first() {
+                    return Ok(ModuleSubObj {
+                        imports: Transform::new(v, "imports").try_into()?,
+                        global: Transform::new(v, "global").try_into()?,
+                        sub: Transform::new(v, "sub").try_into()?,
+                    });
+                }
             }
 
             Err(Error::new(proc_macro2::Span::call_site(), "Expected ModuleSubObj"))
@@ -385,5 +393,23 @@ mod tests {
         println!("{:?}", args);
 
         assert_eq!(format!("{:?}", args), "Array(Array([Int(Int(1)), Object(Object({\"a\": Int(Int(1)), \"b\": Int(Int(2))}))]))");
+    }
+
+    #[test]
+    fn test_into_object_p1() {
+        let f = Formal::new();
+        let args = f.parse("F({ controllers: [Ident1, Ident2] })").unwrap();
+
+        let res = ModuleSubObj::try_from(&args).unwrap();
+        println!("{:?}", res);
+
+        assert_eq!(
+            res,
+            ModuleSubObj {
+                imports: def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
+                global: def::Option(None),
+                sub: def::Option(None)
+            }
+        );
     }
 }
