@@ -4,11 +4,6 @@ use syn_args::ArgsParse;
 use syn_args_derive::ArgsParse;
 
 #[derive(Debug, Clone, ArgsParse)]
-pub enum ModuleArgs {
-    F1(ModuleOptions),
-}
-
-#[derive(Debug, Clone, ArgsParse)]
 pub struct ModuleOptions {
     pub imports: def::Array<def::PathIdent>,
     pub controllers: def::Array<def::PathIdent>,

@@ -188,14 +188,12 @@ pub fn __route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
     return route_derive(args, input);
 }
 
-#[proc_macro_attribute]
-pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
+#[syn_args::derive::declare(args::ModuleOptions)]
+#[syn_args::derive::proc_attribute]
+pub fn module(args: Args, input: TokenStream) -> TokenStream {
     // 解析宏的参数
-    let module_options = {
-        let args = args.clone();
-        let args: args::ModuleArgs = parse_macro_input!(args as SynArgs).arguments().expect("Invalid argument");
-        // println!("// module2 {:?}", args);
-        if let args::ModuleArgs::F1(options) = args {
+    let module_options: args::ModuleOptions = {
+        if let Args::F1(options) = args {
             options
         } else {
             panic!("Invalid argument");
