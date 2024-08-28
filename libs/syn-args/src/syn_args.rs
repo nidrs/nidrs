@@ -22,6 +22,10 @@ impl Parse for SynArgs {
     fn parse(input: ParseStream<'_>) -> syn::Result<Self> {
         let mut res: Vec<Value> = vec![];
 
+        if input.peek(Ident) {
+            input.parse::<Ident>()?;
+        }
+
         let option_content;
         let content = if input.peek(Paren) {
             let content_t;
@@ -56,7 +60,6 @@ impl Parse for SynArgs {
             }
             let _ = content.parse::<Token![,]>()?;
         }
-
         Ok(SynArgs { value: Value::Array(def::Array(res)) })
     }
 }
