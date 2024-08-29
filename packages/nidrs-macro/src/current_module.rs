@@ -5,8 +5,9 @@ use std::{
 
 use proc_macro::Span;
 use quote::ToTokens;
+use syn_args::{def, SynArgs};
 
-use crate::{DefaultUsesOptions, ModuleOptions};
+use crate::{args, DefaultUsesOptions};
 
 static CURRENT_MODULE: Mutex<Option<CurrentModule>> = Mutex::new(None);
 static CURRENT_MODPATH: Mutex<Option<PathBuf>> = Mutex::new(None);
@@ -29,28 +30,28 @@ pub struct CurrentModule {
     // pub current_controller: CurrentController,
 }
 
-impl From<ModuleOptions> for CurrentModule {
-    fn from(args: ModuleOptions) -> Self {
+impl From<args::ModuleOptions> for CurrentModule {
+    fn from(args: args::ModuleOptions) -> Self {
         CurrentModule {
             name: "".to_string(),
-            imports: args.imports.iter().map(|x| x.to_string()).collect(),
-            controllers: args.controllers.iter().map(|x| x.to_string()).collect(),
-            services: args.services.iter().map(|x| x.to_string()).collect(),
-            exports: args.exports.iter().map(|x| x.to_string()).collect(),
-            interceptors: args.interceptors.iter().map(|x| x.to_string()).collect(),
+            imports: args.imports.iter().map(|x| x.to_parts_path().unwrap().to_token_stream().to_string()).collect(),
+            controllers: args.controllers.iter().map(|x| x.to_parts_path().unwrap().to_token_stream().to_string()).collect(),
+            services: args.services.iter().map(|x| x.to_parts_path().unwrap().to_token_stream().to_string()).collect(),
+            exports: args.exports.iter().map(|x| x.to_parts_path().unwrap().to_token_stream().to_string()).collect(),
+            interceptors: args.interceptors.iter().map(|x| x.to_parts_path().unwrap().to_token_stream().to_string()).collect(),
             default_uses: vec![],
         }
     }
 }
 
-impl Into<ModuleOptions> for CurrentModule {
-    fn into(self) -> ModuleOptions {
-        ModuleOptions {
-            imports: self.imports.iter().map(|x| syn::parse_str(x).unwrap()).collect(),
-            controllers: self.controllers.iter().map(|x| syn::parse_str(x).unwrap()).collect(),
-            services: self.services.iter().map(|x| syn::parse_str(x).unwrap()).collect(),
-            exports: self.exports.iter().map(|x| syn::parse_str(x).unwrap()).collect(),
-            interceptors: self.interceptors.iter().map(|x| syn::parse_str(x).unwrap()).collect(),
+impl Into<args::ModuleOptions> for CurrentModule {
+    fn into(self) -> args::ModuleOptions {
+        args::ModuleOptions {
+            imports: def::Array(self.imports.iter().map(|x| def::Expr(syn::parse_str(x).unwrap())).collect()),
+            controllers: def::Array(self.controllers.iter().map(|x| def::Expr(syn::parse_str(x).unwrap())).collect()),
+            services: def::Array(self.services.iter().map(|x| def::Expr(syn::parse_str(x).unwrap())).collect()),
+            exports: def::Array(self.exports.iter().map(|x| def::Expr(syn::parse_str(x).unwrap())).collect()),
+            interceptors: def::Array(self.interceptors.iter().map(|x| def::Expr(syn::parse_str(x).unwrap())).collect()),
         }
     }
 }
@@ -86,7 +87,9 @@ pub fn begin_mod() {
                         let attr_path = attr_path.segments.iter().map(|seg| seg.ident.to_string()).collect::<Vec<String>>();
                         if attr_path.contains(&"module".to_string()) {
                             let module_args = attr.meta.to_token_stream();
-                            let mut module_args: CurrentModule = syn::parse2::<ModuleOptions>(module_args).unwrap().into();
+                            let module_options = syn::parse2::<SynArgs>(module_args.clone()).unwrap().arguments::<syn_args::Arguments>().unwrap();
+                            let module_options: args::ModuleOptions = module_options.try_into().unwrap();
+                            let mut module_args: CurrentModule = module_options.into();
                             module_args.name = item_module.ident.to_string();
                             module_args.default_uses = default_uses.clone();
                             // println!("begin mod {:#?}", module_args);

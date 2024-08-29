@@ -11,7 +11,7 @@
 // >>Push: Service("AppController") -- [Some(String("AppModule"))]
 //  CMETA: ["service_uses"]
 //  CMETA: ["version"]
-//  CMETA: ["role", "auth"]
+//  CMETA: ["auth", "role"]
 // controller AppController []
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
@@ -27,29 +27,29 @@
 //  CMETA: ["RouterPath"]
 // route_derive "get_hello_world"
 // route post /hello None Some(String("v1"))
-// << Pop: Some(Handler("get_hello_world")) ["version", "handler", "RouterName", "RouterMethod", "DisableDefaultPrefix", "RouterPath", "arr", "ServiceName", "ControllerPath", "role", "ServiceType", "auth", "service", "service_uses", "module", "global"]
+// << Pop: Some(Handler("get_hello_world")) ["DisableDefaultPrefix", "version", "RouterPath", "arr", "handler", "RouterName", "RouterMethod", "service_uses", "auth", "ServiceType", "ControllerPath", "role", "ServiceName", "service", "module", "global"]
 
 // >>Push: Handler("post_hello_world") -- [Some(String("AppModule"))]
 //  CMETA: ["RouterName"]
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "post_hello_world"
-// << Pop: Some(Handler("post_hello_world")) ["RouterMethod", "handler", "RouterName", "RouterPath", "ServiceName", "version", "ControllerPath", "role", "ServiceType", "auth", "service", "service_uses", "module", "global"]
+// << Pop: Some(Handler("post_hello_world")) ["handler", "RouterPath", "RouterName", "RouterMethod", "service_uses", "auth", "ServiceType", "ControllerPath", "role", "ServiceName", "service", "version", "module", "global"]
 
-// << Pop: Some(Service("AppController")) ["ServiceName", "version", "ControllerPath", "role", "ServiceType", "auth", "service", "service_uses", "module", "global"]
+// << Pop: Some(Service("AppController")) ["service_uses", "auth", "ServiceType", "ControllerPath", "role", "ServiceName", "service", "version", "module", "global"]
 
 // >>Push: Service("AppInterceptor") -- [Some(String("AppModule"))]
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "AppInterceptor"
-// << Pop: Some(Service("AppInterceptor")) ["service", "ServiceName", "ServiceType", "module", "global"]
+// << Pop: Some(Service("AppInterceptor")) ["service", "ServiceType", "ServiceName", "module", "global"]
 
 // >>Push: Service("AppService") -- [Some(String("AppModule"))]
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "AppService"
 // module "AppModule"
-// << Pop: Some(Service("AppService")) ["ServiceType", "ServiceName", "service", "module", "global"]
+// << Pop: Some(Service("AppService")) ["service", "ServiceType", "ServiceName", "module", "global"]
 
 // << Pop: Some(Module("AppModule")) ["module", "global"]
 
@@ -66,7 +66,7 @@
 // service_derive "ConfService"
 // module "ConfModule"
 // controller UserController []
-// << Pop: Some(Service("ConfService")) ["ServiceType", "ServiceName", "service", "module", "global"]
+// << Pop: Some(Service("ConfService")) ["service", "ServiceName", "ServiceType", "module", "global"]
 
 // << Pop: Some(Module("ConfModule")) ["module", "global"]
 
@@ -83,16 +83,16 @@
 //  CMETA: ["RouterPath"]
 // route_derive "get_hello_world"
 // route post / None None
-// << Pop: Some(Handler("get_hello_world")) ["RouterName", "RouterPath", "handler", "RouterMethod", "ServiceType", "service", "ServiceName", "ControllerPath", "module", "global"]
+// << Pop: Some(Handler("get_hello_world")) ["handler", "RouterName", "RouterPath", "RouterMethod", "service", "ServiceType", "ServiceName", "ControllerPath", "module", "global"]
 
 // >>Push: Handler("create_user") -- [Some(String("UserModule"))]
 //  CMETA: ["RouterName"]
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "create_user"
-// << Pop: Some(Handler("create_user")) ["RouterName", "RouterMethod", "handler", "RouterPath", "ServiceType", "service", "ServiceName", "ControllerPath", "module", "global"]
+// << Pop: Some(Handler("create_user")) ["RouterPath", "handler", "RouterMethod", "RouterName", "service", "ServiceType", "ServiceName", "ControllerPath", "module", "global"]
 
-// << Pop: Some(Service("UserController")) ["ServiceType", "service", "ServiceName", "ControllerPath", "module", "global"]
+// << Pop: Some(Service("UserController")) ["service", "ServiceType", "ServiceName", "ControllerPath", "module", "global"]
 
 // >>Push: Service("UserService") -- [Some(String("UserModule"))]
 //  CMETA: ["ServiceType"]
@@ -139,14 +139,14 @@ mod app {
         impl nidrs::ImplMeta for AppController {
             fn __meta() -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
-                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
-                meta.set("version", "v1");
+                meta.set("service_uses", ["AppInterceptor"]);
+                meta.set("auth", "true");
+                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                 meta.set_data(nidrs::datasets::ControllerPath::from(""));
                 meta.set("role", "admin");
-                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
-                meta.set("auth", "true");
+                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
                 meta.set("service", "AppController");
-                meta.set("service_uses", ["AppInterceptor"]);
+                meta.set("version", "v1");
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -177,20 +177,20 @@ mod app {
             }
             pub fn __meta_get_hello_world(&self) -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
+                meta.set_data(nidrs::datasets::DisableDefaultPrefix(false));
                 meta.set("version", "v2");
+                meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
+                meta.set("arr", ["user"]);
                 meta.set("handler", "get_hello_world");
                 meta.set_data(nidrs::datasets::RouterName::from("get_hello_world"));
                 meta.set_data(nidrs::datasets::RouterMethod::from("get"));
-                meta.set_data(nidrs::datasets::DisableDefaultPrefix(false));
-                meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
-                meta.set("arr", ["user"]);
-                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
+                meta.set("service_uses", ["AppInterceptor"]);
+                meta.set("auth", "true");
+                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                 meta.set_data(nidrs::datasets::ControllerPath::from(""));
                 meta.set("role", "admin");
-                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
-                meta.set("auth", "true");
+                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
                 meta.set("service", "AppController");
-                meta.set("service_uses", ["AppInterceptor"]);
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -252,18 +252,18 @@ mod app {
             }
             pub fn __meta_post_hello_world(&self) -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
-                meta.set_data(nidrs::datasets::RouterMethod::from("post"));
                 meta.set("handler", "post_hello_world");
-                meta.set_data(nidrs::datasets::RouterName::from("post_hello_world"));
                 meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
-                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
-                meta.set("version", "v1");
+                meta.set_data(nidrs::datasets::RouterName::from("post_hello_world"));
+                meta.set_data(nidrs::datasets::RouterMethod::from("post"));
+                meta.set("service_uses", ["AppInterceptor"]);
+                meta.set("auth", "true");
+                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                 meta.set_data(nidrs::datasets::ControllerPath::from(""));
                 meta.set("role", "admin");
-                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
-                meta.set("auth", "true");
+                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
                 meta.set("service", "AppController");
-                meta.set("service_uses", ["AppInterceptor"]);
+                meta.set("version", "v1");
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -1123,8 +1123,8 @@ mod app {
             fn __meta() -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
                 meta.set("service", "AppInterceptor");
-                meta.set_data(nidrs::datasets::ServiceName::from("AppInterceptor"));
                 meta.set_data(nidrs::datasets::ServiceType::from("Service"));
+                meta.set_data(nidrs::datasets::ServiceName::from("AppInterceptor"));
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -1161,9 +1161,9 @@ mod app {
         impl nidrs::ImplMeta for AppService {
             fn __meta() -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
+                meta.set("service", "AppService");
                 meta.set_data(nidrs::datasets::ServiceType::from("Service"));
                 meta.set_data(nidrs::datasets::ServiceName::from("AppService"));
-                meta.set("service", "AppService");
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -1216,7 +1216,7 @@ mod app {
             let dyn_module = ConfModule::for_root(ConfOptions { log_level: "info".to_string() });
             let mut dyn_module_services = dyn_module.services;
             dyn_module_services.drain().for_each(|(k, v)| {
-                ctx.register_service("ConfModule", k, v);
+                ctx.register_service("ConfModule", &k, v);
             });
             let mut dyn_module_exports = dyn_module.exports;
             ctx.append_exports(
@@ -1264,9 +1264,9 @@ mod app {
     impl nidrs::ImplMeta for AppModule {
         fn __meta() -> nidrs::InnerMeta {
             let mut meta = nidrs::InnerMeta::new();
+            meta.set("service", "AppService");
             meta.set_data(nidrs::datasets::ServiceType::from("Service"));
             meta.set_data(nidrs::datasets::ServiceName::from("AppService"));
-            meta.set("service", "AppService");
             meta.set("module", "AppModule");
             meta.set("global", "app");
             meta
@@ -1343,9 +1343,9 @@ mod modules {
             impl nidrs::ImplMeta for ConfService {
                 fn __meta() -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
-                    meta.set_data(nidrs::datasets::ServiceType::from("Service"));
-                    meta.set_data(nidrs::datasets::ServiceName::from("ConfService"));
                     meta.set("service", "ConfService");
+                    meta.set_data(nidrs::datasets::ServiceName::from("ConfService"));
+                    meta.set_data(nidrs::datasets::ServiceType::from("Service"));
                     meta.set("module", "ConfModule");
                     meta.set("global", "app");
                     meta
@@ -1432,9 +1432,9 @@ mod modules {
         impl nidrs::ImplMeta for ConfModule {
             fn __meta() -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
-                meta.set_data(nidrs::datasets::ServiceType::from("Service"));
-                meta.set_data(nidrs::datasets::ServiceName::from("ConfService"));
                 meta.set("service", "ConfService");
+                meta.set_data(nidrs::datasets::ServiceName::from("ConfService"));
+                meta.set_data(nidrs::datasets::ServiceType::from("Service"));
                 meta.set("module", "ConfModule");
                 meta.set("global", "app");
                 meta
@@ -1476,8 +1476,8 @@ mod modules {
             impl nidrs::ImplMeta for UserController {
                 fn __meta() -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
-                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
                     meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
                     meta.set("module", "UserModule");
@@ -1494,12 +1494,12 @@ mod modules {
                 }
                 pub fn __meta_get_hello_world(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
+                    meta.set("handler", "get_hello_world");
                     meta.set_data(nidrs::datasets::RouterName::from("get_hello_world"));
                     meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
-                    meta.set("handler", "get_hello_world");
                     meta.set_data(nidrs::datasets::RouterMethod::from("get"));
-                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
                     meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
                     meta.set("module", "UserModule");
@@ -1543,12 +1543,12 @@ mod modules {
                 }
                 pub fn __meta_create_user(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
-                    meta.set_data(nidrs::datasets::RouterName::from("create_user"));
-                    meta.set_data(nidrs::datasets::RouterMethod::from("post"));
-                    meta.set("handler", "create_user");
                     meta.set_data(nidrs::datasets::RouterPath::from("/"));
-                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                    meta.set("handler", "create_user");
+                    meta.set_data(nidrs::datasets::RouterMethod::from("post"));
+                    meta.set_data(nidrs::datasets::RouterName::from("create_user"));
                     meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
                     meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
                     meta.set("module", "UserModule");
