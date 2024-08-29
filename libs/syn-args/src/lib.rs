@@ -405,7 +405,15 @@ mod tests {
         let args = f.parse("F(1, { a:1, b:2 })").unwrap();
         println!("{:?}", args);
 
-        assert_eq!(format!("{:?}", args.0), "Array(Array([Int(Int(1)), Object(Object({\"a\": Int(Int(1)), \"b\": Int(Int(2))}))]))");
+        assert_eq!(
+            args.0,
+            Value::Array(def::Array(vec![
+                Value::Int(def::Int(1)),
+                Value::Object(def::Object(
+                    vec![("a".to_string(), Value::Int(def::Int(1))), ("b".to_string(), Value::Int(def::Int(2)))].into_iter().collect()
+                ))
+            ]))
+        );
     }
 
     #[test]

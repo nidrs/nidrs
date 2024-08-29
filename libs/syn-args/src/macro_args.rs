@@ -7,6 +7,8 @@ use std::{
 use quote::ToTokens;
 use syn::Error;
 
+use crate::SynArgs;
+
 pub mod def;
 pub mod utils;
 
@@ -24,17 +26,9 @@ impl Formal {
     }
 
     pub fn parse(&self, input: &str) -> Result<Arguments, Error> {
-        let mut res: Vec<Value> = vec![];
-        let input = utils::expr_fix(input);
-        let expr = syn::parse_str::<syn::ExprCall>(&input).unwrap();
-        // println!("{:#?}", expr.args);
-
-        for arg in expr.args {
-            let value = recursive_parsing(&arg);
-            res.push(value);
-        }
-
-        Ok(Arguments(Value::Array(def::Array(res))))
+        let expr = syn::parse_str::<SynArgs>(&input).unwrap();
+        // println!("Formal: {:#?}", expr);
+        Ok(Arguments(expr.value))
     }
 }
 

@@ -1,7 +1,7 @@
-use proc_macro2::Group;
+use proc_macro2::{Group, Span};
 use syn::{
-    parse::{Parse, ParseStream},
-    token::{Brace, Paren},
+    parse::{discouraged::AnyDelimiter, Parse, ParseStream},
+    token::{Brace, Bracket, Paren},
     Expr, Ident, Lit, Path, Token,
 };
 
@@ -22,19 +22,17 @@ impl Parse for SynArgs {
     fn parse(input: ParseStream<'_>) -> syn::Result<Self> {
         let mut res: Vec<Value> = vec![];
 
-        if input.peek(Ident) {
+        if input.peek(Ident) && input.peek2(Paren) {
             input.parse::<Ident>()?;
         }
 
-        let option_content;
-        let content = if input.peek(Paren) {
-            let content_t;
-            let _ = syn::parenthesized!(content_t in input);
-            option_content = Some(content_t);
-            option_content.as_ref().unwrap()
-        } else {
-            input
-        };
+        if input.peek(Paren) {
+            let group = input.parse::<Group>()?;
+            let stream = group.stream();
+            return syn::parse2(stream);
+        }
+
+        let content = input;
 
         while !content.is_empty() {
             if content.peek(Lit) {
@@ -44,15 +42,15 @@ impl Parse for SynArgs {
                 let ident = content.parse::<Path>()?;
                 res.push(Value::PathIdent(def::PathIdent(ident)));
             } else if content.peek(Brace) {
-                let group: Group = content.parse()?;
-
-                let stream = group.stream();
-
-                let p: ObjectArgs = syn::parse2(stream).unwrap();
-
-                res.push(Value::Object(def::Object(p.kv)));
+                let group: ObjectArgs = content.parse()?;
+                res.push(Value::Object(def::Object(group.value)));
+            } else if content.peek(Bracket) {
+                let group: ArrayArgs = content.parse()?;
+                res.push(Value::Array(def::Array(group.value)));
             } else if let Ok(v) = content.parse::<syn::Expr>() {
                 res.push(recursive_parsing(&v));
+            } else {
+                println!("Failed to parse: {:?}", content);
             }
 
             if content.is_empty() {
@@ -60,32 +58,67 @@ impl Parse for SynArgs {
             }
             let _ = content.parse::<Token![,]>()?;
         }
+
         Ok(SynArgs { value: Value::Array(def::Array(res)) })
     }
 }
 
 pub struct ObjectArgs {
-    pub kv: std::collections::HashMap<String, Value>,
+    pub value: std::collections::HashMap<String, Value>,
 }
 
 impl Parse for ObjectArgs {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        let content = input;
+        let content;
+        let _ = syn::braced!(content in input);
 
-        let mut kv = std::collections::HashMap::new();
+        let mut value = std::collections::HashMap::new();
 
         while !content.is_empty() {
-            let key = content.parse::<Ident>()?;
+            let key: Ident = content.parse()?;
             let _: Token![:] = content.parse()?;
-            let value = content.parse::<Expr>()?;
-            kv.insert(key.to_string(), recursive_parsing(&value));
+            if content.peek(Brace) {
+                let group: ObjectArgs = content.parse()?;
+                value.insert(key.to_string(), Value::Object(def::Object(group.value)));
+            } else {
+                let expr = content.parse::<Expr>()?;
+                value.insert(key.to_string(), recursive_parsing(&expr));
+            }
             if content.is_empty() {
                 break;
             }
             let _: Token![,] = content.parse()?;
         }
 
-        Ok(ObjectArgs { kv })
+        Ok(ObjectArgs { value })
+    }
+}
+
+pub struct ArrayArgs {
+    pub value: Vec<Value>,
+}
+
+impl Parse for ArrayArgs {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let content;
+        let _ = syn::bracketed!(content in input);
+
+        let mut value = vec![];
+
+        while !content.is_empty() {
+            let p = content.parse::<SynArgs>()?;
+
+            if let Value::Array(def::Array(v)) = p.value {
+                value.extend(v);
+            }
+
+            if content.is_empty() {
+                break;
+            }
+            let _: Token![,] = content.parse()?;
+        }
+
+        Ok(ArrayArgs { value })
     }
 }
 
