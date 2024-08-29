@@ -11,7 +11,7 @@
 // >>Push: Service("AppController") -- [Some(String("AppModule"))]
 //  CMETA: ["service_uses"]
 //  CMETA: ["version"]
-//  CMETA: ["auth", "role"]
+//  CMETA: ["role", "auth"]
 // controller AppController []
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
@@ -27,22 +27,22 @@
 //  CMETA: ["RouterPath"]
 // route_derive "get_hello_world"
 // route post /hello None Some(String("v1"))
-// << Pop: Some(Handler("get_hello_world")) ["RouterPath", "arr", "handler", "version", "RouterName", "DisableDefaultPrefix", "RouterMethod", "ServiceName", "service", "service_uses", "ControllerPath", "ServiceType", "auth", "role", "module", "global"]
+// << Pop: Some(Handler("get_hello_world")) ["RouterName", "DisableDefaultPrefix", "RouterMethod", "handler", "RouterPath", "arr", "version", "ServiceName", "auth", "ServiceType", "role", "service", "service_uses", "ControllerPath", "module", "global"]
 
 // >>Push: Handler("post_hello_world") -- [Some(String("AppModule"))]
 //  CMETA: ["RouterName"]
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "post_hello_world"
-// << Pop: Some(Handler("post_hello_world")) ["handler", "RouterPath", "RouterMethod", "RouterName", "ServiceName", "service", "service_uses", "version", "ControllerPath", "ServiceType", "auth", "role", "module", "global"]
+// << Pop: Some(Handler("post_hello_world")) ["RouterName", "RouterPath", "handler", "RouterMethod", "ServiceName", "auth", "ServiceType", "role", "service", "version", "service_uses", "ControllerPath", "module", "global"]
 
-// << Pop: Some(Service("AppController")) ["ServiceName", "service", "service_uses", "version", "ControllerPath", "ServiceType", "auth", "role", "module", "global"]
+// << Pop: Some(Service("AppController")) ["ServiceName", "auth", "ServiceType", "role", "service", "version", "service_uses", "ControllerPath", "module", "global"]
 
 // >>Push: Service("AppInterceptor") -- [Some(String("AppModule"))]
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "AppInterceptor"
-// << Pop: Some(Service("AppInterceptor")) ["service", "ServiceType", "ServiceName", "module", "global"]
+// << Pop: Some(Service("AppInterceptor")) ["ServiceType", "ServiceName", "service", "module", "global"]
 
 // >>Push: Service("AppService") -- [Some(String("AppModule"))]
 //  CMETA: ["ServiceType"]
@@ -50,7 +50,7 @@
 // service_derive "AppService"
 // module "AppModule"
 // controller UserController []
-// << Pop: Some(Service("AppService")) ["service", "ServiceType", "ServiceName", "module", "global"]
+// << Pop: Some(Service("AppService")) ["ServiceType", "ServiceName", "service", "module", "global"]
 
 // << Pop: Some(Module("AppModule")) ["module", "global"]
 
@@ -67,23 +67,24 @@
 //  CMETA: ["RouterPath"]
 // route_derive "get_hello_world"
 // route post / None None
-// << Pop: Some(Handler("get_hello_world")) ["RouterPath", "RouterName", "handler", "RouterMethod", "ServiceType", "ServiceName", "ControllerPath", "service", "module", "global"]
+// << Pop: Some(Handler("get_hello_world")) ["handler", "RouterMethod", "RouterName", "RouterPath", "ServiceName", "service", "ServiceType", "ControllerPath", "module", "global"]
 
 // >>Push: Handler("create_user") -- [Some(String("UserModule"))]
 //  CMETA: ["RouterName"]
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "create_user"
-// << Pop: Some(Handler("create_user")) ["handler", "RouterName", "RouterMethod", "RouterPath", "ServiceType", "ServiceName", "ControllerPath", "service", "module", "global"]
+// << Pop: Some(Handler("create_user")) ["handler", "RouterName", "RouterMethod", "RouterPath", "ServiceName", "service", "ServiceType", "ControllerPath", "module", "global"]
 
-// << Pop: Some(Service("UserController")) ["ServiceType", "ServiceName", "ControllerPath", "service", "module", "global"]
+// << Pop: Some(Service("UserController")) ["ServiceName", "service", "ServiceType", "ControllerPath", "module", "global"]
 
 // >>Push: Service("UserService") -- [Some(String("UserModule"))]
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "UserService"
 // module "UserModule"
-// << Pop: Some(Service("UserService")) ["ServiceType", "ServiceName", "service", "module", "global"]
+// << Pop: Some(Service("UserService")) ["ServiceType", "service", "ServiceName", "module", "global"]
+
 #![feature(prelude_import)]
 #[prelude_import]
 use std::prelude::rust_2021::*;
@@ -92,16 +93,16 @@ extern crate std;
 mod app {
     use nidrs::macros::module;
     pub mod controller {
+        use std::collections::HashMap;
         use super::interceptor::AppInterceptor;
+        use nidrs::externs::axum::{extract::Query, response::AppendHeaders, Json};
+        use nidrs::macros::{controller, get, meta, post};
+        use nidrs::{uses, version, Inject, Meta};
+        use crate::AppResult;
         use super::{
             dto::{ArgDto, Status},
             service::AppService,
         };
-        use crate::AppResult;
-        use nidrs::externs::axum::{extract::Query, response::AppendHeaders, Json};
-        use nidrs::macros::{controller, get, meta, post};
-        use nidrs::{uses, version, Inject, Meta};
-        use std::collections::HashMap;
         pub struct AppController {
             app_service: Inject<AppService>,
         }
@@ -109,12 +110,18 @@ mod app {
         impl ::core::default::Default for AppController {
             #[inline]
             fn default() -> AppController {
-                AppController { app_service: ::core::default::Default::default() }
+                AppController {
+                    app_service: ::core::default::Default::default(),
+                }
             }
         }
         impl nidrs::Controller for AppController {}
         impl nidrs::Service for AppController {
-            fn inject(&self, ctx: nidrs::ModuleCtx, module_name: &str) -> nidrs::ModuleCtx {
+            fn inject(
+                &self,
+                ctx: nidrs::ModuleCtx,
+                module_name: &str,
+            ) -> nidrs::ModuleCtx {
                 let service = ctx.get_service::<AppService>(&module_name, "AppService");
                 self.app_service.inject(service.clone());
                 ctx
@@ -124,13 +131,13 @@ mod app {
             fn __meta() -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
                 meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
-                meta.set("service", "AppController");
-                meta.set("service_uses", ["AppInterceptor"]);
-                meta.set("version", "v1");
-                meta.set_data(nidrs::datasets::ControllerPath::from(""));
-                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                 meta.set("auth", "true");
+                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                 meta.set("role", "admin");
+                meta.set("service", "AppController");
+                meta.set("version", "v1");
+                meta.set("service_uses", ["AppInterceptor"]);
+                meta.set_data(nidrs::datasets::ControllerPath::from(""));
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -149,39 +156,55 @@ mod app {
                     ::std::io::_print(format_args!("Meta Keys {0:?}\n", meta.keys()));
                 };
                 {
-                    ::std::io::_print(format_args!("Meta {0:?}\n", meta.get::<&str>("role")));
+                    ::std::io::_print(
+                        format_args!("Meta {0:?}\n", meta.get::<&str>("role")),
+                    );
                 };
                 {
-                    ::std::io::_print(format_args!("Meta {0:?}\n", meta.get_data::<nidrs::datasets::DisableDefaultPrefix>(),));
+                    ::std::io::_print(
+                        format_args!(
+                            "Meta {0:?}\n",
+                            meta.get_data::<nidrs::datasets::DisableDefaultPrefix>(),
+                        ),
+                    );
                 };
                 Ok((
-                    AppendHeaders([("X-Custom-Header".to_string(), "hello".to_string()), ("X-Custom-Header".to_string(), "world".to_string())]),
-                    Status { db: "ok".to_string(), redis: "ok".to_string() },
+                    AppendHeaders([
+                        ("X-Custom-Header".to_string(), "hello".to_string()),
+                        ("X-Custom-Header".to_string(), "world".to_string()),
+                    ]),
+                    Status {
+                        db: "ok".to_string(),
+                        redis: "ok".to_string(),
+                    },
                 ))
             }
             pub fn __meta_get_hello_world(&self) -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
-                meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
-                meta.set("arr", ["user"]);
-                meta.set("handler", "get_hello_world");
-                meta.set("version", "v2");
                 meta.set_data(nidrs::datasets::RouterName::from("get_hello_world"));
                 meta.set_data(nidrs::datasets::DisableDefaultPrefix(false));
                 meta.set_data(nidrs::datasets::RouterMethod::from("get"));
+                meta.set("handler", "get_hello_world");
+                meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
+                meta.set("arr", ["user"]);
+                meta.set("version", "v2");
                 meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
+                meta.set("auth", "true");
+                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                meta.set("role", "admin");
                 meta.set("service", "AppController");
                 meta.set("service_uses", ["AppInterceptor"]);
                 meta.set_data(nidrs::datasets::ControllerPath::from(""));
-                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
-                meta.set("auth", "true");
-                meta.set("role", "admin");
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
             }
-            pub fn __route_get_hello_world(&self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
-                use axum::response::IntoResponse;
+            pub fn __route_get_hello_world(
+                &self,
+                mut ctx: nidrs::ModuleCtx,
+            ) -> nidrs::ModuleCtx {
                 use nidrs::externs::axum;
+                use axum::response::IntoResponse;
                 use nidrs::externs::axum::{extract::Query, Json};
                 use nidrs::externs::meta::{InnerMeta, Meta};
                 use nidrs::Interceptor;
@@ -190,42 +213,76 @@ mod app {
                 let router_info = ctx.get_router_full(&meta);
                 if let Err(e) = router_info {
                     {
-                        ::core::panicking::panic_fmt(format_args!("[{0}] {1:?}", "__route_get_hello_world", e));
+                        ::core::panicking::panic_fmt(
+                            format_args!("[{0}] {1:?}", "__route_get_hello_world", e),
+                        );
                     };
                 }
                 let full_path = router_info.unwrap();
                 {
-                    ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
                 };
                 {
-                    ::std::io::_print(format_args!("Registering router \'{0} {1}\'.\n", "get".to_uppercase(), full_path,));
+                    ::std::io::_print(
+                        format_args!(
+                            "Registering router \'{0} {1}\'.\n",
+                            "get".to_uppercase(),
+                            full_path,
+                        ),
+                    );
                 };
                 meta.set_data(nidrs::datasets::RouterFullPath(full_path.clone()));
                 let meta = Meta::new(meta);
                 let module_name = meta.get::<&str>("module").unwrap();
-                let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
-                let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
+                let controller_name = meta
+                    .get_data::<nidrs::datasets::ServiceName>()
+                    .unwrap()
+                    .value();
+                let t_controller = ctx
+                    .get_controller::<Self>(module_name, controller_name);
                 let router = nidrs::externs::axum::Router::new()
-                    .route(&full_path, nidrs::externs::axum::routing::get(|p0, p1| async move { t_controller.get_hello_world(p0, p1).await }))
+                    .route(
+                        &full_path,
+                        nidrs::externs::axum::routing::get(|p0, p1| async move {
+                            t_controller.get_hello_world(p0, p1).await
+                        }),
+                    )
                     .layer(nidrs::externs::axum::Extension(meta.clone()))
-                    .layer(axum::middleware::from_fn({
-                        let inter = ctx.get_interceptor::<AppInterceptor>(module_name, "AppInterceptor");
-                        move |req: axum::extract::Request, next: axum::middleware::Next| {
-                            let inter = std::sync::Arc::clone(&inter);
-                            async move {
-                                let res = inter.intercept(req, next).await;
-                                if let Ok(res) = res {
-                                    Ok(res.into_response())
-                                } else {
-                                    Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+                    .layer(
+                        axum::middleware::from_fn({
+                            let inter = ctx
+                                .get_interceptor::<
+                                    AppInterceptor,
+                                >(module_name, "AppInterceptor");
+                            move |
+                                req: axum::extract::Request,
+                                next: axum::middleware::Next|
+                            {
+                                let inter = std::sync::Arc::clone(&inter);
+                                async move {
+                                    let res = inter.intercept(req, next).await;
+                                    if let Ok(res) = res {
+                                        Ok(res.into_response())
+                                    } else {
+                                        Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+                                    }
                                 }
                             }
-                        }
-                    }));
+                        }),
+                    );
                 ctx.routers.push(nidrs::RouterWrap::new(router, meta));
                 ctx
             }
-            pub async fn post_hello_world(&self, Query(q): Query<HashMap<String, String>>, Json(j): Json<ArgDto>) -> AppResult<String> {
+            pub async fn post_hello_world(
+                &self,
+                Query(q): Query<HashMap<String, String>>,
+                Json(j): Json<ArgDto>,
+            ) -> AppResult<String> {
                 {
                     ::std::io::_print(format_args!("Query {0:?}\n", q));
                 };
@@ -236,25 +293,28 @@ mod app {
             }
             pub fn __meta_post_hello_world(&self) -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
-                meta.set("handler", "post_hello_world");
-                meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
-                meta.set_data(nidrs::datasets::RouterMethod::from("post"));
                 meta.set_data(nidrs::datasets::RouterName::from("post_hello_world"));
+                meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
+                meta.set("handler", "post_hello_world");
+                meta.set_data(nidrs::datasets::RouterMethod::from("post"));
                 meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
-                meta.set("service", "AppController");
-                meta.set("service_uses", ["AppInterceptor"]);
-                meta.set("version", "v1");
-                meta.set_data(nidrs::datasets::ControllerPath::from(""));
-                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                 meta.set("auth", "true");
+                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                 meta.set("role", "admin");
+                meta.set("service", "AppController");
+                meta.set("version", "v1");
+                meta.set("service_uses", ["AppInterceptor"]);
+                meta.set_data(nidrs::datasets::ControllerPath::from(""));
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
             }
-            pub fn __route_post_hello_world(&self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
-                use axum::response::IntoResponse;
+            pub fn __route_post_hello_world(
+                &self,
+                mut ctx: nidrs::ModuleCtx,
+            ) -> nidrs::ModuleCtx {
                 use nidrs::externs::axum;
+                use axum::response::IntoResponse;
                 use nidrs::externs::axum::{extract::Query, Json};
                 use nidrs::externs::meta::{InnerMeta, Meta};
                 use nidrs::Interceptor;
@@ -263,38 +323,68 @@ mod app {
                 let router_info = ctx.get_router_full(&meta);
                 if let Err(e) = router_info {
                     {
-                        ::core::panicking::panic_fmt(format_args!("[{0}] {1:?}", "__route_post_hello_world", e));
+                        ::core::panicking::panic_fmt(
+                            format_args!("[{0}] {1:?}", "__route_post_hello_world", e),
+                        );
                     };
                 }
                 let full_path = router_info.unwrap();
                 {
-                    ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
                 };
                 {
-                    ::std::io::_print(format_args!("Registering router \'{0} {1}\'.\n", "post".to_uppercase(), full_path,));
+                    ::std::io::_print(
+                        format_args!(
+                            "Registering router \'{0} {1}\'.\n",
+                            "post".to_uppercase(),
+                            full_path,
+                        ),
+                    );
                 };
                 meta.set_data(nidrs::datasets::RouterFullPath(full_path.clone()));
                 let meta = Meta::new(meta);
                 let module_name = meta.get::<&str>("module").unwrap();
-                let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
-                let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
+                let controller_name = meta
+                    .get_data::<nidrs::datasets::ServiceName>()
+                    .unwrap()
+                    .value();
+                let t_controller = ctx
+                    .get_controller::<Self>(module_name, controller_name);
                 let router = nidrs::externs::axum::Router::new()
-                    .route(&full_path, nidrs::externs::axum::routing::get(|p0, p1| async move { t_controller.post_hello_world(p0, p1).await }))
+                    .route(
+                        &full_path,
+                        nidrs::externs::axum::routing::get(|p0, p1| async move {
+                            t_controller.post_hello_world(p0, p1).await
+                        }),
+                    )
                     .layer(nidrs::externs::axum::Extension(meta.clone()))
-                    .layer(axum::middleware::from_fn({
-                        let inter = ctx.get_interceptor::<AppInterceptor>(module_name, "AppInterceptor");
-                        move |req: axum::extract::Request, next: axum::middleware::Next| {
-                            let inter = std::sync::Arc::clone(&inter);
-                            async move {
-                                let res = inter.intercept(req, next).await;
-                                if let Ok(res) = res {
-                                    Ok(res.into_response())
-                                } else {
-                                    Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+                    .layer(
+                        axum::middleware::from_fn({
+                            let inter = ctx
+                                .get_interceptor::<
+                                    AppInterceptor,
+                                >(module_name, "AppInterceptor");
+                            move |
+                                req: axum::extract::Request,
+                                next: axum::middleware::Next|
+                            {
+                                let inter = std::sync::Arc::clone(&inter);
+                                async move {
+                                    let res = inter.intercept(req, next).await;
+                                    if let Ok(res) = res {
+                                        Ok(res.into_response())
+                                    } else {
+                                        Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+                                    }
                                 }
                             }
-                        }
-                    }));
+                        }),
+                    );
                 ctx.routers.push(nidrs::RouterWrap::new(router, meta));
                 ctx
             }
@@ -305,8 +395,7 @@ mod app {
         use nidrs::externs::serde_json;
         use nidrs::{
             externs::axum::{
-                body::Body,
-                http::{header, StatusCode},
+                body::Body, http::{header, StatusCode},
                 response::{IntoResponse, Response},
             },
             valid_macro::dto,
@@ -322,13 +411,28 @@ mod app {
             extern crate serde as _serde;
             #[automatically_derived]
             impl _serde::Serialize for Status {
-                fn serialize<__S>(&self, __serializer: __S) -> _serde::__private::Result<__S::Ok, __S::Error>
+                fn serialize<__S>(
+                    &self,
+                    __serializer: __S,
+                ) -> _serde::__private::Result<__S::Ok, __S::Error>
                 where
                     __S: _serde::Serializer,
                 {
-                    let mut __serde_state = _serde::Serializer::serialize_struct(__serializer, "Status", false as usize + 1 + 1)?;
-                    _serde::ser::SerializeStruct::serialize_field(&mut __serde_state, "db", &self.db)?;
-                    _serde::ser::SerializeStruct::serialize_field(&mut __serde_state, "redis", &self.redis)?;
+                    let mut __serde_state = _serde::Serializer::serialize_struct(
+                        __serializer,
+                        "Status",
+                        false as usize + 1 + 1,
+                    )?;
+                    _serde::ser::SerializeStruct::serialize_field(
+                        &mut __serde_state,
+                        "db",
+                        &self.db,
+                    )?;
+                    _serde::ser::SerializeStruct::serialize_field(
+                        &mut __serde_state,
+                        "redis",
+                        &self.redis,
+                    )?;
                     _serde::ser::SerializeStruct::end(__serde_state)
                 }
             }
@@ -340,7 +444,9 @@ mod app {
             extern crate serde as _serde;
             #[automatically_derived]
             impl<'de> _serde::Deserialize<'de> for Status {
-                fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+                fn deserialize<__D>(
+                    __deserializer: __D,
+                ) -> _serde::__private::Result<Self, __D::Error>
                 where
                     __D: _serde::Deserializer<'de>,
                 {
@@ -355,10 +461,19 @@ mod app {
                     struct __FieldVisitor;
                     impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
                         type Value = __Field;
-                        fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
-                            _serde::__private::Formatter::write_str(__formatter, "field identifier")
+                        fn expecting(
+                            &self,
+                            __formatter: &mut _serde::__private::Formatter,
+                        ) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(
+                                __formatter,
+                                "field identifier",
+                            )
                         }
-                        fn visit_u64<__E>(self, __value: u64) -> _serde::__private::Result<Self::Value, __E>
+                        fn visit_u64<__E>(
+                            self,
+                            __value: u64,
+                        ) -> _serde::__private::Result<Self::Value, __E>
                         where
                             __E: _serde::de::Error,
                         {
@@ -368,7 +483,10 @@ mod app {
                                 _ => _serde::__private::Ok(__Field::__ignore),
                             }
                         }
-                        fn visit_str<__E>(self, __value: &str) -> _serde::__private::Result<Self::Value, __E>
+                        fn visit_str<__E>(
+                            self,
+                            __value: &str,
+                        ) -> _serde::__private::Result<Self::Value, __E>
                         where
                             __E: _serde::de::Error,
                         {
@@ -378,7 +496,10 @@ mod app {
                                 _ => _serde::__private::Ok(__Field::__ignore),
                             }
                         }
-                        fn visit_bytes<__E>(self, __value: &[u8]) -> _serde::__private::Result<Self::Value, __E>
+                        fn visit_bytes<__E>(
+                            self,
+                            __value: &[u8],
+                        ) -> _serde::__private::Result<Self::Value, __E>
                         where
                             __E: _serde::de::Error,
                         {
@@ -391,11 +512,16 @@ mod app {
                     }
                     impl<'de> _serde::Deserialize<'de> for __Field {
                         #[inline]
-                        fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+                        fn deserialize<__D>(
+                            __deserializer: __D,
+                        ) -> _serde::__private::Result<Self, __D::Error>
                         where
                             __D: _serde::Deserializer<'de>,
                         {
-                            _serde::Deserializer::deserialize_identifier(__deserializer, __FieldVisitor)
+                            _serde::Deserializer::deserialize_identifier(
+                                __deserializer,
+                                __FieldVisitor,
+                            )
                         }
                     }
                     #[doc(hidden)]
@@ -405,63 +531,111 @@ mod app {
                     }
                     impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
                         type Value = Status;
-                        fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
-                            _serde::__private::Formatter::write_str(__formatter, "struct Status")
+                        fn expecting(
+                            &self,
+                            __formatter: &mut _serde::__private::Formatter,
+                        ) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(
+                                __formatter,
+                                "struct Status",
+                            )
                         }
                         #[inline]
-                        fn visit_seq<__A>(self, mut __seq: __A) -> _serde::__private::Result<Self::Value, __A::Error>
+                        fn visit_seq<__A>(
+                            self,
+                            mut __seq: __A,
+                        ) -> _serde::__private::Result<Self::Value, __A::Error>
                         where
                             __A: _serde::de::SeqAccess<'de>,
                         {
-                            let __field0 = match _serde::de::SeqAccess::next_element::<String>(&mut __seq)? {
+                            let __field0 = match _serde::de::SeqAccess::next_element::<
+                                String,
+                            >(&mut __seq)? {
                                 _serde::__private::Some(__value) => __value,
                                 _serde::__private::None => {
-                                    return _serde::__private::Err(_serde::de::Error::invalid_length(0usize, &"struct Status with 2 elements"));
+                                    return _serde::__private::Err(
+                                        _serde::de::Error::invalid_length(
+                                            0usize,
+                                            &"struct Status with 2 elements",
+                                        ),
+                                    );
                                 }
                             };
-                            let __field1 = match _serde::de::SeqAccess::next_element::<String>(&mut __seq)? {
+                            let __field1 = match _serde::de::SeqAccess::next_element::<
+                                String,
+                            >(&mut __seq)? {
                                 _serde::__private::Some(__value) => __value,
                                 _serde::__private::None => {
-                                    return _serde::__private::Err(_serde::de::Error::invalid_length(1usize, &"struct Status with 2 elements"));
+                                    return _serde::__private::Err(
+                                        _serde::de::Error::invalid_length(
+                                            1usize,
+                                            &"struct Status with 2 elements",
+                                        ),
+                                    );
                                 }
                             };
-                            _serde::__private::Ok(Status { db: __field0, redis: __field1 })
+                            _serde::__private::Ok(Status {
+                                db: __field0,
+                                redis: __field1,
+                            })
                         }
                         #[inline]
-                        fn visit_map<__A>(self, mut __map: __A) -> _serde::__private::Result<Self::Value, __A::Error>
+                        fn visit_map<__A>(
+                            self,
+                            mut __map: __A,
+                        ) -> _serde::__private::Result<Self::Value, __A::Error>
                         where
                             __A: _serde::de::MapAccess<'de>,
                         {
                             let mut __field0: _serde::__private::Option<String> = _serde::__private::None;
                             let mut __field1: _serde::__private::Option<String> = _serde::__private::None;
-                            while let _serde::__private::Some(__key) = _serde::de::MapAccess::next_key::<__Field>(&mut __map)? {
+                            while let _serde::__private::Some(__key) = _serde::de::MapAccess::next_key::<
+                                __Field,
+                            >(&mut __map)? {
                                 match __key {
                                     __Field::__field0 => {
                                         if _serde::__private::Option::is_some(&__field0) {
-                                            return _serde::__private::Err(<__A::Error as _serde::de::Error>::duplicate_field("db"));
+                                            return _serde::__private::Err(
+                                                <__A::Error as _serde::de::Error>::duplicate_field("db"),
+                                            );
                                         }
-                                        __field0 = _serde::__private::Some(_serde::de::MapAccess::next_value::<String>(&mut __map)?);
+                                        __field0 = _serde::__private::Some(
+                                            _serde::de::MapAccess::next_value::<String>(&mut __map)?,
+                                        );
                                     }
                                     __Field::__field1 => {
                                         if _serde::__private::Option::is_some(&__field1) {
-                                            return _serde::__private::Err(<__A::Error as _serde::de::Error>::duplicate_field("redis"));
+                                            return _serde::__private::Err(
+                                                <__A::Error as _serde::de::Error>::duplicate_field("redis"),
+                                            );
                                         }
-                                        __field1 = _serde::__private::Some(_serde::de::MapAccess::next_value::<String>(&mut __map)?);
+                                        __field1 = _serde::__private::Some(
+                                            _serde::de::MapAccess::next_value::<String>(&mut __map)?,
+                                        );
                                     }
                                     _ => {
-                                        let _ = _serde::de::MapAccess::next_value::<_serde::de::IgnoredAny>(&mut __map)?;
+                                        let _ = _serde::de::MapAccess::next_value::<
+                                            _serde::de::IgnoredAny,
+                                        >(&mut __map)?;
                                     }
                                 }
                             }
                             let __field0 = match __field0 {
                                 _serde::__private::Some(__field0) => __field0,
-                                _serde::__private::None => _serde::__private::de::missing_field("db")?,
+                                _serde::__private::None => {
+                                    _serde::__private::de::missing_field("db")?
+                                }
                             };
                             let __field1 = match __field1 {
                                 _serde::__private::Some(__field1) => __field1,
-                                _serde::__private::None => _serde::__private::de::missing_field("redis")?,
+                                _serde::__private::None => {
+                                    _serde::__private::de::missing_field("redis")?
+                                }
                             };
-                            _serde::__private::Ok(Status { db: __field0, redis: __field1 })
+                            _serde::__private::Ok(Status {
+                                db: __field0,
+                                redis: __field1,
+                            })
                         }
                     }
                     #[doc(hidden)]
@@ -470,7 +644,10 @@ mod app {
                         __deserializer,
                         "Status",
                         FIELDS,
-                        __Visitor { marker: _serde::__private::PhantomData::<Status>, lifetime: _serde::__private::PhantomData },
+                        __Visitor {
+                            marker: _serde::__private::PhantomData::<Status>,
+                            lifetime: _serde::__private::PhantomData,
+                        },
                     )
                 }
             }
@@ -479,7 +656,14 @@ mod app {
         impl ::core::fmt::Debug for Status {
             #[inline]
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                ::core::fmt::Formatter::debug_struct_field2_finish(f, "Status", "db", &self.db, "redis", &&self.redis)
+                ::core::fmt::Formatter::debug_struct_field2_finish(
+                    f,
+                    "Status",
+                    "db",
+                    &self.db,
+                    "redis",
+                    &&self.redis,
+                )
             }
         }
         impl IntoResponse for Status {
@@ -487,10 +671,16 @@ mod app {
                 let json_body = match serde_json::to_string(&self) {
                     Ok(json) => json,
                     Err(_) => {
-                        return Response::builder().status(StatusCode::INTERNAL_SERVER_ERROR).body("Internal server error".into()).unwrap();
+                        return Response::builder()
+                            .status(StatusCode::INTERNAL_SERVER_ERROR)
+                            .body("Internal server error".into())
+                            .unwrap();
                     }
                 };
-                let res: Response<Body> = Response::builder().header(header::CONTENT_TYPE, "application/json").body(json_body.into()).unwrap();
+                let res: Response<Body> = Response::builder()
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .body(json_body.into())
+                    .unwrap();
                 res
             }
         }
@@ -507,13 +697,28 @@ mod app {
             extern crate serde as _serde;
             #[automatically_derived]
             impl _serde::Serialize for A {
-                fn serialize<__S>(&self, __serializer: __S) -> _serde::__private::Result<__S::Ok, __S::Error>
+                fn serialize<__S>(
+                    &self,
+                    __serializer: __S,
+                ) -> _serde::__private::Result<__S::Ok, __S::Error>
                 where
                     __S: _serde::Serializer,
                 {
-                    let mut __serde_state = _serde::Serializer::serialize_struct(__serializer, "A", false as usize + 1 + 1)?;
-                    _serde::ser::SerializeStruct::serialize_field(&mut __serde_state, "hello", &self.hello)?;
-                    _serde::ser::SerializeStruct::serialize_field(&mut __serde_state, "hello2", &self.hello2)?;
+                    let mut __serde_state = _serde::Serializer::serialize_struct(
+                        __serializer,
+                        "A",
+                        false as usize + 1 + 1,
+                    )?;
+                    _serde::ser::SerializeStruct::serialize_field(
+                        &mut __serde_state,
+                        "hello",
+                        &self.hello,
+                    )?;
+                    _serde::ser::SerializeStruct::serialize_field(
+                        &mut __serde_state,
+                        "hello2",
+                        &self.hello2,
+                    )?;
                     _serde::ser::SerializeStruct::end(__serde_state)
                 }
             }
@@ -525,7 +730,9 @@ mod app {
             extern crate serde as _serde;
             #[automatically_derived]
             impl<'de> _serde::Deserialize<'de> for A {
-                fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+                fn deserialize<__D>(
+                    __deserializer: __D,
+                ) -> _serde::__private::Result<Self, __D::Error>
                 where
                     __D: _serde::Deserializer<'de>,
                 {
@@ -540,10 +747,19 @@ mod app {
                     struct __FieldVisitor;
                     impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
                         type Value = __Field;
-                        fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
-                            _serde::__private::Formatter::write_str(__formatter, "field identifier")
+                        fn expecting(
+                            &self,
+                            __formatter: &mut _serde::__private::Formatter,
+                        ) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(
+                                __formatter,
+                                "field identifier",
+                            )
                         }
-                        fn visit_u64<__E>(self, __value: u64) -> _serde::__private::Result<Self::Value, __E>
+                        fn visit_u64<__E>(
+                            self,
+                            __value: u64,
+                        ) -> _serde::__private::Result<Self::Value, __E>
                         where
                             __E: _serde::de::Error,
                         {
@@ -553,7 +769,10 @@ mod app {
                                 _ => _serde::__private::Ok(__Field::__ignore),
                             }
                         }
-                        fn visit_str<__E>(self, __value: &str) -> _serde::__private::Result<Self::Value, __E>
+                        fn visit_str<__E>(
+                            self,
+                            __value: &str,
+                        ) -> _serde::__private::Result<Self::Value, __E>
                         where
                             __E: _serde::de::Error,
                         {
@@ -563,7 +782,10 @@ mod app {
                                 _ => _serde::__private::Ok(__Field::__ignore),
                             }
                         }
-                        fn visit_bytes<__E>(self, __value: &[u8]) -> _serde::__private::Result<Self::Value, __E>
+                        fn visit_bytes<__E>(
+                            self,
+                            __value: &[u8],
+                        ) -> _serde::__private::Result<Self::Value, __E>
                         where
                             __E: _serde::de::Error,
                         {
@@ -576,11 +798,16 @@ mod app {
                     }
                     impl<'de> _serde::Deserialize<'de> for __Field {
                         #[inline]
-                        fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+                        fn deserialize<__D>(
+                            __deserializer: __D,
+                        ) -> _serde::__private::Result<Self, __D::Error>
                         where
                             __D: _serde::Deserializer<'de>,
                         {
-                            _serde::Deserializer::deserialize_identifier(__deserializer, __FieldVisitor)
+                            _serde::Deserializer::deserialize_identifier(
+                                __deserializer,
+                                __FieldVisitor,
+                            )
                         }
                     }
                     #[doc(hidden)]
@@ -590,63 +817,111 @@ mod app {
                     }
                     impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
                         type Value = A;
-                        fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
-                            _serde::__private::Formatter::write_str(__formatter, "struct A")
+                        fn expecting(
+                            &self,
+                            __formatter: &mut _serde::__private::Formatter,
+                        ) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(
+                                __formatter,
+                                "struct A",
+                            )
                         }
                         #[inline]
-                        fn visit_seq<__A>(self, mut __seq: __A) -> _serde::__private::Result<Self::Value, __A::Error>
+                        fn visit_seq<__A>(
+                            self,
+                            mut __seq: __A,
+                        ) -> _serde::__private::Result<Self::Value, __A::Error>
                         where
                             __A: _serde::de::SeqAccess<'de>,
                         {
-                            let __field0 = match _serde::de::SeqAccess::next_element::<String>(&mut __seq)? {
+                            let __field0 = match _serde::de::SeqAccess::next_element::<
+                                String,
+                            >(&mut __seq)? {
                                 _serde::__private::Some(__value) => __value,
                                 _serde::__private::None => {
-                                    return _serde::__private::Err(_serde::de::Error::invalid_length(0usize, &"struct A with 2 elements"));
+                                    return _serde::__private::Err(
+                                        _serde::de::Error::invalid_length(
+                                            0usize,
+                                            &"struct A with 2 elements",
+                                        ),
+                                    );
                                 }
                             };
-                            let __field1 = match _serde::de::SeqAccess::next_element::<B>(&mut __seq)? {
+                            let __field1 = match _serde::de::SeqAccess::next_element::<
+                                B,
+                            >(&mut __seq)? {
                                 _serde::__private::Some(__value) => __value,
                                 _serde::__private::None => {
-                                    return _serde::__private::Err(_serde::de::Error::invalid_length(1usize, &"struct A with 2 elements"));
+                                    return _serde::__private::Err(
+                                        _serde::de::Error::invalid_length(
+                                            1usize,
+                                            &"struct A with 2 elements",
+                                        ),
+                                    );
                                 }
                             };
-                            _serde::__private::Ok(A { hello: __field0, hello2: __field1 })
+                            _serde::__private::Ok(A {
+                                hello: __field0,
+                                hello2: __field1,
+                            })
                         }
                         #[inline]
-                        fn visit_map<__A>(self, mut __map: __A) -> _serde::__private::Result<Self::Value, __A::Error>
+                        fn visit_map<__A>(
+                            self,
+                            mut __map: __A,
+                        ) -> _serde::__private::Result<Self::Value, __A::Error>
                         where
                             __A: _serde::de::MapAccess<'de>,
                         {
                             let mut __field0: _serde::__private::Option<String> = _serde::__private::None;
                             let mut __field1: _serde::__private::Option<B> = _serde::__private::None;
-                            while let _serde::__private::Some(__key) = _serde::de::MapAccess::next_key::<__Field>(&mut __map)? {
+                            while let _serde::__private::Some(__key) = _serde::de::MapAccess::next_key::<
+                                __Field,
+                            >(&mut __map)? {
                                 match __key {
                                     __Field::__field0 => {
                                         if _serde::__private::Option::is_some(&__field0) {
-                                            return _serde::__private::Err(<__A::Error as _serde::de::Error>::duplicate_field("hello"));
+                                            return _serde::__private::Err(
+                                                <__A::Error as _serde::de::Error>::duplicate_field("hello"),
+                                            );
                                         }
-                                        __field0 = _serde::__private::Some(_serde::de::MapAccess::next_value::<String>(&mut __map)?);
+                                        __field0 = _serde::__private::Some(
+                                            _serde::de::MapAccess::next_value::<String>(&mut __map)?,
+                                        );
                                     }
                                     __Field::__field1 => {
                                         if _serde::__private::Option::is_some(&__field1) {
-                                            return _serde::__private::Err(<__A::Error as _serde::de::Error>::duplicate_field("hello2"));
+                                            return _serde::__private::Err(
+                                                <__A::Error as _serde::de::Error>::duplicate_field("hello2"),
+                                            );
                                         }
-                                        __field1 = _serde::__private::Some(_serde::de::MapAccess::next_value::<B>(&mut __map)?);
+                                        __field1 = _serde::__private::Some(
+                                            _serde::de::MapAccess::next_value::<B>(&mut __map)?,
+                                        );
                                     }
                                     _ => {
-                                        let _ = _serde::de::MapAccess::next_value::<_serde::de::IgnoredAny>(&mut __map)?;
+                                        let _ = _serde::de::MapAccess::next_value::<
+                                            _serde::de::IgnoredAny,
+                                        >(&mut __map)?;
                                     }
                                 }
                             }
                             let __field0 = match __field0 {
                                 _serde::__private::Some(__field0) => __field0,
-                                _serde::__private::None => _serde::__private::de::missing_field("hello")?,
+                                _serde::__private::None => {
+                                    _serde::__private::de::missing_field("hello")?
+                                }
                             };
                             let __field1 = match __field1 {
                                 _serde::__private::Some(__field1) => __field1,
-                                _serde::__private::None => _serde::__private::de::missing_field("hello2")?,
+                                _serde::__private::None => {
+                                    _serde::__private::de::missing_field("hello2")?
+                                }
                             };
-                            _serde::__private::Ok(A { hello: __field0, hello2: __field1 })
+                            _serde::__private::Ok(A {
+                                hello: __field0,
+                                hello2: __field1,
+                            })
                         }
                     }
                     #[doc(hidden)]
@@ -655,7 +930,10 @@ mod app {
                         __deserializer,
                         "A",
                         FIELDS,
-                        __Visitor { marker: _serde::__private::PhantomData::<A>, lifetime: _serde::__private::PhantomData },
+                        __Visitor {
+                            marker: _serde::__private::PhantomData::<A>,
+                            lifetime: _serde::__private::PhantomData,
+                        },
                     )
                 }
             }
@@ -664,14 +942,21 @@ mod app {
         impl ::core::fmt::Debug for A {
             #[inline]
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                ::core::fmt::Formatter::debug_struct_field2_finish(f, "A", "hello", &self.hello, "hello2", &&self.hello2)
+                ::core::fmt::Formatter::debug_struct_field2_finish(
+                    f,
+                    "A",
+                    "hello",
+                    &self.hello,
+                    "hello2",
+                    &&self.hello2,
+                )
             }
         }
         impl nidrs::valid::validator::Validator for A {
             fn valid(&self) -> nidrs::valid::validator::ValidResult {
+                use nidrs::valid::validator::Rule;
                 use nidrs::valid::ruleset;
                 use nidrs::valid::ruleset::*;
-                use nidrs::valid::validator::Rule;
                 let v = &self.hello;
                 Email.valid(v, "hello", None)?;
                 let v = &self.hello2;
@@ -692,12 +977,23 @@ mod app {
             extern crate serde as _serde;
             #[automatically_derived]
             impl _serde::Serialize for B {
-                fn serialize<__S>(&self, __serializer: __S) -> _serde::__private::Result<__S::Ok, __S::Error>
+                fn serialize<__S>(
+                    &self,
+                    __serializer: __S,
+                ) -> _serde::__private::Result<__S::Ok, __S::Error>
                 where
                     __S: _serde::Serializer,
                 {
-                    let mut __serde_state = _serde::Serializer::serialize_struct(__serializer, "B", false as usize + 1)?;
-                    _serde::ser::SerializeStruct::serialize_field(&mut __serde_state, "hello2", &self.hello2)?;
+                    let mut __serde_state = _serde::Serializer::serialize_struct(
+                        __serializer,
+                        "B",
+                        false as usize + 1,
+                    )?;
+                    _serde::ser::SerializeStruct::serialize_field(
+                        &mut __serde_state,
+                        "hello2",
+                        &self.hello2,
+                    )?;
                     _serde::ser::SerializeStruct::end(__serde_state)
                 }
             }
@@ -709,7 +1005,9 @@ mod app {
             extern crate serde as _serde;
             #[automatically_derived]
             impl<'de> _serde::Deserialize<'de> for B {
-                fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+                fn deserialize<__D>(
+                    __deserializer: __D,
+                ) -> _serde::__private::Result<Self, __D::Error>
                 where
                     __D: _serde::Deserializer<'de>,
                 {
@@ -723,10 +1021,19 @@ mod app {
                     struct __FieldVisitor;
                     impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
                         type Value = __Field;
-                        fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
-                            _serde::__private::Formatter::write_str(__formatter, "field identifier")
+                        fn expecting(
+                            &self,
+                            __formatter: &mut _serde::__private::Formatter,
+                        ) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(
+                                __formatter,
+                                "field identifier",
+                            )
                         }
-                        fn visit_u64<__E>(self, __value: u64) -> _serde::__private::Result<Self::Value, __E>
+                        fn visit_u64<__E>(
+                            self,
+                            __value: u64,
+                        ) -> _serde::__private::Result<Self::Value, __E>
                         where
                             __E: _serde::de::Error,
                         {
@@ -735,7 +1042,10 @@ mod app {
                                 _ => _serde::__private::Ok(__Field::__ignore),
                             }
                         }
-                        fn visit_str<__E>(self, __value: &str) -> _serde::__private::Result<Self::Value, __E>
+                        fn visit_str<__E>(
+                            self,
+                            __value: &str,
+                        ) -> _serde::__private::Result<Self::Value, __E>
                         where
                             __E: _serde::de::Error,
                         {
@@ -744,7 +1054,10 @@ mod app {
                                 _ => _serde::__private::Ok(__Field::__ignore),
                             }
                         }
-                        fn visit_bytes<__E>(self, __value: &[u8]) -> _serde::__private::Result<Self::Value, __E>
+                        fn visit_bytes<__E>(
+                            self,
+                            __value: &[u8],
+                        ) -> _serde::__private::Result<Self::Value, __E>
                         where
                             __E: _serde::de::Error,
                         {
@@ -756,11 +1069,16 @@ mod app {
                     }
                     impl<'de> _serde::Deserialize<'de> for __Field {
                         #[inline]
-                        fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+                        fn deserialize<__D>(
+                            __deserializer: __D,
+                        ) -> _serde::__private::Result<Self, __D::Error>
                         where
                             __D: _serde::Deserializer<'de>,
                         {
-                            _serde::Deserializer::deserialize_identifier(__deserializer, __FieldVisitor)
+                            _serde::Deserializer::deserialize_identifier(
+                                __deserializer,
+                                __FieldVisitor,
+                            )
                         }
                     }
                     #[doc(hidden)]
@@ -770,44 +1088,73 @@ mod app {
                     }
                     impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
                         type Value = B;
-                        fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
-                            _serde::__private::Formatter::write_str(__formatter, "struct B")
+                        fn expecting(
+                            &self,
+                            __formatter: &mut _serde::__private::Formatter,
+                        ) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(
+                                __formatter,
+                                "struct B",
+                            )
                         }
                         #[inline]
-                        fn visit_seq<__A>(self, mut __seq: __A) -> _serde::__private::Result<Self::Value, __A::Error>
+                        fn visit_seq<__A>(
+                            self,
+                            mut __seq: __A,
+                        ) -> _serde::__private::Result<Self::Value, __A::Error>
                         where
                             __A: _serde::de::SeqAccess<'de>,
                         {
-                            let __field0 = match _serde::de::SeqAccess::next_element::<String>(&mut __seq)? {
+                            let __field0 = match _serde::de::SeqAccess::next_element::<
+                                String,
+                            >(&mut __seq)? {
                                 _serde::__private::Some(__value) => __value,
                                 _serde::__private::None => {
-                                    return _serde::__private::Err(_serde::de::Error::invalid_length(0usize, &"struct B with 1 element"));
+                                    return _serde::__private::Err(
+                                        _serde::de::Error::invalid_length(
+                                            0usize,
+                                            &"struct B with 1 element",
+                                        ),
+                                    );
                                 }
                             };
                             _serde::__private::Ok(B { hello2: __field0 })
                         }
                         #[inline]
-                        fn visit_map<__A>(self, mut __map: __A) -> _serde::__private::Result<Self::Value, __A::Error>
+                        fn visit_map<__A>(
+                            self,
+                            mut __map: __A,
+                        ) -> _serde::__private::Result<Self::Value, __A::Error>
                         where
                             __A: _serde::de::MapAccess<'de>,
                         {
                             let mut __field0: _serde::__private::Option<String> = _serde::__private::None;
-                            while let _serde::__private::Some(__key) = _serde::de::MapAccess::next_key::<__Field>(&mut __map)? {
+                            while let _serde::__private::Some(__key) = _serde::de::MapAccess::next_key::<
+                                __Field,
+                            >(&mut __map)? {
                                 match __key {
                                     __Field::__field0 => {
                                         if _serde::__private::Option::is_some(&__field0) {
-                                            return _serde::__private::Err(<__A::Error as _serde::de::Error>::duplicate_field("hello2"));
+                                            return _serde::__private::Err(
+                                                <__A::Error as _serde::de::Error>::duplicate_field("hello2"),
+                                            );
                                         }
-                                        __field0 = _serde::__private::Some(_serde::de::MapAccess::next_value::<String>(&mut __map)?);
+                                        __field0 = _serde::__private::Some(
+                                            _serde::de::MapAccess::next_value::<String>(&mut __map)?,
+                                        );
                                     }
                                     _ => {
-                                        let _ = _serde::de::MapAccess::next_value::<_serde::de::IgnoredAny>(&mut __map)?;
+                                        let _ = _serde::de::MapAccess::next_value::<
+                                            _serde::de::IgnoredAny,
+                                        >(&mut __map)?;
                                     }
                                 }
                             }
                             let __field0 = match __field0 {
                                 _serde::__private::Some(__field0) => __field0,
-                                _serde::__private::None => _serde::__private::de::missing_field("hello2")?,
+                                _serde::__private::None => {
+                                    _serde::__private::de::missing_field("hello2")?
+                                }
                             };
                             _serde::__private::Ok(B { hello2: __field0 })
                         }
@@ -818,7 +1165,10 @@ mod app {
                         __deserializer,
                         "B",
                         FIELDS,
-                        __Visitor { marker: _serde::__private::PhantomData::<B>, lifetime: _serde::__private::PhantomData },
+                        __Visitor {
+                            marker: _serde::__private::PhantomData::<B>,
+                            lifetime: _serde::__private::PhantomData,
+                        },
                     )
                 }
             }
@@ -827,14 +1177,19 @@ mod app {
         impl ::core::fmt::Debug for B {
             #[inline]
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                ::core::fmt::Formatter::debug_struct_field1_finish(f, "B", "hello2", &&self.hello2)
+                ::core::fmt::Formatter::debug_struct_field1_finish(
+                    f,
+                    "B",
+                    "hello2",
+                    &&self.hello2,
+                )
             }
         }
         impl nidrs::valid::validator::Validator for B {
             fn valid(&self) -> nidrs::valid::validator::ValidResult {
+                use nidrs::valid::validator::Rule;
                 use nidrs::valid::ruleset;
                 use nidrs::valid::ruleset::*;
-                use nidrs::valid::validator::Rule;
                 return Ok(());
             }
             fn example(&self) -> Vec<serde_json::Value> {
@@ -852,13 +1207,32 @@ mod app {
             extern crate serde as _serde;
             #[automatically_derived]
             impl _serde::Serialize for ArgDto {
-                fn serialize<__S>(&self, __serializer: __S) -> _serde::__private::Result<__S::Ok, __S::Error>
+                fn serialize<__S>(
+                    &self,
+                    __serializer: __S,
+                ) -> _serde::__private::Result<__S::Ok, __S::Error>
                 where
                     __S: _serde::Serializer,
                 {
                     match *self {
-                        ArgDto::A(ref __field0) => _serde::Serializer::serialize_newtype_variant(__serializer, "ArgDto", 0u32, "A", __field0),
-                        ArgDto::B(ref __field0) => _serde::Serializer::serialize_newtype_variant(__serializer, "ArgDto", 1u32, "B", __field0),
+                        ArgDto::A(ref __field0) => {
+                            _serde::Serializer::serialize_newtype_variant(
+                                __serializer,
+                                "ArgDto",
+                                0u32,
+                                "A",
+                                __field0,
+                            )
+                        }
+                        ArgDto::B(ref __field0) => {
+                            _serde::Serializer::serialize_newtype_variant(
+                                __serializer,
+                                "ArgDto",
+                                1u32,
+                                "B",
+                                __field0,
+                            )
+                        }
                     }
                 }
             }
@@ -870,7 +1244,9 @@ mod app {
             extern crate serde as _serde;
             #[automatically_derived]
             impl<'de> _serde::Deserialize<'de> for ArgDto {
-                fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+                fn deserialize<__D>(
+                    __deserializer: __D,
+                ) -> _serde::__private::Result<Self, __D::Error>
                 where
                     __D: _serde::Deserializer<'de>,
                 {
@@ -884,33 +1260,56 @@ mod app {
                     struct __FieldVisitor;
                     impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
                         type Value = __Field;
-                        fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
-                            _serde::__private::Formatter::write_str(__formatter, "variant identifier")
+                        fn expecting(
+                            &self,
+                            __formatter: &mut _serde::__private::Formatter,
+                        ) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(
+                                __formatter,
+                                "variant identifier",
+                            )
                         }
-                        fn visit_u64<__E>(self, __value: u64) -> _serde::__private::Result<Self::Value, __E>
+                        fn visit_u64<__E>(
+                            self,
+                            __value: u64,
+                        ) -> _serde::__private::Result<Self::Value, __E>
                         where
                             __E: _serde::de::Error,
                         {
                             match __value {
                                 0u64 => _serde::__private::Ok(__Field::__field0),
                                 1u64 => _serde::__private::Ok(__Field::__field1),
-                                _ => _serde::__private::Err(_serde::de::Error::invalid_value(
-                                    _serde::de::Unexpected::Unsigned(__value),
-                                    &"variant index 0 <= i < 2",
-                                )),
+                                _ => {
+                                    _serde::__private::Err(
+                                        _serde::de::Error::invalid_value(
+                                            _serde::de::Unexpected::Unsigned(__value),
+                                            &"variant index 0 <= i < 2",
+                                        ),
+                                    )
+                                }
                             }
                         }
-                        fn visit_str<__E>(self, __value: &str) -> _serde::__private::Result<Self::Value, __E>
+                        fn visit_str<__E>(
+                            self,
+                            __value: &str,
+                        ) -> _serde::__private::Result<Self::Value, __E>
                         where
                             __E: _serde::de::Error,
                         {
                             match __value {
                                 "A" => _serde::__private::Ok(__Field::__field0),
                                 "B" => _serde::__private::Ok(__Field::__field1),
-                                _ => _serde::__private::Err(_serde::de::Error::unknown_variant(__value, VARIANTS)),
+                                _ => {
+                                    _serde::__private::Err(
+                                        _serde::de::Error::unknown_variant(__value, VARIANTS),
+                                    )
+                                }
                             }
                         }
-                        fn visit_bytes<__E>(self, __value: &[u8]) -> _serde::__private::Result<Self::Value, __E>
+                        fn visit_bytes<__E>(
+                            self,
+                            __value: &[u8],
+                        ) -> _serde::__private::Result<Self::Value, __E>
                         where
                             __E: _serde::de::Error,
                         {
@@ -919,18 +1318,25 @@ mod app {
                                 b"B" => _serde::__private::Ok(__Field::__field1),
                                 _ => {
                                     let __value = &_serde::__private::from_utf8_lossy(__value);
-                                    _serde::__private::Err(_serde::de::Error::unknown_variant(__value, VARIANTS))
+                                    _serde::__private::Err(
+                                        _serde::de::Error::unknown_variant(__value, VARIANTS),
+                                    )
                                 }
                             }
                         }
                     }
                     impl<'de> _serde::Deserialize<'de> for __Field {
                         #[inline]
-                        fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+                        fn deserialize<__D>(
+                            __deserializer: __D,
+                        ) -> _serde::__private::Result<Self, __D::Error>
                         where
                             __D: _serde::Deserializer<'de>,
                         {
-                            _serde::Deserializer::deserialize_identifier(__deserializer, __FieldVisitor)
+                            _serde::Deserializer::deserialize_identifier(
+                                __deserializer,
+                                __FieldVisitor,
+                            )
                         }
                     }
                     #[doc(hidden)]
@@ -940,19 +1346,34 @@ mod app {
                     }
                     impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
                         type Value = ArgDto;
-                        fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
-                            _serde::__private::Formatter::write_str(__formatter, "enum ArgDto")
+                        fn expecting(
+                            &self,
+                            __formatter: &mut _serde::__private::Formatter,
+                        ) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(
+                                __formatter,
+                                "enum ArgDto",
+                            )
                         }
-                        fn visit_enum<__A>(self, __data: __A) -> _serde::__private::Result<Self::Value, __A::Error>
+                        fn visit_enum<__A>(
+                            self,
+                            __data: __A,
+                        ) -> _serde::__private::Result<Self::Value, __A::Error>
                         where
                             __A: _serde::de::EnumAccess<'de>,
                         {
                             match _serde::de::EnumAccess::variant(__data)? {
                                 (__Field::__field0, __variant) => {
-                                    _serde::__private::Result::map(_serde::de::VariantAccess::newtype_variant::<A>(__variant), ArgDto::A)
+                                    _serde::__private::Result::map(
+                                        _serde::de::VariantAccess::newtype_variant::<A>(__variant),
+                                        ArgDto::A,
+                                    )
                                 }
                                 (__Field::__field1, __variant) => {
-                                    _serde::__private::Result::map(_serde::de::VariantAccess::newtype_variant::<B>(__variant), ArgDto::B)
+                                    _serde::__private::Result::map(
+                                        _serde::de::VariantAccess::newtype_variant::<B>(__variant),
+                                        ArgDto::B,
+                                    )
                                 }
                             }
                         }
@@ -963,7 +1384,10 @@ mod app {
                         __deserializer,
                         "ArgDto",
                         VARIANTS,
-                        __Visitor { marker: _serde::__private::PhantomData::<ArgDto>, lifetime: _serde::__private::PhantomData },
+                        __Visitor {
+                            marker: _serde::__private::PhantomData::<ArgDto>,
+                            lifetime: _serde::__private::PhantomData,
+                        },
                     )
                 }
             }
@@ -973,16 +1397,28 @@ mod app {
             #[inline]
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 match self {
-                    ArgDto::A(__self_0) => ::core::fmt::Formatter::debug_tuple_field1_finish(f, "A", &__self_0),
-                    ArgDto::B(__self_0) => ::core::fmt::Formatter::debug_tuple_field1_finish(f, "B", &__self_0),
+                    ArgDto::A(__self_0) => {
+                        ::core::fmt::Formatter::debug_tuple_field1_finish(
+                            f,
+                            "A",
+                            &__self_0,
+                        )
+                    }
+                    ArgDto::B(__self_0) => {
+                        ::core::fmt::Formatter::debug_tuple_field1_finish(
+                            f,
+                            "B",
+                            &__self_0,
+                        )
+                    }
                 }
             }
         }
         impl nidrs::valid::validator::Validator for ArgDto {
             fn valid(&self) -> nidrs::valid::validator::ValidResult {
+                use nidrs::valid::validator::Rule;
                 use nidrs::valid::ruleset;
                 use nidrs::valid::ruleset::*;
-                use nidrs::valid::validator::Rule;
                 match self {
                     ArgDto::A(v) => v.valid()?,
                     ArgDto::B(v) => v.valid()?,
@@ -1001,11 +1437,18 @@ mod app {
             extern crate serde as _serde;
             #[automatically_derived]
             impl _serde::Serialize for ArgWrapDto {
-                fn serialize<__S>(&self, __serializer: __S) -> _serde::__private::Result<__S::Ok, __S::Error>
+                fn serialize<__S>(
+                    &self,
+                    __serializer: __S,
+                ) -> _serde::__private::Result<__S::Ok, __S::Error>
                 where
                     __S: _serde::Serializer,
                 {
-                    _serde::Serializer::serialize_newtype_struct(__serializer, "ArgWrapDto", &self.0)
+                    _serde::Serializer::serialize_newtype_struct(
+                        __serializer,
+                        "ArgWrapDto",
+                        &self.0,
+                    )
                 }
             }
         };
@@ -1016,7 +1459,9 @@ mod app {
             extern crate serde as _serde;
             #[automatically_derived]
             impl<'de> _serde::Deserialize<'de> for ArgWrapDto {
-                fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+                fn deserialize<__D>(
+                    __deserializer: __D,
+                ) -> _serde::__private::Result<Self, __D::Error>
                 where
                     __D: _serde::Deserializer<'de>,
                 {
@@ -1027,29 +1472,47 @@ mod app {
                     }
                     impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
                         type Value = ArgWrapDto;
-                        fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
-                            _serde::__private::Formatter::write_str(__formatter, "tuple struct ArgWrapDto")
+                        fn expecting(
+                            &self,
+                            __formatter: &mut _serde::__private::Formatter,
+                        ) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(
+                                __formatter,
+                                "tuple struct ArgWrapDto",
+                            )
                         }
                         #[inline]
-                        fn visit_newtype_struct<__E>(self, __e: __E) -> _serde::__private::Result<Self::Value, __E::Error>
+                        fn visit_newtype_struct<__E>(
+                            self,
+                            __e: __E,
+                        ) -> _serde::__private::Result<Self::Value, __E::Error>
                         where
                             __E: _serde::Deserializer<'de>,
                         {
-                            let __field0: ArgDto = <ArgDto as _serde::Deserialize>::deserialize(__e)?;
+                            let __field0: ArgDto = <ArgDto as _serde::Deserialize>::deserialize(
+                                __e,
+                            )?;
                             _serde::__private::Ok(ArgWrapDto(__field0))
                         }
                         #[inline]
-                        fn visit_seq<__A>(self, mut __seq: __A) -> _serde::__private::Result<Self::Value, __A::Error>
+                        fn visit_seq<__A>(
+                            self,
+                            mut __seq: __A,
+                        ) -> _serde::__private::Result<Self::Value, __A::Error>
                         where
                             __A: _serde::de::SeqAccess<'de>,
                         {
-                            let __field0 = match _serde::de::SeqAccess::next_element::<ArgDto>(&mut __seq)? {
+                            let __field0 = match _serde::de::SeqAccess::next_element::<
+                                ArgDto,
+                            >(&mut __seq)? {
                                 _serde::__private::Some(__value) => __value,
                                 _serde::__private::None => {
-                                    return _serde::__private::Err(_serde::de::Error::invalid_length(
-                                        0usize,
-                                        &"tuple struct ArgWrapDto with 1 element",
-                                    ));
+                                    return _serde::__private::Err(
+                                        _serde::de::Error::invalid_length(
+                                            0usize,
+                                            &"tuple struct ArgWrapDto with 1 element",
+                                        ),
+                                    );
                                 }
                             };
                             _serde::__private::Ok(ArgWrapDto(__field0))
@@ -1058,7 +1521,10 @@ mod app {
                     _serde::Deserializer::deserialize_newtype_struct(
                         __deserializer,
                         "ArgWrapDto",
-                        __Visitor { marker: _serde::__private::PhantomData::<ArgWrapDto>, lifetime: _serde::__private::PhantomData },
+                        __Visitor {
+                            marker: _serde::__private::PhantomData::<ArgWrapDto>,
+                            lifetime: _serde::__private::PhantomData,
+                        },
                     )
                 }
             }
@@ -1067,14 +1533,18 @@ mod app {
         impl ::core::fmt::Debug for ArgWrapDto {
             #[inline]
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                ::core::fmt::Formatter::debug_tuple_field1_finish(f, "ArgWrapDto", &&self.0)
+                ::core::fmt::Formatter::debug_tuple_field1_finish(
+                    f,
+                    "ArgWrapDto",
+                    &&self.0,
+                )
             }
         }
         impl nidrs::valid::validator::Validator for ArgWrapDto {
             fn valid(&self) -> nidrs::valid::validator::ValidResult {
+                use nidrs::valid::validator::Rule;
                 use nidrs::valid::ruleset;
                 use nidrs::valid::ruleset::*;
-                use nidrs::valid::validator::Rule;
                 return Ok(());
             }
             fn example(&self) -> Vec<serde_json::Value> {
@@ -1089,7 +1559,9 @@ mod app {
     }
     pub mod interceptor {
         use nidrs::{injectable, AppResult, Interceptor};
-        use nidrs_extern::axum::{extract::Request, middleware::Next, response::IntoResponse};
+        use nidrs_extern::axum::{
+            extract::Request, middleware::Next, response::IntoResponse,
+        };
         pub struct AppInterceptor;
         #[automatically_derived]
         impl ::core::default::Default for AppInterceptor {
@@ -1099,29 +1571,41 @@ mod app {
             }
         }
         impl nidrs::Service for AppInterceptor {
-            fn inject(&self, ctx: nidrs::ModuleCtx, module_name: &str) -> nidrs::ModuleCtx {
+            fn inject(
+                &self,
+                ctx: nidrs::ModuleCtx,
+                module_name: &str,
+            ) -> nidrs::ModuleCtx {
                 ctx
             }
         }
         impl nidrs::ImplMeta for AppInterceptor {
             fn __meta() -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
-                meta.set("service", "AppInterceptor");
                 meta.set_data(nidrs::datasets::ServiceType::from("Service"));
                 meta.set_data(nidrs::datasets::ServiceName::from("AppInterceptor"));
+                meta.set("service", "AppInterceptor");
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
             }
         }
         impl Interceptor for AppInterceptor {
-            async fn intercept(&self, req: Request, next: Next) -> AppResult<impl IntoResponse> {
+            async fn intercept(
+                &self,
+                req: Request,
+                next: Next,
+            ) -> AppResult<impl IntoResponse> {
                 {
-                    ::std::io::_print(format_args!("Intercepting request: {0:?}\n", req));
+                    ::std::io::_print(
+                        format_args!("Intercepting request: {0:?}\n", req),
+                    );
                 };
                 let res = next.run(req).await;
                 {
-                    ::std::io::_print(format_args!("Intercepting response: {0:?}\n", res));
+                    ::std::io::_print(
+                        format_args!("Intercepting response: {0:?}\n", res),
+                    );
                 };
                 Ok(res)
             }
@@ -1138,16 +1622,20 @@ mod app {
             }
         }
         impl nidrs::Service for AppService {
-            fn inject(&self, ctx: nidrs::ModuleCtx, module_name: &str) -> nidrs::ModuleCtx {
+            fn inject(
+                &self,
+                ctx: nidrs::ModuleCtx,
+                module_name: &str,
+            ) -> nidrs::ModuleCtx {
                 ctx
             }
         }
         impl nidrs::ImplMeta for AppService {
             fn __meta() -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
-                meta.set("service", "AppService");
                 meta.set_data(nidrs::datasets::ServiceType::from("Service"));
                 meta.set_data(nidrs::datasets::ServiceName::from("AppService"));
+                meta.set("service", "AppService");
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -1173,24 +1661,51 @@ mod app {
     }
     impl nidrs::Module for AppModule {
         fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
-            use nidrs::{Controller, ImplMeta, InterCtx, Interceptor, InterceptorHandler, ModuleCtx, Service, StateCtx};
+            use nidrs::{
+                Service, Controller, Interceptor, InterCtx, InterceptorHandler,
+                ModuleCtx, StateCtx, ImplMeta,
+            };
             if ctx.modules.contains_key("AppModule") {
                 return ctx;
             }
             {
-                ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
             };
             {
-                ::std::io::_print(format_args!("Registering module {0}.\n", "AppModule"));
+                ::std::io::_print(
+                    format_args!("Registering module {0}.\n", "AppModule"),
+                );
             };
             ctx.modules.insert("AppModule".to_string(), Box::new(self));
-            ctx.imports.insert("AppModule".to_string(), Vec::from(["UserModule".to_string()]));
+            ctx.imports
+                .insert("AppModule".to_string(), Vec::from(["UserModule".to_string()]));
             ctx.append_exports("AppModule", Vec::from(["AppService"]), false);
-            ctx.register_interceptor("AppModule", "AppInterceptor", Box::new(std::sync::Arc::new(crate::import::AppInterceptor::default())));
-            if ctx.register_controller("AppModule", "AppController", Box::new(std::sync::Arc::new(controller::AppController::default()))) {
-                let t_controller = ctx.get_controller::<controller::AppController>("AppModule", "AppController");
+            ctx.register_interceptor(
+                "AppModule",
+                "AppInterceptor",
+                Box::new(std::sync::Arc::new(crate::import::AppInterceptor::default())),
+            );
+            if ctx
+                .register_controller(
+                    "AppModule",
+                    "AppController",
+                    Box::new(std::sync::Arc::new(controller::AppController::default())),
+                )
+            {
+                let t_controller = ctx
+                    .get_controller::<
+                        controller::AppController,
+                    >("AppModule", "AppController");
                 ctx = t_controller.__route_get_hello_world(ctx);
-                let t_controller = ctx.get_controller::<controller::AppController>("AppModule", "AppController");
+                let t_controller = ctx
+                    .get_controller::<
+                        controller::AppController,
+                    >("AppModule", "AppController");
                 ctx = t_controller.__route_post_hello_world(ctx);
             }
             let svc = std::sync::Arc::new(AppService::default());
@@ -1198,33 +1713,59 @@ mod app {
             let mut ctx = UserModule::default().init(ctx);
             let t = ctx.get_service::<AppService>("AppModule", "AppService");
             {
-                ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
             };
             {
-                ::std::io::_print(format_args!("Injecting {0}::{1}.\n", "AppModule", "AppService"));
+                ::std::io::_print(
+                    format_args!("Injecting {0}::{1}.\n", "AppModule", "AppService"),
+                );
             };
             let ctx = t.inject(ctx, &"AppModule");
             let t = ctx.get_controller::<AppController>("AppModule", "AppController");
             {
-                ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
             };
             {
-                ::std::io::_print(format_args!("Injecting {0}::{1}.\n", "AppModule", "AppController"));
+                ::std::io::_print(
+                    format_args!("Injecting {0}::{1}.\n", "AppModule", "AppController"),
+                );
             };
             let ctx = t.inject(ctx, &"AppModule");
             let t = ctx.get_interceptor::<AppInterceptor>("AppModule", "AppInterceptor");
             {
-                ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
             };
             {
-                ::std::io::_print(format_args!("Injecting {0}::{1}.\n", "AppModule", "AppInterceptor"));
+                ::std::io::_print(
+                    format_args!("Injecting {0}::{1}.\n", "AppModule", "AppInterceptor"),
+                );
             };
             let ctx = t.inject(ctx, &"AppModule");
             ctx
         }
         fn destroy(&self, ctx: &nidrs::ModuleCtx) {
             {
-                ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
             };
             {
                 ::std::io::_print(format_args!("Destroying module {0}.\n", "AppModule"));
@@ -1234,9 +1775,9 @@ mod app {
     impl nidrs::ImplMeta for AppModule {
         fn __meta() -> nidrs::InnerMeta {
             let mut meta = nidrs::InnerMeta::new();
-            meta.set("service", "AppService");
             meta.set_data(nidrs::datasets::ServiceType::from("Service"));
             meta.set_data(nidrs::datasets::ServiceName::from("AppService"));
+            meta.set("service", "AppService");
             meta.set("module", "AppModule");
             meta.set("global", "app");
             meta
@@ -1247,12 +1788,12 @@ mod modules {
     pub mod user {
         use nidrs::macros::module;
         pub mod controller {
-            use super::{dto::CreateUserDto, service::UserService};
+            use std::collections::HashMap;
             use nidrs::macros::{controller, get};
             use nidrs::{externs::axum::extract::Query, post};
             use nidrs::{AppResult, Inject};
             use nidrs_extern::axum::Json;
-            use std::collections::HashMap;
+            use super::{dto::CreateUserDto, service::UserService};
             pub struct UserController {
                 user_service: Inject<UserService>,
             }
@@ -1260,13 +1801,20 @@ mod modules {
             impl ::core::default::Default for UserController {
                 #[inline]
                 fn default() -> UserController {
-                    UserController { user_service: ::core::default::Default::default() }
+                    UserController {
+                        user_service: ::core::default::Default::default(),
+                    }
                 }
             }
             impl nidrs::Controller for UserController {}
             impl nidrs::Service for UserController {
-                fn inject(&self, ctx: nidrs::ModuleCtx, module_name: &str) -> nidrs::ModuleCtx {
-                    let service = ctx.get_service::<UserService>(&module_name, "UserService");
+                fn inject(
+                    &self,
+                    ctx: nidrs::ModuleCtx,
+                    module_name: &str,
+                ) -> nidrs::ModuleCtx {
+                    let service = ctx
+                        .get_service::<UserService>(&module_name, "UserService");
                     self.user_service.inject(service.clone());
                     ctx
                 }
@@ -1274,17 +1822,20 @@ mod modules {
             impl nidrs::ImplMeta for UserController {
                 fn __meta() -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
-                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
-                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
                     meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
                 }
             }
             impl UserController {
-                pub async fn get_hello_world(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<String> {
+                pub async fn get_hello_world(
+                    &self,
+                    Query(q): Query<HashMap<String, String>>,
+                ) -> AppResult<String> {
                     {
                         ::std::io::_print(format_args!("Query {0:?}\n", q));
                     };
@@ -1292,21 +1843,24 @@ mod modules {
                 }
                 pub fn __meta_get_hello_world(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
-                    meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
-                    meta.set_data(nidrs::datasets::RouterName::from("get_hello_world"));
                     meta.set("handler", "get_hello_world");
                     meta.set_data(nidrs::datasets::RouterMethod::from("get"));
-                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                    meta.set_data(nidrs::datasets::RouterName::from("get_hello_world"));
+                    meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
                     meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
-                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
                     meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
                 }
-                pub fn __route_get_hello_world(&self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
-                    use axum::response::IntoResponse;
+                pub fn __route_get_hello_world(
+                    &self,
+                    mut ctx: nidrs::ModuleCtx,
+                ) -> nidrs::ModuleCtx {
                     use nidrs::externs::axum;
+                    use axum::response::IntoResponse;
                     use nidrs::externs::axum::{extract::Query, Json};
                     use nidrs::externs::meta::{InnerMeta, Meta};
                     use nidrs::Interceptor;
@@ -1315,28 +1869,53 @@ mod modules {
                     let router_info = ctx.get_router_full(&meta);
                     if let Err(e) = router_info {
                         {
-                            ::core::panicking::panic_fmt(format_args!("[{0}] {1:?}", "__route_get_hello_world", e));
+                            ::core::panicking::panic_fmt(
+                                format_args!("[{0}] {1:?}", "__route_get_hello_world", e),
+                            );
                         };
                     }
                     let full_path = router_info.unwrap();
                     {
-                        ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                        ::std::io::_print(
+                            format_args!(
+                                "{0} ",
+                                nidrs_extern::colored::Colorize::green("[nidrs]"),
+                            ),
+                        );
                     };
                     {
-                        ::std::io::_print(format_args!("Registering router \'{0} {1}\'.\n", "get".to_uppercase(), full_path,));
+                        ::std::io::_print(
+                            format_args!(
+                                "Registering router \'{0} {1}\'.\n",
+                                "get".to_uppercase(),
+                                full_path,
+                            ),
+                        );
                     };
                     meta.set_data(nidrs::datasets::RouterFullPath(full_path.clone()));
                     let meta = Meta::new(meta);
                     let module_name = meta.get::<&str>("module").unwrap();
-                    let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
-                    let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
+                    let controller_name = meta
+                        .get_data::<nidrs::datasets::ServiceName>()
+                        .unwrap()
+                        .value();
+                    let t_controller = ctx
+                        .get_controller::<Self>(module_name, controller_name);
                     let router = nidrs::externs::axum::Router::new()
-                        .route(&full_path, nidrs::externs::axum::routing::get(|p0| async move { t_controller.get_hello_world(p0).await }))
+                        .route(
+                            &full_path,
+                            nidrs::externs::axum::routing::get(|p0| async move {
+                                t_controller.get_hello_world(p0).await
+                            }),
+                        )
                         .layer(nidrs::externs::axum::Extension(meta.clone()));
                     ctx.routers.push(nidrs::RouterWrap::new(router, meta));
                     ctx
                 }
-                pub async fn create_user(&self, dto: Json<CreateUserDto>) -> AppResult<String> {
+                pub async fn create_user(
+                    &self,
+                    dto: Json<CreateUserDto>,
+                ) -> AppResult<String> {
                     Ok(self.user_service.extract().get_hello_world2())
                 }
                 pub fn __meta_create_user(&self) -> nidrs::InnerMeta {
@@ -1345,17 +1924,20 @@ mod modules {
                     meta.set_data(nidrs::datasets::RouterName::from("create_user"));
                     meta.set_data(nidrs::datasets::RouterMethod::from("post"));
                     meta.set_data(nidrs::datasets::RouterPath::from("/"));
-                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
-                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
                     meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
                 }
-                pub fn __route_create_user(&self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
-                    use axum::response::IntoResponse;
+                pub fn __route_create_user(
+                    &self,
+                    mut ctx: nidrs::ModuleCtx,
+                ) -> nidrs::ModuleCtx {
                     use nidrs::externs::axum;
+                    use axum::response::IntoResponse;
                     use nidrs::externs::axum::{extract::Query, Json};
                     use nidrs::externs::meta::{InnerMeta, Meta};
                     use nidrs::Interceptor;
@@ -1364,23 +1946,45 @@ mod modules {
                     let router_info = ctx.get_router_full(&meta);
                     if let Err(e) = router_info {
                         {
-                            ::core::panicking::panic_fmt(format_args!("[{0}] {1:?}", "__route_create_user", e));
+                            ::core::panicking::panic_fmt(
+                                format_args!("[{0}] {1:?}", "__route_create_user", e),
+                            );
                         };
                     }
                     let full_path = router_info.unwrap();
                     {
-                        ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                        ::std::io::_print(
+                            format_args!(
+                                "{0} ",
+                                nidrs_extern::colored::Colorize::green("[nidrs]"),
+                            ),
+                        );
                     };
                     {
-                        ::std::io::_print(format_args!("Registering router \'{0} {1}\'.\n", "post".to_uppercase(), full_path,));
+                        ::std::io::_print(
+                            format_args!(
+                                "Registering router \'{0} {1}\'.\n",
+                                "post".to_uppercase(),
+                                full_path,
+                            ),
+                        );
                     };
                     meta.set_data(nidrs::datasets::RouterFullPath(full_path.clone()));
                     let meta = Meta::new(meta);
                     let module_name = meta.get::<&str>("module").unwrap();
-                    let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
-                    let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
+                    let controller_name = meta
+                        .get_data::<nidrs::datasets::ServiceName>()
+                        .unwrap()
+                        .value();
+                    let t_controller = ctx
+                        .get_controller::<Self>(module_name, controller_name);
                     let router = nidrs::externs::axum::Router::new()
-                        .route(&full_path, nidrs::externs::axum::routing::get(|p0| async move { t_controller.create_user(p0).await }))
+                        .route(
+                            &full_path,
+                            nidrs::externs::axum::routing::get(|p0| async move {
+                                t_controller.create_user(p0).await
+                            }),
+                        )
                         .layer(nidrs::externs::axum::Extension(meta.clone()));
                     ctx.routers.push(nidrs::RouterWrap::new(router, meta));
                     ctx
@@ -1403,13 +2007,28 @@ mod modules {
                 extern crate serde as _serde;
                 #[automatically_derived]
                 impl _serde::Serialize for CreateUserDto {
-                    fn serialize<__S>(&self, __serializer: __S) -> _serde::__private::Result<__S::Ok, __S::Error>
+                    fn serialize<__S>(
+                        &self,
+                        __serializer: __S,
+                    ) -> _serde::__private::Result<__S::Ok, __S::Error>
                     where
                         __S: _serde::Serializer,
                     {
-                        let mut __serde_state = _serde::Serializer::serialize_struct(__serializer, "CreateUserDto", false as usize + 1 + 1)?;
-                        _serde::ser::SerializeStruct::serialize_field(&mut __serde_state, "name", &self.name)?;
-                        _serde::ser::SerializeStruct::serialize_field(&mut __serde_state, "age", &self.age)?;
+                        let mut __serde_state = _serde::Serializer::serialize_struct(
+                            __serializer,
+                            "CreateUserDto",
+                            false as usize + 1 + 1,
+                        )?;
+                        _serde::ser::SerializeStruct::serialize_field(
+                            &mut __serde_state,
+                            "name",
+                            &self.name,
+                        )?;
+                        _serde::ser::SerializeStruct::serialize_field(
+                            &mut __serde_state,
+                            "age",
+                            &self.age,
+                        )?;
                         _serde::ser::SerializeStruct::end(__serde_state)
                     }
                 }
@@ -1421,7 +2040,9 @@ mod modules {
                 extern crate serde as _serde;
                 #[automatically_derived]
                 impl<'de> _serde::Deserialize<'de> for CreateUserDto {
-                    fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+                    fn deserialize<__D>(
+                        __deserializer: __D,
+                    ) -> _serde::__private::Result<Self, __D::Error>
                     where
                         __D: _serde::Deserializer<'de>,
                     {
@@ -1436,10 +2057,19 @@ mod modules {
                         struct __FieldVisitor;
                         impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
                             type Value = __Field;
-                            fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
-                                _serde::__private::Formatter::write_str(__formatter, "field identifier")
+                            fn expecting(
+                                &self,
+                                __formatter: &mut _serde::__private::Formatter,
+                            ) -> _serde::__private::fmt::Result {
+                                _serde::__private::Formatter::write_str(
+                                    __formatter,
+                                    "field identifier",
+                                )
                             }
-                            fn visit_u64<__E>(self, __value: u64) -> _serde::__private::Result<Self::Value, __E>
+                            fn visit_u64<__E>(
+                                self,
+                                __value: u64,
+                            ) -> _serde::__private::Result<Self::Value, __E>
                             where
                                 __E: _serde::de::Error,
                             {
@@ -1449,7 +2079,10 @@ mod modules {
                                     _ => _serde::__private::Ok(__Field::__ignore),
                                 }
                             }
-                            fn visit_str<__E>(self, __value: &str) -> _serde::__private::Result<Self::Value, __E>
+                            fn visit_str<__E>(
+                                self,
+                                __value: &str,
+                            ) -> _serde::__private::Result<Self::Value, __E>
                             where
                                 __E: _serde::de::Error,
                             {
@@ -1459,7 +2092,10 @@ mod modules {
                                     _ => _serde::__private::Ok(__Field::__ignore),
                                 }
                             }
-                            fn visit_bytes<__E>(self, __value: &[u8]) -> _serde::__private::Result<Self::Value, __E>
+                            fn visit_bytes<__E>(
+                                self,
+                                __value: &[u8],
+                            ) -> _serde::__private::Result<Self::Value, __E>
                             where
                                 __E: _serde::de::Error,
                             {
@@ -1472,11 +2108,16 @@ mod modules {
                         }
                         impl<'de> _serde::Deserialize<'de> for __Field {
                             #[inline]
-                            fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+                            fn deserialize<__D>(
+                                __deserializer: __D,
+                            ) -> _serde::__private::Result<Self, __D::Error>
                             where
                                 __D: _serde::Deserializer<'de>,
                             {
-                                _serde::Deserializer::deserialize_identifier(__deserializer, __FieldVisitor)
+                                _serde::Deserializer::deserialize_identifier(
+                                    __deserializer,
+                                    __FieldVisitor,
+                                )
                             }
                         }
                         #[doc(hidden)]
@@ -1486,69 +2127,111 @@ mod modules {
                         }
                         impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
                             type Value = CreateUserDto;
-                            fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
-                                _serde::__private::Formatter::write_str(__formatter, "struct CreateUserDto")
+                            fn expecting(
+                                &self,
+                                __formatter: &mut _serde::__private::Formatter,
+                            ) -> _serde::__private::fmt::Result {
+                                _serde::__private::Formatter::write_str(
+                                    __formatter,
+                                    "struct CreateUserDto",
+                                )
                             }
                             #[inline]
-                            fn visit_seq<__A>(self, mut __seq: __A) -> _serde::__private::Result<Self::Value, __A::Error>
+                            fn visit_seq<__A>(
+                                self,
+                                mut __seq: __A,
+                            ) -> _serde::__private::Result<Self::Value, __A::Error>
                             where
                                 __A: _serde::de::SeqAccess<'de>,
                             {
-                                let __field0 = match _serde::de::SeqAccess::next_element::<String>(&mut __seq)? {
+                                let __field0 = match _serde::de::SeqAccess::next_element::<
+                                    String,
+                                >(&mut __seq)? {
                                     _serde::__private::Some(__value) => __value,
                                     _serde::__private::None => {
-                                        return _serde::__private::Err(_serde::de::Error::invalid_length(
-                                            0usize,
-                                            &"struct CreateUserDto with 2 elements",
-                                        ));
+                                        return _serde::__private::Err(
+                                            _serde::de::Error::invalid_length(
+                                                0usize,
+                                                &"struct CreateUserDto with 2 elements",
+                                            ),
+                                        );
                                     }
                                 };
-                                let __field1 = match _serde::de::SeqAccess::next_element::<i32>(&mut __seq)? {
+                                let __field1 = match _serde::de::SeqAccess::next_element::<
+                                    i32,
+                                >(&mut __seq)? {
                                     _serde::__private::Some(__value) => __value,
                                     _serde::__private::None => {
-                                        return _serde::__private::Err(_serde::de::Error::invalid_length(
-                                            1usize,
-                                            &"struct CreateUserDto with 2 elements",
-                                        ));
+                                        return _serde::__private::Err(
+                                            _serde::de::Error::invalid_length(
+                                                1usize,
+                                                &"struct CreateUserDto with 2 elements",
+                                            ),
+                                        );
                                     }
                                 };
-                                _serde::__private::Ok(CreateUserDto { name: __field0, age: __field1 })
+                                _serde::__private::Ok(CreateUserDto {
+                                    name: __field0,
+                                    age: __field1,
+                                })
                             }
                             #[inline]
-                            fn visit_map<__A>(self, mut __map: __A) -> _serde::__private::Result<Self::Value, __A::Error>
+                            fn visit_map<__A>(
+                                self,
+                                mut __map: __A,
+                            ) -> _serde::__private::Result<Self::Value, __A::Error>
                             where
                                 __A: _serde::de::MapAccess<'de>,
                             {
                                 let mut __field0: _serde::__private::Option<String> = _serde::__private::None;
                                 let mut __field1: _serde::__private::Option<i32> = _serde::__private::None;
-                                while let _serde::__private::Some(__key) = _serde::de::MapAccess::next_key::<__Field>(&mut __map)? {
+                                while let _serde::__private::Some(__key) = _serde::de::MapAccess::next_key::<
+                                    __Field,
+                                >(&mut __map)? {
                                     match __key {
                                         __Field::__field0 => {
                                             if _serde::__private::Option::is_some(&__field0) {
-                                                return _serde::__private::Err(<__A::Error as _serde::de::Error>::duplicate_field("name"));
+                                                return _serde::__private::Err(
+                                                    <__A::Error as _serde::de::Error>::duplicate_field("name"),
+                                                );
                                             }
-                                            __field0 = _serde::__private::Some(_serde::de::MapAccess::next_value::<String>(&mut __map)?);
+                                            __field0 = _serde::__private::Some(
+                                                _serde::de::MapAccess::next_value::<String>(&mut __map)?,
+                                            );
                                         }
                                         __Field::__field1 => {
                                             if _serde::__private::Option::is_some(&__field1) {
-                                                return _serde::__private::Err(<__A::Error as _serde::de::Error>::duplicate_field("age"));
+                                                return _serde::__private::Err(
+                                                    <__A::Error as _serde::de::Error>::duplicate_field("age"),
+                                                );
                                             }
-                                            __field1 = _serde::__private::Some(_serde::de::MapAccess::next_value::<i32>(&mut __map)?);
+                                            __field1 = _serde::__private::Some(
+                                                _serde::de::MapAccess::next_value::<i32>(&mut __map)?,
+                                            );
                                         }
                                         _ => {
-                                            let _ = _serde::de::MapAccess::next_value::<_serde::de::IgnoredAny>(&mut __map)?;
+                                            let _ = _serde::de::MapAccess::next_value::<
+                                                _serde::de::IgnoredAny,
+                                            >(&mut __map)?;
                                         }
                                     }
                                 }
                                 let __field0 = match __field0 {
                                     _serde::__private::Some(__field0) => __field0,
-                                    _serde::__private::None => _serde::__private::de::missing_field("name")?,
+                                    _serde::__private::None => {
+                                        _serde::__private::de::missing_field("name")?
+                                    }
                                 };
                                 let __field1 = match __field1 {
                                     _serde::__private::Some(__field1) => __field1,
-                                    _serde::__private::None => _serde::__private::de::missing_field("age")?,
+                                    _serde::__private::None => {
+                                        _serde::__private::de::missing_field("age")?
+                                    }
                                 };
-                                _serde::__private::Ok(CreateUserDto { name: __field0, age: __field1 })
+                                _serde::__private::Ok(CreateUserDto {
+                                    name: __field0,
+                                    age: __field1,
+                                })
                             }
                         }
                         #[doc(hidden)]
@@ -1557,7 +2240,10 @@ mod modules {
                             __deserializer,
                             "CreateUserDto",
                             FIELDS,
-                            __Visitor { marker: _serde::__private::PhantomData::<CreateUserDto>, lifetime: _serde::__private::PhantomData },
+                            __Visitor {
+                                marker: _serde::__private::PhantomData::<CreateUserDto>,
+                                lifetime: _serde::__private::PhantomData,
+                            },
                         )
                     }
                 }
@@ -1566,16 +2252,28 @@ mod modules {
             impl ::core::fmt::Debug for CreateUserDto {
                 #[inline]
                 fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                    ::core::fmt::Formatter::debug_struct_field2_finish(f, "CreateUserDto", "name", &self.name, "age", &&self.age)
+                    ::core::fmt::Formatter::debug_struct_field2_finish(
+                        f,
+                        "CreateUserDto",
+                        "name",
+                        &self.name,
+                        "age",
+                        &&self.age,
+                    )
                 }
             }
             impl nidrs::valid::validator::Validator for CreateUserDto {
                 fn valid(&self) -> nidrs::valid::validator::ValidResult {
+                    use nidrs::valid::validator::Rule;
                     use nidrs::valid::ruleset;
                     use nidrs::valid::ruleset::*;
-                    use nidrs::valid::validator::Rule;
                     let v = &self.name;
-                    Email.valid(v, "name", Some("age must be greater than 0".to_string()))?;
+                    Email
+                        .valid(
+                            v,
+                            "name",
+                            Some("age must be greater than 0".to_string()),
+                        )?;
                     let v = &self.age;
                     Number::default().max(12).min(0).valid(v, "age", None)?;
                     return Ok(());
@@ -1585,17 +2283,30 @@ mod modules {
                 }
             }
             impl<'__s> utoipa::ToSchema<'__s> for CreateUserDto {
-                fn schema() -> (&'__s str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>) {
+                fn schema() -> (
+                    &'__s str,
+                    utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
+                ) {
                     (
                         "CreateUserDto",
                         utoipa::openapi::ObjectBuilder::new()
-                            .property("name", utoipa::openapi::ObjectBuilder::new().schema_type(utoipa::openapi::SchemaType::String))
+                            .property(
+                                "name",
+                                utoipa::openapi::ObjectBuilder::new()
+                                    .schema_type(utoipa::openapi::SchemaType::String),
+                            )
                             .required("name")
                             .property(
                                 "age",
                                 utoipa::openapi::ObjectBuilder::new()
                                     .schema_type(utoipa::openapi::SchemaType::Integer)
-                                    .format(Some(utoipa::openapi::SchemaFormat::KnownFormat(utoipa::openapi::KnownFormat::Int32))),
+                                    .format(
+                                        Some(
+                                            utoipa::openapi::SchemaFormat::KnownFormat(
+                                                utoipa::openapi::KnownFormat::Int32,
+                                            ),
+                                        ),
+                                    ),
                             )
                             .required("age")
                             .into(),
@@ -1604,10 +2315,10 @@ mod modules {
             }
         }
         pub mod service {
-            use crate::app::service::AppService;
+            use std::sync::{Arc, Mutex};
             use nidrs::macros::injectable;
             use nidrs::Inject;
-            use std::sync::{Arc, Mutex};
+            use crate::app::service::AppService;
             pub struct UserService {
                 app_service: Inject<AppService>,
                 count: Arc<Mutex<i32>>,
@@ -1616,12 +2327,20 @@ mod modules {
             impl ::core::default::Default for UserService {
                 #[inline]
                 fn default() -> UserService {
-                    UserService { app_service: ::core::default::Default::default(), count: ::core::default::Default::default() }
+                    UserService {
+                        app_service: ::core::default::Default::default(),
+                        count: ::core::default::Default::default(),
+                    }
                 }
             }
             impl nidrs::Service for UserService {
-                fn inject(&self, ctx: nidrs::ModuleCtx, module_name: &str) -> nidrs::ModuleCtx {
-                    let service = ctx.get_service::<AppService>(&module_name, "AppService");
+                fn inject(
+                    &self,
+                    ctx: nidrs::ModuleCtx,
+                    module_name: &str,
+                ) -> nidrs::ModuleCtx {
+                    let service = ctx
+                        .get_service::<AppService>(&module_name, "AppService");
                     self.app_service.inject(service.clone());
                     ctx
                 }
@@ -1630,8 +2349,8 @@ mod modules {
                 fn __meta() -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
                     meta.set_data(nidrs::datasets::ServiceType::from("Service"));
-                    meta.set_data(nidrs::datasets::ServiceName::from("UserService"));
                     meta.set("service", "UserService");
+                    meta.set_data(nidrs::datasets::ServiceName::from("UserService"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
@@ -1645,7 +2364,9 @@ mod modules {
                     let mut count = self.count.lock().unwrap();
                     *count += 1;
                     ::alloc::__export::must_use({
-                        let res = ::alloc::fmt::format(format_args!("Hello, World! {0}", count));
+                        let res = ::alloc::fmt::format(
+                            format_args!("Hello, World! {0}", count),
+                        );
                         res
                     })
                 }
@@ -1664,23 +2385,51 @@ mod modules {
         }
         impl nidrs::Module for UserModule {
             fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
-                use nidrs::{Controller, ImplMeta, InterCtx, Interceptor, InterceptorHandler, ModuleCtx, Service, StateCtx};
+                use nidrs::{
+                    Service, Controller, Interceptor, InterCtx, InterceptorHandler,
+                    ModuleCtx, StateCtx, ImplMeta,
+                };
                 if ctx.modules.contains_key("UserModule") {
                     return ctx;
                 }
                 {
-                    ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
                 };
                 {
-                    ::std::io::_print(format_args!("Registering module {0}.\n", "UserModule"));
+                    ::std::io::_print(
+                        format_args!("Registering module {0}.\n", "UserModule"),
+                    );
                 };
                 ctx.modules.insert("UserModule".to_string(), Box::new(self));
-                ctx.imports.insert("UserModule".to_string(), Vec::from(["AppModule".to_string()]));
+                ctx.imports
+                    .insert(
+                        "UserModule".to_string(),
+                        Vec::from(["AppModule".to_string()]),
+                    );
                 ctx.append_exports("UserModule", Vec::from(["UserService"]), false);
-                if ctx.register_controller("UserModule", "UserController", Box::new(std::sync::Arc::new(controller::UserController::default()))) {
-                    let t_controller = ctx.get_controller::<controller::UserController>("UserModule", "UserController");
+                if ctx
+                    .register_controller(
+                        "UserModule",
+                        "UserController",
+                        Box::new(
+                            std::sync::Arc::new(controller::UserController::default()),
+                        ),
+                    )
+                {
+                    let t_controller = ctx
+                        .get_controller::<
+                            controller::UserController,
+                        >("UserModule", "UserController");
                     ctx = t_controller.__route_get_hello_world(ctx);
-                    let t_controller = ctx.get_controller::<controller::UserController>("UserModule", "UserController");
+                    let t_controller = ctx
+                        .get_controller::<
+                            controller::UserController,
+                        >("UserModule", "UserController");
                     ctx = t_controller.__route_create_user(ctx);
                 }
                 let svc = std::sync::Arc::new(UserService::default());
@@ -1688,28 +2437,58 @@ mod modules {
                 let mut ctx = AppModule::default().init(ctx);
                 let t = ctx.get_service::<UserService>("UserModule", "UserService");
                 {
-                    ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
                 };
                 {
-                    ::std::io::_print(format_args!("Injecting {0}::{1}.\n", "UserModule", "UserService",));
+                    ::std::io::_print(
+                        format_args!(
+                            "Injecting {0}::{1}.\n",
+                            "UserModule",
+                            "UserService",
+                        ),
+                    );
                 };
                 let ctx = t.inject(ctx, &"UserModule");
-                let t = ctx.get_controller::<UserController>("UserModule", "UserController");
+                let t = ctx
+                    .get_controller::<UserController>("UserModule", "UserController");
                 {
-                    ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
                 };
                 {
-                    ::std::io::_print(format_args!("Injecting {0}::{1}.\n", "UserModule", "UserController",));
+                    ::std::io::_print(
+                        format_args!(
+                            "Injecting {0}::{1}.\n",
+                            "UserModule",
+                            "UserController",
+                        ),
+                    );
                 };
                 let ctx = t.inject(ctx, &"UserModule");
                 ctx
             }
             fn destroy(&self, ctx: &nidrs::ModuleCtx) {
                 {
-                    ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                    ::std::io::_print(
+                        format_args!(
+                            "{0} ",
+                            nidrs_extern::colored::Colorize::green("[nidrs]"),
+                        ),
+                    );
                 };
                 {
-                    ::std::io::_print(format_args!("Destroying module {0}.\n", "UserModule"));
+                    ::std::io::_print(
+                        format_args!("Destroying module {0}.\n", "UserModule"),
+                    );
                 };
             }
         }
@@ -1717,8 +2496,8 @@ mod modules {
             fn __meta() -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
                 meta.set_data(nidrs::datasets::ServiceType::from("Service"));
-                meta.set_data(nidrs::datasets::ServiceName::from("UserService"));
                 meta.set("service", "UserService");
+                meta.set_data(nidrs::datasets::ServiceName::from("UserService"));
                 meta.set("module", "UserModule");
                 meta.set("global", "app");
                 meta
@@ -1728,15 +2507,24 @@ mod modules {
 }
 mod shared {
     pub mod fn_test {
-        use crate::AppResult;
         use nidrs::externs::anyhow;
         use nidrs::externs::axum::http::StatusCode;
         use nidrs::{throw, Exception};
+        use crate::AppResult;
         pub fn fn_test() -> AppResult {
             nidrs::__throw(
-                Exception::new(StatusCode::INTERNAL_SERVER_ERROR, anyhow::Error::msg("Error")),
+                Exception::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    anyhow::Error::msg("Error"),
+                ),
                 &::alloc::__export::must_use({
-                    let res = ::alloc::fmt::format(format_args!("from {0} line {1}", "examples/hello/src/shared/fn_test.rs", 8usize,));
+                    let res = ::alloc::fmt::format(
+                        format_args!(
+                            "from {0} line {1}",
+                            "examples/hello/src/shared/fn_test.rs",
+                            8usize,
+                        ),
+                    );
                     res
                 }),
             )?;
@@ -1744,75 +2532,90 @@ mod shared {
         }
     }
 }
+use std::time::Duration;
 use nidrs::externs::axum::{
-    error_handling::HandleErrorLayer,
-    extract::Request,
-    http::StatusCode,
+    error_handling::HandleErrorLayer, extract::Request, http::StatusCode,
     middleware::{self, Next},
-    response::Response,
-    BoxError,
+    response::Response, BoxError,
 };
 use nidrs::externs::tower::timeout::TimeoutLayer;
 pub use nidrs::AppError;
 pub use nidrs::AppResult;
-use std::time::Duration;
 fn main() {
     let app = nidrs::NidrsFactory::create(app::AppModule);
     let app = app.default_prefix("/api/{version}");
     let app = app.default_version("v1");
-    let app = app.default_router_hook(|router_wrap| {
-        {
-            ::std::io::_print(format_args!(
-                "router_wrap {0:?}\n",
-                (
-                    router_wrap.meta.get_data::<nidrs::datasets::ServiceName>(),
-                    router_wrap.meta.get_data::<nidrs::datasets::RouterFullPath>(),
-                    router_wrap.meta.get::<&str>("router_name"),
-                    router_wrap.meta.get::<&str>("controller_router_path"),
-                    router_wrap.meta.get::<&str>("router_path"),
-                ),
-            ));
-        };
-        if let Some(v) = router_wrap.meta.get_data::<nidrs::datasets::RouterBodyScheme>() {
+    let app = app
+        .default_router_hook(|router_wrap| {
             {
-                ::std::io::_print(format_args!("RouterBodyScheme {0:?}\n", v.value().0));
+                ::std::io::_print(
+                    format_args!(
+                        "router_wrap {0:?}\n",
+                        (
+                            router_wrap.meta.get_data::<nidrs::datasets::ServiceName>(),
+                            router_wrap
+                                .meta
+                                .get_data::<nidrs::datasets::RouterFullPath>(),
+                            router_wrap.meta.get::<&str>("router_name"),
+                            router_wrap.meta.get::<&str>("controller_router_path"),
+                            router_wrap.meta.get::<&str>("router_path"),
+                        ),
+                    ),
+                );
             };
-        }
-        if router_wrap.match_router_path("/**") {
+            if let Some(v) = router_wrap
+                .meta
+                .get_data::<nidrs::datasets::RouterBodyScheme>()
             {
-                ::std::io::_print(format_args!("match /\n"));
-            };
-            router_wrap.router.layer(
-                nidrs::externs::tower::ServiceBuilder::new()
-                    .layer(HandleErrorLayer::new(|error: BoxError| async move {
-                        if error.is::<nidrs::externs::tower::timeout::error::Elapsed>() {
-                            Ok(StatusCode::REQUEST_TIMEOUT)
-                        } else {
-                            Err((
-                                StatusCode::INTERNAL_SERVER_ERROR,
-                                ::alloc::__export::must_use({
-                                    let res = ::alloc::fmt::format(format_args!("Unhandled internal error: {0}", error));
-                                    res
+                {
+                    ::std::io::_print(
+                        format_args!("RouterBodyScheme {0:?}\n", v.value().0),
+                    );
+                };
+            }
+            if router_wrap.match_router_path("/**") {
+                {
+                    ::std::io::_print(format_args!("match /\n"));
+                };
+                router_wrap
+                    .router
+                    .layer(
+                        nidrs::externs::tower::ServiceBuilder::new()
+                            .layer(
+                                HandleErrorLayer::new(|error: BoxError| async move {
+                                    if error
+                                        .is::<nidrs::externs::tower::timeout::error::Elapsed>()
+                                    {
+                                        Ok(StatusCode::REQUEST_TIMEOUT)
+                                    } else {
+                                        Err((
+                                            StatusCode::INTERNAL_SERVER_ERROR,
+                                            ::alloc::__export::must_use({
+                                                let res = ::alloc::fmt::format(
+                                                    format_args!("Unhandled internal error: {0}", error),
+                                                );
+                                                res
+                                            }),
+                                        ))
+                                    }
                                 }),
-                            ))
-                        }
-                    }))
-                    .layer(TimeoutLayer::new(Duration::from_secs(5)))
-                    .layer(middleware::from_fn(auth)),
-            )
-        } else {
-            router_wrap.router
-        }
-    });
+                            )
+                            .layer(TimeoutLayer::new(Duration::from_secs(5)))
+                            .layer(middleware::from_fn(auth)),
+                    )
+            } else {
+                router_wrap.router
+            }
+        });
     let app = app.listen(3000);
     app.block();
 }
 pub mod import {
-    pub use crate::app::controller::AppController;
-    pub use crate::app::interceptor::AppInterceptor;
-    pub use crate::app::service::AppService;
     pub use crate::modules::user::controller::UserController;
     pub use crate::modules::user::service::UserService;
+    pub use crate::app::controller::AppController;
+    pub use crate::app::service::AppService;
+    pub use crate::app::interceptor::AppInterceptor;
 }
 struct CurrentUser {
     pub id: u64,
@@ -1822,21 +2625,35 @@ struct CurrentUser {
 impl ::core::clone::Clone for CurrentUser {
     #[inline]
     fn clone(&self) -> CurrentUser {
-        CurrentUser { id: ::core::clone::Clone::clone(&self.id), username: ::core::clone::Clone::clone(&self.username) }
+        CurrentUser {
+            id: ::core::clone::Clone::clone(&self.id),
+            username: ::core::clone::Clone::clone(&self.username),
+        }
     }
 }
 #[automatically_derived]
 impl ::core::fmt::Debug for CurrentUser {
     #[inline]
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        ::core::fmt::Formatter::debug_struct_field2_finish(f, "CurrentUser", "id", &self.id, "username", &&self.username)
+        ::core::fmt::Formatter::debug_struct_field2_finish(
+            f,
+            "CurrentUser",
+            "id",
+            &self.id,
+            "username",
+            &&self.username,
+        )
     }
 }
 async fn auth(mut req: Request, next: Next) -> Result<Response, StatusCode> {
     {
         ::std::io::_print(format_args!("auth {0:?}\n", req));
     };
-    req.extensions_mut().insert(CurrentUser { id: 1, username: "foo".to_string() });
+    req.extensions_mut()
+        .insert(CurrentUser {
+            id: 1,
+            username: "foo".to_string(),
+        });
     Ok(next.run(req).await)
 }
 extern crate alloc;
