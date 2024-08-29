@@ -9,7 +9,7 @@ impl TryFrom<&Value> for Float {
     fn try_from(value: &Value) -> Result<Self, Self::Error> {
         match value {
             Value::Float(v) => Ok(v.clone()),
-            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected PathIdent")),
+            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Expr")),
         }
     }
 }

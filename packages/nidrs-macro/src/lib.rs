@@ -284,7 +284,7 @@ pub fn module(args: Args, input: TokenStream) -> TokenStream {
     });
 }
 
-fn expand_exports_append(exports: &def::Array<def::PathIdent>) -> TokenStream2 {
+fn expand_exports_append(exports: &def::Array<def::Expr>) -> TokenStream2 {
     let exports_names: Vec<String> = exports.iter().map(|export_tokens| export_tokens.to_string()).collect::<Vec<String>>();
     let exports_names_tokens = exports_names
         .iter()
@@ -300,7 +300,7 @@ fn expand_exports_append(exports: &def::Array<def::PathIdent>) -> TokenStream2 {
     exports_names_tokens
 }
 
-fn merge_defaults_interceptors(interceptors: def::Array<def::PathIdent>) -> def::Array<def::PathIdent> {
+fn merge_defaults_interceptors(interceptors: def::Array<def::Expr>) -> def::Array<def::Expr> {
     let defaults_interceptors = def::Array(
         DEFAULT_INTERS
             .lock()
@@ -310,7 +310,7 @@ fn merge_defaults_interceptors(interceptors: def::Array<def::PathIdent>) -> def:
             .map(|inter| {
                 return inter.as_str().into();
             })
-            .collect::<Vec<def::PathIdent>>(),
+            .collect::<Vec<def::Expr>>(),
     );
 
     let all_interceptors = defaults_interceptors.merge(interceptors);
@@ -831,7 +831,7 @@ fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
     })
 }
 
-fn expand_controller_register(module_name: String, services: &def::Array<def::PathIdent>) -> TokenStream2 {
+fn expand_controller_register(module_name: String, services: &def::Array<def::Expr>) -> TokenStream2 {
     let controller_tokens: Vec<TokenStream2> = services
         .iter()
         .map(|controller_token| {
@@ -866,7 +866,7 @@ fn expand_controller_register(module_name: String, services: &def::Array<def::Pa
     return controller_tokens;
 }
 
-fn expand_service_register(module_name: String, services: &def::Array<def::PathIdent>) -> TokenStream2 {
+fn expand_service_register(module_name: String, services: &def::Array<def::Expr>) -> TokenStream2 {
     let service_tokens = services
         .iter()
         .map(|service_tokens| {
@@ -886,7 +886,7 @@ fn expand_service_register(module_name: String, services: &def::Array<def::PathI
     return service_tokens;
 }
 
-fn expand_interceptor_register(module_name: String, services: &def::Array<def::PathIdent>) -> TokenStream2 {
+fn expand_interceptor_register(module_name: String, services: &def::Array<def::Expr>) -> TokenStream2 {
     // println!("// gen_interceptor_register_tokens {} {:?}", module_name, services);
     let interceptor_tokens = services
         .iter()
@@ -905,7 +905,7 @@ fn expand_interceptor_register(module_name: String, services: &def::Array<def::P
     return interceptor_tokens;
 }
 
-fn expand_imports_register(module_name: String, imports: &def::Array<def::PathIdent>) -> (TokenStream2, TokenStream2) {
+fn expand_imports_register(module_name: String, imports: &def::Array<def::Expr>) -> (TokenStream2, TokenStream2) {
     let mut import_names = vec![];
     let imports = imports
         .iter()
@@ -923,7 +923,7 @@ fn expand_imports_register(module_name: String, imports: &def::Array<def::PathId
                         let dyn_module = #import_call;
                         let mut dyn_module_services = dyn_module.services;
                         dyn_module_services.drain().for_each(|(k, v)| {
-                            ctx.register_service(#dyn_module_name, k, v);
+                            ctx.register_service(#dyn_module_name, &k, v);
                         });
                         let mut dyn_module_exports = dyn_module.exports;
                         ctx.append_exports(#dyn_module_name, dyn_module_exports, nidrs::get_meta_by_type::<#module_ident>().get_data::<nidrs::datasets::Global>().unwrap_or(&nidrs::datasets::Global(false)).value());
@@ -960,7 +960,7 @@ fn expand_imports_register(module_name: String, imports: &def::Array<def::PathId
     return (import_names, imports);
 }
 
-fn expand_dep_inject(con: &str, module_name: String, services: &def::Array<def::PathIdent>) -> TokenStream2 {
+fn expand_dep_inject(con: &str, module_name: String, services: &def::Array<def::Expr>) -> TokenStream2 {
     let con_ident = syn::Ident::new(con, Span::call_site().into());
     let controller_tokens = services
         .iter()

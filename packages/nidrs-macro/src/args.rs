@@ -5,9 +5,9 @@ use syn_args_derive::ArgsParse;
 
 #[derive(Debug, Clone, ArgsParse)]
 pub struct ModuleOptions {
-    pub imports: def::Array<def::PathIdent>,
-    pub controllers: def::Array<def::PathIdent>,
-    pub services: def::Array<def::PathIdent>,
-    pub exports: def::Array<def::PathIdent>,
-    pub interceptors: def::Array<def::PathIdent>,
+    pub imports: def::Array<def::Expr>,
+    pub controllers: def::Array<def::Expr>,
+    pub services: def::Array<def::Expr>,
+    pub exports: def::Array<def::Expr>,
+    pub interceptors: def::Array<def::Expr>,
 }

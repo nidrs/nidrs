@@ -26,7 +26,7 @@ impl Formal {
     }
 
     pub fn parse(&self, input: &str) -> Result<Arguments, Error> {
-        let expr = syn::parse_str::<SynArgs>(&input).unwrap();
+        let expr = syn::parse_str::<SynArgs>(input).unwrap();
         // println!("Formal: {:#?}", expr);
         Ok(Arguments(expr.value))
     }
@@ -35,7 +35,7 @@ impl Formal {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Null,
-    PathIdent(def::PathIdent),
+    Expr(def::Expr),
     Int(def::Int),
     Float(def::Float),
     Bool(def::Bool),
@@ -65,7 +65,6 @@ impl DerefMut for Arguments {
 pub fn recursive_parsing(input: &syn::Expr) -> Value {
     match input {
         syn::Expr::Lit(lit) => recursive_lit(&lit.lit),
-        syn::Expr::Path(path) => Value::PathIdent(def::PathIdent(path.path.clone())),
         syn::Expr::Array(array) => {
             let mut arr = vec![];
             for item in array.elems.iter() {
@@ -83,7 +82,7 @@ pub fn recursive_parsing(input: &syn::Expr) -> Value {
             }
             Value::Object(def::Object(obj))
         }
-        _ => Value::Null,
+        _ => Value::Expr(def::Expr(input.clone())),
     }
 }
 

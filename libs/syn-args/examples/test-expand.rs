@@ -15,8 +15,8 @@ use syn_args::{def, derive::ArgsParse, ArgsParse, Formal};
 pub enum ModuleArgs {
     F1(def::Int, def::Int),
     F2(def::Int),
-    F3(def::PathIdent),
-    F4(def::Array<def::PathIdent>),
+    F3(def::Expr),
+    F4(def::Array<def::Expr>),
     F5(ModuleSubObj),
     F6(def::Array<ModuleSubObj>),
     F7(SubWrap),
@@ -124,7 +124,7 @@ impl TryFrom<syn_args::Transform<'_>> for ModuleArgs {
 }
 pub struct ModuleSubObj {
     pub global: def::Option<def::Bool>,
-    pub imports: def::Array<def::PathIdent>,
+    pub imports: def::Array<def::Expr>,
     pub sub: def::Option<Sub>,
 }
 #[automatically_derived]
@@ -298,7 +298,7 @@ impl TryFrom<syn_args::Transform<'_>> for SubWrap {
     }
 }
 struct T1 {
-    pub controllers: def::Option<def::Array<def::PathIdent>>,
+    pub controllers: def::Option<def::Array<def::Expr>>,
 }
 #[automatically_derived]
 impl ::core::fmt::Debug for T1 {
@@ -396,7 +396,7 @@ fn test_formal_f3() {
     {
         ::std::io::_print(format_args!("{0:?}\n", res));
     };
-    match (&res, &ModuleArgs::F3(def::PathIdent::from("Hello"))) {
+    match (&res, &ModuleArgs::F3(def::Expr::from("Hello"))) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -414,7 +414,7 @@ fn test_formal_f4() {
         &res,
         &ModuleArgs::F4(def::Array(<[_]>::into_vec(
             #[rustc_box]
-            ::alloc::boxed::Box::new([def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
+            ::alloc::boxed::Box::new([def::Expr::from("Ident1"), def::Expr::from("Ident2")]),
         ))),
     ) {
         (left_val, right_val) => {
@@ -435,7 +435,7 @@ fn test_formal_f5() {
         &ModuleArgs::F5(ModuleSubObj {
             imports: def::Array(<[_]>::into_vec(
                 #[rustc_box]
-                ::alloc::boxed::Box::new([def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
+                ::alloc::boxed::Box::new([def::Expr::from("Ident1"), def::Expr::from("Ident2")]),
             )),
             global: def::Option(None),
             sub: def::Option(None),
@@ -462,7 +462,7 @@ fn test_formal_f6() {
                 ModuleSubObj {
                     imports: def::Array(<[_]>::into_vec(
                         #[rustc_box]
-                        ::alloc::boxed::Box::new([def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
+                        ::alloc::boxed::Box::new([def::Expr::from("Ident1"), def::Expr::from("Ident2")]),
                     )),
                     global: def::Option(None),
                     sub: def::Option(None),
@@ -470,7 +470,7 @@ fn test_formal_f6() {
                 ModuleSubObj {
                     imports: def::Array(<[_]>::into_vec(
                         #[rustc_box]
-                        ::alloc::boxed::Box::new([def::PathIdent::from("Ident3"), def::PathIdent::from("Ident4")]),
+                        ::alloc::boxed::Box::new([def::Expr::from("Ident3"), def::Expr::from("Ident4")]),
                     )),
                     global: def::Option(None),
                     sub: def::Option(None),
@@ -499,7 +499,7 @@ fn test_formal_f6_2() {
                 ModuleSubObj {
                     imports: def::Array(<[_]>::into_vec(
                         #[rustc_box]
-                        ::alloc::boxed::Box::new([def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
+                        ::alloc::boxed::Box::new([def::Expr::from("Ident1"), def::Expr::from("Ident2")]),
                     )),
                     global: def::Option(Some(def::Bool(true))),
                     sub: def::Option(None),
@@ -507,7 +507,7 @@ fn test_formal_f6_2() {
                 ModuleSubObj {
                     imports: def::Array(<[_]>::into_vec(
                         #[rustc_box]
-                        ::alloc::boxed::Box::new([def::PathIdent::from("Ident3"), def::PathIdent::from("Ident4")]),
+                        ::alloc::boxed::Box::new([def::Expr::from("Ident3"), def::Expr::from("Ident4")]),
                     )),
                     global: def::Option(None),
                     sub: def::Option(None),
@@ -536,7 +536,7 @@ fn test_formal_f6_3() {
                 ModuleSubObj {
                     imports: def::Array(<[_]>::into_vec(
                         #[rustc_box]
-                        ::alloc::boxed::Box::new([def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
+                        ::alloc::boxed::Box::new([def::Expr::from("Ident1"), def::Expr::from("Ident2")]),
                     )),
                     global: def::Option(Some(def::Bool(true))),
                     sub: def::Option(Some(Sub { value: def::Bool(true) })),
@@ -544,7 +544,7 @@ fn test_formal_f6_3() {
                 ModuleSubObj {
                     imports: def::Array(<[_]>::into_vec(
                         #[rustc_box]
-                        ::alloc::boxed::Box::new([def::PathIdent::from("Ident3"), def::PathIdent::from("Ident4")]),
+                        ::alloc::boxed::Box::new([def::Expr::from("Ident3"), def::Expr::from("Ident4")]),
                     )),
                     global: def::Option(None),
                     sub: def::Option(None),
@@ -598,7 +598,7 @@ fn test_formal_f8() {
         &ModuleArgs::F8(T1 {
             controllers: def::Option(Some(def::Array(<[_]>::into_vec(
                 #[rustc_box]
-                ::alloc::boxed::Box::new([def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
+                ::alloc::boxed::Box::new([def::Expr::from("Ident1"), def::Expr::from("Ident2")]),
             )))),
         }),
     ) {

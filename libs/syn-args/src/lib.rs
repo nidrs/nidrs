@@ -23,8 +23,8 @@ mod tests {
     pub enum ModuleArgs {
         F1(def::Int, def::Int),
         F2(def::Int),
-        F3(def::PathIdent),
-        F4(def::Array<def::PathIdent>),
+        F3(def::Expr),
+        F4(def::Array<def::Expr>),
         F5(ModuleSubObj),
         F6(def::Array<ModuleSubObj>),
         F7(SubWrap),
@@ -116,7 +116,7 @@ mod tests {
     #[derive(Debug, PartialEq)]
     pub struct ModuleSubObj {
         pub global: def::Option<def::Bool>,
-        pub imports: def::Array<def::PathIdent>,
+        pub imports: def::Array<def::Expr>,
         pub sub: def::Option<Sub>,
     }
 
@@ -230,7 +230,7 @@ mod tests {
 
     #[derive(Debug, PartialEq)]
     struct T1 {
-        pub controllers: def::Option<def::Array<def::PathIdent>>,
+        pub controllers: def::Option<def::Array<def::Expr>>,
     }
 
     impl TryFrom<&Value> for T1 {
@@ -280,7 +280,7 @@ mod tests {
         let res = ModuleArgs::parse("F(Hello)").unwrap();
         println!("{:?}", res);
 
-        assert_eq!(res, ModuleArgs::F3(def::PathIdent::from("Hello")));
+        assert_eq!(res, ModuleArgs::F3(def::Expr::from("Hello")));
     }
 
     #[test]
@@ -288,7 +288,7 @@ mod tests {
         let res = ModuleArgs::parse("F([Ident1, Ident2])").unwrap();
         println!("{:?}", res);
 
-        assert_eq!(res, ModuleArgs::F4(def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")])));
+        assert_eq!(res, ModuleArgs::F4(def::Array(vec![def::Expr::from("Ident1"), def::Expr::from("Ident2")])));
     }
 
     #[test]
@@ -299,7 +299,7 @@ mod tests {
         assert_eq!(
             res,
             ModuleArgs::F5(ModuleSubObj {
-                imports: def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
+                imports: def::Array(vec![def::Expr::from("Ident1"), def::Expr::from("Ident2")]),
                 global: def::Option(None),
                 sub: def::Option(None)
             })
@@ -315,12 +315,12 @@ mod tests {
             res,
             ModuleArgs::F6(def::Array(vec![
                 ModuleSubObj {
-                    imports: def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
+                    imports: def::Array(vec![def::Expr::from("Ident1"), def::Expr::from("Ident2")]),
                     global: def::Option(None),
                     sub: def::Option(None)
                 },
                 ModuleSubObj {
-                    imports: def::Array(vec![def::PathIdent::from("Ident3"), def::PathIdent::from("Ident4")]),
+                    imports: def::Array(vec![def::Expr::from("Ident3"), def::Expr::from("Ident4")]),
                     global: def::Option(None),
                     sub: def::Option(None)
                 }
@@ -337,12 +337,12 @@ mod tests {
             res,
             ModuleArgs::F6(def::Array(vec![
                 ModuleSubObj {
-                    imports: def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
+                    imports: def::Array(vec![def::Expr::from("Ident1"), def::Expr::from("Ident2")]),
                     global: def::Option(Some(def::Bool(true))),
                     sub: def::Option(None)
                 },
                 ModuleSubObj {
-                    imports: def::Array(vec![def::PathIdent::from("Ident3"), def::PathIdent::from("Ident4")]),
+                    imports: def::Array(vec![def::Expr::from("Ident3"), def::Expr::from("Ident4")]),
                     global: def::Option(None),
                     sub: def::Option(None)
                 }
@@ -359,12 +359,12 @@ mod tests {
             res,
             ModuleArgs::F6(def::Array(vec![
                 ModuleSubObj {
-                    imports: def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
+                    imports: def::Array(vec![def::Expr::from("Ident1"), def::Expr::from("Ident2")]),
                     global: def::Option(Some(def::Bool(true))),
                     sub: def::Option(Some(Sub { value: def::Bool(true) }))
                 },
                 ModuleSubObj {
-                    imports: def::Array(vec![def::PathIdent::from("Ident3"), def::PathIdent::from("Ident4")]),
+                    imports: def::Array(vec![def::Expr::from("Ident3"), def::Expr::from("Ident4")]),
                     global: def::Option(None),
                     sub: def::Option(None)
                 }
@@ -394,7 +394,7 @@ mod tests {
 
         assert_eq!(
             res,
-            ModuleArgs::F8(T1 { controllers: def::Option(Some(def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]))) })
+            ModuleArgs::F8(T1 { controllers: def::Option(Some(def::Array(vec![def::Expr::from("Ident1"), def::Expr::from("Ident2")]))) })
         );
     }
 
@@ -419,14 +419,14 @@ mod tests {
     #[test]
     fn test_into_object_p1() {
         let f = Formal::new();
-        let args = f.parse("F({ imports: [Ident1, Ident2] })").unwrap();
+        let args = f.parse("F({ imports: [Ident1::register(), Ident2] })").unwrap();
         println!("{:?}", args);
         let res = ModuleSubObj::try_from(args).unwrap();
 
         assert_eq!(
             res,
             ModuleSubObj {
-                imports: def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
+                imports: def::Array(vec![def::Expr::from("Ident1::register ()"), def::Expr::from("Ident2")]),
                 global: def::Option(None),
                 sub: def::Option(None)
             }

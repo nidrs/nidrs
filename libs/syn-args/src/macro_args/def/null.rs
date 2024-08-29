@@ -11,7 +11,7 @@ impl TryFrom<&Value> for Null {
     fn try_from(value: &Value) -> Result<Self, Self::Error> {
         match value {
             Value::Null => Ok(Null),
-            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected PathIdent")),
+            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Expr")),
         }
     }
 }

@@ -364,8 +364,9 @@ impl ModuleCtx {
         svc.clone()
     }
 
-    pub fn register_service(&mut self, current_module_name: &str, service_name: &str, service: Box<dyn Any>) -> bool {
-        let svc_key = current_module_name.to_string() + "::" + service_name;
+    pub fn register_service<T: Into<String>>(&mut self, current_module_name: &str, service_name: T, service: Box<dyn Any>) -> bool {
+        let service_name = service_name.into();
+        let svc_key = current_module_name.to_string() + "::" + &service_name;
         if !self.services.contains_key(svc_key.as_str()) {
             self.services.insert(svc_key.clone(), service);
             self.deps.entry(service_name.to_string()).or_default().push(current_module_name.to_string());
@@ -379,10 +380,11 @@ impl ModuleCtx {
         false
     }
 
-    pub fn append_exports(&mut self, current_module_name: &str, service_names: Vec<&str>, is_global: bool) -> bool {
+    pub fn append_exports<T: Into<String>>(&mut self, current_module_name: &str, service_names: Vec<T>, is_global: bool) -> bool {
         let mut success = true;
         for service_name in service_names {
-            let svc_key = current_module_name.to_string() + "::" + service_name;
+            let service_name = service_name.into();
+            let svc_key = current_module_name.to_string() + "::" + &service_name;
             if !self.exports.contains_key(current_module_name) {
                 self.exports.insert(current_module_name.to_string(), vec![service_name.to_string()]);
             } else {

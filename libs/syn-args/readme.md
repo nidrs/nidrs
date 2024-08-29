@@ -18,8 +18,8 @@ use syn_args::{def, derive::ArgsParse, ArgsParse, Formal};
 pub enum ModuleArgs {
     F1(def::Int, def::Int),
     F2(def::Int),
-    F3(def::PathIdent),
-    F4(def::Array<def::PathIdent>),
+    F3(def::Expr),
+    F4(def::Array<def::Expr>),
     F5(ModuleSubObj),
     F6(def::Array<ModuleSubObj>),
 }
@@ -27,27 +27,27 @@ pub enum ModuleArgs {
 
 #[derive(Debug, PartialEq, ArgsParse)]
 pub struct ModuleSubObj {
-    pub imports: def::Array<def::PathIdent>,
+    pub imports: def::Array<def::Expr>,
 }
 
 fn test_formal_f3() {
     let res = ModuleArgs::parse("F(Hello)").unwrap();
     println!("{:?}", res);
 
-    assert_eq!(res, ModuleArgs::F3(def::PathIdent("Hello".to_string())));
+    assert_eq!(res, ModuleArgs::F3(def::Expr("Hello".to_string())));
 }
 
 fn test_formal_f4() {
     let res = ModuleArgs::parse("F([Ident1, Ident2])").unwrap();
     println!("{:?}", res);
 
-    assert_eq!(res, ModuleArgs::F4(def::Array(vec![def::PathIdent("Ident1".to_string()), def::PathIdent("Ident2".to_string())])));
+    assert_eq!(res, ModuleArgs::F4(def::Array(vec![def::Expr("Ident1".to_string()), def::Expr("Ident2".to_string())])));
 }
 fn test_formal_f5() {
     let res = ModuleArgs::parse("F({ imports: [Ident1, Ident2] })").unwrap();
     println!("{:?}", res);
 
-    assert_eq!(res, ModuleArgs::F5(ModuleSubObj { imports: def::Array(vec![def::PathIdent("Ident1".to_string()), def::PathIdent("Ident2".to_string())]) }));
+    assert_eq!(res, ModuleArgs::F5(ModuleSubObj { imports: def::Array(vec![def::Expr("Ident1".to_string()), def::Expr("Ident2".to_string())]) }));
 }
 
 fn test_formal_f6() {
@@ -57,8 +57,8 @@ fn test_formal_f6() {
     assert_eq!(
         res,
         ModuleArgs::F6(def::Array(vec![
-            ModuleSubObj { imports: def::Array(vec![def::PathIdent("Ident1".to_string()), def::PathIdent("Ident2".to_string())]) },
-            ModuleSubObj { imports: def::Array(vec![def::PathIdent("Ident3".to_string()), def::PathIdent("Ident4".to_string())]) }
+            ModuleSubObj { imports: def::Array(vec![def::Expr("Ident1".to_string()), def::Expr("Ident2".to_string())]) },
+            ModuleSubObj { imports: def::Array(vec![def::Expr("Ident3".to_string()), def::Expr("Ident4".to_string())]) }
         ]))
     );
 }
@@ -70,12 +70,12 @@ fn test_formal_f6_3() {
         res,
         ModuleArgs::F6(def::Array(vec![
             ModuleSubObj {
-                imports: def::Array(vec![def::PathIdent("Ident1".to_string()), def::PathIdent("Ident2".to_string())]),
+                imports: def::Array(vec![def::Expr("Ident1".to_string()), def::Expr("Ident2".to_string())]),
                 global: def::Option(Some(Box::new(def::Bool(true)))),
                 sub: def::Option(Some(Box::new(Sub { value: def::Bool(true) })))
             },
             ModuleSubObj {
-                imports: def::Array(vec![def::PathIdent("Ident3".to_string()), def::PathIdent("Ident4".to_string())]),
+                imports: def::Array(vec![def::Expr("Ident3".to_string()), def::Expr("Ident4".to_string())]),
                 global: def::Option(None),
                 sub: def::Option(None)
             }

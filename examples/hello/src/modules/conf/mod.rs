@@ -7,7 +7,7 @@ use nidrs::{DynamicModule, Service};
 pub use options::ConfOptions;
 use service::ConfService;
 
-#[global]
+// #[global]
 #[module({
   services: [ConfService],
   exports: [ConfService],

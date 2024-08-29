@@ -1,8 +1,8 @@
-use proc_macro2::{Group, Span};
+use proc_macro2::Group;
 use syn::{
-    parse::{discouraged::AnyDelimiter, Parse, ParseStream},
+    parse::{Parse, ParseStream},
     token::{Brace, Bracket, Paren},
-    Expr, Ident, Lit, Path, Token,
+    Expr, Ident, Lit, Token,
 };
 
 use crate::{def, recursive_lit, recursive_parsing, Value};
@@ -38,9 +38,6 @@ impl Parse for SynArgs {
             if content.peek(Lit) {
                 let lit = content.parse::<Lit>()?;
                 res.push(recursive_lit(&lit));
-            } else if content.peek(Ident) {
-                let ident = content.parse::<Path>()?;
-                res.push(Value::PathIdent(def::PathIdent(ident)));
             } else if content.peek(Brace) {
                 let group: ObjectArgs = content.parse()?;
                 res.push(Value::Object(def::Object(group.value)));
@@ -135,24 +132,18 @@ mod tests {
     #[test]
     fn test_syn_args2() {
         let args = syn::parse_str::<SynArgs>("(Test, MY::TEST)").unwrap();
-        assert_eq!(format!("{:?}", args.value), "Array(Array([PathIdent(PathIdent(\"Test\")), PathIdent(PathIdent(\"MY :: TEST\"))]))");
+        assert_eq!(format!("{:?}", args.value), "Array(Array([Expr(Expr(\"Test\")), Expr(Expr(\"MY :: TEST\"))]))");
     }
 
     #[test]
     fn test_syn_args3() {
         let args = syn::parse_str::<SynArgs>("([Test, MY::TEST])").unwrap();
-        assert_eq!(
-            format!("{:?}", args.value),
-            "Array(Array([Array(Array([PathIdent(PathIdent(\"Test\")), PathIdent(PathIdent(\"MY :: TEST\"))]))]))"
-        );
+        assert_eq!(format!("{:?}", args.value), "Array(Array([Array(Array([Expr(Expr(\"Test\")), Expr(Expr(\"MY :: TEST\"))]))]))");
     }
 
     #[test]
     fn test_syn_args3_no_parenthesized() {
         let args = syn::parse_str::<SynArgs>("[Test, MY::TEST]").unwrap();
-        assert_eq!(
-            format!("{:?}", args.value),
-            "Array(Array([Array(Array([PathIdent(PathIdent(\"Test\")), PathIdent(PathIdent(\"MY :: TEST\"))]))]))"
-        );
+        assert_eq!(format!("{:?}", args.value), "Array(Array([Array(Array([Expr(Expr(\"Test\")), Expr(Expr(\"MY :: TEST\"))]))]))");
     }
 }

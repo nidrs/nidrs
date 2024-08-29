@@ -6,8 +6,8 @@ pub mod exception;
 pub mod interceptor;
 pub mod service;
 
-// use crate::modules::conf::ConfModule;
-// use crate::modules::conf::ConfOptions;
+use crate::modules::conf::ConfModule;
+use crate::modules::conf::ConfOptions;
 // use crate::modules::log::LogModule;
 use crate::modules::user::UserModule;
 use controller::AppController;
@@ -17,11 +17,11 @@ use service::AppService;
 // #[default_uses(LogInterceptor)]
 #[module({
     imports: [
-    //     ConfModule::for_root(ConfOptions{
-    //         log_level: "info".to_string(),
-    //     }),
-    //     LogModule,
+        ConfModule::for_root(ConfOptions{
+            log_level: "info".to_string(),
+        }),
         UserModule,
+        //     LogModule,
     ],
     interceptors: [AppInterceptor],
     controllers: [AppController],
