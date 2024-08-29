@@ -1,4 +1,8 @@
-use std::{collections::HashMap, fmt::Debug};
+use std::{
+    collections::HashMap,
+    fmt::Debug,
+    ops::{Deref, DerefMut},
+};
 
 use quote::ToTokens;
 use syn::Error;
@@ -19,7 +23,7 @@ impl Formal {
         Formal {}
     }
 
-    pub fn parse(&self, input: &str) -> Result<Value, Error> {
+    pub fn parse(&self, input: &str) -> Result<Arguments, Error> {
         let mut res: Vec<Value> = vec![];
         let input = utils::expr_fix(input);
         let expr = syn::parse_str::<syn::ExprCall>(&input).unwrap();
@@ -30,7 +34,7 @@ impl Formal {
             res.push(value);
         }
 
-        Ok(Value::Array(def::Array(res)))
+        Ok(Arguments(Value::Array(def::Array(res))))
     }
 }
 
@@ -45,6 +49,23 @@ pub enum Value {
     Option(def::Option<Box<Value>>),
     Object(def::Object<Value>),
     Array(def::Array<Value>),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Arguments(pub Value);
+
+impl Deref for Arguments {
+    type Target = Value;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Arguments {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
 }
 
 pub fn recursive_parsing(input: &syn::Expr) -> Value {

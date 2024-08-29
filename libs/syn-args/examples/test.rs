@@ -44,7 +44,7 @@ fn test_formal_f1() {
     // let args = f.parse("F(Hello)").unwrap();
     println!("{:?}", args);
 
-    let res = ModuleArgs::try_from(&args).unwrap();
+    let res = ModuleArgs::try_from(args).unwrap();
     println!("{:?}", res);
 
     assert_eq!(res, ModuleArgs::F1(def::Int(1), def::Int(3)));
@@ -57,7 +57,7 @@ fn test_formal_f2() {
     // let args = f.parse("F(Hello)").unwrap();
     println!("{:?}", args);
 
-    let res = ModuleArgs::try_from(&args).unwrap();
+    let res = ModuleArgs::try_from(args).unwrap();
     println!("{:?}", res);
 
     assert_eq!(res, ModuleArgs::F2(def::Int(1)));
@@ -184,8 +184,25 @@ fn test_value_p1() {
     let args = f.parse("F(1, { a:1, b:2 })").unwrap();
     println!("{:?}", args);
 
-    assert_eq!(format!("{:?}", args), "Array(Array([Int(Int(1)), Object(Object({\"a\": Int(Int(1)), \"b\": Int(Int(2))}))]))");
+    assert_eq!(format!("{:?}", args.0), "Array(Array([Int(Int(1)), Object(Object({\"a\": Int(Int(1)), \"b\": Int(Int(2))}))]))");
 }
+
+fn test_into_object_p1() {
+    let f = Formal::new();
+    let args = f.parse("F({ imports: [Ident1, Ident2] })").unwrap();
+    println!("{:?}", args);
+    let res = ModuleSubObj::try_from(args).unwrap();
+
+    assert_eq!(
+        res,
+        ModuleSubObj {
+            imports: def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
+            global: def::Option(None),
+            sub: def::Option(None)
+        }
+    );
+}
+
 fn main() {
     test_formal_f1();
     test_formal_f2();
@@ -199,4 +216,5 @@ fn main() {
     test_tokens_formal_f7();
     test_formal_f8();
     test_value_p1();
+    test_into_object_p1();
 }

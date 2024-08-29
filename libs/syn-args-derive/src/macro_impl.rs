@@ -10,6 +10,7 @@ pub fn impl_args_parse(args: &DeriveInput) -> TokenStream {
     let mut fields_type = vec![];
     let mut fields_value = vec![];
     let mut core_expand = quote! {};
+    let mut arguments_expand = quote! {};
 
     if let syn::Data::Enum(data) = &args.data {
         for variant in &data.variants {
@@ -55,6 +56,9 @@ pub fn impl_args_parse(args: &DeriveInput) -> TokenStream {
                 #(#match_arms)*
             }
         };
+        arguments_expand = quote! {
+            Self::try_from(&value.0)
+        };
     } else if let syn::Data::Struct(data) = &args.data {
         let mut variant_fields_name = vec![];
         let mut variant_fields_type = vec![];
@@ -79,6 +83,14 @@ pub fn impl_args_parse(args: &DeriveInput) -> TokenStream {
                     }
                 );
             }
+        };
+        arguments_expand = quote! {
+            if let syn_args::Value::Array(v) = value.0 {
+                if let Some(value) = v.first() {
+                    return Self::try_from(value);
+                }
+            }
+            Err(Self::Error::new(proc_macro2::Span::call_site(), "Arguments Into T"))
         };
     }
 
@@ -111,7 +123,14 @@ pub fn impl_args_parse(args: &DeriveInput) -> TokenStream {
                     }
                 }
 
-                Err(Self::Error::new(proc_macro2::Span::call_site(), "Expected SubWrap"))
+                Err(Self::Error::new(proc_macro2::Span::call_site(), "Expected Transform value"))
+            }
+        }
+        impl #impl_generics TryFrom<syn_args::Arguments> for #name #ty_generics #where_clause  {
+            type Error = syn::Error;
+
+            fn try_from(value: syn_args::Arguments) -> Result<Self, Self::Error> {
+                #arguments_expand
             }
         }
     };

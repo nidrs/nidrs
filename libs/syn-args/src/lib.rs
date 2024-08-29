@@ -91,6 +91,14 @@ mod tests {
         }
     }
 
+    impl TryFrom<Arguments> for ModuleArgs {
+        type Error = Error;
+
+        fn try_from(value: Arguments) -> Result<Self, Self::Error> {
+            Self::try_from(&value.0)
+        }
+    }
+
     impl TryFrom<Transform<'_>> for ModuleArgs {
         type Error = Error;
 
@@ -125,6 +133,19 @@ mod tests {
             }
 
             Err(Error::new(proc_macro2::Span::call_site(), "Expected ModuleSubObj"))
+        }
+    }
+
+    impl TryFrom<Arguments> for ModuleSubObj {
+        type Error = Error;
+
+        fn try_from(value: Arguments) -> Result<Self, Self::Error> {
+            if let Value::Array(v) = value.0 {
+                if let Some(value) = v.first() {
+                    return Self::try_from(value);
+                }
+            }
+            Err(Error::new(proc_macro2::Span::call_site(), "Arguments ModuleSubObj"))
         }
     }
 
@@ -234,7 +255,7 @@ mod tests {
         // let args = f.parse("F(Hello)").unwrap();
         println!("{:?}", args);
 
-        let res = ModuleArgs::try_from(&args).unwrap();
+        let res = ModuleArgs::try_from(args).unwrap();
         println!("{:?}", res);
 
         assert_eq!(res, ModuleArgs::F1(def::Int(1), def::Int(3)));
@@ -248,7 +269,7 @@ mod tests {
         // let args = f.parse("F(Hello)").unwrap();
         println!("{:?}", args);
 
-        let res = ModuleArgs::try_from(&args).unwrap();
+        let res = ModuleArgs::try_from(args).unwrap();
         println!("{:?}", res);
 
         assert_eq!(res, ModuleArgs::F2(def::Int(1)));
@@ -384,6 +405,23 @@ mod tests {
         let args = f.parse("F(1, { a:1, b:2 })").unwrap();
         println!("{:?}", args);
 
-        assert_eq!(format!("{:?}", args), "Array(Array([Int(Int(1)), Object(Object({\"a\": Int(Int(1)), \"b\": Int(Int(2))}))]))");
+        assert_eq!(format!("{:?}", args.0), "Array(Array([Int(Int(1)), Object(Object({\"a\": Int(Int(1)), \"b\": Int(Int(2))}))]))");
+    }
+
+    #[test]
+    fn test_into_object_p1() {
+        let f = Formal::new();
+        let args = f.parse("F({ imports: [Ident1, Ident2] })").unwrap();
+        println!("{:?}", args);
+        let res = ModuleSubObj::try_from(args).unwrap();
+
+        assert_eq!(
+            res,
+            ModuleSubObj {
+                imports: def::Array(vec![def::PathIdent::from("Ident1"), def::PathIdent::from("Ident2")]),
+                global: def::Option(None),
+                sub: def::Option(None)
+            }
+        );
     }
 }
