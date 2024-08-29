@@ -62,6 +62,14 @@ impl DerefMut for Arguments {
     }
 }
 
+impl TryFrom<Value> for Arguments {
+    type Error = Error;
+
+    fn try_from(value: Value) -> Result<Self, Self::Error> {
+        Ok(Arguments(value))
+    }
+}
+
 pub fn recursive_parsing(input: &syn::Expr) -> Value {
     match input {
         syn::Expr::Lit(lit) => recursive_lit(&lit.lit),

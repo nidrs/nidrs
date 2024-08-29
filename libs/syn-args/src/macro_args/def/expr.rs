@@ -69,10 +69,8 @@ impl<'a> TryInto<def::Expr> for Transform<'a> {
     }
 }
 
-impl<'a> TryInto<syn::Path> for &Expr {
-    type Error = Error;
-
-    fn try_into(self) -> Result<syn::Path, Self::Error> {
+impl Expr {
+    pub fn to_parts_path(&self) -> Result<syn::Path, syn::Error> {
         match &self.0 {
             syn::Expr::Path(path) => Ok(path.path.clone()),
             syn::Expr::Call(call) => {
