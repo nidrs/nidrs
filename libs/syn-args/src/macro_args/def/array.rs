@@ -30,12 +30,24 @@ where
 {
     type Error = Error;
 
+    #[cfg(feature = "loose_mode")]
     fn try_into(self) -> Result<def::Array<T>, Self::Error> {
         if let Value::Object(obj) = self.value {
             if let Some(Value::Array(arr)) = obj.get(self.key) {
                 return Ok(def::Array(arr.iter().map(|v| T::try_from(v)).collect::<Result<Vec<T>, Self::Error>>()?));
             } else {
                 return Ok(def::Array(Vec::new()));
+            }
+        }
+
+        Err(Error::new(proc_macro2::Span::call_site(), "Expected Array"))
+    }
+
+    #[cfg(not(feature = "loose_mode"))]
+    fn try_into(self) -> Result<def::Array<T>, Self::Error> {
+        if let Value::Object(obj) = self.value {
+            if let Some(Value::Array(arr)) = obj.get(self.key) {
+                return Ok(def::Array(arr.iter().map(|v| T::try_from(v)).collect::<Result<Vec<T>, Self::Error>>()?));
             }
         }
 
