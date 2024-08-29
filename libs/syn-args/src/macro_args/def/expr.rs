@@ -68,3 +68,21 @@ impl<'a> TryInto<def::Expr> for Transform<'a> {
         Err(Error::new(proc_macro2::Span::call_site(), "Expected Expr"))
     }
 }
+
+impl<'a> TryInto<syn::Path> for &Expr {
+    type Error = Error;
+
+    fn try_into(self) -> Result<syn::Path, Self::Error> {
+        match &self.0 {
+            syn::Expr::Path(path) => Ok(path.path.clone()),
+            syn::Expr::Call(call) => {
+                if let syn::Expr::Path(path) = &*call.func {
+                    Ok(path.path.clone())
+                } else {
+                    Err(Error::new(proc_macro2::Span::call_site(), "Expected Path"))
+                }
+            }
+            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Path")),
+        }
+    }
+}
