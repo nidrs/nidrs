@@ -49,27 +49,6 @@ static ROUTES: Lazy<Mutex<HashMap<String, Vec<String>>>> = Lazy::new(|| Mutex::n
 static EVENTS: Lazy<Mutex<HashMap<String, Vec<(String, String)>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<EventName, Vec<(ServiceName,FName)>>
 static DEFAULT_INTERS: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(vec![]));
 
-#[derive(Debug, Clone)]
-struct RouteMeta {
-    method: String,
-    path: String,
-    name: String,
-    func_args: Vec<String>,
-    is_body: bool,
-    is_meta: bool,
-}
-
-#[derive(Debug, Clone)]
-struct ControllerMeta {
-    name: String,
-    path: String,
-}
-
-#[derive(Debug, Clone)]
-struct ServiceMeta {
-    name: String,
-}
-
 #[proc_macro_attribute]
 pub fn get(args: TokenStream, input: TokenStream) -> TokenStream {
     return route("get", args, input);
