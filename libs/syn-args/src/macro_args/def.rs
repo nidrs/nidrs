@@ -31,4 +31,7 @@ pub use float::*;
 mod int;
 pub use int::*;
 
+mod extends;
+pub use extends::*;
+
 mod native;

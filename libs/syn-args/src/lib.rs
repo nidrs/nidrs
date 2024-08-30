@@ -28,6 +28,7 @@ mod tests {
         F5(ModuleSubObj),
         F6(def::Array<ModuleSubObj>),
         F7(SubWrap),
+        F9(def::String, def::Extends<def::Bool>),
         F8(def::Option<T1>),
     }
 
@@ -68,6 +69,11 @@ mod tests {
 
                 match Transform::new(v, "0").try_into() {
                     Ok(rt) => return Ok(ModuleArgs::F7(rt)),
+                    Err(e) => err = e,
+                }
+
+                match ewc::<_, _, syn::Error>(|| Ok(ModuleArgs::F9(Transform::new(v, "0").try_into()?, Transform::new(v, "1").try_into()?))) {
+                    Ok(rt) => return Ok(rt),
                     Err(e) => err = e,
                 }
 
@@ -486,5 +492,15 @@ mod tests {
                 sub: def::Option(None)
             }
         );
+    }
+
+    #[test]
+    fn test_extends_p1() {
+        let f = Formal::new();
+        let args = f.parse("F(\"Hello\", true, false)").unwrap();
+        println!("{:?}", args);
+        let res = ModuleArgs::try_from(args).unwrap();
+
+        assert_eq!(res, ModuleArgs::F9(def::String("Hello".to_string()), def::Extends(vec![def::Bool(true), def::Bool(false)])));
     }
 }
