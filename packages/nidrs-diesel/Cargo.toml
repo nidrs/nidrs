@@ -17,7 +17,7 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
-diesel = { version = "2.1.6", features = ["r2d2"] }
+diesel = { version = "2.2.3", features = ["r2d2"] }
 nidrs = { workspace = true }
 nidrs-macro = { workspace = true }
 nidrs-extern = { workspace = true }
