@@ -15,7 +15,7 @@ mod tests {
 
     use syn::Error;
     use traits::ArgsParse;
-    use utils::{ewc, otr};
+    use utils::ewc;
 
     use super::*;
 
