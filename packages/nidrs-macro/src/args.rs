@@ -11,3 +11,8 @@ pub struct ModuleOptions {
     pub exports: def::Array<def::Expr>,
     pub interceptors: def::Array<def::Expr>,
 }
+
+#[derive(Debug, Clone, ArgsParse)]
+pub enum RouteArgs {
+    F1(def::Option<def::String>),
+}

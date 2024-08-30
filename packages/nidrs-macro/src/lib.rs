@@ -603,37 +603,26 @@ pub fn main(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 fn route(method: &str, args: TokenStream, input: TokenStream) -> TokenStream {
-    let path: String = if args.is_empty() {
-        "".to_string()
-    } else {
-        let args = parse_macro_input!(args as syn::Expr);
-        let path = if let syn::Expr::Lit(lit) = args {
-            if let syn::Lit::Str(str) = lit.lit {
-                str.value().trim().to_string()
-            } else {
-                panic!("Invalid argument")
-            }
-        } else {
-            // throw error
-            panic!("Invalid argument");
-        };
-        path
+    let args: args::RouteArgs = parse_macro_input!(args as SynArgs).arguments().unwrap();
+    let path = match args {
+        args::RouteArgs::F1(def::Option(Some(v))) => v.to_string(),
+        _ => "".to_string(),
     };
-    println!("// route {} {} {:?} {:?}", method, path, meta_parse::get_meta_value("controller_router_path"), meta_parse::get_meta_value("version"));
+
     let func = parse_macro_input!(input as ItemFn);
 
-    let ident = func.sig.ident.clone();
-    let ident_name = ident.to_string();
+    let route_ident = func.sig.ident.clone();
+    let route_name = route_ident.to_string();
 
     let current_controller_name: String =
-        cmeta::CMeta::get_stack_data("ServiceName").expect(&format!("[route] {} ServiceName not found", ident_name));
+        cmeta::CMeta::get_stack_data("ServiceName").expect(&format!("[route] {} ServiceName not found", route_name));
 
     let mut routes = ROUTES.lock().unwrap();
     let controller = routes.get_mut(&current_controller_name).unwrap();
-    controller.push(ident_name.clone());
+    controller.push(route_name.clone());
 
     TokenStream::from(quote! {
-        #[nidrs::meta(nidrs::datasets::RouterName::from(#ident_name))]
+        #[nidrs::meta(nidrs::datasets::RouterName::from(#route_name))]
         #[nidrs::meta(nidrs::datasets::RouterMethod::from(#method))]
         #[nidrs::meta(nidrs::datasets::RouterPath::from(#path))]
         #[nidrs::__route_derive]
