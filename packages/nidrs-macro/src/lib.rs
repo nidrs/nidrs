@@ -99,26 +99,15 @@ pub fn trace(args: TokenStream, input: TokenStream) -> TokenStream {
     return route("trace", args, input);
 }
 
-#[proc_macro_attribute]
-pub fn controller(args: TokenStream, input: TokenStream) -> TokenStream {
-    current_module::begin_mod();
-
-    // 解析宏的参数
-    let path = if args.is_empty() {
-        "".to_string()
-    } else {
-        let args = parse_macro_input!(args as syn::Expr);
-        let path = if let syn::Expr::Lit(lit) = args {
-            if let syn::Lit::Str(str) = lit.lit {
-                str.value().trim().to_string()
-            } else {
-                panic!("Invalid argument")
-            }
-        } else {
-            "".to_string()
-        };
-        path
+#[syn_args::derive::declare(def::Option<def::String>)]
+#[syn_args::derive::proc_attribute]
+pub fn controller(args: Args, input: TokenStream) -> TokenStream {
+    let path = match args {
+        Args::F1(def::Option(Some(v))) => v.to_string(),
+        _ => "".to_string(),
     };
+
+    current_module::begin_mod();
 
     let func = parse_macro_input!(input as ItemStruct);
 
