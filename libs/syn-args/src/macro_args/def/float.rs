@@ -28,16 +28,21 @@ impl DerefMut for Float {
     }
 }
 
-impl<'a> TryInto<def::Float> for Transform<'a> {
+impl TryFrom<Transform<'_>> for def::Float {
     type Error = Error;
 
-    fn try_into(self) -> Result<def::Float, Self::Error> {
-        if let Value::Object(obj) = self.value {
-            if let Some(Value::Float(v)) = obj.get(self.key) {
+    fn try_from(value: Transform<'_>) -> Result<Self, Self::Error> {
+        if let Value::Object(obj) = value.value {
+            if let Some(Value::Float(v)) = obj.get(value.key) {
+                return Ok(v.clone());
+            }
+        } else if let Value::Array(v) = value.value {
+            let index = value.key.parse::<usize>().map_err(|_| Error::new(proc_macro2::Span::call_site(), "Expected usize"))?;
+            if let Some(Value::Float(v)) = v.get(index) {
                 return Ok(v.clone());
             }
         }
 
-        Err(Error::new(proc_macro2::Span::call_site(), "Expected Float"))
+        Err(Error::new(proc_macro2::Span::call_site(), "TryFrom<Transform<'_>> for def::Float"))
     }
 }

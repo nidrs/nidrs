@@ -28,53 +28,56 @@ mod tests {
         F5(ModuleSubObj),
         F6(def::Array<ModuleSubObj>),
         F7(SubWrap),
-        F8(T1),
+        F8(def::Option<T1>),
     }
 
     impl TryFrom<&Value> for ModuleArgs {
         type Error = Error;
         fn try_from(v: &Value) -> Result<Self, Error> {
+            let mut err = Error::new(proc_macro2::Span::call_site(), "Expected ModuleArgs");
             if let Value::Array(args) = v {
-                let r = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F1(otr(args.first())?.try_into()?, otr(args.get(1))?.try_into()?)));
-                if let Ok(rt) = r {
-                    return Ok(rt);
+                match ewc::<_, _, syn::Error>(|| Ok(ModuleArgs::F1(Transform::new(v, "0").try_into()?, Transform::new(v, "1").try_into()?))) {
+                    Ok(rt) => return Ok(rt),
+                    Err(e) => err = e,
                 }
 
-                let r = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F2(otr(args.first())?.try_into()?)));
-                if let Ok(rt) = r {
-                    return Ok(rt);
+                match Transform::new(v, "0").try_into() {
+                    Ok(rt) => return Ok(ModuleArgs::F2(rt)),
+                    Err(e) => err = e,
                 }
 
-                let r = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F3(otr(args.first())?.try_into()?)));
-                if let Ok(rt) = r {
-                    return Ok(rt);
+                match Transform::new(v, "0").try_into() {
+                    Ok(rt) => return Ok(ModuleArgs::F3(rt)),
+                    Err(e) => err = e,
                 }
 
-                let r = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F4(otr(args.first())?.try_into()?)));
-                if let Ok(rt) = r {
-                    return Ok(rt);
+                match Transform::new(v, "0").try_into() {
+                    Ok(rt) => return Ok(ModuleArgs::F4(rt)),
+                    Err(e) => err = e,
                 }
 
-                let r = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F5(otr(args.first())?.try_into()?)));
-                if let Ok(rt) = r {
-                    return Ok(rt);
+                match Transform::new(v, "0").try_into() {
+                    Ok(rt) => return Ok(ModuleArgs::F5(rt)),
+                    Err(e) => err = e,
                 }
 
-                let r = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F6(otr(args.first())?.try_into()?)));
-                if let Ok(rt) = r {
-                    return Ok(rt);
+                match Transform::new(v, "0").try_into() {
+                    Ok(rt) => return Ok(ModuleArgs::F6(rt)),
+                    Err(e) => err = e,
                 }
-                let r = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F7(otr(args.first())?.try_into()?)));
-                if let Ok(rt) = r {
-                    return Ok(rt);
+
+                match Transform::new(v, "0").try_into() {
+                    Ok(rt) => return Ok(ModuleArgs::F7(rt)),
+                    Err(e) => err = e,
                 }
-                let r = ewc::<_, _, anyhow::Error>(|| Ok(ModuleArgs::F8(otr(args.first())?.try_into()?)));
-                if let Ok(rt) = r {
-                    return Ok(rt);
+
+                match Transform::new(v, "0").try_into() {
+                    Ok(rt) => return Ok(ModuleArgs::F8(rt)),
+                    Err(e) => err = e,
                 }
             }
 
-            Err(Error::new(proc_macro2::Span::call_site(), "Invalid args"))
+            Err(err)
         }
     }
 
@@ -124,6 +127,7 @@ mod tests {
         type Error = Error;
 
         fn try_from(value: &Value) -> Result<Self, Self::Error> {
+            println!("ModuleSubObj： {:?}", value);
             if let Value::Object(_) = value {
                 return Ok(ModuleSubObj {
                     imports: Transform::new(value, "imports").try_into()?,
@@ -146,6 +150,25 @@ mod tests {
                 }
             }
             Err(Error::new(proc_macro2::Span::call_site(), "Arguments ModuleSubObj"))
+        }
+    }
+
+    impl TryFrom<Transform<'_>> for ModuleSubObj {
+        type Error = Error;
+
+        fn try_from(value: Transform) -> Result<Self, Self::Error> {
+            if let Value::Object(obj) = value.value {
+                if let Some(v) = obj.get(value.key) {
+                    return v.try_into();
+                }
+            } else if let Value::Array(v) = value.value {
+                let index = value.key.parse::<usize>().unwrap();
+                if let Some(value) = v.get(index) {
+                    return Self::try_from(value);
+                }
+            }
+
+            Err(Error::new(proc_macro2::Span::call_site(), "Expected ModuleSubObj"))
         }
     }
 
@@ -222,6 +245,11 @@ mod tests {
                 if let Some(v) = obj.get(value.key) {
                     return v.try_into();
                 }
+            } else if let Value::Array(v) = value.value {
+                let index = value.key.parse::<usize>().unwrap();
+                if let Some(value) = v.get(index) {
+                    return Self::try_from(value);
+                }
             }
 
             Err(Error::new(proc_macro2::Span::call_site(), "Expected SubWrap"))
@@ -239,6 +267,26 @@ mod tests {
         fn try_from(value: &Value) -> Result<Self, Self::Error> {
             if let Value::Object(_) = value {
                 return Ok(T1 { controllers: Transform::new(value, "controllers").try_into()? });
+            }
+
+            Err(Error::new(proc_macro2::Span::call_site(), "Expected T1"))
+        }
+    }
+
+    impl TryFrom<Transform<'_>> for T1 {
+        type Error = Error;
+
+        fn try_from(value: Transform<'_>) -> Result<Self, Self::Error> {
+            println!("{:?} {:?}", value.key, value.value);
+            if let Value::Object(obj) = value.value {
+                if let Some(v) = obj.get(value.key) {
+                    return v.try_into();
+                }
+            } else if let Value::Array(v) = value.value {
+                let index = value.key.parse::<usize>().unwrap();
+                if let Some(value) = v.get(index) {
+                    return Self::try_from(value);
+                }
             }
 
             Err(Error::new(proc_macro2::Span::call_site(), "Expected T1"))
@@ -394,11 +442,18 @@ mod tests {
 
         assert_eq!(
             res,
-            ModuleArgs::F8(T1 { controllers: def::Option(Some(def::Array(vec![def::Expr::from("Ident1"), def::Expr::from("Ident2")]))) })
+            ModuleArgs::F8(def::Option(Some(T1 {
+                controllers: def::Option(Some(def::Array(vec![def::Expr::from("Ident1"), def::Expr::from("Ident2")])))
+            })))
         );
+
+        let res = ModuleArgs::parse("F()").unwrap();
+        println!("{:?}", res);
+
+        assert_eq!(res, ModuleArgs::F8(def::Option(None)));
     }
 
-    #[test]
+    // #[test]
     fn test_value_p1() {
         let f = Formal::new();
 

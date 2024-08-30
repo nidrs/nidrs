@@ -30,7 +30,7 @@ impl TryFrom<&Value> for Expr {
     fn try_from(value: &Value) -> Result<Self, Self::Error> {
         match value {
             Value::Expr(i) => Ok(i.clone()),
-            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Expr")),
+            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected TryFrom<&Value> for Expr")),
         }
     }
 }
@@ -55,17 +55,36 @@ impl DerefMut for Expr {
     }
 }
 
-impl<'a> TryInto<def::Expr> for Transform<'a> {
+// impl<'a> TryInto<def::Expr> for Transform<'a> {
+//     type Error = Error;
+
+//     fn try_into(self) -> Result<def::Expr, Self::Error> {
+//         if let Value::Object(obj) = self.value {
+//             if let Some(Value::Expr(v)) = obj.get(self.key) {
+//                 return Ok(v.clone());
+//             }
+//         }
+
+//         Err(Error::new(proc_macro2::Span::call_site(), "Expected TryInto<def::Expr> for Transform"))
+//     }
+// }
+
+impl TryFrom<Transform<'_>> for def::Expr {
     type Error = Error;
 
-    fn try_into(self) -> Result<def::Expr, Self::Error> {
-        if let Value::Object(obj) = self.value {
-            if let Some(Value::Expr(v)) = obj.get(self.key) {
+    fn try_from(value: Transform<'_>) -> Result<Self, Self::Error> {
+        if let Value::Object(obj) = value.value {
+            if let Some(Value::Expr(v)) = obj.get(value.key) {
+                return Ok(v.clone());
+            }
+        } else if let Value::Array(v) = value.value {
+            let index = value.key.parse::<usize>().map_err(|_| Error::new(proc_macro2::Span::call_site(), "Expected usize"))?;
+            if let Some(Value::Expr(v)) = v.get(index) {
                 return Ok(v.clone());
             }
         }
 
-        Err(Error::new(proc_macro2::Span::call_site(), "Expected Expr"))
+        Err(Error::new(proc_macro2::Span::call_site(), "Expected TryFrom<Transform> for def::Expr"))
     }
 }
 

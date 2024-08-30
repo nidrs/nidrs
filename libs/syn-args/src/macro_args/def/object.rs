@@ -23,15 +23,15 @@ impl<T> DerefMut for Object<T> {
     }
 }
 
-impl<'a, T> TryInto<def::Object<T>> for Transform<'a>
+impl<'a, T> TryFrom<Transform<'a>> for def::Object<T>
 where
     T: TryFrom<&'a Value, Error = Error>,
 {
     type Error = Error;
 
-    fn try_into(self) -> Result<def::Object<T>, Self::Error> {
-        if let Value::Object(obj) = self.value {
-            if let Some(v) = obj.get(self.key) {
+    fn try_from(value: Transform<'a>) -> Result<Self, Self::Error> {
+        if let Value::Object(obj) = value.value {
+            if let Some(v) = obj.get(value.key) {
                 if let Value::Object(obj) = v {
                     let mut res = HashMap::new();
                     for (k, v) in obj.0.iter() {
@@ -42,7 +42,7 @@ where
             }
         }
 
-        Err(Error::new(proc_macro2::Span::call_site(), "Expected Object"))
+        Err(Error::new(proc_macro2::Span::call_site(), "Expected TryFrom<Transform<'_>> for def::Object<T>"))
     }
 }
 

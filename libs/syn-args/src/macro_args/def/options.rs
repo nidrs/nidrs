@@ -31,7 +31,16 @@ where
                 return Ok(Self(None));
             }
         }
-        Err(Error::new(proc_macro2::Span::call_site(), "Expected Option"))
+        if let Value::Array(v) = value.value {
+            let index = value.key.parse::<usize>().map_err(|_| Error::new(proc_macro2::Span::call_site(), "Expected usize"))?;
+            if let Some(v) = v.get(index) {
+                return Ok(Self(Some(T::try_from(v)?)));
+            } else {
+                return Ok(Self(None));
+            }
+        }
+        // println!("Failed to parse: {:?}", (value.key, value.value));
+        Err(Error::new(proc_macro2::Span::call_site(), "Expected Transform Into def::Option"))
     }
 }
 
@@ -41,7 +50,7 @@ impl TryFrom<&Value> for def::Option<Box<Value>> {
     fn try_from(value: &Value) -> Result<Self, Self::Error> {
         match value {
             Value::Option(opt) => Ok(opt.clone()),
-            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Option")),
+            _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected &Value Into def::Option<Box<Value>>")),
         }
     }
 }

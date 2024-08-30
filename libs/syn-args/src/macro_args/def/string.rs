@@ -28,16 +28,21 @@ impl DerefMut for String {
     }
 }
 
-impl<'a> TryInto<def::String> for Transform<'a> {
+impl TryFrom<Transform<'_>> for def::String {
     type Error = Error;
 
-    fn try_into(self) -> Result<def::String, Self::Error> {
-        if let Value::Object(obj) = self.value {
-            if let Some(Value::String(v)) = obj.get(self.key) {
+    fn try_from(value: Transform<'_>) -> Result<Self, Self::Error> {
+        if let Value::Object(obj) = value.value {
+            if let Some(Value::String(v)) = obj.get(value.key) {
+                return Ok(v.clone());
+            }
+        } else if let Value::Array(v) = value.value {
+            let index = value.key.parse::<usize>().map_err(|_| Error::new(proc_macro2::Span::call_site(), "Expected usize"))?;
+            if let Some(Value::String(v)) = v.get(index) {
                 return Ok(v.clone());
             }
         }
 
-        Err(Error::new(proc_macro2::Span::call_site(), "Expected String"))
+        Err(Error::new(proc_macro2::Span::call_site(), "Expected TryFrom<Transform> for def::String"))
     }
 }
