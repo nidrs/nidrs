@@ -326,7 +326,7 @@ pub fn uses(args: Args, input: TokenStream) -> TokenStream {
         }
         _ => panic!("Invalid argument"),
     };
-    let func = parse_macro_input!(input as InterceptorArgs);
+    let func = parse_macro_input!(input as UFnStruct);
     let used_ident = &func.ident;
     let inter_names = args.iter().map(|arg| arg.to_path_name().unwrap()).collect::<Vec<String>>();
 
@@ -372,7 +372,7 @@ pub fn default_uses(args: Args, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     let raw = input.clone();
-    let fun = parse_macro_input!(input as InterceptorArgs);
+    let fun = parse_macro_input!(input as UFnStruct);
 
     current_module::check_mod();
 

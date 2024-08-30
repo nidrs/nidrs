@@ -17,27 +17,27 @@ pub enum TokenType {
     Struct(ItemStruct),
 }
 #[derive(Clone)]
-pub struct InterceptorArgs {
+pub struct UFnStruct {
     pub ident: Ident,
     pub typ: TokenType,
 }
 
-impl Parse for InterceptorArgs {
+impl Parse for UFnStruct {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         // 使用 peek 方法来检查输入的下一个 Token 类型
         let struct_parse = input.parse::<syn::ItemStruct>();
         let fn_parse = input.parse::<syn::ItemFn>();
         if let Ok(item) = struct_parse {
-            Ok(InterceptorArgs { ident: item.clone().ident, typ: TokenType::Struct(item) })
+            Ok(UFnStruct { ident: item.clone().ident, typ: TokenType::Struct(item) })
         } else if let Ok(item) = fn_parse {
-            Ok(InterceptorArgs { ident: item.sig.ident.clone(), typ: TokenType::Fn(item) })
+            Ok(UFnStruct { ident: item.sig.ident.clone(), typ: TokenType::Fn(item) })
         } else {
             Err(syn::Error::new(input.span(), "Invalid interceptor"))
         }
     }
 }
 
-impl ToTokens for InterceptorArgs {
+impl ToTokens for UFnStruct {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         match &self.typ {
             TokenType::Fn(item) => item.to_tokens(tokens),
