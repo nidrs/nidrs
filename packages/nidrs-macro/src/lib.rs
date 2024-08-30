@@ -369,65 +369,56 @@ pub fn on_module_destroy(args: TokenStream, input: TokenStream) -> TokenStream {
     });
 }
 
-#[proc_macro_attribute]
-pub fn uses(args: TokenStream, input: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(args as ExprList);
-    let input_type = input.clone();
-    let input_type = parse_macro_input!(input_type as InterceptorArgs);
-    let used_ident = input_type.ident;
-    let inter_names = args
-        .items
-        .iter()
-        .map(|arg| {
-            if let Expr::Path(path) = arg {
-                path.to_token_stream().to_string()
-            } else {
-                panic!("Invalid argument");
-            }
-        })
-        .collect::<Vec<String>>();
-
-    let expand = if let TokenType::Fn(item) = input_type.typ {
-        quote! {
-            #[nidrs::meta(method_uses = [#(#inter_names),*])]
+#[syn_args::derive::declare(def::Expr, def::Extends<def::Expr>)]
+#[syn_args::derive::proc_attribute]
+pub fn uses(args: Args, input: TokenStream) -> TokenStream {
+    let args: Vec<def::Expr> = match args {
+        Args::F1(first, other) => {
+            let mut args = vec![first];
+            args.append(&mut other.clone());
+            args
         }
-    } else if let TokenType::Struct(item) = input_type.typ {
-        quote! {
-            #[nidrs::meta(service_uses = [#(#inter_names),*])]
-        }
-    } else {
-        panic!("Invalid argument");
+        _ => panic!("Invalid argument"),
     };
-    println!("// uses {:?}", inter_names);
-    let input = TokenStream2::from(input);
+    let func = parse_macro_input!(input as InterceptorArgs);
+    let used_ident = &func.ident;
+    let inter_names = args.iter().map(|arg| arg.to_path_name().unwrap()).collect::<Vec<String>>();
+
+    let expand = match &func.typ {
+        TokenType::Fn(item) => {
+            quote! {
+                #[nidrs::meta(method_uses = [#(#inter_names),*])]
+            }
+        }
+        TokenType::Struct(item) => {
+            quote! {
+                #[nidrs::meta(service_uses = [#(#inter_names),*])]
+            }
+        }
+        _ => panic!("Invalid argument"),
+    };
+
     return quote! {
         #expand
-        #input
+        #func
     }
     .into();
 }
 
-#[proc_macro_attribute]
-pub fn default_uses(args: TokenStream, input: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(args as ExprList);
-    let input_type = input.clone();
-    let input_type = parse_macro_input!(input_type as InterceptorArgs);
-    let used_ident = input_type.ident;
-    let inter_names = args
-        .items
-        .iter()
-        .map(|arg| {
-            if let Expr::Path(path) = arg {
-                path.to_token_stream().to_string()
-            } else {
-                panic!("Invalid argument");
-            }
-        })
-        .collect::<Vec<String>>();
+#[syn_args::derive::declare(def::Expr, def::Extends<def::Expr>)]
+#[syn_args::derive::proc_attribute]
+pub fn default_uses(args: Args, input: TokenStream) -> TokenStream {
+    let args: Vec<def::Expr> = match args {
+        Args::F1(first, other) => {
+            let mut args = vec![first];
+            args.append(&mut other.clone());
+            args
+        }
+        _ => panic!("Invalid argument"),
+    };
+    let inter_names = args.iter().map(|arg| arg.to_path_name().unwrap()).collect::<Vec<String>>();
 
     DEFAULT_INTERS.lock().unwrap().append(&mut inter_names.clone());
-
-    // println!("// default_uses {:?}", inter_names);
 
     return input;
 }

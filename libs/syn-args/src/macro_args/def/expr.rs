@@ -102,4 +102,9 @@ impl Expr {
             _ => Err(Error::new(proc_macro2::Span::call_site(), "Expected Path")),
         }
     }
+
+    pub fn to_path_name(&self) -> Result<std::string::String, syn::Error> {
+        let path = self.to_parts_path()?;
+        Ok(path.segments.iter().map(|s| s.ident.to_string()).collect::<Vec<std::string::String>>().join("::"))
+    }
 }

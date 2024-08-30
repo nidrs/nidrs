@@ -96,6 +96,15 @@ impl Parse for InterceptorArgs {
     }
 }
 
+impl ToTokens for InterceptorArgs {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        match &self.typ {
+            TokenType::Fn(item) => item.to_tokens(tokens),
+            TokenType::Struct(item) => item.to_tokens(tokens),
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct DefaultUsesOptions {
     pub args: Vec<TokenStream2>,
