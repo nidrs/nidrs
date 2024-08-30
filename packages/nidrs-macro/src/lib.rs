@@ -35,15 +35,12 @@ use syn_args::{def, SynArgs};
 use utils::merge_uses;
 mod global;
 
-use crate::meta_parse::MetaValue;
-
 mod app_parse;
 mod args;
 mod cmeta;
 mod current_module;
 mod impl_expand;
 mod import_path;
-mod meta_parse;
 mod utils;
 
 static ROUTES: Lazy<Mutex<HashMap<String, Vec<String>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<ControllerName, Vec<RouteName>>
@@ -131,7 +128,6 @@ pub fn controller(args: Args, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn __controller_derive(args: TokenStream, input: TokenStream) -> TokenStream {
-    // println!("__controller_derive {:?}", meta_parse::get_meta_value("METADATA:nidrs::datasets::ServiceName"));
     impl_expand::__service_derive(ServiceType::Controller, input)
 }
 
@@ -173,12 +169,11 @@ pub fn module(args: Args, input: TokenStream) -> TokenStream {
     let trigger_on_module_destroy_tokens = impl_expand::expand_events_trigger(ident_name.clone(), "on_module_destroy");
 
     let module_meta_tokens = cmeta::CMeta::build_tokens();
-    let is_global_tokens = if let Some(MetaValue::Bool(bool)) = meta_parse::get_meta_value("Global") { bool } else { false };
+    let is_global_tokens = if let Some(CMetaValue::Bool(bool)) = cmeta::CMeta::get_stack_data("Global") { bool } else { false };
     println!("// module {:?}", ident.to_string());
 
     ROUTES.lock().unwrap().clear();
     EVENTS.lock().unwrap().clear();
-    meta_parse::clear();
     current_module::end_mod();
 
     return TokenStream::from(quote! {
@@ -435,11 +430,6 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     let targs = args.clone();
     let cmeta = parse_macro_input!(targs as cmeta::CMeta);
     cmeta::CMeta::collect(cmeta);
-
-    let args = parse_macro_input!(args as MetaArgs);
-    // println!("// meta {:?} {:?}", func.ident.to_string(), args.kv.keys());
-
-    meta_parse::collect(args);
 
     return raw;
 }

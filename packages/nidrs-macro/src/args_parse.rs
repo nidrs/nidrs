@@ -12,65 +12,6 @@ use syn::{
 use syn_serde::json;
 
 #[derive(Clone)]
-pub struct ExprList {
-    pub items: Punctuated<Expr, syn::Token![,]>,
-}
-
-impl Parse for ExprList {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let items = Punctuated::parse_terminated(input)?;
-        Ok(ExprList { items })
-    }
-}
-
-#[derive(Clone)]
-pub struct MetaArgs {
-    pub kv: HashMap<String, Box<Expr>>,
-}
-
-impl Parse for MetaArgs {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let items: Punctuated<Expr, syn::Token![,]> = Punctuated::parse_terminated(input)?;
-        let mut kv = HashMap::new();
-        items.iter().for_each(|item| {
-            if let syn::Expr::Assign(assign) = item {
-                if let syn::Expr::Path(path) = *assign.left.clone() {
-                    let k = path.path.segments.first().unwrap().ident.to_string();
-                    let v = assign.right.clone();
-                    kv.insert(k, v);
-                }
-            } else if let syn::Expr::Path(path) = item {
-                let mut p = path.path.segments.iter().map(|s| s.ident.to_string()).collect::<Vec<String>>().join("::");
-                if p.contains("Global::") {
-                    if p.contains("Global::Enabled") {
-                        p = "Global::Enabled".to_string();
-                    } else {
-                        p = "Global::Disabled".to_string();
-                    }
-                } else if p.contains("DefaultPrefix::") {
-                    if p.contains("DefaultPrefix::Disabled") {
-                        p = "DefaultPrefix::Disabled".to_string();
-                    } else {
-                        p = "DefaultPrefix::Enabled".to_string();
-                    }
-                }
-                let key = format!("{}:{}", "METADATA", p).replace(" ", "");
-                kv.insert(key, Box::new(path.clone().into()));
-            } else if let syn::Expr::Call(call) = item {
-                // println!("p {:?}", p);
-                let mut p = call.func.to_token_stream().to_string();
-                let key = format!("{}:{}", "METADATA", p).replace(" ", "");
-                kv.insert(key, Box::new(call.clone().into()));
-            } else {
-                println!("metaArgs {:?}", item);
-                panic!("Invalid argument");
-            }
-        });
-        Ok(MetaArgs { kv })
-    }
-}
-
-#[derive(Clone)]
 pub enum TokenType {
     Fn(ItemFn),
     Struct(ItemStruct),

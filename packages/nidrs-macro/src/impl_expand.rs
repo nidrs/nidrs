@@ -21,7 +21,6 @@ use syn_args::SynArgs;
 use crate::args;
 use crate::cmeta;
 use crate::import_path;
-use crate::meta_parse;
 use crate::utils::merge_uses;
 
 use proc_macro::Span;
@@ -63,8 +62,6 @@ pub(crate) fn route(method: &str, args: TokenStream, input: TokenStream) -> Toke
 
 pub(crate) fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemFn);
-    // let meta_tokens: TokenStream2 = meta_parse::build_tokens();
-    meta_parse::clear_meta();
     let fn_ident = func.sig.ident.clone();
     let meta_fn_ident = syn::Ident::new(format!("__meta_{}", func.sig.ident.to_string()).as_str(), func.span().clone());
 
@@ -464,8 +461,6 @@ pub(crate) fn __service_derive(service_type: ServiceType, input: TokenStream) ->
     println!("// service_derive {:?}", func.ident.to_string());
 
     let inject_tokens: TokenStream2 = gen_service_inject_tokens(service_type, &func);
-
-    meta_parse::stash();
 
     TokenStream::from(quote! {
         #[derive(Default)]
