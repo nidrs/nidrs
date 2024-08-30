@@ -549,34 +549,18 @@ pub fn elog(input: TokenStream) -> TokenStream {
     });
 }
 
-/// auto add a meta #[meta(version = String)]
-#[proc_macro_attribute]
-pub fn version(args: TokenStream, input: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(args as ExprList);
-    let raw_input = TokenStream2::from(input.clone());
+#[syn_args::derive::declare(def::String)]
+#[syn_args::derive::proc_attribute]
+pub fn version(args: Args, input: TokenStream) -> TokenStream {
+    let version = match args {
+        Args::F1(v) => v.to_string(),
+        _ => "".to_string(),
+    };
 
-    let version = args
-        .items
-        .iter()
-        .map(|arg| {
-            if let Expr::Lit(lit) = arg {
-                if let syn::Lit::Str(str) = lit.to_owned().lit {
-                    str.value().trim().to_string()
-                } else {
-                    panic!("Invalid argument")
-                }
-            } else {
-                panic!("Invalid argument")
-            }
-        })
-        .collect::<Vec<String>>()
-        .first()
-        .unwrap()
-        .clone();
-
+    let input = TokenStream2::from(input);
     return TokenStream::from(quote! {
         #[nidrs::macros::meta(version = #version)]
-        #raw_input
+        #input
     });
 }
 
