@@ -22,7 +22,8 @@ pub fn impl_args_parse(args: &DeriveInput) -> TokenStream {
             for field in &variant.fields {
                 let field_name = &field.ident;
                 let field_type = &field.ty;
-                let field_value = quote! { syn_args::utils::otr(v.get(#i))?.try_into()? };
+                let i_str = i.to_string();
+                let field_value = quote! { syn_args::Transform::new(v, #i_str).try_into()? };
 
                 variant_fields_name.push(field_name);
                 variant_fields_type.push(field_type);
@@ -46,13 +47,13 @@ pub fn impl_args_parse(args: &DeriveInput) -> TokenStream {
             }
 
             match_arms.push(quote! {
-                if let Ok(rt) = syn_args::utils::ewc::<_, _, anyhow::Error>(|| Ok(#name::#variant_name(#(#match_arm),*))) {
+                if let Ok(rt) = syn_args::utils::ewc::<_, _, syn::Error>(|| Ok(#name::#variant_name(#(#match_arm),*))) {
                     return Ok(rt);
                 }
             });
         }
         core_expand = quote! {
-            if let syn_args::Value::Array(v) = v {
+            if let syn_args::Value::Array(_) = v {
                 #(#match_arms)*
             }
         };
@@ -119,7 +120,12 @@ pub fn impl_args_parse(args: &DeriveInput) -> TokenStream {
             fn try_from(value: syn_args::Transform) -> Result<Self, Self::Error> {
                 if let syn_args::Value::Object(obj) = value.value {
                     if let Some(v) = obj.get(value.key) {
-                        return Ok(v.try_into()?);
+                        return v.try_into();
+                    }
+                } else if let syn_args::Value::Array(v) = value.value {
+                    let index = value.key.parse::<usize>().unwrap();
+                    if let Some(value) = v.get(index) {
+                        return Self::try_from(value);
                     }
                 }
 

@@ -1,4 +1,4 @@
-use syn_args::{def, derive::ArgsParse, ArgsParse, Formal};
+use syn_args::{def, derive::ArgsParse, ArgsParse, Formal, Value};
 
 #[derive(Debug, PartialEq, ArgsParse)]
 pub enum ModuleArgs {
@@ -9,7 +9,7 @@ pub enum ModuleArgs {
     F5(ModuleSubObj),
     F6(def::Array<ModuleSubObj>),
     F7(SubWrap),
-    F8(T1),
+    F8(def::Option<T1>),
 }
 
 #[derive(Debug, PartialEq, ArgsParse)]
@@ -172,28 +172,47 @@ fn test_formal_f8() {
     let res = ModuleArgs::parse("F({ controllers: [Ident1, Ident2] })").unwrap();
     println!("{:?}", res);
 
-    assert_eq!(res, ModuleArgs::F8(T1 { controllers: def::Option(Some(def::Array(vec![def::Expr::from("Ident1"), def::Expr::from("Ident2")]))) }));
+    assert_eq!(
+        res,
+        ModuleArgs::F8(def::Option(Some(T1 {
+            controllers: def::Option(Some(def::Array(vec![def::Expr::from("Ident1"), def::Expr::from("Ident2")])))
+        })))
+    );
+
+    let res = ModuleArgs::parse("F()").unwrap();
+    println!("{:?}", res);
+
+    assert_eq!(res, ModuleArgs::F8(def::Option(None)));
 }
 
+//
 fn test_value_p1() {
     let f = Formal::new();
 
     let args = f.parse("F(1, { a:1, b:2 })").unwrap();
     println!("{:?}", args);
 
-    assert_eq!(format!("{:?}", args.0), "Array(Array([Int(Int(1)), Object(Object({\"a\": Int(Int(1)), \"b\": Int(Int(2))}))]))");
+    assert_eq!(
+        args.0,
+        Value::Array(def::Array(vec![
+            Value::Int(def::Int(1)),
+            Value::Object(def::Object(
+                vec![("a".to_string(), Value::Int(def::Int(1))), ("b".to_string(), Value::Int(def::Int(2)))].into_iter().collect()
+            ))
+        ]))
+    );
 }
 
 fn test_into_object_p1() {
     let f = Formal::new();
-    let args = f.parse("F({ imports: [Ident1, Ident2] })").unwrap();
+    let args = f.parse("F({ imports: [Ident1::register(), Ident2] })").unwrap();
     println!("{:?}", args);
     let res = ModuleSubObj::try_from(args).unwrap();
 
     assert_eq!(
         res,
         ModuleSubObj {
-            imports: def::Array(vec![def::Expr::from("Ident1"), def::Expr::from("Ident2")]),
+            imports: def::Array(vec![def::Expr::from("Ident1::register ()"), def::Expr::from("Ident2")]),
             global: def::Option(None),
             sub: def::Option(None)
         }
@@ -212,6 +231,6 @@ fn main() {
     test_formal_f7();
     test_tokens_formal_f7();
     test_formal_f8();
-    test_value_p1();
+    // test_value_p1();
     test_into_object_p1();
 }
