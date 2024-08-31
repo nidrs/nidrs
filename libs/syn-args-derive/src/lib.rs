@@ -3,18 +3,20 @@ use std::{collections::HashMap, sync::Mutex};
 use macro_impl::impl_args_parse;
 use once_cell::sync::Lazy;
 use proc_macro::TokenStream;
-use quote::{quote, ToTokens};
+use quote::quote;
 
 mod macro_impl;
 
 static DEFS_DEC: Lazy<Mutex<HashMap<String, Vec<String>>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
+/// Derive macro for `ArgsParse` trait.
 #[proc_macro_derive(ArgsParse)]
 pub fn args_parse_derive(input: TokenStream) -> TokenStream {
     let ast = syn::parse(input).unwrap();
     impl_args_parse(&ast).into()
 }
 
+/// Declare arguments for the function, must be used in conjunction with proc_attribute or proc.
 #[proc_macro_attribute]
 pub fn declare(args: TokenStream, input: TokenStream) -> TokenStream {
     let mut defs = DEFS_DEC.lock().unwrap();
@@ -49,11 +51,57 @@ pub fn declare(args: TokenStream, input: TokenStream) -> TokenStream {
     expanded.into()
 }
 
+/// Tool to mark when developing ProcMacroAttribute
+/// Example:
+/// ```ignore
+/// # #[macro_use] extern crate syn_args;
+/// # use proc_macro::TokenStream;
+/// use syn_args::def;
+///
+/// #[syn_args::derive::declare(def::Int)]
+/// #[syn_args::derive::declare(def::Int, def::String)]
+/// #[syn_args::derive::proc_attribute]
+/// pub fn hello(args: Args, input: TokenStream) -> TokenStream {
+///   match args {
+///    Args::F1(i) => {
+///      println!("i: {}", i);
+///    }
+///    Args::F2(i, s) => {
+///      println!("i: {}, s: {}", i, s);
+///    }
+///   }
+///   input
+/// }
+///
+/// ```
 #[proc_macro_attribute]
 pub fn proc_attribute(_: TokenStream, input: TokenStream) -> TokenStream {
     expand_function_macro(ProcType::ProcMacroAttribute, input)
 }
 
+/// Tool to mark when developing ProcMacro
+/// Example:
+/// ```ignore
+/// # #[macro_use] extern crate syn_args;
+/// # use proc_macro::TokenStream;
+/// use syn_args::def;
+///
+/// #[syn_args::derive::declare(def::Int)]
+/// #[syn_args::derive::declare(def::Int, def::String)]
+/// #[syn_args::derive::proc]
+/// pub fn hello(args: Args) -> TokenStream {
+///   match args {
+///    Args::F1(i) => {
+///      println!("i: {}", i);
+///    }
+///    Args::F2(i, s) => {
+///      println!("i: {}, s: {}", i, s);
+///    }
+///   }
+///   TokenStream::new()
+/// }
+///
+/// ```
 #[proc_macro_attribute]
 pub fn proc(_: TokenStream, input: TokenStream) -> TokenStream {
     expand_function_macro(ProcType::ProcMacro, input)
@@ -62,23 +110,6 @@ pub fn proc(_: TokenStream, input: TokenStream) -> TokenStream {
 enum ProcType {
     ProcMacroAttribute,
     ProcMacro,
-}
-
-impl ToTokens for ProcType {
-    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        match self {
-            ProcType::ProcMacroAttribute => {
-                tokens.extend(quote! {
-                    #[proc_macro_attribute]
-                });
-            }
-            ProcType::ProcMacro => {
-                tokens.extend(quote! {
-                    #[proc_macro]
-                });
-            }
-        }
-    }
 }
 
 fn expand_function_macro(proc_type: ProcType, input: TokenStream) -> TokenStream {
@@ -110,23 +141,49 @@ fn expand_function_macro(proc_type: ProcType, input: TokenStream) -> TokenStream
 
         // println!("args_member: {}", args_member);
 
-        quote! {
-            #proc_type
-            pub fn #fn_ident(args: proc_macro::TokenStream, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-                use syn_args::derive::ArgsParse;
-                use syn_args::ArgsParse;
-                use syn_args::SynArgs;
-                #[derive(Debug, ArgsParse)]
-                enum Args {
-                    #(#args_member)*
+        match proc_type {
+            ProcType::ProcMacroAttribute => {
+                quote! {
+                    #[proc_macro_attribute]
+                    pub fn #fn_ident(args: proc_macro::TokenStream, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+                        use syn_args::derive::ArgsParse;
+                        use syn_args::ArgsParse;
+                        use syn_args::SynArgs;
+                        #[derive(Debug, ArgsParse)]
+                        enum Args {
+                            #(#args_member)*
+                        }
+
+                        let args: Args = parse_macro_input!(args as SynArgs).arguments().expect("Invalid argument");
+
+                        return f(args, input);
+
+                        fn f(args: Args, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+                            #fn_block
+                        }
+                    }
                 }
+            }
+            ProcType::ProcMacro => {
+                quote! {
+                    #[proc_macro]
+                    pub fn #fn_ident(args: proc_macro::TokenStream) -> proc_macro::TokenStream {
+                        use syn_args::derive::ArgsParse;
+                        use syn_args::ArgsParse;
+                        use syn_args::SynArgs;
+                        #[derive(Debug, ArgsParse)]
+                        enum Args {
+                            #(#args_member)*
+                        }
 
-                let args: Args = parse_macro_input!(args as SynArgs).arguments().expect("Invalid argument");
+                        let args: Args = parse_macro_input!(args as SynArgs).arguments().expect("Invalid argument");
 
-                return f(args, input);
+                        return f(args);
 
-                fn f(args: Args, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-                    #fn_block
+                        fn f(args: Args) -> proc_macro::TokenStream {
+                            #fn_block
+                        }
+                    }
                 }
             }
         }
