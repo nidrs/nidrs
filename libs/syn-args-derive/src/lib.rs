@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::Mutex};
 use macro_impl::impl_args_parse;
 use once_cell::sync::Lazy;
 use proc_macro::TokenStream;
-use quote::quote;
+use quote::{quote, ToTokens};
 
 mod macro_impl;
 
@@ -51,6 +51,37 @@ pub fn declare(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn proc_attribute(_: TokenStream, input: TokenStream) -> TokenStream {
+    expand_function_macro(ProcType::ProcMacroAttribute, input)
+}
+
+#[proc_macro_attribute]
+pub fn proc(_: TokenStream, input: TokenStream) -> TokenStream {
+    expand_function_macro(ProcType::ProcMacro, input)
+}
+
+enum ProcType {
+    ProcMacroAttribute,
+    ProcMacro,
+}
+
+impl ToTokens for ProcType {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        match self {
+            ProcType::ProcMacroAttribute => {
+                tokens.extend(quote! {
+                    #[proc_macro_attribute]
+                });
+            }
+            ProcType::ProcMacro => {
+                tokens.extend(quote! {
+                    #[proc_macro]
+                });
+            }
+        }
+    }
+}
+
+fn expand_function_macro(proc_type: ProcType, input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::Item);
     let expended = if let syn::Item::Fn(item_fn) = input {
         let fn_ident = &item_fn.sig.ident;
@@ -80,7 +111,7 @@ pub fn proc_attribute(_: TokenStream, input: TokenStream) -> TokenStream {
         // println!("args_member: {}", args_member);
 
         quote! {
-            #[proc_macro_attribute]
+            #proc_type
             pub fn #fn_ident(args: proc_macro::TokenStream, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                 use syn_args::derive::ArgsParse;
                 use syn_args::ArgsParse;
