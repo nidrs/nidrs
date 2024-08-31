@@ -2,6 +2,28 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## syn-args-derive-v0.3.0 - 2024-08-31
+#### Bug Fixes
+- 修复没有导出宏的问题 - (d59122a) - WumaCoder
+#### Documentation
+- add commit doc - (0a928d6) - Lyda
+#### Features
+- **(syn-args)** 新增过程宏的参数解析 - (3084ca5) - *Lyda*
+- **(syn-args)** 宏兼容新的写法 - (c9714ba) - *WumaCoder*
+- **(syn-args)** 支持更简单的使用 API - (b3fb129) - *WumaCoder*
+#### Miscellaneous Chores
+- Revert "test: 零时提交" - (acfe461) - Lyda
+#### Refactoring
+- **(syn-args)** 重构 def::Array 的实现 - (658f99d) - *Lyda*
+- 去除无用库 - (f880473) - Lyda
+- 结构体支持解析一个参数的情况 - (b9dbc85) - WumaCoder
+#### Style
+- format code - (6d30665) - Lyda
+#### Tests
+- 零时提交 - (730c2ed) - WumaCoder
+
+- - -
+
 ## syn-args-derive-v0.2.1 - 2024-08-25
 #### Bug Fixes
 - **(syn-args)** 版本修复 - (f02d543) - *Lyda*
