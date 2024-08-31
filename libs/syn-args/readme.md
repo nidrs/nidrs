@@ -5,6 +5,8 @@
     <img src="https://img.shields.io/crates/v/syn-args?style=for-the-badge" />
   </p>
   <p>
+    <a href="https://github.com/nidrs/nidrs/tree/main/libs/syn-args">Repo Link</a>
+      ·
     <a href="https://github.com/nidrs/nidrs/blob/main/libs/syn-args/readme-zh.md">中文文档</a>
   </p>
 </div>
