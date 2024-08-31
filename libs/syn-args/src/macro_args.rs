@@ -12,6 +12,7 @@ use crate::SynArgs;
 pub mod def;
 pub mod utils;
 
+/// parse the input into Arguments
 pub struct Formal {}
 
 impl Default for Formal {
@@ -32,6 +33,7 @@ impl Formal {
     }
 }
 
+/// Intermediate layer type, usually converted from syn::Expr
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Null,
@@ -67,51 +69,5 @@ impl TryFrom<Value> for Arguments {
 
     fn try_from(value: Value) -> Result<Self, Self::Error> {
         Ok(Arguments(value))
-    }
-}
-
-pub fn recursive_parsing(input: &syn::Expr) -> Value {
-    match input {
-        syn::Expr::Lit(lit) => recursive_lit(&lit.lit),
-        syn::Expr::Array(array) => {
-            let mut arr = vec![];
-            for item in array.elems.iter() {
-                let item = recursive_parsing(item);
-                arr.push(item);
-            }
-            Value::Array(def::Array(arr))
-        }
-        syn::Expr::Struct(struct_expr) => {
-            let mut obj = HashMap::new();
-            for field in struct_expr.fields.iter() {
-                let key = field.member.to_token_stream().to_string();
-                let value = recursive_parsing(&field.expr);
-                obj.insert(key, value);
-            }
-            Value::Object(def::Object(obj))
-        }
-        _ => Value::Expr(def::Expr(input.clone())),
-    }
-}
-
-pub fn recursive_lit(lit: &syn::Lit) -> Value {
-    match lit {
-        syn::Lit::Int(int) => {
-            let v = int.base10_parse::<i32>().unwrap();
-            Value::Int(def::Int(v))
-        }
-        syn::Lit::Str(str) => {
-            let v = str.value();
-            Value::String(def::String(v))
-        }
-        syn::Lit::Float(float) => {
-            let v = float.base10_parse::<f32>().unwrap();
-            Value::Float(def::Float(v))
-        }
-        syn::Lit::Bool(bool) => {
-            let v = bool.value;
-            Value::Bool(def::Bool(v))
-        }
-        _ => Value::Null,
     }
 }

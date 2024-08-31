@@ -5,7 +5,8 @@ use syn::{
     Expr, Ident, Lit, Token,
 };
 
-use crate::{def, recursive_lit, recursive_parsing, Value};
+use crate::utils::{recursive_lit, recursive_parsing};
+use crate::{def, Value};
 
 #[derive(Debug)]
 pub struct SynArgs {
