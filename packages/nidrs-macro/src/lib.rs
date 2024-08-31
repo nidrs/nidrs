@@ -97,6 +97,11 @@ pub fn trace(args: TokenStream, input: TokenStream) -> TokenStream {
     return impl_expand::route("trace", args, input);
 }
 
+#[proc_macro_attribute]
+pub fn __route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
+    return impl_expand::route_derive(args, input);
+}
+
 #[syn_args::derive::declare(def::Option<def::String>)]
 #[syn_args::derive::proc_attribute]
 pub fn controller(args: Args, input: TokenStream) -> TokenStream {
@@ -121,19 +126,63 @@ pub fn controller(args: Args, input: TokenStream) -> TokenStream {
         #[nidrs::meta(nidrs::datasets::ServiceType::from("Controller"))]
         #[nidrs::meta(nidrs::datasets::ServiceName::from(#ident_name))]
         #[nidrs::meta(nidrs::datasets::ControllerPath::from(#path))]
-        #[nidrs::macros::__controller_derive]
+        #[nidrs::macros::__service_derive(Controller)]
         #func
     })
 }
 
 #[proc_macro_attribute]
-pub fn __controller_derive(args: TokenStream, input: TokenStream) -> TokenStream {
-    impl_expand::__service_derive(ServiceType::Controller, input)
+pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
+    current_module::begin_mod();
+    let func = parse_macro_input!(input as ItemStruct);
+    let func_ident = func.ident.clone();
+    let func_ident_name = func.ident.to_string();
+
+    let call_site = Span::call_site();
+    let binding = call_site.source_file().path();
+    let call_site_str = binding.to_string_lossy();
+    let call_site_line = call_site.start().line();
+
+    // println!("// injectable {}", func.ident.to_string());
+    import_path::push_path(&func_ident_name.clone());
+
+    return TokenStream::from(quote! {
+        #[nidrs::meta(nidrs::datasets::ServiceType::from("Service"))]
+        #[nidrs::meta(nidrs::datasets::ServiceName::from(#func_ident_name))]
+        #[nidrs::macros::__service_derive(Service)]
+        #func
+    });
 }
 
 #[proc_macro_attribute]
-pub fn __route_derive(args: TokenStream, input: TokenStream) -> TokenStream {
-    return impl_expand::route_derive(args, input);
+pub fn interceptor(args: TokenStream, input: TokenStream) -> TokenStream {
+    current_module::begin_mod();
+    let func = parse_macro_input!(input as ItemStruct);
+    let func_ident = func.ident.clone();
+    let func_ident_name = func.ident.to_string();
+
+    import_path::push_path(&func_ident_name.clone());
+
+    return TokenStream::from(quote! {
+        #[nidrs::meta(nidrs::datasets::ServiceType::from("Interceptor"))]
+        #[nidrs::meta(nidrs::datasets::ServiceName::from(#func_ident_name))]
+        #[nidrs::macros::__service_derive(Interceptor)]
+        #func
+    });
+}
+
+#[syn_args::derive::declare(def::Expr)]
+#[syn_args::derive::proc_attribute]
+pub fn __service_derive(args: Args, input: TokenStream) -> TokenStream {
+    let service_type = match args {
+        Args::F1(v) => match v.to_path_name().unwrap().as_str() {
+            "Controller" => ServiceType::Controller,
+            "Service" => ServiceType::Service,
+            "Interceptor" => ServiceType::Interceptor,
+            _ => panic!("Invalid service type"),
+        },
+    };
+    impl_expand::__service_derive(service_type, input)
 }
 
 #[syn_args::derive::declare(args::ModuleOptions)]
@@ -229,56 +278,6 @@ pub fn module(args: Args, input: TokenStream) -> TokenStream {
             }
         }
     });
-}
-
-#[proc_macro_attribute]
-pub fn injectable(args: TokenStream, input: TokenStream) -> TokenStream {
-    current_module::begin_mod();
-    let func = parse_macro_input!(input as ItemStruct);
-    let func_ident = func.ident.clone();
-    let func_ident_name = func.ident.to_string();
-
-    let call_site = Span::call_site();
-    let binding = call_site.source_file().path();
-    let call_site_str = binding.to_string_lossy();
-    let call_site_line = call_site.start().line();
-
-    // println!("// injectable {}", func.ident.to_string());
-    import_path::push_path(&func_ident_name.clone());
-
-    return TokenStream::from(quote! {
-        #[nidrs::meta(nidrs::datasets::ServiceType::from("Service"))]
-        #[nidrs::meta(nidrs::datasets::ServiceName::from(#func_ident_name))]
-        #[nidrs::macros::__injectable_derive]
-        #func
-    });
-}
-
-#[proc_macro_attribute]
-pub fn __injectable_derive(args: TokenStream, input: TokenStream) -> TokenStream {
-    impl_expand::__service_derive(ServiceType::Service, input)
-}
-
-#[proc_macro_attribute]
-pub fn interceptor(args: TokenStream, input: TokenStream) -> TokenStream {
-    current_module::begin_mod();
-    let func = parse_macro_input!(input as ItemStruct);
-    let func_ident = func.ident.clone();
-    let func_ident_name = func.ident.to_string();
-
-    import_path::push_path(&func_ident_name.clone());
-
-    return TokenStream::from(quote! {
-        #[nidrs::meta(nidrs::datasets::ServiceType::from("Interceptor"))]
-        #[nidrs::meta(nidrs::datasets::ServiceName::from(#func_ident_name))]
-        #[nidrs::macros::__interceptor_derive]
-        #func
-    });
-}
-
-#[proc_macro_attribute]
-pub fn __interceptor_derive(args: TokenStream, input: TokenStream) -> TokenStream {
-    impl_expand::__service_derive(ServiceType::Interceptor, input)
 }
 
 #[proc_macro_attribute]
@@ -434,53 +433,6 @@ pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
     return raw;
 }
 
-#[proc_macro]
-pub fn throw(input: TokenStream) -> TokenStream {
-    let input = TokenStream2::from(input);
-    let call_site = Span::call_site();
-    let binding = call_site.source_file().path();
-    let call_site_str = binding.to_string_lossy();
-    let call_site_line = call_site.start().line();
-
-    // let binding = ROUTES.lock().unwrap();
-    // let current_controller = CURRENT_CONTROLLER.lock().unwrap();
-    // let struct_name =  current_controller.as_ref().unwrap().name.clone();
-    // let method_name = binding.get(&struct_name).unwrap().keys().last().unwrap();
-
-    // 构建返回的 TokenStream
-    let expanded = quote! {
-        // println!("Macro called from method: {}.{}", stringify!(#struct_name), stringify!(#method_name));
-        // println!("Macro called from: {} line {}", #call_site_str, #call_site_line);
-        nidrs::__throw(#input, &format!("from {} line {}", #call_site_str, #call_site_line))?;
-    };
-
-    expanded.into()
-}
-
-#[proc_macro]
-pub fn log(input: TokenStream) -> TokenStream {
-    let input = TokenStream2::from(input);
-
-    let input_tokens = input.into_iter().collect::<Vec<_>>();
-
-    return TokenStream::from(quote::quote! {
-        print!("{} ", nidrs_extern::colored::Colorize::green("[nidrs]"));
-        println!(#(#input_tokens)*);
-    });
-}
-
-#[proc_macro]
-pub fn elog(input: TokenStream) -> TokenStream {
-    let input = TokenStream2::from(input);
-
-    let input_tokens = input.into_iter().collect::<Vec<_>>();
-
-    return TokenStream::from(quote::quote! {
-        eprint!("{} ", nidrs_extern::colored::Colorize::red("[nidrs]"));
-        eprintln!(#(#input_tokens)*);
-    });
-}
-
 #[syn_args::derive::declare(def::String)]
 #[syn_args::derive::proc_attribute]
 pub fn version(args: Args, input: TokenStream) -> TokenStream {
@@ -532,4 +484,51 @@ pub fn main(args: TokenStream, input: TokenStream) -> TokenStream {
     });
 
     return main_tokens.into();
+}
+
+#[proc_macro]
+pub fn throw(input: TokenStream) -> TokenStream {
+    let input = TokenStream2::from(input);
+    let call_site = Span::call_site();
+    let binding = call_site.source_file().path();
+    let call_site_str = binding.to_string_lossy();
+    let call_site_line = call_site.start().line();
+
+    // let binding = ROUTES.lock().unwrap();
+    // let current_controller = CURRENT_CONTROLLER.lock().unwrap();
+    // let struct_name =  current_controller.as_ref().unwrap().name.clone();
+    // let method_name = binding.get(&struct_name).unwrap().keys().last().unwrap();
+
+    // 构建返回的 TokenStream
+    let expanded = quote! {
+        // println!("Macro called from method: {}.{}", stringify!(#struct_name), stringify!(#method_name));
+        // println!("Macro called from: {} line {}", #call_site_str, #call_site_line);
+        nidrs::__throw(#input, &format!("from {} line {}", #call_site_str, #call_site_line))?;
+    };
+
+    expanded.into()
+}
+
+#[proc_macro]
+pub fn log(input: TokenStream) -> TokenStream {
+    let input = TokenStream2::from(input);
+
+    let input_tokens = input.into_iter().collect::<Vec<_>>();
+
+    return TokenStream::from(quote::quote! {
+        print!("{} ", nidrs_extern::colored::Colorize::green("[nidrs]"));
+        println!(#(#input_tokens)*);
+    });
+}
+
+#[proc_macro]
+pub fn elog(input: TokenStream) -> TokenStream {
+    let input = TokenStream2::from(input);
+
+    let input_tokens = input.into_iter().collect::<Vec<_>>();
+
+    return TokenStream::from(quote::quote! {
+        eprint!("{} ", nidrs_extern::colored::Colorize::red("[nidrs]"));
+        eprintln!(#(#input_tokens)*);
+    });
 }
