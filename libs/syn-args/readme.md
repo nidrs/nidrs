@@ -1,12 +1,15 @@
 <div align="center">
-  <p><img src="./logo.png" width="50%" /></p>
+  <h1>⚙️ SynArgs</h1>
+  <p><img src="https://github.com/nidrs/nidrs/blob/main/libs/syn-args/logo.png?raw=true" width="50%" /></p>
   <p>
     <img src="https://img.shields.io/crates/v/syn-args?style=for-the-badge" />
   </p>
-  <div style="height: 20px"></div>
+  <p>
+    <a href="https://github.com/nidrs/nidrs/blob/main/libs/syn-args/readme-zh.md">中文文档</a>
+  </p>
 </div>
 
-# SynArgs
+## Hello
 
 **SynArgs** is a powerful and easy-to-use string pattern matching and parsing tool that can parse strings into corresponding data structures. It is widely applicable to various parameter parsing needs and can be flexibly extended to suit complex parsing scenarios.
 

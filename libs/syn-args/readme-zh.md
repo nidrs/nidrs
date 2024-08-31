@@ -1,11 +1,15 @@
 <div align="center">
-  <p><img src="./logo.png" width="50%" /></p>
+  <h1>⚙️ SynArgs</h1>
+  <p><img src="https://github.com/nidrs/nidrs/blob/main/libs/syn-args/logo.png?raw=true" width="50%" /></p>
   <p>
     <img src="https://img.shields.io/crates/v/syn-args?style=for-the-badge" />
   </p>
+  <p>
+    <a href="https://github.com/nidrs/nidrs/blob/main/libs/syn-args/readme-zh.md">中文文档</a>
+  </p>
 </div>
 
-# SynArgs
+## 你好
 
 **SynArgs** 是一个强大且易用的字符串模式匹配和解析工具，能够将字符串解析为相应的数据结构。它广泛适用于多种参数解析需求，并且可以灵活扩展，适合复杂场景的参数解析。
 
