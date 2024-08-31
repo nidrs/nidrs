@@ -9,7 +9,10 @@ use syn::Error;
 
 use crate::SynArgs;
 
+/// Contains basic types for syn-args, used for quick parameter parsing
 pub mod def;
+
+/// Contains some auxiliary functions
 pub mod utils;
 
 /// parse the input into Arguments
@@ -47,6 +50,8 @@ pub enum Value {
     Array(def::Array<Value>),
 }
 
+/// Arguments type, usually converted from Value
+/// This type is used to distinguish top-level types for easier processing, and is ultimately converted to specific types through Arguments.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Arguments(pub Value);
 

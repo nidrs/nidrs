@@ -8,6 +8,24 @@ use syn::{
 use crate::utils::{recursive_lit, recursive_parsing};
 use crate::{def, Value};
 
+/// A very important core type used to convert types related to syn::parse into Value, and then you can call the `.arguments` method to get the specific type (this type must be derived using the `ArgsParse` macro)
+/// Example:
+/// ```rust
+/// use syn_args::def;
+/// use syn_args::derive::ArgsParse;
+/// use syn_args::SynArgs;
+///
+/// #[derive(Debug, ArgsParse)]
+/// enum FArgs {
+///    F1(def::Int),
+///    F2(def::String),
+/// }
+///
+/// fn main() {
+///    let args = syn::parse_str::<SynArgs>("F(1)").unwrap();
+///    let args = args.arguments::<FArgs>().unwrap();
+///    println!("{:?}", args);
+/// }
 #[derive(Debug)]
 pub struct SynArgs {
     pub value: Value,
@@ -61,7 +79,7 @@ impl Parse for SynArgs {
     }
 }
 
-pub struct ObjectArgs {
+pub(crate) struct ObjectArgs {
     pub value: std::collections::HashMap<String, Value>,
 }
 
@@ -92,7 +110,7 @@ impl Parse for ObjectArgs {
     }
 }
 
-pub struct ArrayArgs {
+pub(crate) struct ArrayArgs {
     pub value: Vec<Value>,
 }
 
