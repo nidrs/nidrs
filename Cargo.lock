@@ -2082,7 +2082,6 @@ dependencies = [
 name = "syn-args"
 version = "0.2.1"
 dependencies = [
- "anyhow",
  "proc-macro2",
  "quote",
  "syn 2.0.75",
