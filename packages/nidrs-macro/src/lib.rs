@@ -33,7 +33,6 @@ mod args_parse;
 use args_parse::*;
 use syn_args::{def, SynArgs};
 use utils::merge_uses;
-mod global;
 
 mod app_parse;
 mod args;
