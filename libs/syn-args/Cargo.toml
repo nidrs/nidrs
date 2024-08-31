@@ -1,6 +1,6 @@
 [package]
 name = "syn-args"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["Lydanne <wumacoder@gmail.com>"]
 description = "syn-args is a library for parsing function arguments."
 keywords = ["syn-args", "syn"]
