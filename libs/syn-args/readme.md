@@ -15,7 +15,7 @@
 
 **SynArgs** is a powerful and easy-to-use string pattern matching and parsing tool that can parse strings into corresponding data structures. It is widely applicable to various parameter parsing needs and can be flexibly extended to suit complex parsing scenarios.
 
-## Features
+## Focus
 
 - **Easy to Use**: Quickly get started and easily parse strings into structs.
 - **Highly Extensible**: Supports extended parameter definitions to adapt to various parsing scenarios.
@@ -40,6 +40,11 @@ Add the dependencies to your project:
 cargo add syn
 cargo add syn-args
 ```
+
+## Features
+
+- `syn-args = { features = ["loose_mode"] }`
+  - Loose matching mode for parameters, where `def::Bool` and `def::Array` can be used without `def::Options` if they are optional parameters.
 
 ## Usage
 

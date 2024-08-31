@@ -1,3 +1,4 @@
+#![doc = include_str!("../readme.md")]
 mod macro_args;
 mod syn_args;
 mod traits;
