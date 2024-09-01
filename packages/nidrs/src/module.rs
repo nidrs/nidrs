@@ -1,4 +1,9 @@
+use nidrs_extern::axum::extract::Request;
+use nidrs_extern::axum::response::IntoResponse;
+use nidrs_extern::axum::routing::Route;
 use nidrs_extern::tokio;
+use nidrs_extern::tower;
+use nidrs_extern::tower::Layer;
 use nidrs_extern::{
     axum::{self, response::IntoResponse as _},
     datasets::{self, RouterBodyScheme},
@@ -16,6 +21,7 @@ use nidrs_extern::{
     utoipa_redoc::{Redoc, Servable},
     utoipa_swagger_ui::SwaggerUi,
 };
+use std::convert::Infallible;
 use std::{
     any::Any,
     collections::HashMap,
@@ -141,6 +147,18 @@ impl<T: Module> NidrsFactory<T> {
         self
     }
 
+    pub fn default_layer<L>(mut self, middle: L) -> Self
+    where
+        L: Layer<Route> + Clone + Send + 'static,
+        L::Service: tower::Service<Request> + Clone + Send + 'static,
+        <L::Service as tower::Service<Request>>::Response: IntoResponse + 'static,
+        <L::Service as tower::Service<Request>>::Error: Into<Infallible> + 'static,
+        <L::Service as tower::Service<Request>>::Future: Send + 'static,
+    {
+        self.inter_apply.push(Box::new(move |router| router.layer::<L>(middle)));
+        self
+    }
+
     pub fn each_router(mut self, hook: impl Fn(MetaRouter) -> axum::Router<StateCtx> + 'static) -> Self {
         self.router_hook = Box::new(hook);
         self
@@ -156,14 +174,6 @@ impl<T: Module> NidrsFactory<T> {
         // println!("ModuleCtx Deps: {:?}", &module_ctx.deps);
         // println!("ModuleCtx Services: {:?}", &module_ctx.services.keys());
         // println!("ModuleCtx Globals: {:?}", &module_ctx.globals);
-
-        // for item in self.module_ctx.interceptors.iter() {
-        //     let service_name = item.0;
-        //     let service = item.1;
-        //     if service_name.starts_with(GLOBALS_KEY) {
-        //         let service = self.module_ctx.get_interceptor(current_module_name, service_name)
-        //     }
-        // }
 
         let mut sub_router = axum::Router::new();
         for router in self.module_ctx.routers.iter() {

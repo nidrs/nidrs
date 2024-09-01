@@ -23,30 +23,42 @@ fn main() {
     let app = app.default_prefix("/api/{version}");
     let app = app.default_version("v1");
     let app = app.default_uses(app::interceptor::AppInterceptor);
+    let app = app.default_layer(
+        nidrs::externs::tower::ServiceBuilder::new()
+            .layer(HandleErrorLayer::new(|error: BoxError| async move {
+                if error.is::<nidrs::externs::tower::timeout::error::Elapsed>() {
+                    Ok(StatusCode::REQUEST_TIMEOUT)
+                } else {
+                    Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Unhandled internal error: {error}")))
+                }
+            }))
+            .layer(TimeoutLayer::new(Duration::from_secs(5)))
+            .layer(middleware::from_fn(auth)),
+    );
 
-    let app = app.each_router(|mr| {
-        // if let Some(v) = router_wrap.meta.get_data::<nidrs::datasets::RouterBodyScheme>() {
-        //     println!("RouterBodyScheme {:?}", v.value().0);
-        // }
+    // let app = app.each_router(|mr| {
+    //     // if let Some(v) = router_wrap.meta.get_data::<nidrs::datasets::RouterBodyScheme>() {
+    //     //     println!("RouterBodyScheme {:?}", v.value().0);
+    //     // }
 
-        if mr.match_full_path("/api/v2/**") {
-            println!("match {:?}", (mr.meta.get_data::<nidrs::datasets::ServiceName>(), mr.meta.get_data::<nidrs::datasets::RouterFullPath>(),));
-            mr.router.layer(
-                nidrs::externs::tower::ServiceBuilder::new()
-                    .layer(HandleErrorLayer::new(|error: BoxError| async move {
-                        if error.is::<nidrs::externs::tower::timeout::error::Elapsed>() {
-                            Ok(StatusCode::REQUEST_TIMEOUT)
-                        } else {
-                            Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Unhandled internal error: {error}")))
-                        }
-                    }))
-                    .layer(TimeoutLayer::new(Duration::from_secs(5)))
-                    .layer(middleware::from_fn(auth)),
-            )
-        } else {
-            mr.router
-        }
-    });
+    //     if mr.match_full_path("/api/v2/**") {
+    //         println!("match {:?}", (mr.meta.get_data::<nidrs::datasets::ServiceName>(), mr.meta.get_data::<nidrs::datasets::RouterFullPath>(),));
+    //         mr.router.layer(
+    //             nidrs::externs::tower::ServiceBuilder::new()
+    //                 .layer(HandleErrorLayer::new(|error: BoxError| async move {
+    //                     if error.is::<nidrs::externs::tower::timeout::error::Elapsed>() {
+    //                         Ok(StatusCode::REQUEST_TIMEOUT)
+    //                     } else {
+    //                         Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Unhandled internal error: {error}")))
+    //                     }
+    //                 }))
+    //                 .layer(TimeoutLayer::new(Duration::from_secs(5)))
+    //                 .layer(middleware::from_fn(auth)),
+    //         )
+    //     } else {
+    //         mr.router
+    //     }
+    // });
 
     let app = app.listen(3000);
 
