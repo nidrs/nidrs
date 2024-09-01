@@ -1,3 +1,4 @@
+use nidrs::macros::default_uses;
 use nidrs::macros::module;
 
 pub mod controller;
@@ -14,7 +15,7 @@ use controller::AppController;
 use interceptor::AppInterceptor;
 use service::AppService;
 
-// #[default_uses(LogInterceptor)]
+// #[default_uses(AppInterceptor)]
 #[module({
     imports: [
         ConfModule::for_root(ConfOptions{

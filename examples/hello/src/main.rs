@@ -22,6 +22,7 @@ fn main() {
 
     let app = app.default_prefix("/api/{version}");
     let app = app.default_version("v1");
+    let app = app.default_uses(app::interceptor::AppInterceptor::default());
 
     let app = app.default_router_hook(|router_wrap| {
         println!(

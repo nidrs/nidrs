@@ -1,8 +1,9 @@
 use nidrs_extern::{
-    axum,
+    axum::{self, response::IntoResponse as _},
     datasets::{self, RouterBodyScheme},
-    meta::Meta,
+    meta::{ImplMeta, Meta},
     tokio::signal,
+    tower::Service as _,
     utoipa::{
         self,
         openapi::{
@@ -23,9 +24,9 @@ use std::{
     time::Duration,
 };
 
-use crate::{provider, shared::otr, template_format, AppResult, InnerMeta, Service};
+use crate::{provider, shared::otr, template_format, AppResult, InnerMeta, Interceptor, Service};
 
-static GLOBALS_KEY: &str = "Globals";
+static GLOBALS_KEY: &str = "Defaults";
 
 pub trait Module {
     fn init(self, ctx: ModuleCtx) -> ModuleCtx;
@@ -88,6 +89,7 @@ pub struct NidrsFactory<T: Module> {
     pub router: axum::Router<StateCtx>,
     pub port: u32,
     pub rt: RwLock<Option<tokio::runtime::Runtime>>,
+    pub inter_apply: Vec<Box<dyn FnOnce(axum::Router<StateCtx>) -> axum::Router<StateCtx> + 'static>>,
 
     pub router_hook: Box<dyn Fn(RouterWrap) -> axum::Router<StateCtx>>,
 }
@@ -96,7 +98,15 @@ impl<T: Module> NidrsFactory<T> {
     pub fn create(module: T) -> Self {
         let router: axum::Router<StateCtx> = axum::Router::new().route("/", axum::routing::get(|| async move { "Hello, Nidrs!" }));
         let module_ctx = ModuleCtx::new(ModuleDefaults { default_version: "v1", default_prefix: "" });
-        NidrsFactory { rt: RwLock::new(None), router, module: Some(module), module_ctx, port: 3000, router_hook: Box::new(|r| r.router) }
+        NidrsFactory {
+            rt: RwLock::new(None),
+            router,
+            module: Some(module),
+            module_ctx,
+            port: 3000,
+            router_hook: Box::new(|r| r.router),
+            inter_apply: vec![],
+        }
     }
 
     pub fn default_prefix(mut self, prefix: &'static str) -> Self {
@@ -106,6 +116,29 @@ impl<T: Module> NidrsFactory<T> {
 
     pub fn default_version(mut self, v: &'static str) -> Self {
         self.module_ctx.defaults.default_version = v;
+        self
+    }
+
+    pub fn default_uses<I: Interceptor + 'static + Sync + Send>(mut self, inter: I) -> Self {
+        let service_name = I::__meta().get_data::<datasets::ServiceName>().unwrap().value().clone();
+        let interceptor = Arc::new(inter);
+        self.module_ctx.register_interceptor(GLOBALS_KEY, &service_name, Box::new(interceptor.clone()));
+
+        self.inter_apply.push(Box::new(move |router| {
+            router.layer(axum::middleware::from_fn({
+                move |req: axum::extract::Request, next: axum::middleware::Next| {
+                    let inter = std::sync::Arc::clone(&interceptor);
+                    async move {
+                        let res = inter.intercept(req, next).await;
+                        if let Ok(res) = res {
+                            Ok(res.into_response())
+                        } else {
+                            Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+                        }
+                    }
+                }
+            }))
+        }));
         self
     }
 
@@ -124,6 +157,15 @@ impl<T: Module> NidrsFactory<T> {
         // println!("ModuleCtx Deps: {:?}", &module_ctx.deps);
         // println!("ModuleCtx Services: {:?}", &module_ctx.services.keys());
         // println!("ModuleCtx Globals: {:?}", &module_ctx.globals);
+
+        // for item in self.module_ctx.interceptors.iter() {
+        //     let service_name = item.0;
+        //     let service = item.1;
+        //     if service_name.starts_with(GLOBALS_KEY) {
+        //         let service = self.module_ctx.get_interceptor(current_module_name, service_name)
+        //     }
+        // }
+
         let mut sub_router = axum::Router::new();
         for router in self.module_ctx.routers.iter() {
             sub_router = sub_router.merge((self.router_hook)(router.clone()));
@@ -175,6 +217,9 @@ impl<T: Module> NidrsFactory<T> {
             .merge(Redoc::with_url("/redoc", api.clone()))
             .merge(RapiDoc::new("/api-docs/openapi.json").path("/rapidoc"));
 
+        while let Some(apply) = self.inter_apply.pop() {
+            self.router = apply(self.router);
+        }
         nidrs_macro::log!("Swagger UI on {}", format!("http://0.0.0.0:{}/swagger-ui", self.port));
         nidrs_macro::log!("Rapidoc UI on {}", format!("http://0.0.0.0:{}/rapidoc", self.port));
         nidrs_macro::log!("Redoc UI on {}", format!("http://0.0.0.0:{}/redoc", self.port));

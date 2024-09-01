@@ -12,7 +12,7 @@ use super::{
     service::AppService,
 };
 
-#[uses(AppInterceptor)]
+// #[uses(AppInterceptor)]
 #[version("v1")]
 #[meta(role = "admin", auth = "true")]
 // #[meta(nidrs::datasets::DisableDefaultPrefix(true))]
