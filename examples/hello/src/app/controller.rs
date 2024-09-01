@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
-use super::interceptor::AppInterceptor;
 use nidrs::externs::axum::{extract::Query, response::AppendHeaders, Json};
 use nidrs::macros::{controller, get, meta, post};
-use nidrs::{uses, version, Inject, Meta};
+use nidrs::{version, Inject, Meta};
 
 use crate::AppResult;
 
