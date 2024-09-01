@@ -22,7 +22,7 @@ fn main() {
 
     let app = app.default_prefix("/api/{version}");
     let app = app.default_version("v1");
-    let app = app.default_uses(app::interceptor::AppInterceptor);
+    // let app = app.default_uses(app::interceptor::AppInterceptor);
     let app = app.default_layer(
         nidrs::externs::tower::ServiceBuilder::new()
             .layer(HandleErrorLayer::new(|error: BoxError| async move {

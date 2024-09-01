@@ -104,7 +104,7 @@ impl AppController {
         println!("Query {:?}", q);
         Ok(self.app_service.get_hello_world())
     }
-    
+
     #[uses(LogInterceptor)]
     #[post("/hello")]
     pub async fn post_hello_world(&self, Query(q): Query<HashMap<String, String>>, Json(j): Json<serde_json::Value>) -> AppResult<String> {
@@ -159,7 +159,6 @@ use crate::modules::user::UserModule;
 use controller::AppController;
 use service::AppService;
 
-#[default_uses(LogInterceptor)]
 #[module({
     imports: [
         ConfModule::for_root(ConfOptions{

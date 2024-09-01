@@ -14,7 +14,6 @@ use controller::AppController;
 use interceptor::AppInterceptor;
 use service::AppService;
 
-// #[default_uses(AppInterceptor)]
 #[module({
     imports: [
         ConfModule::for_root(ConfOptions{

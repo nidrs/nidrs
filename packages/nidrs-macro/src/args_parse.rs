@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{quote, ToTokens};
+use quote::{quote, ToTokens, TokenStreamExt};
 use syn::{
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
@@ -28,20 +28,11 @@ impl Parse for UFnStruct {
         let struct_parse = input.parse::<syn::ItemStruct>();
         let fn_parse = input.parse::<syn::ItemFn>();
         if let Ok(item) = struct_parse {
-            Ok(UFnStruct { ident: item.clone().ident, typ: TokenType::Struct(item) })
+            Ok(UFnStruct { ident: item.ident.clone(), typ: TokenType::Struct(item) })
         } else if let Ok(item) = fn_parse {
             Ok(UFnStruct { ident: item.sig.ident.clone(), typ: TokenType::Fn(item) })
         } else {
             Err(syn::Error::new(input.span(), "Invalid interceptor"))
-        }
-    }
-}
-
-impl ToTokens for UFnStruct {
-    fn to_tokens(&self, tokens: &mut TokenStream2) {
-        match &self.typ {
-            TokenType::Fn(item) => item.to_tokens(tokens),
-            TokenType::Struct(item) => item.to_tokens(tokens),
         }
     }
 }

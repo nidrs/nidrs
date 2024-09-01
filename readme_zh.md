@@ -41,7 +41,7 @@ Nidrs 提供了一个即插即用的应用程序架构，使开发人员和团�
   - [ ] on_application_shutdown (待定)
 - [x] 请求响应拦截器
   - [x] 控制器作用域 v0.0.4
-  - [x] 全局作用域  v0.0.6
+  - [x] 全局作用域 v0.0.6
 - [ ] 请求参数校验
 - [ ] 基于请求参数校验的 Mock 服务
 - [x] 统一返回类型 v0.0.4
@@ -157,7 +157,6 @@ use crate::modules::user::UserModule;
 use controller::AppController;
 use service::AppService;
 
-#[default_uses(LogInterceptor)]
 #[module({
     imports: [
         ConfModule::for_root(ConfOptions{

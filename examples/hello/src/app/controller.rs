@@ -1,17 +1,17 @@
 use std::collections::HashMap;
 
 use nidrs::externs::axum::{extract::Query, response::AppendHeaders, Json};
-use nidrs::macros::{controller, get, meta, post};
+use nidrs::macros::{controller, get, meta, post, uses};
 use nidrs::{version, Inject, Meta};
 
 use crate::AppResult;
 
 use super::{
     dto::{ArgDto, Status},
+    interceptor::AppInterceptor,
     service::AppService,
 };
 
-// #[uses(AppInterceptor)]
 #[version("v1")]
 #[meta(role = "admin", auth = "true")]
 // #[meta(nidrs::datasets::DisableDefaultPrefix(true))]
@@ -21,8 +21,8 @@ pub struct AppController {
 }
 
 impl AppController {
+    #[uses(AppInterceptor)]
     #[meta(arr = ["user"])]
-    // #[uses(LogInterceptor)]
     #[meta(nidrs::datasets::DisableDefaultPrefix(false))]
     #[version("v2")]
     #[get("/hello")]
@@ -50,7 +50,6 @@ impl AppController {
     //     Ok(self.app_service.get_hello_world())
     // }
 
-    // #[uses(LogInterceptor)]
     #[post("/hello")]
     pub async fn post_hello_world(&self, Query(q): Query<HashMap<String, String>>, Json(j): Json<ArgDto>) -> AppResult<String> {
         println!("Query {:?}", q);

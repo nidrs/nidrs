@@ -324,6 +324,7 @@ pub fn uses(args: Args, input: TokenStream) -> TokenStream {
         }
         _ => panic!("Invalid argument"),
     };
+    let raw = TokenStream2::from(input.clone());
     let func = parse_macro_input!(input as UFnStruct);
     let used_ident = &func.ident;
     let inter_names = args.iter().map(|arg| arg.to_path_name().unwrap()).collect::<Vec<String>>();
@@ -344,28 +345,28 @@ pub fn uses(args: Args, input: TokenStream) -> TokenStream {
 
     return quote! {
         #expand
-        #func
+        #raw
     }
     .into();
 }
 
-#[syn_args::derive::declare(def::Expr, def::Extends<def::Expr>)]
-#[syn_args::derive::proc_attribute]
-pub fn default_uses(args: Args, input: TokenStream) -> TokenStream {
-    let args: Vec<def::Expr> = match args {
-        Args::F1(first, other) => {
-            let mut args = vec![first];
-            args.append(&mut other.clone());
-            args
-        }
-        _ => panic!("Invalid argument"),
-    };
-    let inter_names = args.iter().map(|arg| arg.to_path_name().unwrap()).collect::<Vec<String>>();
+// #[syn_args::derive::declare(def::Expr, def::Extends<def::Expr>)]
+// #[syn_args::derive::proc_attribute]
+// pub fn default_uses(args: Args, input: TokenStream) -> TokenStream {
+//     let args: Vec<def::Expr> = match args {
+//         Args::F1(first, other) => {
+//             let mut args = vec![first];
+//             args.append(&mut other.clone());
+//             args
+//         }
+//         _ => panic!("Invalid argument"),
+//     };
+//     let inter_names = args.iter().map(|arg| arg.to_path_name().unwrap()).collect::<Vec<String>>();
 
-    DEFAULT_INTERS.lock().unwrap().append(&mut inter_names.clone());
+//     DEFAULT_INTERS.lock().unwrap().append(&mut inter_names.clone());
 
-    return input;
-}
+//     return input;
+// }
 
 #[proc_macro_attribute]
 pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
