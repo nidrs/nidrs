@@ -233,7 +233,7 @@ mod app {
                             }
                         }
                     }));
-                ctx.routers.push(nidrs::RouterWrap::new(router, meta));
+                ctx.routers.push(nidrs::MetaRouter::new(router, meta));
                 ctx
             }
             pub async fn post_hello_world(&self, Query(q): Query<HashMap<String, String>>, Json(j): Json<ArgDto>) -> AppResult<String> {
@@ -306,7 +306,7 @@ mod app {
                             }
                         }
                     }));
-                ctx.routers.push(nidrs::RouterWrap::new(router, meta));
+                ctx.routers.push(nidrs::MetaRouter::new(router, meta));
                 ctx
             }
         }
@@ -1530,7 +1530,7 @@ mod modules {
                     let router = nidrs::externs::axum::Router::new()
                         .route(&full_path, nidrs::externs::axum::routing::get(|p0| async move { t_controller.get_hello_world(p0).await }))
                         .layer(nidrs::externs::axum::Extension(meta.clone()));
-                    ctx.routers.push(nidrs::RouterWrap::new(router, meta));
+                    ctx.routers.push(nidrs::MetaRouter::new(router, meta));
                     ctx
                 }
                 pub async fn create_user(&self, dto: Json<CreateUserDto>) -> AppResult<String> {
@@ -1579,7 +1579,7 @@ mod modules {
                     let router = nidrs::externs::axum::Router::new()
                         .route(&full_path, nidrs::externs::axum::routing::get(|p0| async move { t_controller.create_user(p0).await }))
                         .layer(nidrs::externs::axum::Extension(meta.clone()));
-                    ctx.routers.push(nidrs::RouterWrap::new(router, meta));
+                    ctx.routers.push(nidrs::MetaRouter::new(router, meta));
                     ctx
                 }
             }
@@ -1954,7 +1954,7 @@ fn main() {
     let app = nidrs::NidrsFactory::create(app::AppModule);
     let app = app.default_prefix("/api/{version}");
     let app = app.default_version("v1");
-    let app = app.default_router_hook(|router_wrap| {
+    let app = app.each_router(|router_wrap| {
         {
             ::std::io::_print(format_args!(
                 "router_wrap {0:?}\n",
@@ -1972,7 +1972,7 @@ fn main() {
                 ::std::io::_print(format_args!("RouterBodyScheme {0:?}\n", v.value().0));
             };
         }
-        if router_wrap.match_router_path("/**") {
+        if router_wrap.match_full_path("/**") {
             {
                 ::std::io::_print(format_args!("match /\n"));
             };

@@ -1,9 +1,9 @@
+use nidrs_extern::tokio;
 use nidrs_extern::{
     axum::{self, response::IntoResponse as _},
     datasets::{self, RouterBodyScheme},
     meta::{ImplMeta, Meta},
     tokio::signal,
-    tower::Service as _,
     utoipa::{
         self,
         openapi::{
@@ -16,7 +16,6 @@ use nidrs_extern::{
     utoipa_redoc::{Redoc, Servable},
     utoipa_swagger_ui::SwaggerUi,
 };
-use nidrs_extern::{datasets::RouterPath, tokio};
 use std::{
     any::Any,
     collections::HashMap,
@@ -91,7 +90,7 @@ pub struct NidrsFactory<T: Module> {
     pub rt: RwLock<Option<tokio::runtime::Runtime>>,
     pub inter_apply: Vec<Box<dyn FnOnce(axum::Router<StateCtx>) -> axum::Router<StateCtx> + 'static>>,
 
-    pub router_hook: Box<dyn Fn(RouterWrap) -> axum::Router<StateCtx>>,
+    pub router_hook: Box<dyn Fn(MetaRouter) -> axum::Router<StateCtx>>,
 }
 
 impl<T: Module> NidrsFactory<T> {
@@ -142,7 +141,7 @@ impl<T: Module> NidrsFactory<T> {
         self
     }
 
-    pub fn default_router_hook(mut self, hook: impl Fn(RouterWrap) -> axum::Router<StateCtx> + 'static) -> Self {
+    pub fn each_router(mut self, hook: impl Fn(MetaRouter) -> axum::Router<StateCtx> + 'static) -> Self {
         self.router_hook = Box::new(hook);
         self
     }
@@ -287,7 +286,7 @@ pub struct ModuleCtx {
     pub modules: HashMap<String, Box<dyn Module>>,
     pub services: HashMap<String, Box<dyn Any>>,
     pub controllers: HashMap<String, Box<dyn Any>>,
-    pub routers: Vec<RouterWrap>,
+    pub routers: Vec<MetaRouter>,
     pub interceptors: HashMap<String, Box<dyn Any>>,
 
     pub imports: HashMap<String, Vec<String>>,
@@ -464,23 +463,23 @@ impl ModuleCtx {
 }
 
 #[derive(Debug, Clone)]
-pub struct RouterWrap {
+pub struct MetaRouter {
     pub router: axum::Router<StateCtx>,
     pub meta: Meta,
 }
 
-impl RouterWrap {
+impl MetaRouter {
     pub fn new(router: axum::Router<StateCtx>, meta: Meta) -> Self {
-        RouterWrap { router, meta }
+        MetaRouter { router, meta }
     }
 }
 
-impl RouterWrap {
-    pub fn match_router_path(&self, matcher: &str) -> bool {
+impl MetaRouter {
+    pub fn match_full_path(&self, matcher: &str) -> bool {
         let glob = nidrs_extern::globset::Glob::new(matcher);
         match glob {
             Ok(glob) => {
-                let path: &str = self.meta.get_data::<RouterPath>().unwrap().value();
+                let path: &str = self.meta.get_data::<datasets::RouterFullPath>().unwrap().value();
                 glob.compile_matcher().is_match(path)
             }
             Err(err) => {

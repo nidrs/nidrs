@@ -192,7 +192,7 @@ pub(crate) fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream
                 #(#interceptor_uses_expand)*;
                 ;
             ctx.routers
-                .push(nidrs::RouterWrap::new(router, meta));
+                .push(nidrs::MetaRouter::new(router, meta));
 
             ctx
         }
