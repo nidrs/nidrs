@@ -3,22 +3,93 @@
 #![feature(alloc)]
 #![feature(fmt_helpers_for_derive)]
 #![allow(warnings, unused)]
-// injectable AppService
-// injectable UserEntity
-// injectable UserService
+// controller AppController []
+// >>Push: Global("app") -- [None]
+//  CMETA: []
+// >>Push: Module("AppModule") -- [None]
+// >>Push: Service("AppController") -- [Some(String("AppModule"))]
+//  CMETA: ["ServiceType"]
+//  CMETA: ["ServiceName"]
+//  CMETA: ["ControllerPath"]
+// service_derive "AppController"
+// >>Push: Handler("get_hello_world") -- [Some(String("AppModule"))]
+//  CMETA: ["RouterName"]
+//  CMETA: ["RouterMethod"]
+//  CMETA: ["RouterPath"]
+// route_derive "get_hello_world"
+// << Pop: Some(Handler("get_hello_world")) ["RouterPath", "handler", "RouterMethod", "RouterName", "ControllerPath", "ServiceName", "service", "ServiceType", "module", "global"]
+
+// << Pop: Some(Service("AppController")) ["ControllerPath", "ServiceName", "service", "ServiceType", "module", "global"]
+
+// >>Push: Service("AppService") -- [Some(String("AppModule"))]
+//  CMETA: ["ServiceType"]
+//  CMETA: ["ServiceName"]
+// service_derive "AppService"
+// module "AppModule"
+// << Pop: Some(Service("AppService")) ["service", "ServiceType", "ServiceName", "module", "global"]
+
+// >>Push: Service("JsonInterceptor") -- [Some(String("AppModule"))]
+//  CMETA: ["ServiceType"]
+//  CMETA: ["ServiceName"]
+// service_derive "JsonInterceptor"
+// << Pop: Some(Service("JsonInterceptor")) ["ServiceType", "service", "ServiceName", "module", "global"]
+
+// >>Push: Service("UserEntity") -- [Some(String("AppModule"))]
+//  CMETA: ["ServiceType"]
+//  CMETA: ["ServiceName"]
+// service_derive "UserEntity"
+// controller UserController []
+// << Pop: Some(Service("UserEntity")) ["service", "ServiceType", "ServiceName", "module", "global"]
+
+// << Pop: Some(Module("AppModule")) ["module", "global"]
+
+// >>Push: Module("UserModule") -- [None]
+// >>Push: Service("UserController") -- [Some(String("UserModule"))]
+//  CMETA: ["ServiceType"]
+//  CMETA: ["ServiceName"]
+//  CMETA: ["ControllerPath"]
+// service_derive "UserController"
+// >>Push: Handler("get_user_all") -- [Some(String("UserModule"))]
+//  CMETA: ["RouterName"]
+//  CMETA: ["RouterMethod"]
+//  CMETA: ["RouterPath"]
+// route_derive "get_user_all"
+// << Pop: Some(Handler("get_user_all")) ["RouterMethod", "handler", "RouterName", "RouterPath", "ServiceType", "ServiceName", "service", "ControllerPath", "module", "global"]
+
+// >>Push: Handler("get_user_by_id") -- [Some(String("UserModule"))]
+//  CMETA: ["RouterName"]
+//  CMETA: ["RouterMethod"]
+//  CMETA: ["RouterPath"]
+// route_derive "get_user_by_id"
+// << Pop: Some(Handler("get_user_by_id")) ["RouterName", "RouterMethod", "handler", "RouterPath", "ServiceType", "ServiceName", "service", "ControllerPath", "module", "global"]
+
+// >>Push: Handler("create_user") -- [Some(String("UserModule"))]
+//  CMETA: ["RouterName"]
+//  CMETA: ["RouterMethod"]
+//  CMETA: ["RouterPath"]
+// route_derive "create_user"
+// << Pop: Some(Handler("create_user")) ["RouterName", "RouterMethod", "handler", "RouterPath", "ServiceType", "ServiceName", "service", "ControllerPath", "module", "global"]
+
+// << Pop: Some(Service("UserController")) ["ServiceType", "ServiceName", "service", "ControllerPath", "module", "global"]
+
+// >>Push: Service("UserService") -- [Some(String("UserModule"))]
+//  CMETA: ["ServiceType"]
+//  CMETA: ["ServiceName"]
+// service_derive "UserService"
+// module "UserModule"
+// << Pop: Some(Service("UserService")) ["ServiceType", "ServiceName", "service", "module", "global"]
 #![feature(prelude_import)]
 #[prelude_import]
 use std::prelude::rust_2021::*;
 #[macro_use]
 extern crate std;
 mod app {
-    use nidrs::default_uses;
     use nidrs_macro::module;
     pub mod controller {
         use super::service::AppService;
         use crate::AppResult;
         use axum::extract::Query;
-        use nidrs::{Inject, Meta};
+        use nidrs::{Inject, InnerMeta};
         use nidrs_macro::{controller, get};
         use std::collections::HashMap;
         pub struct AppController {
@@ -40,15 +111,19 @@ mod app {
             }
         }
         impl nidrs::ImplMeta for AppController {
-            fn __meta() -> nidrs::Meta {
-                let mut meta = nidrs::Meta::new();
-                meta.set("service_name".to_string(), "AppController");
-                meta.set("service_type".to_string(), "Controller");
+            fn __meta() -> nidrs::InnerMeta {
+                let mut meta = nidrs::InnerMeta::new();
+                meta.set_data(nidrs::datasets::ControllerPath::from("/app"));
+                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
+                meta.set("service", "AppController");
+                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                meta.set("module", "AppModule");
+                meta.set("global", "app");
                 meta
             }
         }
         impl AppController {
-            pub async fn get_hello_world(&self, meta: Meta, Query(q): Query<HashMap<String, String>>) -> AppResult<String> {
+            pub async fn get_hello_world(&self, meta: InnerMeta, Query(q): Query<HashMap<String, String>>) -> AppResult<String> {
                 {
                     ::std::io::_print(format_args!("Query {0:?}\n", q));
                 };
@@ -57,9 +132,51 @@ mod app {
                 };
                 Ok(self.app_service.get_hello_world2())
             }
-            pub fn __meta_get_hello_world(&self) -> nidrs::Meta {
-                let mut meta = nidrs::Meta::new();
+            pub fn __meta_get_hello_world(&self) -> nidrs::InnerMeta {
+                let mut meta = nidrs::InnerMeta::new();
+                meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
+                meta.set("handler", "get_hello_world");
+                meta.set_data(nidrs::datasets::RouterMethod::from("get"));
+                meta.set_data(nidrs::datasets::RouterName::from("get_hello_world"));
+                meta.set_data(nidrs::datasets::ControllerPath::from("/app"));
+                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
+                meta.set("service", "AppController");
+                meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                meta.set("module", "AppModule");
+                meta.set("global", "app");
                 meta
+            }
+            pub fn __route_get_hello_world(&self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
+                use axum::response::IntoResponse;
+                use nidrs::externs::axum;
+                use nidrs::externs::axum::{extract::Query, Json};
+                use nidrs::externs::meta::{InnerMeta, Meta};
+                use nidrs::Interceptor;
+                use serde_json::Value;
+                let mut meta = self.__meta_get_hello_world();
+                let router_info = ctx.get_router_full(&meta);
+                if let Err(e) = router_info {
+                    {
+                        ::core::panicking::panic_fmt(format_args!("[{0}] {1:?}", "__route_get_hello_world", e));
+                    };
+                }
+                let full_path = router_info.unwrap();
+                {
+                    ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                };
+                {
+                    ::std::io::_print(format_args!("Registering router \'{0} {1}\'.\n", "get".to_uppercase(), full_path,));
+                };
+                meta.set_data(nidrs::datasets::RouterFullPath(full_path.clone()));
+                let meta = Meta::new(meta);
+                let module_name = meta.get::<&str>("module").unwrap();
+                let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
+                let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
+                let router = nidrs::externs::axum::Router::new()
+                    .route(&full_path, nidrs::externs::axum::routing::get(|p0, p1| async move { t_controller.get_hello_world(p0, p1).await }))
+                    .layer(nidrs::externs::axum::Extension(meta.clone()));
+                ctx.routers.push(nidrs::MetaRouter::new(router, meta));
+                ctx
             }
         }
     }
@@ -281,10 +398,13 @@ mod app {
             }
         }
         impl nidrs::ImplMeta for AppService {
-            fn __meta() -> nidrs::Meta {
-                let mut meta = nidrs::Meta::new();
-                meta.set("service_name".to_string(), "AppService");
-                meta.set("service_type".to_string(), "Service");
+            fn __meta() -> nidrs::InnerMeta {
+                let mut meta = nidrs::InnerMeta::new();
+                meta.set("service", "AppService");
+                meta.set_data(nidrs::datasets::ServiceType::from("Service"));
+                meta.set_data(nidrs::datasets::ServiceName::from("AppService"));
+                meta.set("module", "AppModule");
+                meta.set("global", "app");
                 meta
             }
         }
@@ -294,27 +414,13 @@ mod app {
             }
         }
     }
-    use crate::{interceptors::json_interceptor::JsonInterceptor, modules::user::UserModule};
+    use crate::modules::user::UserModule;
     use controller::AppController;
-    use nidrs_diesel::options::ConnectionDriver;
     use nidrs_diesel::DieselModule;
     use nidrs_diesel::DieselOptions;
+    use nidrs_diesel::SqlitePoolManager;
     use service::AppService;
     pub struct AppModule;
-    #[automatically_derived]
-    impl ::core::clone::Clone for AppModule {
-        #[inline]
-        fn clone(&self) -> AppModule {
-            AppModule
-        }
-    }
-    #[automatically_derived]
-    impl ::core::fmt::Debug for AppModule {
-        #[inline]
-        fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-            ::core::fmt::Formatter::write_str(f, "AppModule")
-        }
-    }
     #[automatically_derived]
     impl ::core::default::Default for AppModule {
         #[inline]
@@ -324,7 +430,7 @@ mod app {
     }
     impl nidrs::Module for AppModule {
         fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
-            use nidrs::{Controller, ImplMeta, InterCtx, Interceptor, Interceptor, ModuleCtx, Service, StateCtx};
+            use nidrs::{Controller, ImplMeta, InterCtx, Interceptor, InterceptorHandler, ModuleCtx, Service, StateCtx};
             if ctx.modules.contains_key("AppModule") {
                 return ctx;
             }
@@ -339,55 +445,21 @@ mod app {
             ctx.append_exports("AppModule", Vec::from(["AppService"]), false);
             if ctx.register_controller("AppModule", "AppController", Box::new(std::sync::Arc::new(controller::AppController::default()))) {
                 let t_controller = ctx.get_controller::<controller::AppController>("AppModule", "AppController");
-                let t_interceptor_0 = ctx.get_interceptor::<crate::import::JsonInterceptor>("AppModule", "JsonInterceptor");
-                let mut meta = nidrs::get_meta(t_controller.clone());
-                let t_meta = t_controller.__meta_get_hello_world();
-                meta.merge(t_meta);
-                let meta = std::sync::Arc::new(meta);
-                let version = *meta.get::<&str>("version").unwrap_or(&ctx.defaults.default_version);
-                let disable_default_prefix = *meta.get::<bool>("disable_default_prefix").unwrap_or(&false);
-                let path = if disable_default_prefix {
-                    "/app/hello".to_string()
-                } else {
-                    nidrs::template_format(
-                        &{
-                            let res = ::alloc::fmt::format(format_args!("{0}{1}", ctx.defaults.default_prefix, "/app/hello",));
-                            res
-                        },
-                        [("version", version)],
-                    )
-                };
-                {
-                    ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
-                };
-                {
-                    ::std::io::_print(format_args!("Registering router \'{0} {1}\'.\n", "get".to_uppercase(), path,));
-                };
-                let router = axum::Router::new().route(
-                    &path,
-                    axum::routing::get(|parts, p1| async move {
-                        let mut t_meta = nidrs::Meta::new();
-                        t_meta.extend(meta);
-                        let t_body = nidrs_extern::axum::body::Body::empty();
-                        let ctx = InterCtx { meta: t_meta, parts, body: t_body };
-                        let t_inter_fn_0 = |ctx: InterCtx<_>| async move {
-                            let p0 = ctx.meta;
-                            t_controller.get_hello_world(p0, p1).await
-                        };
-                        t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
-                    }),
-                );
-                ctx.routers.push(router);
+                ctx = t_controller.__route_get_hello_world(ctx);
             }
             let svc = std::sync::Arc::new(AppService::default());
             ctx.register_service("AppModule", "AppService", Box::new(svc));
-            let dyn_module = DieselModule::for_root(DieselOptions { url: "file:db.sqlite3".to_string(), driver: ConnectionDriver::Sqlite });
+            let dyn_module = DieselModule::for_root(DieselOptions { driver: SqlitePoolManager::new("file:db.sqlite3") });
             let mut dyn_module_services = dyn_module.services;
             dyn_module_services.drain().for_each(|(k, v)| {
-                ctx.register_service("DieselModule", k, v);
+                ctx.register_service("DieselModule", &k, v);
             });
             let mut dyn_module_exports = dyn_module.exports;
-            ctx.append_exports("DieselModule", dyn_module_exports, *nidrs::get_meta_by_type::<DieselModule>().get("global").unwrap_or(&false));
+            ctx.append_exports(
+                "DieselModule",
+                dyn_module_exports,
+                nidrs::get_meta_by_type::<DieselModule>().get_data::<nidrs::datasets::Global>().unwrap_or(&nidrs::datasets::Global(false)).value(),
+            );
             let mut ctx = DieselModule::default().init(ctx);
             let mut ctx = UserModule::default().init(ctx);
             let t = ctx.get_service::<AppService>("AppModule", "AppService");
@@ -406,14 +478,6 @@ mod app {
                 ::std::io::_print(format_args!("Injecting {0}::{1}.\n", "AppModule", "AppController"));
             };
             let ctx = t.inject(ctx, &"AppModule");
-            let t = ctx.get_interceptor::<JsonInterceptor>("AppModule", "JsonInterceptor");
-            {
-                ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
-            };
-            {
-                ::std::io::_print(format_args!("Injecting {0}::{1}.\n", "AppModule", "JsonInterceptor"));
-            };
-            let ctx = t.inject(ctx, &"AppModule");
             ctx
         }
         fn destroy(&self, ctx: &nidrs::ModuleCtx) {
@@ -426,10 +490,58 @@ mod app {
         }
     }
     impl nidrs::ImplMeta for AppModule {
-        fn __meta() -> nidrs::Meta {
-            let mut meta = nidrs::Meta::new();
-            meta.set("module_name".to_string(), "AppModule");
+        fn __meta() -> nidrs::InnerMeta {
+            let mut meta = nidrs::InnerMeta::new();
+            meta.set("service", "AppService");
+            meta.set_data(nidrs::datasets::ServiceType::from("Service"));
+            meta.set_data(nidrs::datasets::ServiceName::from("AppService"));
+            meta.set("module", "AppModule");
+            meta.set("global", "app");
             meta
+        }
+    }
+}
+mod interceptors {
+    pub mod json_interceptor {
+        use crate::AppResult;
+        use axum::extract::FromRequest;
+        use nidrs::{AnyBody, InterCtx, InterceptorHandler, IntoAnyBody, StateCtx};
+        use nidrs_macro::interceptor;
+        use std::fmt::Debug;
+        pub struct JsonInterceptor {}
+        #[automatically_derived]
+        impl ::core::default::Default for JsonInterceptor {
+            #[inline]
+            fn default() -> JsonInterceptor {
+                JsonInterceptor {}
+            }
+        }
+        impl nidrs::Service for JsonInterceptor {
+            fn inject(&self, ctx: nidrs::ModuleCtx, module_name: &str) -> nidrs::ModuleCtx {
+                ctx
+            }
+        }
+        impl nidrs::ImplMeta for JsonInterceptor {
+            fn __meta() -> nidrs::InnerMeta {
+                let mut meta = nidrs::InnerMeta::new();
+                meta.set_data(nidrs::datasets::ServiceType::from("Interceptor"));
+                meta.set("service", "JsonInterceptor");
+                meta.set_data(nidrs::datasets::ServiceName::from("JsonInterceptor"));
+                meta.set("module", "AppModule");
+                meta.set("global", "app");
+                meta
+            }
+        }
+        impl<B: FromRequest<StateCtx> + Debug, P: IntoAnyBody> InterceptorHandler<B, P> for JsonInterceptor {
+            type R = AnyBody;
+            async fn interceptor<F, H>(&self, ctx: InterCtx<B>, handler: H) -> AppResult<Self::R>
+            where
+                F: std::future::Future<Output = AppResult<P>> + Send + 'static,
+                H: FnOnce(InterCtx<B>) -> F,
+            {
+                let r: AppResult<AnyBody> = handler(ctx).await.map(|r| IntoAnyBody::from_serializable(r));
+                r
+            }
         }
     }
 }
@@ -440,7 +552,7 @@ mod models {
             use chrono::NaiveDateTime;
             use diesel::{connection::LoadConnection, prelude::*};
             use nidrs::{injectable, AppResult, Inject};
-            use nidrs_diesel::pool::SqlitePoolManager;
+            use nidrs_diesel::{PoolManager, SqlitePoolManager};
             use serde::Serialize;
             #[diesel(table_name = users)]
             #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
@@ -473,7 +585,7 @@ mod models {
             const _: () = {
                 use diesel;
                 use diesel::deserialize::{self, FromStaticSqlRow, Queryable};
-                use diesel::row::{Field, Row};
+                use diesel::row::{Field as _, Row as _};
                 use std::convert::TryInto;
                 impl<__DB: diesel::backend::Backend, __ST0, __ST1, __ST2, __ST3> Queryable<(__ST0, __ST1, __ST2, __ST3), __DB> for User
                 where
@@ -567,10 +679,13 @@ mod models {
                 }
             }
             impl nidrs::ImplMeta for UserEntity {
-                fn __meta() -> nidrs::Meta {
-                    let mut meta = nidrs::Meta::new();
-                    meta.set("service_name".to_string(), "UserEntity");
-                    meta.set("service_type".to_string(), "Service");
+                fn __meta() -> nidrs::InnerMeta {
+                    let mut meta = nidrs::InnerMeta::new();
+                    meta.set("service", "UserEntity");
+                    meta.set_data(nidrs::datasets::ServiceType::from("Service"));
+                    meta.set_data(nidrs::datasets::ServiceName::from("UserEntity"));
+                    meta.set("module", "AppModule");
+                    meta.set("global", "app");
                     meta
                 }
             }
@@ -599,7 +714,7 @@ mod models {
         }
     }
     pub mod schema {
-        #[allow(unused_imports, dead_code, unreachable_pub)]
+        #[allow(unused_imports, dead_code, unreachable_pub, unused_qualifications)]
         pub mod users {
             pub use self::columns::*;
             use ::diesel;
@@ -1563,10 +1678,14 @@ mod modules {
     pub mod user {
         use nidrs::module;
         pub mod controller {
-            use super::service::UserService;
+            use super::{dto::CreateUserDto, service::UserService};
             use crate::models::entities::user::User;
-            use axum::{extract::Query, Json};
-            use nidrs::{AppResult, Inject};
+            use axum::{
+                extract::{Path, Query},
+                http::HeaderMap,
+                Json,
+            };
+            use nidrs::{post, AppResult, Inject};
             use nidrs_macro::{controller, get};
             use std::collections::HashMap;
             pub struct UserController {
@@ -1588,34 +1707,323 @@ mod modules {
                 }
             }
             impl nidrs::ImplMeta for UserController {
-                fn __meta() -> nidrs::Meta {
-                    let mut meta = nidrs::Meta::new();
-                    meta.set("service_name".to_string(), "UserController");
-                    meta.set("service_type".to_string(), "Controller");
+                fn __meta() -> nidrs::InnerMeta {
+                    let mut meta = nidrs::InnerMeta::new();
+                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                    meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
+                    meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
+                    meta.set("module", "UserModule");
+                    meta.set("global", "app");
                     meta
                 }
             }
             impl UserController {
-                pub async fn get_user_all(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<Vec<User>> {
+                pub async fn get_user_all(&self, header: HeaderMap, Query(q): Query<HashMap<String, String>>) -> AppResult<Vec<User>> {
                     {
                         ::std::io::_print(format_args!("Query {0:?}\n", q));
                     };
+                    let rid = header.get("X-RID");
+                    if let Some(rid) = rid {
+                        {
+                            ::std::io::_print(format_args!("rid: {0:?}\n", rid));
+                        };
+                    }
                     self.user_service.all().await
                 }
-                pub fn __meta_get_user_all(&self) -> nidrs::Meta {
-                    let mut meta = nidrs::Meta::new();
+                pub fn __meta_get_user_all(&self) -> nidrs::InnerMeta {
+                    let mut meta = nidrs::InnerMeta::new();
+                    meta.set_data(nidrs::datasets::RouterMethod::from("get"));
+                    meta.set("handler", "get_user_all");
+                    meta.set_data(nidrs::datasets::RouterName::from("get_user_all"));
+                    meta.set_data(nidrs::datasets::RouterPath::from("/"));
+                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                    meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
+                    meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
+                    meta.set("module", "UserModule");
+                    meta.set("global", "app");
                     meta
+                }
+                pub fn __route_get_user_all(&self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
+                    use axum::response::IntoResponse;
+                    use nidrs::externs::axum;
+                    use nidrs::externs::axum::{extract::Query, Json};
+                    use nidrs::externs::meta::{InnerMeta, Meta};
+                    use nidrs::Interceptor;
+                    use serde_json::Value;
+                    let mut meta = self.__meta_get_user_all();
+                    let router_info = ctx.get_router_full(&meta);
+                    if let Err(e) = router_info {
+                        {
+                            ::core::panicking::panic_fmt(format_args!("[{0}] {1:?}", "__route_get_user_all", e));
+                        };
+                    }
+                    let full_path = router_info.unwrap();
+                    {
+                        ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                    };
+                    {
+                        ::std::io::_print(format_args!("Registering router \'{0} {1}\'.\n", "get".to_uppercase(), full_path,));
+                    };
+                    meta.set_data(nidrs::datasets::RouterFullPath(full_path.clone()));
+                    let meta = Meta::new(meta);
+                    let module_name = meta.get::<&str>("module").unwrap();
+                    let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
+                    let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
+                    let router = nidrs::externs::axum::Router::new()
+                        .route(&full_path, nidrs::externs::axum::routing::get(|p0, p1| async move { t_controller.get_user_all(p0, p1).await }))
+                        .layer(nidrs::externs::axum::Extension(meta.clone()));
+                    ctx.routers.push(nidrs::MetaRouter::new(router, meta));
+                    ctx
+                }
+                pub async fn get_user_by_id(&self, Path(user_id): Path<i32>, Query(q): Query<HashMap<String, String>>) -> AppResult<User> {
+                    {
+                        ::std::io::_print(format_args!("Query {0:?}\n", q));
+                    };
+                    self.user_service.find_by_id(user_id).await
+                }
+                pub fn __meta_get_user_by_id(&self) -> nidrs::InnerMeta {
+                    let mut meta = nidrs::InnerMeta::new();
+                    meta.set_data(nidrs::datasets::RouterName::from("get_user_by_id"));
+                    meta.set_data(nidrs::datasets::RouterMethod::from("get"));
+                    meta.set("handler", "get_user_by_id");
+                    meta.set_data(nidrs::datasets::RouterPath::from("/:id"));
+                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                    meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
+                    meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
+                    meta.set("module", "UserModule");
+                    meta.set("global", "app");
+                    meta
+                }
+                pub fn __route_get_user_by_id(&self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
+                    use axum::response::IntoResponse;
+                    use nidrs::externs::axum;
+                    use nidrs::externs::axum::{extract::Query, Json};
+                    use nidrs::externs::meta::{InnerMeta, Meta};
+                    use nidrs::Interceptor;
+                    use serde_json::Value;
+                    let mut meta = self.__meta_get_user_by_id();
+                    let router_info = ctx.get_router_full(&meta);
+                    if let Err(e) = router_info {
+                        {
+                            ::core::panicking::panic_fmt(format_args!("[{0}] {1:?}", "__route_get_user_by_id", e));
+                        };
+                    }
+                    let full_path = router_info.unwrap();
+                    {
+                        ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                    };
+                    {
+                        ::std::io::_print(format_args!("Registering router \'{0} {1}\'.\n", "get".to_uppercase(), full_path,));
+                    };
+                    meta.set_data(nidrs::datasets::RouterFullPath(full_path.clone()));
+                    let meta = Meta::new(meta);
+                    let module_name = meta.get::<&str>("module").unwrap();
+                    let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
+                    let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
+                    let router = nidrs::externs::axum::Router::new()
+                        .route(&full_path, nidrs::externs::axum::routing::get(|p0, p1| async move { t_controller.get_user_by_id(p0, p1).await }))
+                        .layer(nidrs::externs::axum::Extension(meta.clone()));
+                    ctx.routers.push(nidrs::MetaRouter::new(router, meta));
+                    ctx
+                }
+                pub async fn create_user(&self, Json(j): Json<CreateUserDto>) -> AppResult<usize> {
+                    {
+                        ::std::io::_print(format_args!("Query {0:?}\n", j));
+                    };
+                    self.user_service.create(j).await
+                }
+                pub fn __meta_create_user(&self) -> nidrs::InnerMeta {
+                    let mut meta = nidrs::InnerMeta::new();
+                    meta.set_data(nidrs::datasets::RouterName::from("create_user"));
+                    meta.set_data(nidrs::datasets::RouterMethod::from("post"));
+                    meta.set("handler", "create_user");
+                    meta.set_data(nidrs::datasets::RouterPath::from("/"));
+                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                    meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
+                    meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
+                    meta.set("module", "UserModule");
+                    meta.set("global", "app");
+                    meta
+                }
+                pub fn __route_create_user(&self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
+                    use axum::response::IntoResponse;
+                    use nidrs::externs::axum;
+                    use nidrs::externs::axum::{extract::Query, Json};
+                    use nidrs::externs::meta::{InnerMeta, Meta};
+                    use nidrs::Interceptor;
+                    use serde_json::Value;
+                    let mut meta = self.__meta_create_user();
+                    let router_info = ctx.get_router_full(&meta);
+                    if let Err(e) = router_info {
+                        {
+                            ::core::panicking::panic_fmt(format_args!("[{0}] {1:?}", "__route_create_user", e));
+                        };
+                    }
+                    let full_path = router_info.unwrap();
+                    {
+                        ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
+                    };
+                    {
+                        ::std::io::_print(format_args!("Registering router \'{0} {1}\'.\n", "post".to_uppercase(), full_path,));
+                    };
+                    meta.set_data(nidrs::datasets::RouterFullPath(full_path.clone()));
+                    let meta = Meta::new(meta);
+                    let module_name = meta.get::<&str>("module").unwrap();
+                    let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
+                    let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
+                    let router = nidrs::externs::axum::Router::new()
+                        .route(&full_path, nidrs::externs::axum::routing::get(|p0| async move { t_controller.create_user(p0).await }))
+                        .layer(nidrs::externs::axum::Extension(meta.clone()));
+                    ctx.routers.push(nidrs::MetaRouter::new(router, meta));
+                    ctx
                 }
             }
         }
-        pub mod service {
-            use crate::{
-                app::service::AppService,
-                models::entities::user::{User, UserEntity},
+        pub mod dto {
+            pub struct CreateUserDto {
+                pub name: String,
+            }
+            #[automatically_derived]
+            impl ::core::fmt::Debug for CreateUserDto {
+                #[inline]
+                fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                    ::core::fmt::Formatter::debug_struct_field1_finish(f, "CreateUserDto", "name", &&self.name)
+                }
+            }
+            #[doc(hidden)]
+            #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+            const _: () = {
+                #[allow(unused_extern_crates, clippy::useless_attribute)]
+                extern crate serde as _serde;
+                #[automatically_derived]
+                impl<'de> _serde::Deserialize<'de> for CreateUserDto {
+                    fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+                    where
+                        __D: _serde::Deserializer<'de>,
+                    {
+                        #[allow(non_camel_case_types)]
+                        #[doc(hidden)]
+                        enum __Field {
+                            __field0,
+                            __ignore,
+                        }
+                        #[doc(hidden)]
+                        struct __FieldVisitor;
+                        impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
+                            type Value = __Field;
+                            fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
+                                _serde::__private::Formatter::write_str(__formatter, "field identifier")
+                            }
+                            fn visit_u64<__E>(self, __value: u64) -> _serde::__private::Result<Self::Value, __E>
+                            where
+                                __E: _serde::de::Error,
+                            {
+                                match __value {
+                                    0u64 => _serde::__private::Ok(__Field::__field0),
+                                    _ => _serde::__private::Ok(__Field::__ignore),
+                                }
+                            }
+                            fn visit_str<__E>(self, __value: &str) -> _serde::__private::Result<Self::Value, __E>
+                            where
+                                __E: _serde::de::Error,
+                            {
+                                match __value {
+                                    "name" => _serde::__private::Ok(__Field::__field0),
+                                    _ => _serde::__private::Ok(__Field::__ignore),
+                                }
+                            }
+                            fn visit_bytes<__E>(self, __value: &[u8]) -> _serde::__private::Result<Self::Value, __E>
+                            where
+                                __E: _serde::de::Error,
+                            {
+                                match __value {
+                                    b"name" => _serde::__private::Ok(__Field::__field0),
+                                    _ => _serde::__private::Ok(__Field::__ignore),
+                                }
+                            }
+                        }
+                        impl<'de> _serde::Deserialize<'de> for __Field {
+                            #[inline]
+                            fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+                            where
+                                __D: _serde::Deserializer<'de>,
+                            {
+                                _serde::Deserializer::deserialize_identifier(__deserializer, __FieldVisitor)
+                            }
+                        }
+                        #[doc(hidden)]
+                        struct __Visitor<'de> {
+                            marker: _serde::__private::PhantomData<CreateUserDto>,
+                            lifetime: _serde::__private::PhantomData<&'de ()>,
+                        }
+                        impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
+                            type Value = CreateUserDto;
+                            fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
+                                _serde::__private::Formatter::write_str(__formatter, "struct CreateUserDto")
+                            }
+                            #[inline]
+                            fn visit_seq<__A>(self, mut __seq: __A) -> _serde::__private::Result<Self::Value, __A::Error>
+                            where
+                                __A: _serde::de::SeqAccess<'de>,
+                            {
+                                let __field0 = match _serde::de::SeqAccess::next_element::<String>(&mut __seq)? {
+                                    _serde::__private::Some(__value) => __value,
+                                    _serde::__private::None => {
+                                        return _serde::__private::Err(_serde::de::Error::invalid_length(
+                                            0usize,
+                                            &"struct CreateUserDto with 1 element",
+                                        ));
+                                    }
+                                };
+                                _serde::__private::Ok(CreateUserDto { name: __field0 })
+                            }
+                            #[inline]
+                            fn visit_map<__A>(self, mut __map: __A) -> _serde::__private::Result<Self::Value, __A::Error>
+                            where
+                                __A: _serde::de::MapAccess<'de>,
+                            {
+                                let mut __field0: _serde::__private::Option<String> = _serde::__private::None;
+                                while let _serde::__private::Some(__key) = _serde::de::MapAccess::next_key::<__Field>(&mut __map)? {
+                                    match __key {
+                                        __Field::__field0 => {
+                                            if _serde::__private::Option::is_some(&__field0) {
+                                                return _serde::__private::Err(<__A::Error as _serde::de::Error>::duplicate_field("name"));
+                                            }
+                                            __field0 = _serde::__private::Some(_serde::de::MapAccess::next_value::<String>(&mut __map)?);
+                                        }
+                                        _ => {
+                                            let _ = _serde::de::MapAccess::next_value::<_serde::de::IgnoredAny>(&mut __map)?;
+                                        }
+                                    }
+                                }
+                                let __field0 = match __field0 {
+                                    _serde::__private::Some(__field0) => __field0,
+                                    _serde::__private::None => _serde::__private::de::missing_field("name")?,
+                                };
+                                _serde::__private::Ok(CreateUserDto { name: __field0 })
+                            }
+                        }
+                        #[doc(hidden)]
+                        const FIELDS: &'static [&'static str] = &["name"];
+                        _serde::Deserializer::deserialize_struct(
+                            __deserializer,
+                            "CreateUserDto",
+                            FIELDS,
+                            __Visitor { marker: _serde::__private::PhantomData::<CreateUserDto>, lifetime: _serde::__private::PhantomData },
+                        )
+                    }
+                }
             };
+        }
+        pub mod service {
+            use super::dto::CreateUserDto;
+            use crate::models::entities::user::{User, UserEntity};
             use nidrs::{AppResult, Inject};
             use nidrs_macro::injectable;
-            use std::sync::{Arc, Mutex};
             pub struct UserService {
                 user_entity: Inject<UserEntity>,
             }
@@ -1634,16 +2042,19 @@ mod modules {
                 }
             }
             impl nidrs::ImplMeta for UserService {
-                fn __meta() -> nidrs::Meta {
-                    let mut meta = nidrs::Meta::new();
-                    meta.set("service_name".to_string(), "UserService");
-                    meta.set("service_type".to_string(), "Service");
+                fn __meta() -> nidrs::InnerMeta {
+                    let mut meta = nidrs::InnerMeta::new();
+                    meta.set_data(nidrs::datasets::ServiceType::from("Service"));
+                    meta.set_data(nidrs::datasets::ServiceName::from("UserService"));
+                    meta.set("service", "UserService");
+                    meta.set("module", "UserModule");
+                    meta.set("global", "app");
                     meta
                 }
             }
             impl UserService {
-                pub async fn create(&self, name: String) -> AppResult<usize> {
-                    self.user_entity.create(name).await
+                pub async fn create(&self, part: CreateUserDto) -> AppResult<usize> {
+                    self.user_entity.create(part.name).await
                 }
                 pub async fn find_by_id(&self, id: i32) -> AppResult<User> {
                     self.user_entity.find_by_id(id).await
@@ -1658,7 +2069,6 @@ mod modules {
         }
         use crate::models::entities::user::UserEntity;
         use controller::UserController;
-        use nidrs_diesel::DieselModule;
         use service::UserService;
         pub struct UserModule;
         #[automatically_derived]
@@ -1670,7 +2080,7 @@ mod modules {
         }
         impl nidrs::Module for UserModule {
             fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
-                use nidrs::{Controller, ImplMeta, InterCtx, Interceptor, Interceptor, ModuleCtx, Service, StateCtx};
+                use nidrs::{Controller, ImplMeta, InterCtx, Interceptor, InterceptorHandler, ModuleCtx, Service, StateCtx};
                 if ctx.modules.contains_key("UserModule") {
                     return ctx;
                 }
@@ -1685,42 +2095,11 @@ mod modules {
                 ctx.append_exports("UserModule", Vec::from(["UserService"]), false);
                 if ctx.register_controller("UserModule", "UserController", Box::new(std::sync::Arc::new(controller::UserController::default()))) {
                     let t_controller = ctx.get_controller::<controller::UserController>("UserModule", "UserController");
-                    let t_interceptor_0 = ctx.get_interceptor::<crate::import::JsonInterceptor>("UserModule", "JsonInterceptor");
-                    let mut meta = nidrs::get_meta(t_controller.clone());
-                    let t_meta = t_controller.__meta_get_user_all();
-                    meta.merge(t_meta);
-                    let meta = std::sync::Arc::new(meta);
-                    let version = *meta.get::<&str>("version").unwrap_or(&ctx.defaults.default_version);
-                    let disable_default_prefix = *meta.get::<bool>("disable_default_prefix").unwrap_or(&false);
-                    let path = if disable_default_prefix {
-                        "/user/".to_string()
-                    } else {
-                        nidrs::template_format(
-                            &{
-                                let res = ::alloc::fmt::format(format_args!("{0}{1}", ctx.defaults.default_prefix, "/user/",));
-                                res
-                            },
-                            [("version", version)],
-                        )
-                    };
-                    {
-                        ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
-                    };
-                    {
-                        ::std::io::_print(format_args!("Registering router \'{0} {1}\'.\n", "get".to_uppercase(), path,));
-                    };
-                    let router = axum::Router::new().route(
-                        &path,
-                        axum::routing::get(|parts, p0| async move {
-                            let mut t_meta = nidrs::Meta::new();
-                            t_meta.extend(meta);
-                            let t_body = nidrs_extern::axum::body::Body::empty();
-                            let ctx = InterCtx { meta: t_meta, parts, body: t_body };
-                            let t_inter_fn_0 = |ctx: InterCtx<_>| async move { t_controller.get_user_all(p0).await };
-                            t_interceptor_0.interceptor(ctx, t_inter_fn_0).await
-                        }),
-                    );
-                    ctx.routers.push(router);
+                    ctx = t_controller.__route_get_user_all(ctx);
+                    let t_controller = ctx.get_controller::<controller::UserController>("UserModule", "UserController");
+                    ctx = t_controller.__route_get_user_by_id(ctx);
+                    let t_controller = ctx.get_controller::<controller::UserController>("UserModule", "UserController");
+                    ctx = t_controller.__route_create_user(ctx);
                 }
                 let svc = std::sync::Arc::new(UserService::default());
                 ctx.register_service("UserModule", "UserService", Box::new(svc));
@@ -1762,9 +2141,13 @@ mod modules {
             }
         }
         impl nidrs::ImplMeta for UserModule {
-            fn __meta() -> nidrs::Meta {
-                let mut meta = nidrs::Meta::new();
-                meta.set("module_name".to_string(), "UserModule");
+            fn __meta() -> nidrs::InnerMeta {
+                let mut meta = nidrs::InnerMeta::new();
+                meta.set_data(nidrs::datasets::ServiceType::from("Service"));
+                meta.set_data(nidrs::datasets::ServiceName::from("UserService"));
+                meta.set("service", "UserService");
+                meta.set("module", "UserModule");
+                meta.set("global", "app");
                 meta
             }
         }
@@ -1777,52 +2160,10 @@ mod shared {
         use nidrs::{throw, Exception};
         pub fn fn_test() -> AppResult {
             nidrs::__throw(Exception::new(StatusCode::INTERNAL_SERVER_ERROR, anyhow::Error::msg("Error")), &{
-                let res = ::alloc::fmt::format(format_args!("from {0} line {1}", "examples/hello-diesel/src/shared/fn_test.rs", 7usize,));
+                let res = ::alloc::fmt::format(format_args!("from {0} line {1}", "examples/hello-orm-diesel-sqlite/src/shared/fn_test.rs", 7usize,));
                 res
             })?;
             Ok(())
-        }
-    }
-}
-mod interceptors {
-    pub mod json_interceptor {
-        use crate::AppResult;
-        use axum::extract::FromRequest;
-        use nidrs::{AnyBody, Inject, InterCtx, Interceptor, IntoAnyBody, StateCtx};
-        use nidrs_macro::interceptor;
-        use std::fmt::Debug;
-        pub struct JsonInterceptor {}
-        #[automatically_derived]
-        impl ::core::default::Default for JsonInterceptor {
-            #[inline]
-            fn default() -> JsonInterceptor {
-                JsonInterceptor {}
-            }
-        }
-        impl nidrs::Interceptor for JsonInterceptor {}
-        impl nidrs::Service for JsonInterceptor {
-            fn inject(&self, ctx: nidrs::ModuleCtx, module_name: &str) -> nidrs::ModuleCtx {
-                ctx
-            }
-        }
-        impl nidrs::ImplMeta for JsonInterceptor {
-            fn __meta() -> nidrs::Meta {
-                let mut meta = nidrs::Meta::new();
-                meta.set("service_name".to_string(), "JsonInterceptor");
-                meta.set("service_type".to_string(), "Interceptor");
-                meta
-            }
-        }
-        impl<B: FromRequest<StateCtx> + Debug, P: IntoAnyBody> Interceptor<B, P> for JsonInterceptor {
-            type R = AnyBody;
-            async fn interceptor<F, H>(&self, ctx: InterCtx<B>, handler: H) -> AppResult<Self::R>
-            where
-                F: std::future::Future<Output = AppResult<P>> + Send + 'static,
-                H: FnOnce(InterCtx<B>) -> F,
-            {
-                let r: AppResult<AnyBody> = handler(ctx).await.map(|r| IntoAnyBody::from_serializable(r));
-                r
-            }
         }
     }
 }
@@ -1832,7 +2173,7 @@ fn main() {
     let app = nidrs::NidrsFactory::create(app::AppModule);
     let app = app.default_prefix("/api/{version}");
     let app = app.default_version("v1");
-    app.listen(3000);
+    app.listen(3000).block();
 }
 pub mod import {
     pub use crate::app::controller::AppController;

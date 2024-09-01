@@ -1,4 +1,3 @@
-use nidrs::default_uses;
 use nidrs_macro::module;
 
 pub mod controller;
@@ -15,7 +14,6 @@ use nidrs_diesel::DieselOptions;
 // use nidrs_diesel::SqlitePoolManager;
 use nidrs_diesel::MysqlPoolManager;
 
-#[default_uses(JsonInterceptor)]
 #[module({
     imports: [
         DieselModule::for_root(DieselOptions{

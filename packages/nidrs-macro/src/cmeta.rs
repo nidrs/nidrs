@@ -416,14 +416,16 @@ pub fn init_app_meta() {
     CMeta::push(CMetaLevel::Global("app".to_string()));
     let cmeta = CMeta::new();
     if let Some(app_path) = get_current_app_path() {
-        println!("// init_app_meta: {:?} {:?}", app_path, app_path.exists());
-        let app = std::fs::read_to_string(app_path).expect("[10001] read file error");
-        let app_ast = syn::parse_file(&app).expect("[10002] parse file error");
-        for item in app_ast.items.iter() {
-            if let syn::Item::Fn(item_fn) = item {
-                if let Some(args) = parse_main_macro_args(item_fn) {
-                    // println!("item: {:?}", item);
-                    // println!("args: {:?}", args);
+        // println!("// init_app_meta: {:?} {:?}", app_path, app_path.exists());
+        if app_path.exists() {
+            let app = std::fs::read_to_string(app_path.clone()).expect(&format!("[init_app_meta.read_to_string] read {app_path:?} file error"));
+            let app_ast = syn::parse_file(&app).expect(&format!("[init_app_meta.parse_file] parse {app:?} file error"));
+            for item in app_ast.items.iter() {
+                if let syn::Item::Fn(item_fn) = item {
+                    if let Some(args) = parse_main_macro_args(item_fn) {
+                        // println!("item: {:?}", item);
+                        // println!("args: {:?}", args);
+                    }
                 }
             }
         }

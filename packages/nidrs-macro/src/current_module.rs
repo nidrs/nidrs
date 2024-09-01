@@ -74,10 +74,10 @@ pub fn begin_mod() {
     if let Some(path_buf) = path_buf {
         CURRENT_MODPATH.lock().unwrap().replace(path_buf.clone());
         if path_buf.is_file() {
-            let mod_content = std::fs::read_to_string(&path_buf).expect("[10001] read file error");
+            let mod_content = std::fs::read_to_string(&path_buf).expect(&format!("[begin_mod.read_to_string] read `{path_buf:?}` file error"));
             // println!("// post {:?}", path_buf);
             // println!("// mod.rs {:?}", mod_content);
-            let content_ast = syn::parse_file(&mod_content).expect("[10002] parse file error");
+            let content_ast = syn::parse_file(&mod_content).expect(&format!("[begin_mod.parse_file] read `{mod_content:?}` file error"));
             for item in content_ast.items {
                 if let syn::Item::Struct(item_module) = item {
                     // println!("// mod {:#?}", item_module);

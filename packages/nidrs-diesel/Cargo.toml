@@ -4,12 +4,7 @@ version = "0.0.3"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
 description = "Nidrs & Diesel integration"
 keywords = ["nidrs", "orm", "diesel", "web", "database"]
-categories = [
-    "network-programming",
-    "asynchronous",
-    "web-programming::http-server",
-    "web-programming::websocket"
-]
+categories = ["network-programming", "asynchronous", "web-programming::http-server", "web-programming::websocket"]
 publish = true
 edition.workspace = true
 homepage.workspace = true
@@ -23,7 +18,7 @@ nidrs-macro = { workspace = true }
 nidrs-extern = { workspace = true }
 
 [features]
-# default = ["sqlite"]
+default = ["sqlite"]
 mysql = ["diesel/mysql"]
 postgres = ["diesel/postgres"]
 sqlite = ["diesel/sqlite"]

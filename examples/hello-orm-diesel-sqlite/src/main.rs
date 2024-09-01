@@ -1,5 +1,4 @@
 mod app;
-mod interceptors;
 mod models;
 mod modules;
 mod shared;
