@@ -893,25 +893,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hello-expand"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum",
- "axum-extra",
- "chrono",
- "dotenvy",
- "nidrs",
- "nidrs-extern",
- "nidrs-macro",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "tower",
-]
-
-[[package]]
 name = "hello-orm-diesel-mysql"
 version = "0.1.0"
 dependencies = [
