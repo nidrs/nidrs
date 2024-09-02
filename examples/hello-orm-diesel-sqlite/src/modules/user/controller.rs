@@ -19,8 +19,8 @@ pub struct UserController {
 
 impl UserController {
     #[get("/")]
-    pub async fn get_user_all(&self, header: HeaderMap, Query(q): Query<HashMap<String, String>>) -> AppResult<Vec<User>> {
-        println!("Query {:?}", q);
+    pub async fn get_user_all(&self, header: HeaderMap) -> AppResult<Vec<User>> {
+        // println!("Query {:?}", q);
 
         let rid = header.get("X-RID");
 
