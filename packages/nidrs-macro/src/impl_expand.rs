@@ -66,6 +66,26 @@ pub(crate) fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream
     let meta_fn_ident = syn::Ident::new(format!("__meta_{}", func.sig.ident.to_string()).as_str(), func.span().clone());
 
     println!("// route_derive {:?}", func.sig.ident.to_string());
+    // println!("route_derive {:?}", func.sig.output);
+
+    let mut is_tuple = false; // AppResult<(T,T)>
+    if let syn::ReturnType::Type(_, ty) = &func.sig.output {
+        if let syn::Type::Path(p) = ty.as_ref() {
+            if let Some(segment) = p.path.segments.first() {
+                // println!("route_derive {:#?}", segment);
+                if segment.ident.to_string() == "AppResult" {
+                    if let syn::PathArguments::AngleBracketed(args) = &segment.arguments {
+                        if let syn::GenericArgument::Type(ty) = args.args.first().unwrap() {
+                            if let syn::Type::Tuple(_) = ty {
+                                is_tuple = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    println!("// route_derive is_tuple {:?}", is_tuple);
 
     let route_fn_ident = syn::Ident::new(format!("__route_{}", func.sig.ident.to_string()).as_str(), func.span().clone());
     let route_fn_name = route_fn_ident.to_string();
@@ -143,6 +163,19 @@ pub(crate) fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream
 
     // println!(" route_derive {:?} {:?}", func.sig.ident.to_string(), func_args);
 
+    let handler_tokens = if is_tuple {
+        quote!{
+            r
+        }
+    }else {
+        quote! {
+            match r {
+                Ok(r) => Json(r).into_response(),
+                Err(e) => e.into_response(),
+            }
+        }
+    };
+
     TokenStream::from(quote! {
         #func
 
@@ -177,19 +210,18 @@ pub(crate) fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream
             let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
 
             let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
-            // let t_meta = meta.clone();
+
             let router = nidrs::externs::axum::Router::new()
                 .route(
                     &full_path,
-                    // nidrs::externs::axum::routing::get(|state: nidrs::externs::axum::extract::State<nidrs::StateCtx>, req: nidrs::externs::axum::extract::Request| async move {
                     nidrs::externs::axum::routing::get(|#axum_args| async move {
                         #meta_token
-                        t_controller.#fn_ident(#func_args).await
-                        // return String::from("ok");
+                        let r = t_controller.#fn_ident(#func_args).await;
+                        #handler_tokens
                     }),
                 )
                 .layer(nidrs::externs::axum::Extension(meta.clone()))
-                #(#interceptor_uses_expand)*;
+                #(#interceptor_uses_expand)*
                 ;
             ctx.routers
                 .push(nidrs::MetaRouter::new(router, meta));

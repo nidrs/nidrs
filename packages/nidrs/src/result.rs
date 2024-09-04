@@ -1,3 +1,4 @@
+use axum::Json;
 use nidrs_extern::axum::{http::StatusCode, response::IntoResponse};
 use nidrs_extern::{colored::Colorize, *};
 use nidrs_valid::validator::ValidError;
@@ -72,5 +73,12 @@ impl std::fmt::Display for Exception {
 impl IntoResponse for Exception {
     fn into_response(self) -> axum::response::Response {
         axum::response::Response::builder().status(self.status).body(self.error.to_string()).unwrap().into_response()
+    }
+}
+
+pub fn result_to_json<T: IntoResponse>(result: AppResult<T>) -> Json<axum::response::Response> {
+    match result {
+        Ok(t) => Json(t.into_response()),
+        Err(e) => Json(e.into_response()),
     }
 }
