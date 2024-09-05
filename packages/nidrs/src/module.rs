@@ -39,20 +39,21 @@ pub trait Module {
     fn destroy(&self, ctx: &ModuleCtx);
 }
 
-pub struct DynamicModule {
+pub struct DynamicModule<M>
+where
+    M: Module,
+{
+    pub module: Option<M>,
     pub services: HashMap<String, Box<dyn Any>>,
     pub exports: Vec<String>,
 }
 
-impl Default for DynamicModule {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl DynamicModule {
-    pub fn new() -> Self {
-        DynamicModule { services: HashMap::new(), exports: Vec::new() }
+impl<M> DynamicModule<M>
+where
+    M: Module,
+{
+    pub fn new(module: M) -> Self {
+        DynamicModule { services: HashMap::new(), exports: Vec::new(), module: Some(module) }
     }
 
     pub fn provider(mut self, service: (String, Box<dyn Any>)) -> Self {
@@ -74,7 +75,10 @@ impl DynamicModule {
     }
 }
 
-impl Module for DynamicModule {
+impl<M> Module for DynamicModule<M>
+where
+    M: Module,
+{
     fn init(self, ctx: ModuleCtx) -> ModuleCtx {
         ctx
     }

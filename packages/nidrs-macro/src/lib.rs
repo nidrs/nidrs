@@ -197,6 +197,7 @@ pub fn module(args: Args, input: TokenStream) -> TokenStream {
     };
 
     let func = parse_macro_input!(input as ItemStruct);
+    let (impl_generics, ty_generics, where_clause) = func.generics.split_for_impl();
     let ident = func.ident.clone();
     let ident_name = ident.to_string();
 
@@ -205,7 +206,7 @@ pub fn module(args: Args, input: TokenStream) -> TokenStream {
 
     let all_interceptors = impl_expand::merge_defaults_interceptors(module_options.interceptors.clone());
     let interceptor_register_tokens = impl_expand::expand_interceptor_register(ident_name.clone(), &all_interceptors);
-    let (import_names_tokens, imports_register_tokens) = impl_expand::expand_imports_register(ident_name.clone(), &module_options.imports);
+    let (import_names_tokens, imports_register_tokens) = impl_expand::expand_imports_register(ident_name.clone(), &module_options.imports, &func);
     // let imports_register_names = args.imports.clone().iter().map(|import_tokens| import_tokens.to_string()).collect::<Vec<String>>();
     let exports_names_tokens = impl_expand::expand_exports_append(&module_options.exports);
 
@@ -228,7 +229,7 @@ pub fn module(args: Args, input: TokenStream) -> TokenStream {
         #[derive(Default)]
         #func
 
-        impl nidrs::Module for #ident {
+        impl #impl_generics nidrs::Module for #ident #ty_generics #where_clause  {
             fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx{
                 use nidrs::{Service, Controller, Interceptor, InterCtx, InterceptorHandler, ModuleCtx, StateCtx, ImplMeta};
                 if ctx.modules.contains_key(#ident_name) {
@@ -271,7 +272,7 @@ pub fn module(args: Args, input: TokenStream) -> TokenStream {
             }
         }
 
-        impl nidrs::ImplMeta for #ident{
+        impl #impl_generics nidrs::ImplMeta for #ident #ty_generics #where_clause{
             fn __meta() -> nidrs::InnerMeta {
                 #module_meta_tokens
             }
