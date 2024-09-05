@@ -101,7 +101,7 @@ pub struct NidrsFactory<T: Module> {
 
 impl<T: Module> NidrsFactory<T> {
     pub fn create(module: T) -> Self {
-        let router: axum::Router<StateCtx> = axum::Router::new().route("/", axum::routing::get(|| async move { "Hello, Nidrs!" }));
+        let router: axum::Router<StateCtx> = axum::Router::new();
         let module_ctx = ModuleCtx::new(ModuleDefaults { default_version: "v1", default_prefix: "" });
         NidrsFactory {
             rt: RwLock::new(None),
