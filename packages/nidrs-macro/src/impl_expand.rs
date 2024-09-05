@@ -164,10 +164,10 @@ pub(crate) fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream
     // println!(" route_derive {:?} {:?}", func.sig.ident.to_string(), func_args);
 
     let handler_tokens = if is_tuple {
-        quote!{
+        quote! {
             r
         }
-    }else {
+    } else {
         quote! {
             match r {
                 Ok(r) => Json(r).into_response(),
@@ -214,13 +214,13 @@ pub(crate) fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream
             let router = nidrs::externs::axum::Router::new()
                 .route(
                     &full_path,
-                    nidrs::externs::axum::routing::get(|#axum_args| async move {
+                    nidrs::externs::axum::routing::#route_method (|#axum_args| async move {
                         #meta_token
                         let r = t_controller.#fn_ident(#func_args).await;
                         #handler_tokens
                     }),
                 )
-                .layer(nidrs::externs::axum::Extension(meta.clone()))
+                .route_layer(nidrs::externs::axum::Extension(meta.clone()))
                 #(#interceptor_uses_expand)*
                 ;
             ctx.routers
