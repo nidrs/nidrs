@@ -189,7 +189,7 @@ impl<T: Module> NidrsFactory<T> {
         for router in self.module_ctx.routers.iter() {
             let path = router.meta.get_data::<datasets::RouterFullPath>().unwrap().value();
             let method = router.meta.get_data::<datasets::RouterMethod>().unwrap().value();
-            println!("path: {}, method: {}, body: {:?}", path, method, router.meta.get_data::<RouterBodyScheme>());
+            // println!("path: {}, method: {}, body: {:?}", path, method, router.meta.get_data::<RouterBodyScheme>());
             let path_type = match method.as_str() {
                 "post" => utoipa::openapi::PathItemType::Post,
                 "put" => utoipa::openapi::PathItemType::Put,
@@ -245,9 +245,9 @@ impl<T: Module> NidrsFactory<T> {
         while let Some(apply) = self.inter_apply.pop() {
             self.router = apply(self.router);
         }
-        nidrs_macro::log!("Swagger UI on {}", format!("http://0.0.0.0:{}/swagger-ui", self.port));
-        nidrs_macro::log!("Rapidoc UI on {}", format!("http://0.0.0.0:{}/rapidoc", self.port));
-        nidrs_macro::log!("Redoc UI on {}", format!("http://0.0.0.0:{}/redoc", self.port));
+        nidrs_macro::log!("Swagger UI on {}", format!("http://127.0.0.1:{}/swagger-ui", self.port));
+        nidrs_macro::log!("Rapidoc UI on {}", format!("http://127.0.0.1:{}/rapidoc", self.port));
+        nidrs_macro::log!("Redoc UI on {}", format!("http://127.0.0.1:{}/redoc", self.port));
 
         self
     }
@@ -255,7 +255,7 @@ impl<T: Module> NidrsFactory<T> {
     pub fn block(mut self) {
         // listen...
         let server = || async {
-            let tcp = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", self.port)).await?;
+            let tcp = tokio::net::TcpListener::bind(format!("127.0.0.1:{}", self.port)).await?;
             let addr = tcp.local_addr()?;
             nidrs_macro::log!("Listening on {}", addr);
 

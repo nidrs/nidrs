@@ -104,7 +104,7 @@ impl AppController {
         println!("Query {:?}", q);
         Ok(self.app_service.get_hello_world())
     }
-    
+
     #[uses(LogInterceptor)]
     #[post("/hello")]
     pub async fn post_hello_world(&self, Query(q): Query<HashMap<String, String>>, Json(j): Json<serde_json::Value>) -> AppResult<String> {
@@ -237,7 +237,7 @@ ConfService initialized with log_level: ConfOptions { log_level: "info" }
 [nidrs] Injecting AppService.
 [nidrs] Injecting AppController.
 [nidrs] Injecting LogInterceptor.
-[nidrs] Listening on 0.0.0.0:3000
+[nidrs] Listening on 127.0.0.1:3000
 ```
 
 ## Sponsor

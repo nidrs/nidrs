@@ -234,7 +234,7 @@ ConfService initialized with log_level: ConfOptions { log_level: "info" }
 [nidrs] Injecting AppService.
 [nidrs] Injecting AppController.
 [nidrs] Injecting LogInterceptor.
-[nidrs] Listening on 0.0.0.0:3000
+[nidrs] Listening on 127.0.0.1:3000
 ```
 
 ## Install Develop Env
