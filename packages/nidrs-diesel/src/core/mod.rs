@@ -20,8 +20,8 @@ use crate::ConnectionDriver;
 pub struct DieselModule;
 
 impl DieselModule {
-    pub fn for_root<D: Into<ConnectionDriver>>(opts: DieselOptions<D>) -> DynamicModule {
-        let d = DynamicModule::new();
+    pub fn for_root<D: Into<ConnectionDriver>>(opts: DieselOptions<D>) -> DynamicModule<Self> {
+        let d = DynamicModule::new(DieselModule);
         match opts.driver.into() {
             #[cfg(feature = "sqlite")]
             options::ConnectionDriver::Sqlite(pool) => d.export(pool),

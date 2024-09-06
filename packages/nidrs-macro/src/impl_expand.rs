@@ -8,6 +8,7 @@ use syn::parse_macro_input;
 use syn::spanned::Spanned;
 use syn::Expr;
 use syn::ItemFn;
+use syn::Path;
 use syn::Type;
 
 use syn::ItemStruct;
@@ -304,7 +305,9 @@ pub(crate) fn expand_interceptor_register(module_name: String, services: &def::A
     return interceptor_tokens;
 }
 
-pub(crate) fn expand_imports_register(module_name: String, imports: &def::Array<def::Expr>) -> (TokenStream2, TokenStream2) {
+pub(crate) fn expand_imports_register(module_name: String, imports: &def::Array<def::Expr>, func: &ItemStruct) -> (TokenStream2, TokenStream2) {
+    // let (impl_generics, ty_generics, where_clause) = func.generics.split_for_impl();
+
     let mut import_names = vec![];
     let imports = imports
         .iter()
@@ -315,18 +318,31 @@ pub(crate) fn expand_imports_register(module_name: String, imports: &def::Array<
             let import_call = syn::parse2::<ExprCall>(import_tokens.to_token_stream());
             if let Ok(import_call) = import_call {
                 if let Expr::Path(path) = import_call.func.as_ref() {
-                    let module_ident = path.path.segments.first().unwrap().ident.clone();
-                    import_names.push(module_ident.to_string());
-                    let dyn_module_name = module_ident.to_string();
+                    let path_string = path.to_token_stream().to_string();
+                    let mut import_module_ident = path_string.split("::").map(|item|item.trim()).collect::<Vec<_>>();
+                    
+                    if import_module_ident.len() > 2 {
+                        import_module_ident.pop();
+                    }else{
+                        import_module_ident = vec![import_module_ident.first().unwrap()];
+                    }
+
+                    let dyn_module_name = import_module_ident.join("::");
+
+                    let import_module_ident: Path = syn::parse_str(&dyn_module_name).unwrap();
+                    let import_module_ident = import_module_ident.to_token_stream();
+                    import_names.push(dyn_module_name.clone());
+        
                     quote! {
-                        let dyn_module = #import_call;
+                        let mut dyn_module = #import_call;
+                        let mut dyn_module_wrap = dyn_module.module.take().unwrap();
                         let mut dyn_module_services = dyn_module.services;
                         dyn_module_services.drain().for_each(|(k, v)| {
                             ctx.register_service(#dyn_module_name, &k, v);
                         });
                         let mut dyn_module_exports = dyn_module.exports;
-                        ctx.append_exports(#dyn_module_name, dyn_module_exports, nidrs::get_meta_by_type::<#module_ident>().get_data::<nidrs::datasets::Global>().unwrap_or(&nidrs::datasets::Global(false)).value());
-                        let mut ctx = #module_ident::default().init(ctx);
+                        ctx.append_exports(#dyn_module_name, dyn_module_exports, nidrs::get_meta_by_type::<#import_module_ident>().get_data::<nidrs::datasets::Global>().unwrap_or(&nidrs::datasets::Global(false)).value());
+                        let mut ctx = dyn_module_wrap.init(ctx);
                     }
                 } else {
                     panic!("Invalid import.")
@@ -381,6 +397,7 @@ pub(crate) fn expand_dep_inject(con: &str, module_name: String, services: &def::
 }
 
 pub(crate) fn gen_service_inject_tokens(service_type: ServiceType, func: &ItemStruct) -> TokenStream2 {
+    let (impl_generics, ty_generics, where_clause) = func.generics.split_for_impl();
     let is_service = service_type == ServiceType::Service;
     let is_interceptor = service_type == ServiceType::Interceptor;
     let service_type_indent = syn::Ident::new(service_type.into(), Span::call_site().into());
@@ -433,7 +450,7 @@ pub(crate) fn gen_service_inject_tokens(service_type: ServiceType, func: &ItemSt
         quote! {}
     } else {
         quote! {
-            impl nidrs::#service_type_indent for #service_name_ident {}
+            impl #impl_generics nidrs::#service_type_indent for #service_name_ident #ty_generics #where_clause  {}
         }
     };
 
@@ -441,14 +458,14 @@ pub(crate) fn gen_service_inject_tokens(service_type: ServiceType, func: &ItemSt
 
     let inject_tokens = TokenStream2::from(quote! {
         #middle_tokens
-        impl nidrs::Service for #service_name_ident {
+        impl #impl_generics nidrs::Service for #service_name_ident #ty_generics #where_clause {
             fn inject(&self, ctx: nidrs::ModuleCtx, module_name: &str) -> nidrs::ModuleCtx{
                 #(#fields)*
                 ctx
             }
         }
 
-        impl nidrs::ImplMeta for #service_name_ident{
+        impl #impl_generics nidrs::ImplMeta for #service_name_ident #ty_generics #where_clause{
             fn __meta() -> nidrs::InnerMeta {
                 #meta_tokens
             }
