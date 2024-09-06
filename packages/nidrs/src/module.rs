@@ -189,6 +189,7 @@ impl<T: Module> NidrsFactory<T> {
         for router in self.module_ctx.routers.iter() {
             let path = router.meta.get_data::<datasets::RouterFullPath>().unwrap().value();
             let method = router.meta.get_data::<datasets::RouterMethod>().unwrap().value();
+            println!("path: {}, method: {}, body: {:?}", path, method, router.meta.get_data::<RouterBodyScheme>());
             let path_type = match method.as_str() {
                 "post" => utoipa::openapi::PathItemType::Post,
                 "put" => utoipa::openapi::PathItemType::Put,
@@ -205,20 +206,31 @@ impl<T: Module> NidrsFactory<T> {
             } else {
                 ContentBuilder::new().build()
             };
-            let path_item = PathItemBuilder::new()
-                .operation(
+
+            if let Some(path_item) = paths.paths.get_mut(path) {
+                path_item.operations.insert(
                     path_type,
                     OperationBuilder::new()
                         .description(path.into())
                         .request_body(Some(RequestBodyBuilder::new().content("application/json", content).build()))
                         .build(),
-                )
-                .build();
-            paths.paths.insert(path.into(), path_item);
+                );
+            } else {
+                let path_item = PathItemBuilder::new()
+                    .operation(
+                        path_type,
+                        OperationBuilder::new()
+                            .description(path.into())
+                            .request_body(Some(RequestBodyBuilder::new().content("application/json", content).build()))
+                            .build(),
+                    )
+                    .build();
+                paths.paths.insert(path.into(), path_item);
+            }
         }
 
         let api = OpenApiBuilder::new()
-            .info(Info::new("Nidrs API", self.module_ctx.defaults.default_version))
+            .info(Info::new("Nidrs OpenAPI", self.module_ctx.defaults.default_version))
             .paths(paths)
             .components(Some(Components::new()))
             .build();
