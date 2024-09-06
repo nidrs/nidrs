@@ -243,7 +243,7 @@ ConfService initialized with log_level: ConfOptions { log_level: "info" }
 
 Open source is not easy, and sponsorship is also not easy. Both require courage. I believe that those who give love will receive love in return. May your good fortune start from this contribution~
 
-[Go to Sponsor on [AfDian]](https://afdian.net/a/nidrs)
+[Go to Sponsor on [AfDian]](https://ifdian.net/a/nidrs)
 
 ## About
 

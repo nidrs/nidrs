@@ -278,7 +278,7 @@ pub struct ModuleCtx{
 
 开源不易，赞助亦不易，都需要勇气，我相信爱出者爱返，愿你的好运从这份奉献开始运转～
 
-[前往【爱发电】赞助](https://afdian.net/a/nidrs)
+[前往【爱发电】赞助](https://ifdian.net/a/nidrs)
 
 ## About
 
