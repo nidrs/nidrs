@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use axum::extract::Query;
-use nidrs::{Inject, InnerMeta};
+use nidrs::Inject;
 use nidrs_macro::{controller, get};
 
 use crate::AppResult;
