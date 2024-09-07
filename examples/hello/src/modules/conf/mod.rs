@@ -15,7 +15,7 @@ use service::ConfService;
 pub struct ConfModule;
 
 impl ConfModule {
-    pub fn for_root(options: ConfOptions) -> DynamicModule {
-        DynamicModule::new().service(options)
+    pub fn for_root(options: ConfOptions) -> DynamicModule<Self> {
+        DynamicModule::new(Self).service(options)
     }
 }
