@@ -110,7 +110,7 @@ impl InnerMeta {
     }
 
     pub fn remove_value<V: Any + Send + Sync>(&mut self) -> Option<Box<dyn Any + Send + Sync>> {
-        self.remove(&type_key::<V>())
+        self.remove(type_key::<V>())
     }
 
     pub fn merge(&mut self, meta: InnerMeta) -> &mut Self {
