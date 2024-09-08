@@ -5,7 +5,7 @@ use once_cell::sync::Lazy;
 use proc_macro::{token_stream, TokenStream};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
-use syn::{ext, parse::Parse, punctuated::Punctuated, Expr, ExprCall, PatPath};
+use syn::{ext, parse::Parse, punctuated::Punctuated, spanned::Spanned, Expr, ExprCall, PatPath};
 
 use crate::{
     app_parse::{get_current_app_path, parse_main_macro_args},
@@ -58,12 +58,15 @@ impl From<Expr> for MetaData {
                     } else {
                         key = CMetaKey::String(k1);
                     }
-                    let v = call_path.args.first().expect("[cmeta.MetaData.from] call_path.args.first").clone();
+                    if let Some(args) = call_path.args.first() {
+                        value = CMetaValue::from(args.clone());
+                    } else {
+                        value = CMetaValue::None;
+                    }
                     // println!("v: {}", v.to_token_stream().to_string());
-                    value = CMetaValue::from(v);
                 }
             }
-            _ => todo!(),
+            _ => todo!("Todo MetaData::from"),
         };
 
         MetaData { expr, value: Box::new(value), key }
@@ -120,6 +123,7 @@ impl From<Expr> for CMetaValue {
                     CMetaValue::String(lit.to_token_stream().to_string())
                 }
             }
+            Expr::Closure(closure) => CMetaValue::None,
             Expr::Array(array) => {
                 let mut arr = Vec::new();
                 for item in array.elems.iter() {
@@ -392,7 +396,7 @@ impl Parse for CMeta {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let items: Punctuated<Expr, syn::Token![,]> = Punctuated::parse_terminated(input)?;
         let mut cmeta = CMeta::new();
-        items.iter().for_each(|item| {
+        for item in items.iter() {
             if let syn::Expr::Assign(assign) = item {
                 if let syn::Expr::Path(path) = *assign.left.clone() {
                     let k = path.path.segments.first().expect("[cmeta.CMeta.parse] path.segments.first").ident.to_string();
@@ -404,10 +408,9 @@ impl Parse for CMeta {
             } else if let syn::Expr::Call(_) = item {
                 cmeta.set_data(item.clone());
             } else {
-                println!("// metaArgs {:?}", item);
-                panic!("Invalid argument");
+                return Err(syn::Error::new(item.span(), "unknown"));
             }
-        });
+        }
         Ok(cmeta)
     }
 }

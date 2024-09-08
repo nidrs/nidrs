@@ -371,7 +371,7 @@ pub fn uses(args: Args, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn meta(args: TokenStream, input: TokenStream) -> TokenStream {
-    let raw = input.clone();
+    let raw: TokenStream = input.clone();
     let fun = parse_macro_input!(input as UFnStruct);
 
     current_module::check_mod();
