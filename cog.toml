@@ -67,12 +67,13 @@ authors = [
 [bump_profiles]
 
 [packages]
-nidrs-valid = { path = "packages/nidrs-valid" }
-nidrs-valid-macro = { path = "packages/nidrs-valid-macro" }
+nidrs = { path = "packages/nidrs" }
 nidrs-extern = { path = "packages/nidrs-extern" }
 nidrs-macro = { path = "packages/nidrs-macro" }
 nidrs-diesel = { path = "packages/nidrs-diesel" }
-nidrs = { path = "packages/nidrs" }
+nidrs-valid = { path = "packages/nidrs-valid" }
+nidrs-valid-macro = { path = "packages/nidrs-valid-macro" }
+nidrs-openapi = { path = "packages/nidrs-openapi" }
+nidrs-openapi-macro = { path = "packages/nidrs-openapi-macro" }
 syn-args = { path = "libs/syn-args" }
 syn-args-derive = { path = "libs/syn-args-derive" }
-

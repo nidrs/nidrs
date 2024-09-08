@@ -1,0 +1,20 @@
+[package]
+name = "nidrs-openapi"
+version = "0.0.1"
+authors = ["WumaCoder <wumacoder@gmail.com>"]
+description = "Nidrs openapi library."
+keywords = ["nidrs", "axum", "http", "web", "framework"]
+categories = ["network-programming", "asynchronous", "web-programming::http-server", "web-programming::websocket"]
+publish = true
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+nidrs-openapi-macro = { workspace = true }
+serde_json = "1.0.115"
+serde = "1.0.197"
+thiserror = "1.0.58"
+axum = "0.7.5"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

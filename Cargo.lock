@@ -1334,6 +1334,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "nidrs-openapi"
+version = "0.0.1"
+dependencies = [
+ "axum",
+ "nidrs-openapi-macro",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "nidrs-openapi-macro"
+version = "0.0.1"
+dependencies = [
+ "nidrs-extern",
+ "once_cell",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.77",
+ "syn-serde",
+]
+
+[[package]]
 name = "nidrs-valid"
 version = "0.0.1"
 dependencies = [
