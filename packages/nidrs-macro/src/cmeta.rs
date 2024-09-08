@@ -66,7 +66,7 @@ impl From<Expr> for MetaData {
                     // println!("v: {}", v.to_token_stream().to_string());
                 }
             }
-            _ => todo!("Todo MetaData::from"),
+            _ => (),
         };
 
         MetaData { expr, value: Box::new(value), key }

@@ -8,6 +8,8 @@ use nidrs::{
     },
     valid_macro::dto,
 };
+use nidrs_extern::utoipa;
+use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Status {
@@ -34,6 +36,7 @@ impl IntoResponse for Status {
 }
 
 // #[derive(Serialize, Deserialize, Debug)]
+#[derive(ToSchema)]
 #[dto]
 pub struct A {
     #[rule(Email)]
@@ -43,13 +46,14 @@ pub struct A {
     pub hello2: B,
 }
 
-// #[derive(Serialize, Deserialize, Debug)]
+#[derive(ToSchema)]
 #[dto]
 pub struct B {
     pub hello2: String,
 }
 
 // #[derive(Serialize, Deserialize, Debug)]
+#[derive(ToSchema)]
 #[dto]
 pub enum ArgDto {
     A(A),
