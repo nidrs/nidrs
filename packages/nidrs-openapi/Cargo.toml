@@ -12,9 +12,16 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
-nidrs-openapi-macro = { workspace = true }
 serde_json = "1.0.115"
 serde = "1.0.197"
 thiserror = "1.0.58"
 axum = "0.7.5"
+utoipa = "4.2.3"
+utoipa-swagger-ui = { version = "7", features = ["axum"] }
+utoipa-redoc = { version = "4.0.0", features = ["axum"] }
+utoipa-scalar = { version = "0.1.0", features = ["axum"] }
+utoipa-rapidoc = { version = "*", features = ["axum"] }
+
+nidrs-openapi-macro = { workspace = true }
+nidrs-extern = { workspace = true }
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

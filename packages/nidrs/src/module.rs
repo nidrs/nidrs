@@ -1,24 +1,15 @@
 use nidrs_extern::axum::extract::Request;
 use nidrs_extern::axum::response::IntoResponse;
 use nidrs_extern::axum::routing::Route;
-use nidrs_extern::datasets::ParamType;
-use nidrs_extern::datasets::RouterParams;
+use nidrs_extern::router::MetaRouter;
+use nidrs_extern::router::StateCtx;
 use nidrs_extern::tokio;
 use nidrs_extern::tower;
 use nidrs_extern::tower::Layer;
-use nidrs_extern::utoipa;
 use nidrs_extern::{
     axum::{self},
     datasets::{self},
-    meta::Meta,
     tokio::signal,
-    utoipa::openapi::{
-        path::{OperationBuilder, PathItemBuilder},
-        Components, Info, OpenApiBuilder, PathsBuilder,
-    },
-    utoipa_rapidoc::RapiDoc,
-    utoipa_redoc::{Redoc, Servable},
-    utoipa_swagger_ui::SwaggerUi,
 };
 use std::convert::Infallible;
 use std::{
@@ -28,7 +19,6 @@ use std::{
     time::Duration,
 };
 
-use crate::shared::convert_path_to_openapi;
 use crate::{provider, shared::otr, template_format, AppResult, InnerMeta, Interceptor, Service};
 
 static GLOBALS_KEY: &str = "Defaults";
@@ -184,68 +174,9 @@ impl<T: Module> NidrsFactory<T> {
             sub_router = sub_router.merge((self.router_hook)(router.clone()));
         }
 
-        // OPENAPI IMPLEMENTATION
-        let mut paths = PathsBuilder::new().build();
-        let mut components = Components::new();
+        self.router = self.router.merge(sub_router);
 
-        for router in self.module_ctx.routers.iter() {
-            let path = router.meta.get_data::<datasets::RouterFullPath>().unwrap().value();
-            let method = router.meta.get_data::<datasets::RouterMethod>().unwrap().value();
-            let router_name = router.meta.get_data::<datasets::RouterName>().unwrap().value();
-            let controller_name = router.meta.get_data::<datasets::ServiceName>().unwrap().value();
-            // println!("path: {}, method: {}, body: {:?}", path, method, router.meta.get_data::<RouterBodyScheme>());
-            let path_type = match method.as_str() {
-                "post" => utoipa::openapi::PathItemType::Post,
-                "put" => utoipa::openapi::PathItemType::Put,
-                "delete" => utoipa::openapi::PathItemType::Delete,
-                "patch" => utoipa::openapi::PathItemType::Patch,
-                "options" => utoipa::openapi::PathItemType::Options,
-                "head" => utoipa::openapi::PathItemType::Head,
-                "trace" => utoipa::openapi::PathItemType::Trace,
-                "connect" => utoipa::openapi::PathItemType::Connect,
-                _ => utoipa::openapi::PathItemType::Get,
-            };
-
-            let opath = convert_path_to_openapi(path);
-            if paths.paths.get(&opath).is_none() {
-                let path_item = PathItemBuilder::new().build();
-                paths.paths.insert(opath.clone(), path_item);
-            }
-
-            if let Some(path_item) = paths.paths.get_mut(&opath) {
-                let mut parameters = vec![];
-                let mut request_body = None;
-                let router_params = router.meta.get_data::<RouterParams>();
-                if let Some(router_params) = router_params {
-                    for param in router_params.value() {
-                        match param {
-                            ParamType::Parameter(p) => {
-                                parameters.push(p.clone());
-                            }
-                            ParamType::RequestBody(body, scheme) => {
-                                components.schemas.insert(scheme.0.to_string(), scheme.1.to_owned());
-                                request_body = Some(body.to_owned());
-                            }
-                        }
-                    }
-                }
-                let _ = path_item.parameters.insert(parameters);
-                path_item.operations.insert(path_type.clone(), OperationBuilder::new().request_body(request_body).build());
-            }
-        }
-
-        let api = OpenApiBuilder::new()
-            .info(Info::new("Nidrs OpenAPI", self.module_ctx.defaults.default_version))
-            .paths(paths)
-            .components(Some(components))
-            .build();
-
-        self.router = self
-            .router
-            .merge(sub_router)
-            .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api.clone()))
-            .merge(Redoc::with_url("/redoc", api.clone()))
-            .merge(RapiDoc::new("/api-docs/openapi.json").path("/rapidoc"));
+        self.router = self.router.merge(nidrs_openapi::register(&self.module_ctx.routers));
 
         nidrs_macro::log!("Swagger UI on {}", format!("http://127.0.0.1:{}/swagger-ui", self.port));
         nidrs_macro::log!("Rapidoc UI on {}", format!("http://127.0.0.1:{}/rapidoc", self.port));
@@ -309,9 +240,6 @@ impl<T: Module> NidrsFactory<T> {
         }
     }
 }
-
-#[derive(Debug, Clone)]
-pub struct StateCtx {}
 
 pub struct ModuleCtx {
     pub defaults: ModuleDefaults,
@@ -491,34 +419,6 @@ impl ModuleCtx {
         };
 
         Ok(full_path)
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct MetaRouter {
-    pub router: axum::Router<StateCtx>,
-    pub meta: Meta,
-}
-
-impl MetaRouter {
-    pub fn new(router: axum::Router<StateCtx>, meta: Meta) -> Self {
-        MetaRouter { router, meta }
-    }
-}
-
-impl MetaRouter {
-    pub fn match_full_path(&self, matcher: &str) -> bool {
-        let glob = nidrs_extern::globset::Glob::new(matcher);
-        match glob {
-            Ok(glob) => {
-                let path: &str = self.meta.get_data::<datasets::RouterFullPath>().unwrap().value();
-                glob.compile_matcher().is_match(path)
-            }
-            Err(err) => {
-                nidrs_macro::elog!("Error: {:?}", err);
-                false
-            }
-        }
     }
 }
 

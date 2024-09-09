@@ -1,5 +1,5 @@
+use nidrs::openapi::utoipa;
 use nidrs::valid_macro::dto;
-use nidrs_extern::utoipa;
 
 #[derive(utoipa::ToSchema)]
 #[dto]

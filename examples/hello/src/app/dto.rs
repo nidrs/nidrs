@@ -1,5 +1,6 @@
 use nidrs::externs::serde::{Deserialize, Serialize};
 use nidrs::externs::serde_json;
+use nidrs::openapi::utoipa;
 use nidrs::{
     externs::axum::{
         body::Body,
@@ -8,7 +9,6 @@ use nidrs::{
     },
     valid_macro::dto,
 };
-use nidrs_extern::utoipa;
 use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Debug)]

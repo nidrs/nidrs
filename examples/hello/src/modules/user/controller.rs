@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use nidrs::datasets::to_router_parameters;
 use nidrs::macros::{controller, get, meta};
+use nidrs::openapi::to_router_parameters;
 use nidrs::{externs::axum::extract::Query, post};
 use nidrs::{AppResult, Inject};
 use nidrs_extern::axum::extract::Path;
@@ -23,7 +23,7 @@ impl UserController {
         Ok(self.user_service.extract().get_hello_world2())
     }
 
-    #[meta(nidrs::shared::block({
+    #[meta(nidrs::externs::shared::block({
         to_router_parameters::<Path<UserByIdDto>>()
         .merge(to_router_parameters::<Query<FilterDto>>())
     }))]
@@ -32,7 +32,7 @@ impl UserController {
         Ok(format!("get one! id: {}", id.id))
     }
 
-    #[meta(nidrs::shared::block({
+    #[meta(nidrs::externs::shared::block({
         to_router_parameters::<Path<UserByIdDto>>()
         .merge(to_router_parameters::<Query<FilterDto>>())
         .merge(to_router_parameters::<Json<CreateUserDto>>())
