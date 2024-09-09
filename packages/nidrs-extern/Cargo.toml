@@ -15,7 +15,7 @@ license.workspace = true
 axum = { version = "0.7.4", features = ["ws", "json"] }
 axum-extra = { version = "0.9.2", features = ["typed-header", "typed-routing"] }
 tokio = { version = "1.36.0", features = ["full"] }
-tower = "0.4.13"
+tower = "0.5.0"
 colored = "2"
 anyhow = "1.0.82"
 thiserror = "1.0.58"
