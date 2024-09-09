@@ -16,6 +16,7 @@ pub struct UserController {
 }
 
 impl UserController {
+    #[api]
     #[get("/")]
     pub async fn get_all(&self, Query(q): Query<HashMap<String, String>>) -> AppResult<String> {
         println!("Query {:?}", q);
@@ -23,13 +24,13 @@ impl UserController {
         Ok(self.user_service.extract().get_hello_world2())
     }
 
-    #[api]
+    // #[api]
     #[get("/:id")]
     pub async fn get_one(&self, id: Path<UserByIdDto>, query: Query<FilterDto>) -> AppResult<String> {
         Ok(format!("get one! id: {}", id.id))
     }
 
-    #[api]
+    // #[api]
     #[post("/:id")]
     pub async fn create_user(&self, query: Query<FilterDto>, dto: Json<CreateUserDto>) -> AppResult<String> {
         Ok(self.user_service.extract().get_hello_world2())
