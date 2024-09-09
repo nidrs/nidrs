@@ -71,8 +71,8 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
 
     let api = OpenApiBuilder::new().info(Info::new("Nidrs OpenAPI", "v1.0")).paths(paths).components(Some(components)).build();
 
-    return axum::Router::new()
+    axum::Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api.clone()))
         .merge(Redoc::with_url("/redoc", api.clone()))
-        .merge(RapiDoc::new("/api-docs/openapi.json").path("/rapidoc"));
+        .merge(RapiDoc::new("/api-docs/openapi.json").path("/rapidoc"))
 }
