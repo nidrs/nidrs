@@ -31,7 +31,7 @@ impl UserController {
     }
 
     #[api]
-    #[post("/:id")]
+    #[post("/")]
     pub async fn create_user(&self, query: Query<FilterDto>, dto: Json<CreateUserDto>) -> AppResult<String> {
         Ok(self.user_service.extract().get_hello_world2())
     }
