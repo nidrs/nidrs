@@ -23,3 +23,10 @@ pub struct FilterDto {
     pub page: i32,
     pub size: i32,
 }
+
+#[nidrs::openapi::schema]
+#[nidrs::valid::dto]
+pub struct CreateUserResDto {
+    pub id: i32,
+    pub name: String,
+}

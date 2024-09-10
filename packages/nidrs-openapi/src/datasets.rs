@@ -7,6 +7,32 @@ use utoipa::openapi::{
     ContentBuilder, Ref,
 };
 
+#[derive(Debug)]
+pub struct RouterIn(pub RouterParams);
+impl MetaKey for RouterIn {
+    fn meta_key() -> String {
+        "RouterIn".to_string()
+    }
+}
+impl RouterIn {
+    pub fn value(&self) -> &RouterParams {
+        &self.0
+    }
+}
+
+#[derive(Debug)]
+pub struct RouterOut(pub RouterParams);
+impl MetaKey for RouterOut {
+    fn meta_key() -> String {
+        "RouterOut".to_string()
+    }
+}
+impl RouterOut {
+    pub fn value(&self) -> &RouterParams {
+        &self.0
+    }
+}
+
 #[derive(Clone)]
 pub enum ParamDto {
     None,

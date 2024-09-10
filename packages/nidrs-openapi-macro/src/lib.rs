@@ -19,10 +19,10 @@ pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
     });
 
     quote! {
-        #[meta(nidrs::externs::shared::block({
+        #[meta(nidrs::openapi::RouterIn(
             nidrs::openapi::RouterParams::default()
             #(#args)*
-        }))]
+        ))]
         #input
     }
     .into()

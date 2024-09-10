@@ -7,7 +7,7 @@ use nidrs::{AppResult, Inject};
 use nidrs_extern::axum::extract::Path;
 use nidrs_extern::axum::Json;
 
-use super::dto::FilterDto;
+use super::dto::{CreateUserResDto, FilterDto};
 use super::{dto::CreateUserDto, dto::UserByIdDto, service::UserService};
 
 #[controller("/user")]
@@ -30,9 +30,13 @@ impl UserController {
         Ok(format!("get one! id: {}", id.id))
     }
 
+    #[meta(nidrs::openapi::RouterOut(
+        nidrs::openapi::RouterParams::default()
+            .merge(nidrs::openapi::RouterParams::default()))
+    )]
     #[api]
     #[post("/")]
-    pub async fn create_user(&self, query: Query<FilterDto>, dto: Json<CreateUserDto>) -> AppResult<String> {
-        Ok(self.user_service.extract().get_hello_world2())
+    pub async fn create_user(&self, dto: Json<CreateUserDto>) -> AppResult<CreateUserResDto> {
+        Ok(CreateUserResDto { id: 1, name: dto.name.clone() })
     }
 }

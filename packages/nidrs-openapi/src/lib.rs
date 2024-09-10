@@ -30,7 +30,7 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
         let method = router.meta.get_data::<nidrs_extern::datasets::RouterMethod>().unwrap().value();
         let router_name = router.meta.get_data::<nidrs_extern::datasets::RouterName>().unwrap().value();
         let controller_name = router.meta.get_data::<nidrs_extern::datasets::ServiceName>().unwrap().value();
-        println!("path: {}, method: {}, body: {:?}", path, method, router.meta.get_data::<datasets::RouterParams>());
+        println!("path: {}, method: {}, body: {:?}", path, method, router.meta.get_data::<datasets::RouterIn>());
         let path_type = match method.as_str() {
             "post" => utoipa::openapi::PathItemType::Post,
             "put" => utoipa::openapi::PathItemType::Put,
@@ -51,9 +51,9 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
 
         if let Some(path_item) = paths.paths.get_mut(&opath) {
             let mut operation = OperationBuilder::new();
-            let router_params = router.meta.get_data::<datasets::RouterParams>();
+            let router_params = router.meta.get_data::<datasets::RouterIn>();
             if let Some(router_params) = router_params {
-                for param in router_params.value() {
+                for param in router_params.value().value() {
                     match param {
                         datasets::ParamType::Parameter(p) => {
                             operation = operation.parameter(p.to_owned());
@@ -65,6 +65,17 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
                     }
                 }
             }
+            operation = operation.responses(
+                utoipa::openapi::ResponsesBuilder::new()
+                    .response(
+                        "200",
+                        utoipa::openapi::ResponseBuilder::new()
+                            .content("application/json", utoipa::openapi::ContentBuilder::new().build())
+                            .description("OK")
+                            .build(),
+                    )
+                    .build(),
+            );
             path_item.operations.insert(path_type.clone(), operation.build());
         }
     }
