@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use axum::extract::Query;
+use nidrs::externs::axum::extract::Query;
 use nidrs::Inject;
 use nidrs_macro::{controller, get};
 

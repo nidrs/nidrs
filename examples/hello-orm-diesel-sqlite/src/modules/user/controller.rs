@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use axum::{
+use nidrs::externs::axum::{
     extract::{Path, Query},
     http::HeaderMap,
     Json,

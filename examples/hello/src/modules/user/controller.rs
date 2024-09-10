@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use nidrs::macros::{controller, get, meta};
-use nidrs::openapi_macro::api;
+use nidrs::openapi::api;
 use nidrs::{externs::axum::extract::Query, post};
 use nidrs::{AppResult, Inject};
 use nidrs_extern::axum::extract::Path;

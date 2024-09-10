@@ -7,7 +7,7 @@ use nidrs::{
         http::{header, StatusCode},
         response::{IntoResponse, Response},
     },
-    valid_macro::dto,
+    valid::dto,
 };
 use utoipa::ToSchema;
 
@@ -35,7 +35,6 @@ impl IntoResponse for Status {
     }
 }
 
-// #[derive(Serialize, Deserialize, Debug)]
 #[derive(ToSchema)]
 #[dto]
 pub struct A {
@@ -52,7 +51,6 @@ pub struct B {
     pub hello2: String,
 }
 
-// #[derive(Serialize, Deserialize, Debug)]
 #[derive(ToSchema)]
 #[dto]
 pub enum ArgDto {

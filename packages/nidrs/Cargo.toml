@@ -15,9 +15,7 @@ license.workspace = true
 nidrs-macro = { workspace = true }
 nidrs-extern = { workspace = true }
 nidrs-valid = { workspace = true }
-nidrs-valid-macro = { workspace = true }
 nidrs-openapi = { workspace = true }
-nidrs-openapi-macro = { workspace = true }
 
 [features]
 default = ["tower", "serde"]

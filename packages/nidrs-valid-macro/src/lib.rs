@@ -8,7 +8,7 @@ pub fn dto(args: TokenStream, input: TokenStream) -> TokenStream {
     let raw_input = TokenStream2::from(input.clone());
 
     TokenStream::from(quote! {
-        #[derive(serde::Serialize, serde::Deserialize, Debug, nidrs::valid_macro::Validator)]
+        #[derive(serde::Serialize, serde::Deserialize, Debug, nidrs::valid::Validator)]
         #raw_input
     })
 }

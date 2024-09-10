@@ -911,9 +911,6 @@ dependencies = [
 name = "hello-orm-diesel-sqlite"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "axum",
- "axum-extra",
  "chrono",
  "diesel",
  "dotenvy",
@@ -923,9 +920,6 @@ dependencies = [
  "nidrs-macro",
  "serde",
  "serde_json",
- "thiserror",
- "tokio",
- "tower 0.4.13",
 ]
 
 [[package]]
@@ -1268,9 +1262,7 @@ dependencies = [
  "nidrs-extern",
  "nidrs-macro",
  "nidrs-openapi",
- "nidrs-openapi-macro",
  "nidrs-valid",
- "nidrs-valid-macro",
 ]
 
 [[package]]

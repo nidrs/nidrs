@@ -29,7 +29,5 @@ pub use nidrs_extern as externs;
 pub use nidrs_macro as macros;
 
 pub use nidrs_valid as valid;
-pub use nidrs_valid_macro as valid_macro;
 
 pub use nidrs_openapi as openapi;
-pub use nidrs_openapi_macro as openapi_macro;
