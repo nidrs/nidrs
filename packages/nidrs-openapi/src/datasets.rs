@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use nidrs_extern::{datasets::MetaKey, meta::Meta};
 use utoipa::openapi::{
-    self,
     path::Parameter,
     request_body::{RequestBody, RequestBodyBuilder},
     ContentBuilder, Ref,
@@ -98,19 +97,12 @@ impl<K, V> ToParamDto for HashMap<K, V> {}
 
 impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Json<T> {
     fn to_router_parameters() -> RouterParams {
-        // let scheme = T::schema();
-        // let ref_scheme = Ref::new(format!("#/components/schemas/{}", scheme.0));
-        // RouterParams(vec![ParamType::RequestBody(
-        //     RequestBodyBuilder::new().content("application/json", ContentBuilder::new().schema(ref_scheme).build()).build(),
-        //     scheme,
-        // )])
-
         let t = T::to_param_dto(ParamDtoType::RequestBody);
-        if let ParamDto::RequestBodies(scheme) = t {
-            let ref_scheme = Ref::new(format!("#/components/schemas/{}", scheme.0));
+        if let ParamDto::RequestBodies(schema) = t {
+            let ref_scheme = Ref::new(format!("#/components/schemas/{}", schema.0));
             RouterParams(vec![ParamType::RequestBody(
                 RequestBodyBuilder::new().content("application/json", ContentBuilder::new().schema(ref_scheme).build()).build(),
-                scheme,
+                schema,
             )])
         } else {
             RouterParams(vec![])
@@ -118,17 +110,20 @@ impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Json<T> {
     }
 }
 
-// impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Form<T> {
-//     fn to_router_parameters() -> RouterParams {
-//         // let scheme = T::schema();
-//         // let ref_scheme = Ref::new(format!("#/components/schemas/{}", scheme.0));
-//         // RouterParams(vec![ParamType::RequestBody(
-//         //     RequestBodyBuilder::new().content("application/x-www-form-urlencoded", ContentBuilder::new().schema(ref_scheme).build()).build(),
-//         //     scheme,
-//         // )])
-//         RouterParams(T::to_param_dto())
-//     }
-// }
+impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Form<T> {
+    fn to_router_parameters() -> RouterParams {
+        let t = T::to_param_dto(ParamDtoType::RequestBody);
+        if let ParamDto::RequestBodies(schema) = t {
+            let ref_scheme = Ref::new(format!("#/components/schemas/{}", schema.0));
+            RouterParams(vec![ParamType::RequestBody(
+                RequestBodyBuilder::new().content("application/x-www-form-urlencoded", ContentBuilder::new().schema(ref_scheme).build()).build(),
+                schema,
+            )])
+        } else {
+            RouterParams(vec![])
+        }
+    }
+}
 
 impl ToRouterParamsByType for Meta {}
 
