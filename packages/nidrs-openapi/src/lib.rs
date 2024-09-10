@@ -18,6 +18,8 @@ use utoipa_swagger_ui::SwaggerUi;
 mod datasets;
 pub use datasets::*;
 
+pub use nidrs_openapi_macro::*;
+
 pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
     // OPENAPI IMPLEMENTATION
     let mut paths = PathsBuilder::new().build();
