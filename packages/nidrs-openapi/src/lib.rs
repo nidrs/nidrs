@@ -30,7 +30,7 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
         let method = router.meta.get_data::<nidrs_extern::datasets::RouterMethod>().unwrap().value();
         let router_name = router.meta.get_data::<nidrs_extern::datasets::RouterName>().unwrap().value();
         let controller_name = router.meta.get_data::<nidrs_extern::datasets::ServiceName>().unwrap().value();
-        // println!("path: {}, method: {}, body: {:?}", path, method, router.meta.get_data::<RouterBodyScheme>());
+        println!("path: {}, method: {}, body: {:?}", path, method, router.meta.get_data::<datasets::RouterParams>());
         let path_type = match method.as_str() {
             "post" => utoipa::openapi::PathItemType::Post,
             "put" => utoipa::openapi::PathItemType::Put,
@@ -50,24 +50,22 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
         }
 
         if let Some(path_item) = paths.paths.get_mut(&opath) {
-            let mut parameters = vec![];
-            let mut request_body = None;
+            let mut operation = OperationBuilder::new();
             let router_params = router.meta.get_data::<datasets::RouterParams>();
             if let Some(router_params) = router_params {
                 for param in router_params.value() {
                     match param {
                         datasets::ParamType::Parameter(p) => {
-                            parameters.push(p.clone());
+                            operation = operation.parameter(p.to_owned());
                         }
                         datasets::ParamType::RequestBody(body, scheme) => {
                             components.schemas.insert(scheme.0.to_string(), scheme.1.to_owned());
-                            request_body = Some(body.to_owned());
+                            operation = operation.request_body(Some(body.to_owned()));
                         }
                     }
                 }
             }
-            let _ = path_item.parameters.insert(parameters);
-            path_item.operations.insert(path_type.clone(), OperationBuilder::new().request_body(request_body).build());
+            path_item.operations.insert(path_type.clone(), operation.build());
         }
     }
 

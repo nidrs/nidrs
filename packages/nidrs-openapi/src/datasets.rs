@@ -27,14 +27,17 @@ pub enum ParamType {
     RequestBody(RequestBody, (&'static str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>)),
 }
 
-#[derive(Clone, Default)]
-pub struct RouterParams(pub Vec<ParamType>);
-
-impl std::fmt::Debug for RouterParams {
+impl std::fmt::Debug for ParamType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("RouterParams").finish()
+        match self {
+            Self::Parameter(arg0) => f.debug_tuple("Parameter").finish(),
+            Self::RequestBody(arg0, arg1) => f.debug_tuple("RequestBody").finish(),
+        }
     }
 }
+
+#[derive(Clone, Default, Debug)]
+pub struct RouterParams(pub Vec<ParamType>);
 
 impl RouterParams {
     pub fn value(&self) -> &Vec<ParamType> {
