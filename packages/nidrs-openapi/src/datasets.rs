@@ -79,12 +79,6 @@ impl RouterParams {
     }
 }
 
-impl MetaKey for RouterParams {
-    fn meta_key() -> String {
-        "RouterParams".to_string()
-    }
-}
-
 pub trait ToRouterParamsByType {
     fn to_router_parameters() -> RouterParams {
         RouterParams(vec![])
