@@ -40,12 +40,12 @@ pub fn schema(args: TokenStream, input: TokenStream) -> TokenStream {
         #input
 
         impl #impl_generics nidrs::openapi::ToParamDto for #ident #ty_generics #where_clause {
-            fn to_param_dto(dto_type: nidrs::openapi::ParamDtoType) -> nidrs::openapi::ParamDto {
+            fn to_param_dto(dto_type: nidrs::openapi::ParamDtoIn) -> nidrs::openapi::ParamDto {
                 use nidrs::openapi::utoipa::IntoParams;
                 use nidrs::openapi::utoipa::ToSchema;
                 match dto_type {
-                    nidrs::openapi::ParamDtoType::Parameter(p) => nidrs::openapi::ParamDto::Parameters(Self::into_params(|| Some(p.clone()))),
-                    nidrs::openapi::ParamDtoType::RequestBody => nidrs::openapi::ParamDto::RequestBodies(Self::schema()),
+                    nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
+                    nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema(Self::schema()),
                 }
             }
         }

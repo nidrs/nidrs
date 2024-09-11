@@ -36,27 +36,27 @@ impl RouterOut {
 #[derive(Clone)]
 pub enum ParamDto {
     None,
-    Parameters(Vec<Parameter>),
-    RequestBodies((&'static str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>)),
+    ParamList(Vec<Parameter>),
+    BodySchema((&'static str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>)),
 }
 
 #[derive(Clone)]
-pub enum ParamDtoType {
-    Parameter(utoipa::openapi::path::ParameterIn),
-    RequestBody,
+pub enum ParamDtoIn {
+    Param(utoipa::openapi::path::ParameterIn),
+    Body,
 }
 
 #[derive(Clone)]
 pub enum ParamType {
-    Parameter(Parameter),
-    RequestBody(RequestBody, Option<(&'static str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>)>),
+    Param(Parameter),
+    Body(RequestBody, Option<(&'static str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>)>),
 }
 
 impl std::fmt::Debug for ParamType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Parameter(arg0) => f.debug_tuple("Parameter").finish(),
-            Self::RequestBody(arg0, arg1) => f.debug_tuple("RequestBody").finish(),
+            Self::Param(arg0) => f.debug_tuple("Parameter").finish(),
+            Self::Body(arg0, arg1) => f.debug_tuple("Body").finish(),
         }
     }
 }
@@ -92,16 +92,16 @@ pub trait ToRouterParamsByType {
 }
 
 pub trait ToParamDto {
-    fn to_param_dto(dto_type: ParamDtoType) -> ParamDto {
+    fn to_param_dto(dto_type: ParamDtoIn) -> ParamDto {
         ParamDto::None
     }
 }
 
 impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Path<T> {
     fn to_router_parameters() -> RouterParams {
-        let t = T::to_param_dto(ParamDtoType::Parameter(utoipa::openapi::path::ParameterIn::Path));
-        if let ParamDto::Parameters(mut parameters) = t {
-            RouterParams(parameters.drain(..).map(ParamType::Parameter).collect())
+        let t = T::to_param_dto(ParamDtoIn::Param(utoipa::openapi::path::ParameterIn::Path));
+        if let ParamDto::ParamList(mut parameters) = t {
+            RouterParams(parameters.drain(..).map(ParamType::Param).collect())
         } else {
             RouterParams(vec![])
         }
@@ -110,9 +110,9 @@ impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Path<T> {
 
 impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Query<T> {
     fn to_router_parameters() -> RouterParams {
-        let t = T::to_param_dto(ParamDtoType::Parameter(utoipa::openapi::path::ParameterIn::Query));
-        if let ParamDto::Parameters(mut parameters) = t {
-            RouterParams(parameters.drain(..).map(ParamType::Parameter).collect())
+        let t = T::to_param_dto(ParamDtoIn::Param(utoipa::openapi::path::ParameterIn::Query));
+        if let ParamDto::ParamList(mut parameters) = t {
+            RouterParams(parameters.drain(..).map(ParamType::Param).collect())
         } else {
             RouterParams(vec![])
         }
@@ -123,10 +123,10 @@ impl<K, V> ToParamDto for HashMap<K, V> {}
 
 impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Json<T> {
     fn to_router_parameters() -> RouterParams {
-        let t = T::to_param_dto(ParamDtoType::RequestBody);
-        if let ParamDto::RequestBodies(schema) = t {
+        let t = T::to_param_dto(ParamDtoIn::Body);
+        if let ParamDto::BodySchema(schema) = t {
             let ref_scheme = Ref::new(format!("#/components/schemas/{}", schema.0));
-            RouterParams(vec![ParamType::RequestBody(
+            RouterParams(vec![ParamType::Body(
                 RequestBodyBuilder::new().content("application/json", ContentBuilder::new().schema(ref_scheme).build()).build(),
                 Some(schema),
             )])
@@ -138,10 +138,10 @@ impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Json<T> {
 
 impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Form<T> {
     fn to_router_parameters() -> RouterParams {
-        let t = T::to_param_dto(ParamDtoType::RequestBody);
-        if let ParamDto::RequestBodies(schema) = t {
+        let t = T::to_param_dto(ParamDtoIn::Body);
+        if let ParamDto::BodySchema(schema) = t {
             let ref_scheme = Ref::new(format!("#/components/schemas/{}", schema.0));
-            RouterParams(vec![ParamType::RequestBody(
+            RouterParams(vec![ParamType::Body(
                 RequestBodyBuilder::new().content("application/x-www-form-urlencoded", ContentBuilder::new().schema(ref_scheme).build()).build(),
                 Some(schema),
             )])
@@ -177,7 +177,7 @@ impl<T> ToRouterParamsByType for axum::extract::WebSocketUpgrade<T> {}
 
 impl ToRouterParamsByType for String {
     fn to_router_parameters() -> RouterParams {
-        RouterParams(vec![ParamType::RequestBody(RequestBodyBuilder::new().content("text", ContentBuilder::new().build()).build(), None)])
+        RouterParams(vec![ParamType::Body(RequestBodyBuilder::new().content("text", ContentBuilder::new().build()).build(), None)])
     }
 }
 

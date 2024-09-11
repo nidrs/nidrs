@@ -1967,12 +1967,12 @@ mod modules {
                 }
             }
             impl nidrs::openapi::ToParamDto for CreateUserDto {
-                fn to_param_dto(dto_type: nidrs::openapi::ParamDtoType) -> nidrs::openapi::ParamDto {
+                fn to_param_dto(dto_type: nidrs::openapi::ParamDtoIn) -> nidrs::openapi::ParamDto {
                     use nidrs::openapi::utoipa::IntoParams;
                     use nidrs::openapi::utoipa::ToSchema;
                     match dto_type {
-                        nidrs::openapi::ParamDtoType::Parameter(p) => nidrs::openapi::ParamDto::Parameters(Self::into_params(|| Some(p.clone()))),
-                        nidrs::openapi::ParamDtoType::RequestBody => nidrs::openapi::ParamDto::RequestBodies(Self::schema()),
+                        nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
+                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema(Self::schema()),
                     }
                 }
             }
@@ -2172,12 +2172,12 @@ mod modules {
                 }
             }
             impl nidrs::openapi::ToParamDto for UserByIdDto {
-                fn to_param_dto(dto_type: nidrs::openapi::ParamDtoType) -> nidrs::openapi::ParamDto {
+                fn to_param_dto(dto_type: nidrs::openapi::ParamDtoIn) -> nidrs::openapi::ParamDto {
                     use nidrs::openapi::utoipa::IntoParams;
                     use nidrs::openapi::utoipa::ToSchema;
                     match dto_type {
-                        nidrs::openapi::ParamDtoType::Parameter(p) => nidrs::openapi::ParamDto::Parameters(Self::into_params(|| Some(p.clone()))),
-                        nidrs::openapi::ParamDtoType::RequestBody => nidrs::openapi::ParamDto::RequestBodies(Self::schema()),
+                        nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
+                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema(Self::schema()),
                     }
                 }
             }
@@ -2465,12 +2465,12 @@ mod modules {
                 }
             }
             impl nidrs::openapi::ToParamDto for FilterDto {
-                fn to_param_dto(dto_type: nidrs::openapi::ParamDtoType) -> nidrs::openapi::ParamDto {
+                fn to_param_dto(dto_type: nidrs::openapi::ParamDtoIn) -> nidrs::openapi::ParamDto {
                     use nidrs::openapi::utoipa::IntoParams;
                     use nidrs::openapi::utoipa::ToSchema;
                     match dto_type {
-                        nidrs::openapi::ParamDtoType::Parameter(p) => nidrs::openapi::ParamDto::Parameters(Self::into_params(|| Some(p.clone()))),
-                        nidrs::openapi::ParamDtoType::RequestBody => nidrs::openapi::ParamDto::RequestBodies(Self::schema()),
+                        nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
+                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema(Self::schema()),
                     }
                 }
             }

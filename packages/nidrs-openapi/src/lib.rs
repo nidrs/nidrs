@@ -5,7 +5,7 @@ use nidrs_extern::{
 pub use utoipa;
 use utoipa::openapi::{
     path::{OperationBuilder, PathItemBuilder},
-    Components, Info, OpenApiBuilder, PathsBuilder, Response,
+    Components, Info, OpenApiBuilder, PathsBuilder,
 };
 pub use utoipa_rapidoc;
 use utoipa_rapidoc::RapiDoc;
@@ -30,7 +30,7 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
         let method = router.meta.get_data::<nidrs_extern::datasets::RouterMethod>().unwrap().value();
         let router_name = router.meta.get_data::<nidrs_extern::datasets::RouterName>().unwrap().value();
         let controller_name = router.meta.get_data::<nidrs_extern::datasets::ServiceName>().unwrap().value();
-        println!("path: {}, method: {}, body: {:?}", path, method, router.meta.get_data::<datasets::RouterIn>());
+        // println!("path: {}, method: {}, body: {:?}", path, method, router.meta.get_data::<datasets::RouterIn>());
         let path_type = match method.as_str() {
             "post" => utoipa::openapi::PathItemType::Post,
             "put" => utoipa::openapi::PathItemType::Put,
@@ -57,10 +57,10 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
             if let Some(router_in) = router_in {
                 for param in router_in.value().value() {
                     match param {
-                        datasets::ParamType::Parameter(p) => {
+                        datasets::ParamType::Param(p) => {
                             operation = operation.parameter(p.to_owned());
                         }
-                        datasets::ParamType::RequestBody(body, scheme) => {
+                        datasets::ParamType::Body(body, scheme) => {
                             if let Some(scheme) = scheme {
                                 components.schemas.insert(scheme.0.to_string(), scheme.1.to_owned());
                                 operation = operation.request_body(Some(body.to_owned()));
@@ -71,21 +71,18 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
             }
             if let Some(router_out) = router_out {
                 for param in router_out.value().value() {
-                    match param {
-                        datasets::ParamType::RequestBody(body, scheme) => {
-                            if let Some(scheme) = scheme {
-                                components.schemas.insert(scheme.0.to_string(), scheme.1.to_owned());
-                                // operation = operation.request_body(Some(body.to_owned()));
-                                let mut response = utoipa::openapi::ResponseBuilder::new();
-                                for (k, v) in body.to_owned().content.iter() {
-                                    response = response.content(k, v.to_owned());
-                                }
-                                operation = operation.responses(utoipa::openapi::ResponsesBuilder::new().response("200", response.build()).build());
-                            } else {
-                                operation = operation.response("200", utoipa::openapi::ResponseBuilder::new().build());
+                    if let datasets::ParamType::Body(body, scheme) = param {
+                        if let Some(scheme) = scheme {
+                            components.schemas.insert(scheme.0.to_string(), scheme.1.to_owned());
+                            // operation = operation.request_body(Some(body.to_owned()));
+                            let mut response = utoipa::openapi::ResponseBuilder::new();
+                            for (k, v) in body.to_owned().content.iter() {
+                                response = response.content(k, v.to_owned());
                             }
+                            operation = operation.responses(utoipa::openapi::ResponsesBuilder::new().response("200", response.build()).build());
+                        } else {
+                            operation = operation.response("200", utoipa::openapi::ResponseBuilder::new().build());
                         }
-                        _ => {}
                     }
                 }
             }
