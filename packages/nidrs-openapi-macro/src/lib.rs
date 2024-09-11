@@ -7,23 +7,37 @@ use syn::{ItemFn, ItemStruct};
 pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as ItemFn);
 
-    let mut args: Vec<TokenStream2> = vec![];
+    let mut router_in: Vec<TokenStream2> = vec![];
 
     input.sig.inputs.iter().for_each(|arg| {
         if let syn::FnArg::Typed(pat) = arg {
             let tokens = pat.ty.to_token_stream();
-            args.push(quote! {
+            router_in.push(quote! {
                 .merge_type::<#tokens>()
             })
         }
     });
 
+    let mut router_out: Vec<TokenStream2> = vec![];
+
+    if let syn::ReturnType::Type(_, ty) = &input.sig.output {
+        router_out.push(quote! {
+            .merge_type::<#ty>()
+        });
+    }
+
     quote! {
         #[meta(disable_auto_json = true)]
-        #[meta(nidrs::openapi::RouterIn(
-            nidrs::openapi::RouterParams::default()
-            #(#args)*
-        ))]
+        #[meta(
+            nidrs::openapi::RouterIn(
+                nidrs::openapi::RouterParams::default()
+                #(#router_in)*,
+            ),
+            nidrs::openapi::RouterOut(
+                nidrs::openapi::RouterParams::default()
+                #(#router_out)*,
+            )
+        )]
         #input
     }
     .into()
