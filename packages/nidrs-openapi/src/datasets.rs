@@ -55,7 +55,7 @@ pub enum ParamType {
 impl std::fmt::Debug for ParamType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Param(arg0) => f.debug_tuple("Parameter").finish(),
+            Self::Param(arg0) => f.debug_tuple("Param").finish(),
             Self::Body(arg0, arg1) => f.debug_tuple("Body").finish(),
         }
     }
