@@ -30,13 +30,14 @@ impl UserController {
         Ok(format!("get one! id: {}", id.id))
     }
 
-    #[meta(nidrs::openapi::RouterOut(
-        nidrs::openapi::RouterParams::default()
-            .merge(nidrs::openapi::RouterParams::default()))
-    )]
+    // #[meta(nidrs::openapi::RouterOut(
+    //     nidrs::openapi::RouterParams::default()
+    //         .merge_type::<AppResult<CreateUserResDto>>())
+    // )]
+    #[meta(disable_auto_json = true)]
     #[api]
     #[post("/")]
-    pub async fn create_user(&self, dto: Json<CreateUserDto>) -> AppResult<CreateUserResDto> {
-        Ok(CreateUserResDto { id: 1, name: dto.name.clone() })
+    pub async fn create_user(&self, dto: Json<CreateUserDto>) -> AppResult<Json<CreateUserResDto>> {
+        Ok(Json(CreateUserResDto { id: 1, name: dto.name.clone() }))
     }
 }

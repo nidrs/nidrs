@@ -174,3 +174,9 @@ impl<T> ToRouterParamsByType for axum::extract::Request<T> {}
 impl<T> ToRouterParamsByType for axum::extract::State<T> {}
 
 impl<T> ToRouterParamsByType for axum::extract::WebSocketUpgrade<T> {}
+
+impl<T: ToRouterParamsByType, E> ToRouterParamsByType for Result<T, E> {
+    fn to_router_parameters() -> RouterParams {
+        T::to_router_parameters()
+    }
+}

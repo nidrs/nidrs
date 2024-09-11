@@ -69,6 +69,7 @@ pub(crate) fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream
     println!("// route_derive {:?}", func.sig.ident.to_string());
     // println!("route_derive {:?}", func.sig.output);
 
+    let disable_auto_json: bool = cmeta::CMeta::get_stack("disable_auto_json").unwrap_or(cmeta::CMetaValue::Bool(false)).into();
     let mut is_tuple = false; // AppResult<(T,T)>
     if let syn::ReturnType::Type(_, ty) = &func.sig.output {
         if let syn::Type::Path(p) = ty.as_ref() {
@@ -164,7 +165,7 @@ pub(crate) fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream
 
     // println!(" route_derive {:?} {:?}", func.sig.ident.to_string(), func_args);
 
-    let handler_tokens = if is_tuple {
+    let handler_tokens = if is_tuple || disable_auto_json {
         quote! {
             r
         }

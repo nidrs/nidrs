@@ -106,6 +106,33 @@ pub enum CMetaValue {
     None,
 }
 
+impl Into<bool> for CMetaValue {
+    fn into(self) -> bool {
+        if let CMetaValue::Bool(b) = self {
+            return b;
+        }
+        return false;
+    }
+}
+
+impl Into<i64> for CMetaValue {
+    fn into(self) -> i64 {
+        if let CMetaValue::Int(i) = self {
+            return i;
+        }
+        return 0;
+    }
+}
+
+impl Into<f64> for CMetaValue {
+    fn into(self) -> f64 {
+        if let CMetaValue::Float(f) = self {
+            return f;
+        }
+        return 0.0;
+    }
+}
+
 impl From<Expr> for CMetaValue {
     fn from(exp: Expr) -> Self {
         match &exp {
