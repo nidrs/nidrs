@@ -5,6 +5,7 @@ use nidrs_extern::{
 pub use utoipa;
 use utoipa::openapi::{
     path::{OperationBuilder, PathItemBuilder},
+    request_body::RequestBodyBuilder,
     Components, Info, OpenApiBuilder, PathsBuilder,
 };
 pub use utoipa_rapidoc;
@@ -23,7 +24,7 @@ pub use nidrs_openapi_macro::*;
 pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
     // OPENAPI IMPLEMENTATION
     let mut paths = PathsBuilder::new().build();
-    let mut components = Components::new();
+    let components = Components::new();
 
     for router in routers.iter() {
         let path = router.meta.get_data::<nidrs_extern::datasets::RouterFullPath>().unwrap().value();
@@ -60,10 +61,14 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
                         datasets::ParamType::Param(p) => {
                             operation = operation.parameter(p.to_owned());
                         }
-                        datasets::ParamType::Body(body, scheme) => {
-                            if let Some(scheme) = scheme {
-                                components.schemas.insert(scheme.0.to_string(), scheme.1.to_owned());
-                                operation = operation.request_body(Some(body.to_owned()));
+                        datasets::ParamType::Body(body) => {
+                            if let Some(schema) = &body.schema {
+                                // components.schemas.insert(schema.0.to_string(), schema.1.to_owned());
+                                operation = operation.request_body(Some(
+                                    RequestBodyBuilder::new()
+                                        .content(body.content_type, utoipa::openapi::ContentBuilder::new().schema(schema.to_owned().1).build())
+                                        .build(),
+                                ));
                             }
                         }
                     }
@@ -71,15 +76,12 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
             }
             if let Some(router_out) = router_out {
                 for param in router_out.value().value() {
-                    if let datasets::ParamType::Body(body, scheme) = param {
-                        if let Some(scheme) = scheme {
-                            components.schemas.insert(scheme.0.to_string(), scheme.1.to_owned());
-                            // operation = operation.request_body(Some(body.to_owned()));
-                            let mut response = utoipa::openapi::ResponseBuilder::new();
-                            for (k, v) in body.to_owned().content.iter() {
-                                response = response.content(k, v.to_owned());
-                            }
-                            operation = operation.responses(utoipa::openapi::ResponsesBuilder::new().response("200", response.build()).build());
+                    if let datasets::ParamType::Body(body) = param {
+                        if let Some(schema) = &body.schema {
+                            let response = utoipa::openapi::ResponseBuilder::new()
+                                .content(body.content_type, utoipa::openapi::ContentBuilder::new().schema(schema.1.to_owned()).build())
+                                .build();
+                            operation = operation.responses(utoipa::openapi::ResponsesBuilder::new().response("200", response).build());
                         } else {
                             operation = operation.response("200", utoipa::openapi::ResponseBuilder::new().build());
                         }

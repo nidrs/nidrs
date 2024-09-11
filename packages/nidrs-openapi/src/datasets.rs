@@ -1,11 +1,7 @@
 use std::collections::HashMap;
 
 use nidrs_extern::{datasets::MetaKey, meta::Meta};
-use utoipa::openapi::{
-    path::Parameter,
-    request_body::{RequestBody, RequestBodyBuilder},
-    ContentBuilder, Ref,
-};
+use utoipa::openapi::path::Parameter;
 
 #[derive(Debug)]
 pub struct RouterIn(pub RouterParams);
@@ -49,16 +45,22 @@ pub enum ParamDtoIn {
 #[derive(Clone)]
 pub enum ParamType {
     Param(Parameter),
-    Body(RequestBody, Option<(&'static str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>)>),
+    Body(BodySchema),
 }
 
 impl std::fmt::Debug for ParamType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Param(arg0) => f.debug_tuple("Param").finish(),
-            Self::Body(arg0, arg1) => f.debug_tuple("Body").finish(),
+            Self::Body(arg0) => f.debug_tuple("Body").finish(),
         }
     }
+}
+
+#[derive(Clone)]
+pub struct BodySchema {
+    pub content_type: &'static str,
+    pub schema: Option<(&'static str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>)>,
 }
 
 #[derive(Clone, Default, Debug)]
@@ -119,11 +121,12 @@ impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Json<T> {
     fn to_router_parameters() -> RouterParams {
         let t = T::to_param_dto(ParamDtoIn::Body);
         if let ParamDto::BodySchema(schema) = t {
-            let ref_scheme = Ref::new(format!("#/components/schemas/{}", schema.0));
-            RouterParams(vec![ParamType::Body(
-                RequestBodyBuilder::new().content("application/json", ContentBuilder::new().schema(ref_scheme).build()).build(),
-                Some(schema),
-            )])
+            // let ref_scheme = Ref::new(format!("#/components/schemas/{}", schema.0));
+            // RouterParams(vec![ParamType::Body(
+            //     RequestBodyBuilder::new().content("application/json", ContentBuilder::new().schema(ref_scheme).build()).build(),
+            //     Some(schema),
+            // )])
+            RouterParams(vec![ParamType::Body(BodySchema { content_type: "application/json", schema: Some(schema) })])
         } else {
             RouterParams(vec![])
         }
@@ -134,11 +137,12 @@ impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Form<T> {
     fn to_router_parameters() -> RouterParams {
         let t = T::to_param_dto(ParamDtoIn::Body);
         if let ParamDto::BodySchema(schema) = t {
-            let ref_scheme = Ref::new(format!("#/components/schemas/{}", schema.0));
-            RouterParams(vec![ParamType::Body(
-                RequestBodyBuilder::new().content("application/x-www-form-urlencoded", ContentBuilder::new().schema(ref_scheme).build()).build(),
-                Some(schema),
-            )])
+            // let ref_scheme: Ref = Ref::new(format!("#/components/schemas/{}", schema.0));
+            // RouterParams(vec![ParamType::Body(
+            //     RequestBodyBuilder::new().content("application/x-www-form-urlencoded", ContentBuilder::new().schema(ref_scheme).build()).build(),
+            //     Some(schema),
+            // )])
+            RouterParams(vec![ParamType::Body(BodySchema { content_type: "application/x-www-form-urlencoded", schema: Some(schema) })])
         } else {
             RouterParams(vec![])
         }
@@ -171,7 +175,7 @@ impl<T> ToRouterParamsByType for axum::extract::WebSocketUpgrade<T> {}
 
 impl ToRouterParamsByType for String {
     fn to_router_parameters() -> RouterParams {
-        RouterParams(vec![ParamType::Body(RequestBodyBuilder::new().content("text", ContentBuilder::new().build()).build(), None)])
+        RouterParams(vec![ParamType::Body(BodySchema { content_type: "text/plain", schema: None })])
     }
 }
 
