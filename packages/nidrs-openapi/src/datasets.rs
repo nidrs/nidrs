@@ -49,7 +49,7 @@ pub enum ParamDtoType {
 #[derive(Clone)]
 pub enum ParamType {
     Parameter(Parameter),
-    RequestBody(RequestBody, (&'static str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>)),
+    RequestBody(RequestBody, Option<(&'static str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>)>),
 }
 
 impl std::fmt::Debug for ParamType {
@@ -128,7 +128,7 @@ impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Json<T> {
             let ref_scheme = Ref::new(format!("#/components/schemas/{}", schema.0));
             RouterParams(vec![ParamType::RequestBody(
                 RequestBodyBuilder::new().content("application/json", ContentBuilder::new().schema(ref_scheme).build()).build(),
-                schema,
+                Some(schema),
             )])
         } else {
             RouterParams(vec![])
@@ -143,7 +143,7 @@ impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Form<T> {
             let ref_scheme = Ref::new(format!("#/components/schemas/{}", schema.0));
             RouterParams(vec![ParamType::RequestBody(
                 RequestBodyBuilder::new().content("application/x-www-form-urlencoded", ContentBuilder::new().schema(ref_scheme).build()).build(),
-                schema,
+                Some(schema),
             )])
         } else {
             RouterParams(vec![])
@@ -174,6 +174,12 @@ impl<T> ToRouterParamsByType for axum::extract::Request<T> {}
 impl<T> ToRouterParamsByType for axum::extract::State<T> {}
 
 impl<T> ToRouterParamsByType for axum::extract::WebSocketUpgrade<T> {}
+
+impl ToRouterParamsByType for String {
+    fn to_router_parameters() -> RouterParams {
+        RouterParams(vec![ParamType::RequestBody(RequestBodyBuilder::new().content("text", ContentBuilder::new().build()).build(), None)])
+    }
+}
 
 impl<T: ToRouterParamsByType, E> ToRouterParamsByType for Result<T, E> {
     fn to_router_parameters() -> RouterParams {

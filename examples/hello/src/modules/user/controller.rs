@@ -24,17 +24,20 @@ impl UserController {
         Ok(self.user_service.extract().get_hello_world2())
     }
 
+    #[meta(nidrs::openapi::RouterOut(
+        nidrs::openapi::RouterParams::default()
+            .merge_type::<String>())
+    )]
     #[api]
     #[get("/:id")]
     pub async fn get_one(&self, id: Path<UserByIdDto>, query: Query<FilterDto>) -> AppResult<String> {
         Ok(format!("get one! id: {}", id.id))
     }
 
-    // #[meta(nidrs::openapi::RouterOut(
-    //     nidrs::openapi::RouterParams::default()
-    //         .merge_type::<AppResult<CreateUserResDto>>())
-    // )]
-    #[meta(disable_auto_json = true)]
+    #[meta(nidrs::openapi::RouterOut(
+        nidrs::openapi::RouterParams::default()
+            .merge_type::<Json<CreateUserResDto>>())
+    )]
     #[api]
     #[post("/")]
     pub async fn create_user(&self, dto: Json<CreateUserDto>) -> AppResult<Json<CreateUserResDto>> {

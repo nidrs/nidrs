@@ -5,7 +5,7 @@ use nidrs_extern::{
 pub use utoipa;
 use utoipa::openapi::{
     path::{OperationBuilder, PathItemBuilder},
-    Components, Info, OpenApiBuilder, PathsBuilder,
+    Components, Info, OpenApiBuilder, PathsBuilder, Response,
 };
 pub use utoipa_rapidoc;
 use utoipa_rapidoc::RapiDoc;
@@ -51,31 +51,44 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
 
         if let Some(path_item) = paths.paths.get_mut(&opath) {
             let mut operation = OperationBuilder::new();
-            let router_params = router.meta.get_data::<datasets::RouterIn>();
-            if let Some(router_params) = router_params {
-                for param in router_params.value().value() {
+            let router_in = router.meta.get_data::<datasets::RouterIn>();
+            let router_out = router.meta.get_data::<datasets::RouterOut>();
+            // println!("router_in: {:?}, router_out: {:?}", router_in, router_out);
+            if let Some(router_in) = router_in {
+                for param in router_in.value().value() {
                     match param {
                         datasets::ParamType::Parameter(p) => {
                             operation = operation.parameter(p.to_owned());
                         }
                         datasets::ParamType::RequestBody(body, scheme) => {
-                            components.schemas.insert(scheme.0.to_string(), scheme.1.to_owned());
-                            operation = operation.request_body(Some(body.to_owned()));
+                            if let Some(scheme) = scheme {
+                                components.schemas.insert(scheme.0.to_string(), scheme.1.to_owned());
+                                operation = operation.request_body(Some(body.to_owned()));
+                            }
                         }
                     }
                 }
             }
-            operation = operation.responses(
-                utoipa::openapi::ResponsesBuilder::new()
-                    .response(
-                        "200",
-                        utoipa::openapi::ResponseBuilder::new()
-                            .content("application/json", utoipa::openapi::ContentBuilder::new().build())
-                            .description("OK")
-                            .build(),
-                    )
-                    .build(),
-            );
+            if let Some(router_out) = router_out {
+                for param in router_out.value().value() {
+                    match param {
+                        datasets::ParamType::RequestBody(body, scheme) => {
+                            if let Some(scheme) = scheme {
+                                components.schemas.insert(scheme.0.to_string(), scheme.1.to_owned());
+                                // operation = operation.request_body(Some(body.to_owned()));
+                                let mut response = utoipa::openapi::ResponseBuilder::new();
+                                for (k, v) in body.to_owned().content.iter() {
+                                    response = response.content(k, v.to_owned());
+                                }
+                                operation = operation.responses(utoipa::openapi::ResponsesBuilder::new().response("200", response.build()).build());
+                            } else {
+                                operation = operation.response("200", utoipa::openapi::ResponseBuilder::new().build());
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
             path_item.operations.insert(path_type.clone(), operation.build());
         }
     }
