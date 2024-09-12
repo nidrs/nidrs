@@ -94,7 +94,9 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
                     }
                 }
             }
-            path_item.operations.insert(path_type.clone(), operation.tag(tag_name).build());
+            path_item
+                .operations
+                .insert(path_type.clone(), operation.tag(tag_name).description(Some(format!("{}::{}", controller_name, router_name))).build());
         }
     }
 
