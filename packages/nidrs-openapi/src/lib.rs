@@ -77,14 +77,14 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
             if let Some(router_out) = router_out {
                 for param in router_out.value().value() {
                     if let datasets::ParamType::Body(body) = param {
+                        let mut content = utoipa::openapi::ContentBuilder::new();
                         if let Some(schema) = &body.schema {
-                            let response = utoipa::openapi::ResponseBuilder::new()
-                                .content(body.content_type, utoipa::openapi::ContentBuilder::new().schema(schema.1.to_owned()).build())
-                                .build();
-                            operation = operation.response("200", response);
+                            content = content.schema(schema.to_owned().1);
                         } else {
-                            operation = operation.response("200", utoipa::openapi::ResponseBuilder::new().build());
+                            content = content.example(Some(serde_json::Value::String("String".to_string())));
                         }
+                        let response = utoipa::openapi::ResponseBuilder::new().content(body.content_type, content.build()).build();
+                        operation = operation.response("200", response);
                     }
                 }
             }
