@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use nidrs_extern::{
     router::{MetaRouter, StateCtx},
     shared::convert_path_to_openapi,
@@ -6,6 +8,7 @@ pub use utoipa;
 use utoipa::openapi::{
     path::{OperationBuilder, PathItemBuilder},
     request_body::RequestBodyBuilder,
+    tag::TagBuilder,
     Components, Info, OpenApiBuilder, PathsBuilder,
 };
 pub use utoipa_rapidoc;
@@ -25,6 +28,7 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
     // OPENAPI IMPLEMENTATION
     let mut paths = PathsBuilder::new().build();
     let components = Components::new();
+    let mut tags = vec![];
 
     for router in routers.iter() {
         let path = router.meta.get_data::<nidrs_extern::datasets::RouterFullPath>().unwrap().value();
@@ -32,6 +36,8 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
         let router_name = router.meta.get_data::<nidrs_extern::datasets::RouterName>().unwrap().value();
         let controller_name = router.meta.get_data::<nidrs_extern::datasets::ServiceName>().unwrap().value();
         // println!("path: {}, method: {}, body: {:?}", path, method, router.meta.get_data::<datasets::RouterIn>());
+        let tag_name = format!("{}", controller_name);
+        tags.push(TagBuilder::new().name(&tag_name).build());
         let path_type = match method.as_str() {
             "post" => utoipa::openapi::PathItemType::Post,
             "put" => utoipa::openapi::PathItemType::Put,
@@ -88,11 +94,11 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
                     }
                 }
             }
-            path_item.operations.insert(path_type.clone(), operation.build());
+            path_item.operations.insert(path_type.clone(), operation.tag(tag_name).build());
         }
     }
 
-    let api = OpenApiBuilder::new().info(Info::new("Nidrs OpenAPI", "v1.0")).paths(paths).components(Some(components)).build();
+    let api = OpenApiBuilder::new().info(Info::new("Nidrs OpenAPI", "v1.0")).paths(paths).components(Some(components)).tags(Some(tags)).build();
 
     axum::Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api.clone()))
