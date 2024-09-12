@@ -81,7 +81,7 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
                             let response = utoipa::openapi::ResponseBuilder::new()
                                 .content(body.content_type, utoipa::openapi::ContentBuilder::new().schema(schema.1.to_owned()).build())
                                 .build();
-                            operation = operation.responses(utoipa::openapi::ResponsesBuilder::new().response("200", response).build());
+                            operation = operation.response("200", response);
                         } else {
                             operation = operation.response("200", utoipa::openapi::ResponseBuilder::new().build());
                         }
