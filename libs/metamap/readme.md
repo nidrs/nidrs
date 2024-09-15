@@ -1,6 +1,6 @@
 <div align="center">
   <h1>📦 Metamap</h1>
-  <p><img src="https://github.com/nidrs/nidrs/blob/main/libs/syn-args/logo.jpeg?raw=true" width="50%" /></p>
+  <p><img src="https://github.com/nidrs/nidrs/blob/main/libs/metamap/logo.jpeg?raw=true" width="50%" /></p>
   <p>
     <img src="https://img.shields.io/crates/v/metamap?style=for-the-badge" />
   </p>
