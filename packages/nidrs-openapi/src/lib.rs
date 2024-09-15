@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use nidrs_extern::{
     router::{MetaRouter, StateCtx},
     shared::convert_path_to_openapi,
@@ -36,7 +34,7 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
         let router_name = router.meta.get_data::<nidrs_extern::datasets::RouterName>().unwrap().value();
         let controller_name = router.meta.get_data::<nidrs_extern::datasets::ServiceName>().unwrap().value();
         // println!("path: {}, method: {}, body: {:?}", path, method, router.meta.get_data::<datasets::RouterIn>());
-        let tag_name = format!("{}", controller_name);
+        let tag_name = controller_name.to_string();
         tags.push(TagBuilder::new().name(&tag_name).build());
         let path_type = match method.as_str() {
             "post" => utoipa::openapi::PathItemType::Post,
