@@ -77,3 +77,4 @@ nidrs-openapi = { path = "packages/nidrs-openapi" }
 nidrs-openapi-macro = { path = "packages/nidrs-openapi-macro" }
 syn-args = { path = "libs/syn-args" }
 syn-args-derive = { path = "libs/syn-args-derive" }
+metamap = { path = "libs/metamap"}
