@@ -5,6 +5,10 @@ use std::{
     fmt::Debug,
 };
 
+/// Represents a Metamap object.
+///
+/// This struct contains a map that associates keys of type `String` with values of type `Box<dyn Any + Send + Sync>`.
+/// It also has an optional field `extend` that holds a boxed `Metamap` object.
 #[derive(Default)]
 pub struct Metamap {
     map: HashMap<String, Box<dyn Any + Send + Sync>>,
