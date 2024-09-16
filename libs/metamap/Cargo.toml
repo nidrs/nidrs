@@ -1,6 +1,6 @@
 [package]
 name = "metamap"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Lydanne <wumacoder@gmail.com>"]
 description = "Metamap is a special `map` data structure for storing arbitrary types, designed to provide a flexible solution for scenarios where the type is uncertain. It allows you to easily store and retrieve various native Rust types as well as custom structs or enums, showcasing excellent flexibility and generalization capabilities."
 keywords = ["nidrs", "metamap", "meta", "map"]

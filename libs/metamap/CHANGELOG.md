@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## metamap-v0.2.1 - 2024-09-16
+#### Bug Fixes
+- **(metamap)** 重命名Debug实现的结构体为Metamap - (73b2a04) - *Lyda*
+#### Refactoring
+- **(metamap)** 使用Metamap替换InnerMeta - (f40264a) - *Lyda*
+
+- - -
+
 ## metamap-v0.2.0 - 2024-09-16
 #### Features
 - **(metamap)** extend ref metamap - (a47cce4) - *Lyda*
