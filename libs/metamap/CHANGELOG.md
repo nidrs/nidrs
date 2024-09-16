@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## metamap-v0.2.0 - 2024-09-16
+#### Features
+- **(metamap)** extend ref metamap - (a47cce4) - *Lyda*
+
+- - -
+
 ## metamap-v0.1.1 - 2024-09-15
 #### Bug Fixes
 - **(metamap)** 添加注释 - (4c907e1) - *Lyda*
