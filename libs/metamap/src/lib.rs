@@ -10,12 +10,12 @@ use std::{
 /// This struct contains a map that associates keys of type `String` with values of type `Box<dyn Any + Send + Sync>`.
 /// It also has an optional field `extend` that holds a boxed `Metamap` object.
 #[derive(Default)]
-pub struct Metamap {
+pub struct Metamap<'a> {
     map: HashMap<String, Box<dyn Any + Send + Sync>>,
-    extend: Option<Box<Metamap>>,
+    extend: Option<&'a Metamap<'a>>,
 }
 
-impl Debug for Metamap {
+impl<'a> Debug for Metamap<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut keys = self.map.keys().collect::<HashSet<&String>>();
         if let Some(p) = &self.extend {
@@ -26,7 +26,7 @@ impl Debug for Metamap {
     }
 }
 
-impl Metamap {
+impl<'a> Metamap<'a> {
     pub fn new() -> Self {
         Metamap { map: HashMap::new(), extend: None }
     }
@@ -121,8 +121,8 @@ impl Metamap {
         self
     }
 
-    pub fn extend(&mut self, meta: Metamap) -> &mut Self {
-        self.extend = Some(Box::new(meta));
+    pub fn extend(&mut self, meta: &'a Metamap) -> &mut Self {
+        self.extend = Some(meta);
         self
     }
 
@@ -320,7 +320,7 @@ mod tests {
         meta2.set("i", vec![vec![2, 3], vec![4, 5]]);
         meta2.set("j", vec![vec!["2", "3"], vec!["4", "5"]]);
 
-        meta1.extend(meta2);
+        meta1.extend(&meta2);
 
         assert_eq!(*meta1.get::<i32>("a").unwrap(), 1);
         assert_eq!(*meta1.get::<&str>("b").unwrap(), "2");
