@@ -36,8 +36,8 @@ metamap = "*"
 
 你可以通过简单的键值对（KV）方式存取不同类型的数据，Metamap 支持整数、字符串、浮点数、向量等常见数据类型。
 
-```rust
-let mut meta = InnerMeta::new();
+```rs
+let mut meta = Metamap::new();
 meta.set("a", 1);
 meta.set("b", "2");
 meta.set("c", 3.0);
@@ -67,7 +67,7 @@ assert_eq!(*meta.get::<Vec<Vec<&str>>>("j").unwrap(), vec![vec!["1", "2"], vec![
 
 Metamap 不仅限于基础类型的存取，也支持复杂自定义类型如结构体和枚举。以下是存储和读取自定义类型的示例：
 
-```rust
+```rs
 #[derive(Debug, PartialEq, Eq)]
 enum TestEnum {
     A,
@@ -82,7 +82,7 @@ struct TestData {
 #[derive(Debug, PartialEq, Eq)]
 struct TupleData(i32, String);
 
-let mut meta = InnerMeta::new();
+let mut meta = Metamap::new();
 meta.set_data(TestEnum::A);
 meta.set_data(TestData { name: "test".to_string() });
 meta.set_data(TupleData(1, "tuple".to_string()));

@@ -36,8 +36,8 @@ metamap = "*"
 
 You can store and retrieve data of different types using a simple key-value (KV) approach. Metamap supports common data types such as integers, strings, floating-point numbers, vectors, and more.
 
-```rust
-let mut meta = InnerMeta::new();
+```rs
+let mut meta = Metamap::new();
 meta.set("a", 1);
 meta.set("b", "2");
 meta.set("c", 3.0);
@@ -67,7 +67,7 @@ assert_eq!(*meta.get::<Vec<Vec<&str>>>("j").unwrap(), vec![vec!["1", "2"], vec![
 
 Metamap is not limited to basic types; it also supports complex custom types such as structs and enums. Here is an example of storing and retrieving custom types:
 
-```rust
+```rs
 #[derive(Debug, PartialEq, Eq)]
 enum TestEnum {
     A,
@@ -82,7 +82,7 @@ struct TestData {
 #[derive(Debug, PartialEq, Eq)]
 struct TupleData(i32, String);
 
-let mut meta = InnerMeta::new();
+let mut meta = Metamap::new();
 meta.set_data(TestEnum::A);
 meta.set_data(TestData { name: "test".to_string() });
 meta.set_data(TupleData(1, "tuple".to_string()));
