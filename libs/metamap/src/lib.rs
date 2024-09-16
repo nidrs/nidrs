@@ -3,30 +3,55 @@ use std::{
     any::{Any, TypeId},
     collections::{HashMap, HashSet},
     fmt::Debug,
+    ops::{Deref, DerefMut},
+    sync::Arc,
 };
+
+#[derive(Debug, Clone)]
+pub struct RefMeta(pub Arc<Metamap>);
+
+impl RefMeta {
+    pub fn new(meta: Metamap) -> Self {
+        RefMeta(Arc::new(meta))
+    }
+}
+
+impl Deref for RefMeta {
+    type Target = Metamap;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for RefMeta {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        Arc::get_mut(&mut self.0).expect("Cannot mutate a shared reference")
+    }
+}
 
 /// Represents a Metamap object.
 ///
 /// This struct contains a map that associates keys of type `String` with values of type `Box<dyn Any + Send + Sync>`.
 /// It also has an optional field `extend` that holds a boxed `Metamap` object.
 #[derive(Default)]
-pub struct Metamap<'a> {
+pub struct Metamap {
     map: HashMap<String, Box<dyn Any + Send + Sync>>,
-    extend: Option<&'a Metamap<'a>>,
+    extend: Option<RefMeta>,
 }
 
-impl<'a> Debug for Metamap<'a> {
+impl Debug for Metamap {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut keys = self.map.keys().collect::<HashSet<&String>>();
         if let Some(p) = &self.extend {
-            let keys2 = p.map.keys().collect::<HashSet<&String>>();
+            let keys2 = p.0.map.keys().collect::<HashSet<&String>>();
             keys.extend(keys2);
         }
         f.debug_struct("Metamap").field("keys", &keys.iter()).finish()
     }
 }
 
-impl<'a> Metamap<'a> {
+impl Metamap {
     pub fn new() -> Self {
         Metamap { map: HashMap::new(), extend: None }
     }
@@ -121,8 +146,8 @@ impl<'a> Metamap<'a> {
         self
     }
 
-    pub fn extend(&mut self, meta: &'a Metamap) -> &mut Self {
-        self.extend = Some(meta);
+    pub fn extend(&mut self, ref_meta: RefMeta) -> &mut Self {
+        self.extend = Some(ref_meta);
         self
     }
 
@@ -320,7 +345,7 @@ mod tests {
         meta2.set("i", vec![vec![2, 3], vec![4, 5]]);
         meta2.set("j", vec![vec!["2", "3"], vec!["4", "5"]]);
 
-        meta1.extend(&meta2);
+        meta1.extend(RefMeta::new(meta2));
 
         assert_eq!(*meta1.get::<i32>("a").unwrap(), 1);
         assert_eq!(*meta1.get::<&str>("b").unwrap(), "2");
