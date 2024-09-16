@@ -22,7 +22,7 @@ impl<'a> Debug for Metamap<'a> {
             let keys2 = p.map.keys().collect::<HashSet<&String>>();
             keys.extend(keys2);
         }
-        f.debug_struct("Meta").field("keys", &keys.iter()).finish()
+        f.debug_struct("Metamap").field("keys", &keys.iter()).finish()
     }
 }
 
