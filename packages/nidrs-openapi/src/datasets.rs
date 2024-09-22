@@ -203,4 +203,4 @@ macro_rules! impl_for_tuples {
     };
 }
 
-impl_for_tuples!(T1, T2);
+impl_for_tuples!(T1, T2, T3, T4, T5);
