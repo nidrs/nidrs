@@ -17,6 +17,8 @@
 //  CMETA: ["ControllerPath"]
 // service_derive "AppController"
 // >>Push: Handler("get_hello_world") -- [Some(String("AppModule"))]
+//  CMETA: ["disable_auto_json"]
+//  CMETA: ["RouterOut", "RouterIn"]
 //  CMETA: ["method_uses"]
 //  CMETA: ["arr"]
 //  CMETA: ["DisableDefaultPrefix"]
@@ -26,7 +28,7 @@
 //  CMETA: ["RouterPath"]
 // route_derive "get_hello_world"
 // route_derive is_tuple true
-// << Pop: Some(Handler("get_hello_world")) ["RouterPath", "handler", "arr", "version", "method_uses", "DisableDefaultPrefix", "RouterName", "RouterMethod", "ServiceType", "role", "ServiceName", "ControllerPath", "auth", "service", "module", "global"]
+// << Pop: Some(Handler("get_hello_world")) ["disable_auto_json", "RouterPath", "RouterName", "RouterMethod", "RouterIn", "handler", "DisableDefaultPrefix", "arr", "RouterOut", "version", "method_uses", "ServiceType", "auth", "ServiceName", "ControllerPath", "service", "role", "module", "global"]
 
 // >>Push: Handler("post_hello_world") -- [Some(String("AppModule"))]
 //  CMETA: ["RouterName"]
@@ -34,22 +36,22 @@
 //  CMETA: ["RouterPath"]
 // route_derive "post_hello_world"
 // route_derive is_tuple false
-// << Pop: Some(Handler("post_hello_world")) ["RouterMethod", "RouterPath", "handler", "RouterName", "ServiceType", "role", "ServiceName", "version", "ControllerPath", "auth", "service", "module", "global"]
+// << Pop: Some(Handler("post_hello_world")) ["RouterMethod", "RouterName", "RouterPath", "handler", "ServiceType", "auth", "ServiceName", "ControllerPath", "service", "version", "role", "module", "global"]
 
-// << Pop: Some(Service("AppController")) ["ServiceType", "role", "ServiceName", "version", "ControllerPath", "auth", "service", "module", "global"]
+// << Pop: Some(Service("AppController")) ["ServiceType", "auth", "ServiceName", "ControllerPath", "service", "version", "role", "module", "global"]
 
 // >>Push: Service("AppInterceptor") -- [Some(String("AppModule"))]
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "AppInterceptor"
-// << Pop: Some(Service("AppInterceptor")) ["service", "ServiceType", "ServiceName", "module", "global"]
+// << Pop: Some(Service("AppInterceptor")) ["service", "ServiceName", "ServiceType", "module", "global"]
 
 // >>Push: Service("AppService") -- [Some(String("AppModule"))]
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "AppService"
 // module "AppModule"
-// << Pop: Some(Service("AppService")) ["ServiceName", "service", "ServiceType", "module", "global"]
+// << Pop: Some(Service("AppService")) ["service", "ServiceType", "ServiceName", "module", "global"]
 
 // << Pop: Some(Module("AppModule")) ["module", "global"]
 
@@ -58,7 +60,7 @@
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "ConfOptions"
-// << Pop: Some(Service("ConfOptions")) ["service", "ServiceName", "ServiceType", "module", "global"]
+// << Pop: Some(Service("ConfOptions")) ["service", "ServiceType", "ServiceName", "module", "global"]
 
 // >>Push: Service("ConfService") -- [Some(String("ConfModule"))]
 //  CMETA: ["ServiceType"]
@@ -66,7 +68,7 @@
 // service_derive "ConfService"
 // module "ConfModule"
 // controller UserController []
-// << Pop: Some(Service("ConfService")) ["ServiceName", "service", "ServiceType", "module", "global"]
+// << Pop: Some(Service("ConfService")) ["ServiceType", "service", "ServiceName", "module", "global"]
 
 // << Pop: Some(Module("ConfModule")) ["module", "global"]
 
@@ -77,40 +79,43 @@
 //  CMETA: ["ControllerPath"]
 // service_derive "UserController"
 // >>Push: Handler("get_all") -- [Some(String("UserModule"))]
-//  CMETA: ["block"]
+//  CMETA: ["disable_auto_json"]
+//  CMETA: ["RouterOut", "RouterIn"]
 //  CMETA: ["RouterName"]
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "get_all"
 // route_derive is_tuple false
-// << Pop: Some(Handler("get_all")) ["RouterPath", "block", "RouterName", "handler", "RouterMethod", "ServiceName", "ControllerPath", "service", "ServiceType", "module", "global"]
+// << Pop: Some(Handler("get_all")) ["RouterIn", "disable_auto_json", "RouterName", "RouterPath", "RouterOut", "handler", "RouterMethod", "service", "ControllerPath", "ServiceName", "ServiceType", "module", "global"]
 
 // >>Push: Handler("get_one") -- [Some(String("UserModule"))]
-//  CMETA: ["block"]
+//  CMETA: ["disable_auto_json"]
+//  CMETA: ["RouterIn", "RouterOut"]
 //  CMETA: ["RouterName"]
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "get_one"
 // route_derive is_tuple false
-// << Pop: Some(Handler("get_one")) ["RouterPath", "block", "handler", "RouterMethod", "RouterName", "ServiceName", "ControllerPath", "service", "ServiceType", "module", "global"]
+// << Pop: Some(Handler("get_one")) ["RouterName", "handler", "RouterMethod", "RouterIn", "RouterPath", "disable_auto_json", "RouterOut", "service", "ControllerPath", "ServiceName", "ServiceType", "module", "global"]
 
 // >>Push: Handler("create_user") -- [Some(String("UserModule"))]
-//  CMETA: ["block"]
+//  CMETA: ["disable_auto_json"]
+//  CMETA: ["RouterIn", "RouterOut"]
 //  CMETA: ["RouterName"]
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "create_user"
 // route_derive is_tuple false
-// << Pop: Some(Handler("create_user")) ["handler", "RouterName", "block", "RouterMethod", "RouterPath", "ServiceName", "ControllerPath", "service", "ServiceType", "module", "global"]
+// << Pop: Some(Handler("create_user")) ["RouterPath", "RouterMethod", "RouterIn", "disable_auto_json", "handler", "RouterOut", "RouterName", "service", "ControllerPath", "ServiceName", "ServiceType", "module", "global"]
 
-// << Pop: Some(Service("UserController")) ["ServiceName", "ControllerPath", "service", "ServiceType", "module", "global"]
+// << Pop: Some(Service("UserController")) ["service", "ControllerPath", "ServiceName", "ServiceType", "module", "global"]
 
 // >>Push: Service("UserService") -- [Some(String("UserModule"))]
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "UserService"
 // module "UserModule"
-// << Pop: Some(Service("UserService")) ["ServiceType", "ServiceName", "service", "module", "global"]
+// << Pop: Some(Service("UserService")) ["ServiceType", "service", "ServiceName", "module", "global"]
 #![feature(prelude_import)]
 #[prelude_import]
 use std::prelude::rust_2021::*;
@@ -127,6 +132,7 @@ mod app {
         use crate::AppResult;
         use nidrs::externs::axum::{extract::Query, response::AppendHeaders, Json};
         use nidrs::macros::{controller, get, meta, post, uses};
+        use nidrs::openapi::api;
         use nidrs::{version, Inject, Meta};
         use std::collections::HashMap;
         pub struct AppController {
@@ -151,12 +157,12 @@ mod app {
             fn __meta() -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
                 meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
-                meta.set("role", "admin");
-                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
-                meta.set("version", "v1");
-                meta.set_data(nidrs::datasets::ControllerPath::from(""));
                 meta.set("auth", "true");
+                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
+                meta.set_data(nidrs::datasets::ControllerPath::from(""));
                 meta.set("service", "AppController");
+                meta.set("version", "v1");
+                meta.set("role", "admin");
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -167,7 +173,7 @@ mod app {
                 &self,
                 meta: Meta,
                 Query(q): Query<HashMap<String, String>>,
-            ) -> AppResult<(AppendHeaders<[(String, String); 2]>, Status)> {
+            ) -> AppResult<(AppendHeaders<[(String, String); 2]>, Json<Status>)> {
                 {
                     ::std::io::_print(format_args!("Query {0:?}\n", q));
                 };
@@ -182,25 +188,32 @@ mod app {
                 };
                 Ok((
                     AppendHeaders([("X-Custom-Header".to_string(), "hello".to_string()), ("X-Custom-Header".to_string(), "world".to_string())]),
-                    Status { db: "ok".to_string(), redis: "ok".to_string() },
+                    Json(Status { db: "ok".to_string(), redis: "ok".to_string() }),
                 ))
             }
             pub fn __meta_get_hello_world(&self) -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
+                meta.set("disable_auto_json", true);
                 meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
-                meta.set("handler", "get_hello_world");
-                meta.set("arr", ["user"]);
-                meta.set("version", "v2");
-                meta.set("method_uses", ["AppInterceptor"]);
-                meta.set_data(nidrs::datasets::DisableDefaultPrefix(false));
                 meta.set_data(nidrs::datasets::RouterName::from("get_hello_world"));
                 meta.set_data(nidrs::datasets::RouterMethod::from("get"));
+                meta.set_data(nidrs::openapi::RouterIn(
+                    nidrs::openapi::RouterParams::default().merge_type::<Meta>().merge_type::<Query<HashMap<String, String>>>(),
+                ));
+                meta.set("handler", "get_hello_world");
+                meta.set_data(nidrs::datasets::DisableDefaultPrefix(false));
+                meta.set("arr", ["user"]);
+                meta.set_data(nidrs::openapi::RouterOut(
+                    nidrs::openapi::RouterParams::default().merge_type::<AppResult<(AppendHeaders<[(String, String); 2]>, Json<Status>)>>(),
+                ));
+                meta.set("version", "v2");
+                meta.set("method_uses", ["AppInterceptor"]);
                 meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
-                meta.set("role", "admin");
+                meta.set("auth", "true");
                 meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
                 meta.set_data(nidrs::datasets::ControllerPath::from(""));
-                meta.set("auth", "true");
                 meta.set("service", "AppController");
+                meta.set("role", "admin");
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -269,16 +282,16 @@ mod app {
             pub fn __meta_post_hello_world(&self) -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
                 meta.set_data(nidrs::datasets::RouterMethod::from("post"));
+                meta.set_data(nidrs::datasets::RouterName::from("post_hello_world"));
                 meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
                 meta.set("handler", "post_hello_world");
-                meta.set_data(nidrs::datasets::RouterName::from("post_hello_world"));
                 meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
-                meta.set("role", "admin");
-                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
-                meta.set("version", "v1");
-                meta.set_data(nidrs::datasets::ControllerPath::from(""));
                 meta.set("auth", "true");
+                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
+                meta.set_data(nidrs::datasets::ControllerPath::from(""));
                 meta.set("service", "AppController");
+                meta.set("version", "v1");
+                meta.set("role", "admin");
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -508,6 +521,59 @@ mod app {
             #[inline]
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 ::core::fmt::Formatter::debug_struct_field2_finish(f, "Status", "db", &self.db, "redis", &&self.redis)
+            }
+        }
+        impl nidrs::valid::validator::Validator for Status {
+            fn valid(&self) -> nidrs::valid::validator::ValidResult {
+                use nidrs::valid::ruleset;
+                use nidrs::valid::ruleset::*;
+                use nidrs::valid::validator::Rule;
+                return Ok(());
+            }
+            fn example(&self) -> Vec<serde_json::Value> {
+                ::alloc::vec::Vec::new()
+            }
+        }
+        impl utoipa::IntoParams for Status {
+            fn into_params(parameter_in_provider: impl Fn() -> Option<utoipa::openapi::path::ParameterIn>) -> Vec<utoipa::openapi::path::Parameter> {
+                [
+                    utoipa::openapi::path::ParameterBuilder::new()
+                        .name("db")
+                        .parameter_in(parameter_in_provider().unwrap_or_default())
+                        .required(utoipa::openapi::Required::True)
+                        .schema(Some(utoipa::openapi::ObjectBuilder::new().schema_type(utoipa::openapi::SchemaType::String)))
+                        .build(),
+                    utoipa::openapi::path::ParameterBuilder::new()
+                        .name("redis")
+                        .parameter_in(parameter_in_provider().unwrap_or_default())
+                        .required(utoipa::openapi::Required::True)
+                        .schema(Some(utoipa::openapi::ObjectBuilder::new().schema_type(utoipa::openapi::SchemaType::String)))
+                        .build(),
+                ]
+                .to_vec()
+            }
+        }
+        impl<'__s> utoipa::ToSchema<'__s> for Status {
+            fn schema() -> (&'__s str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>) {
+                (
+                    "Status",
+                    utoipa::openapi::ObjectBuilder::new()
+                        .property("db", utoipa::openapi::ObjectBuilder::new().schema_type(utoipa::openapi::SchemaType::String))
+                        .required("db")
+                        .property("redis", utoipa::openapi::ObjectBuilder::new().schema_type(utoipa::openapi::SchemaType::String))
+                        .required("redis")
+                        .into(),
+                )
+            }
+        }
+        impl nidrs::openapi::ToParamDto for Status {
+            fn to_param_dto(dto_type: nidrs::openapi::ParamDtoIn) -> nidrs::openapi::ParamDto {
+                use nidrs::openapi::utoipa::IntoParams;
+                use nidrs::openapi::utoipa::ToSchema;
+                match dto_type {
+                    nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
+                    nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema(Self::schema()),
+                }
             }
         }
         impl IntoResponse for Status {
@@ -1170,8 +1236,8 @@ mod app {
             fn __meta() -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
                 meta.set("service", "AppInterceptor");
-                meta.set_data(nidrs::datasets::ServiceType::from("Service"));
                 meta.set_data(nidrs::datasets::ServiceName::from("AppInterceptor"));
+                meta.set_data(nidrs::datasets::ServiceType::from("Service"));
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -1208,9 +1274,9 @@ mod app {
         impl nidrs::ImplMeta for AppService {
             fn __meta() -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
-                meta.set_data(nidrs::datasets::ServiceName::from("AppService"));
                 meta.set("service", "AppService");
                 meta.set_data(nidrs::datasets::ServiceType::from("Service"));
+                meta.set_data(nidrs::datasets::ServiceName::from("AppService"));
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -1311,9 +1377,9 @@ mod app {
     impl nidrs::ImplMeta for AppModule {
         fn __meta() -> nidrs::InnerMeta {
             let mut meta = nidrs::InnerMeta::new();
-            meta.set_data(nidrs::datasets::ServiceName::from("AppService"));
             meta.set("service", "AppService");
             meta.set_data(nidrs::datasets::ServiceType::from("Service"));
+            meta.set_data(nidrs::datasets::ServiceName::from("AppService"));
             meta.set("module", "AppModule");
             meta.set("global", "app");
             meta
@@ -1350,8 +1416,8 @@ mod modules {
                 fn __meta() -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
                     meta.set("service", "ConfOptions");
-                    meta.set_data(nidrs::datasets::ServiceName::from("ConfOptions"));
                     meta.set_data(nidrs::datasets::ServiceType::from("Service"));
+                    meta.set_data(nidrs::datasets::ServiceName::from("ConfOptions"));
                     meta.set("module", "ConfModule");
                     meta.set("global", "app");
                     meta
@@ -1390,9 +1456,9 @@ mod modules {
             impl nidrs::ImplMeta for ConfService {
                 fn __meta() -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
-                    meta.set_data(nidrs::datasets::ServiceName::from("ConfService"));
-                    meta.set("service", "ConfService");
                     meta.set_data(nidrs::datasets::ServiceType::from("Service"));
+                    meta.set("service", "ConfService");
+                    meta.set_data(nidrs::datasets::ServiceName::from("ConfService"));
                     meta.set("module", "ConfModule");
                     meta.set("global", "app");
                     meta
@@ -1479,9 +1545,9 @@ mod modules {
         impl nidrs::ImplMeta for ConfModule {
             fn __meta() -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
-                meta.set_data(nidrs::datasets::ServiceName::from("ConfService"));
-                meta.set("service", "ConfService");
                 meta.set_data(nidrs::datasets::ServiceType::from("Service"));
+                meta.set("service", "ConfService");
+                meta.set_data(nidrs::datasets::ServiceName::from("ConfService"));
                 meta.set("module", "ConfModule");
                 meta.set("global", "app");
                 meta
@@ -1496,7 +1562,7 @@ mod modules {
     pub mod user {
         use nidrs::macros::module;
         pub mod controller {
-            use super::dto::FilterDto;
+            use super::dto::{CreateUserResDto, FilterDto};
             use super::{dto::CreateUserDto, dto::UserByIdDto, service::UserService};
             use nidrs::macros::{controller, get, meta};
             use nidrs::openapi::api;
@@ -1526,9 +1592,9 @@ mod modules {
             impl nidrs::ImplMeta for UserController {
                 fn __meta() -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
-                    meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
-                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
                     meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
+                    meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
                     meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
@@ -1544,16 +1610,16 @@ mod modules {
                 }
                 pub fn __meta_get_all(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
-                    meta.set_data(nidrs::datasets::RouterPath::from("/"));
-                    meta.set_data(nidrs::externs::shared::block({
-                        nidrs::openapi::RouterParams::default().merge_type::<Query<HashMap<String, String>>>()
-                    }));
+                    meta.set_data(nidrs::openapi::RouterIn(nidrs::openapi::RouterParams::default().merge_type::<Query<HashMap<String, String>>>()));
+                    meta.set("disable_auto_json", true);
                     meta.set_data(nidrs::datasets::RouterName::from("get_all"));
+                    meta.set_data(nidrs::datasets::RouterPath::from("/"));
+                    meta.set_data(nidrs::openapi::RouterOut(nidrs::openapi::RouterParams::default().merge_type::<AppResult<String>>()));
                     meta.set("handler", "get_all");
                     meta.set_data(nidrs::datasets::RouterMethod::from("get"));
-                    meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
-                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
                     meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
+                    meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
                     meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
@@ -1590,10 +1656,7 @@ mod modules {
                             &full_path,
                             nidrs::externs::axum::routing::get(|p0| async move {
                                 let r = t_controller.get_all(p0).await;
-                                match r {
-                                    Ok(r) => Json(r).into_response(),
-                                    Err(e) => e.into_response(),
-                                }
+                                r
                             }),
                         )
                         .route_layer(nidrs::externs::axum::Extension(meta.clone()));
@@ -1608,16 +1671,18 @@ mod modules {
                 }
                 pub fn __meta_get_one(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
-                    meta.set_data(nidrs::datasets::RouterPath::from("/:id"));
-                    meta.set_data(nidrs::externs::shared::block({
-                        nidrs::openapi::RouterParams::default().merge_type::<Path<UserByIdDto>>().merge_type::<Query<FilterDto>>()
-                    }));
+                    meta.set_data(nidrs::datasets::RouterName::from("get_one"));
                     meta.set("handler", "get_one");
                     meta.set_data(nidrs::datasets::RouterMethod::from("get"));
-                    meta.set_data(nidrs::datasets::RouterName::from("get_one"));
-                    meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
-                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
+                    meta.set_data(nidrs::openapi::RouterIn(
+                        nidrs::openapi::RouterParams::default().merge_type::<Path<UserByIdDto>>().merge_type::<Query<FilterDto>>(),
+                    ));
+                    meta.set_data(nidrs::datasets::RouterPath::from("/:id"));
+                    meta.set("disable_auto_json", true);
+                    meta.set_data(nidrs::openapi::RouterOut(nidrs::openapi::RouterParams::default().merge_type::<AppResult<String>>()));
                     meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
+                    meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
                     meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
@@ -1654,31 +1719,30 @@ mod modules {
                             &full_path,
                             nidrs::externs::axum::routing::get(|p0, p1| async move {
                                 let r = t_controller.get_one(p0, p1).await;
-                                match r {
-                                    Ok(r) => Json(r).into_response(),
-                                    Err(e) => e.into_response(),
-                                }
+                                r
                             }),
                         )
                         .route_layer(nidrs::externs::axum::Extension(meta.clone()));
                     ctx.routers.push(nidrs::MetaRouter::new(router, meta));
                     ctx
                 }
-                pub async fn create_user(&self, query: Query<FilterDto>, dto: Json<CreateUserDto>) -> AppResult<String> {
-                    Ok(self.user_service.extract().get_hello_world2())
+                pub async fn create_user(&self, dto: Json<CreateUserDto>) -> AppResult<Json<CreateUserResDto>> {
+                    Ok(Json(CreateUserResDto { id: 1, name: dto.name.clone() }))
                 }
                 pub fn __meta_create_user(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
-                    meta.set("handler", "create_user");
-                    meta.set_data(nidrs::datasets::RouterName::from("create_user"));
-                    meta.set_data(nidrs::externs::shared::block({
-                        nidrs::openapi::RouterParams::default().merge_type::<Query<FilterDto>>().merge_type::<Json<CreateUserDto>>()
-                    }));
+                    meta.set_data(nidrs::datasets::RouterPath::from("/"));
                     meta.set_data(nidrs::datasets::RouterMethod::from("post"));
-                    meta.set_data(nidrs::datasets::RouterPath::from("/:id"));
-                    meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
-                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
+                    meta.set_data(nidrs::openapi::RouterIn(nidrs::openapi::RouterParams::default().merge_type::<Json<CreateUserDto>>()));
+                    meta.set("disable_auto_json", true);
+                    meta.set("handler", "create_user");
+                    meta.set_data(nidrs::openapi::RouterOut(
+                        nidrs::openapi::RouterParams::default().merge_type::<AppResult<Json<CreateUserResDto>>>(),
+                    ));
+                    meta.set_data(nidrs::datasets::RouterName::from("create_user"));
                     meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
+                    meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
                     meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
@@ -1713,12 +1777,9 @@ mod modules {
                     let router = nidrs::externs::axum::Router::new()
                         .route(
                             &full_path,
-                            nidrs::externs::axum::routing::post(|p0, p1| async move {
-                                let r = t_controller.create_user(p0, p1).await;
-                                match r {
-                                    Ok(r) => Json(r).into_response(),
-                                    Err(e) => e.into_response(),
-                                }
+                            nidrs::externs::axum::routing::post(|p0| async move {
+                                let r = t_controller.create_user(p0).await;
+                                r
                             }),
                         )
                         .route_layer(nidrs::externs::axum::Extension(meta.clone()));
@@ -2474,6 +2535,247 @@ mod modules {
                     }
                 }
             }
+            pub struct CreateUserResDto {
+                pub id: i32,
+                pub name: String,
+            }
+            #[doc(hidden)]
+            #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+            const _: () = {
+                #[allow(unused_extern_crates, clippy::useless_attribute)]
+                extern crate serde as _serde;
+                #[automatically_derived]
+                impl _serde::Serialize for CreateUserResDto {
+                    fn serialize<__S>(&self, __serializer: __S) -> _serde::__private::Result<__S::Ok, __S::Error>
+                    where
+                        __S: _serde::Serializer,
+                    {
+                        let mut __serde_state = _serde::Serializer::serialize_struct(__serializer, "CreateUserResDto", false as usize + 1 + 1)?;
+                        _serde::ser::SerializeStruct::serialize_field(&mut __serde_state, "id", &self.id)?;
+                        _serde::ser::SerializeStruct::serialize_field(&mut __serde_state, "name", &self.name)?;
+                        _serde::ser::SerializeStruct::end(__serde_state)
+                    }
+                }
+            };
+            #[doc(hidden)]
+            #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+            const _: () = {
+                #[allow(unused_extern_crates, clippy::useless_attribute)]
+                extern crate serde as _serde;
+                #[automatically_derived]
+                impl<'de> _serde::Deserialize<'de> for CreateUserResDto {
+                    fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+                    where
+                        __D: _serde::Deserializer<'de>,
+                    {
+                        #[allow(non_camel_case_types)]
+                        #[doc(hidden)]
+                        enum __Field {
+                            __field0,
+                            __field1,
+                            __ignore,
+                        }
+                        #[doc(hidden)]
+                        struct __FieldVisitor;
+                        impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
+                            type Value = __Field;
+                            fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
+                                _serde::__private::Formatter::write_str(__formatter, "field identifier")
+                            }
+                            fn visit_u64<__E>(self, __value: u64) -> _serde::__private::Result<Self::Value, __E>
+                            where
+                                __E: _serde::de::Error,
+                            {
+                                match __value {
+                                    0u64 => _serde::__private::Ok(__Field::__field0),
+                                    1u64 => _serde::__private::Ok(__Field::__field1),
+                                    _ => _serde::__private::Ok(__Field::__ignore),
+                                }
+                            }
+                            fn visit_str<__E>(self, __value: &str) -> _serde::__private::Result<Self::Value, __E>
+                            where
+                                __E: _serde::de::Error,
+                            {
+                                match __value {
+                                    "id" => _serde::__private::Ok(__Field::__field0),
+                                    "name" => _serde::__private::Ok(__Field::__field1),
+                                    _ => _serde::__private::Ok(__Field::__ignore),
+                                }
+                            }
+                            fn visit_bytes<__E>(self, __value: &[u8]) -> _serde::__private::Result<Self::Value, __E>
+                            where
+                                __E: _serde::de::Error,
+                            {
+                                match __value {
+                                    b"id" => _serde::__private::Ok(__Field::__field0),
+                                    b"name" => _serde::__private::Ok(__Field::__field1),
+                                    _ => _serde::__private::Ok(__Field::__ignore),
+                                }
+                            }
+                        }
+                        impl<'de> _serde::Deserialize<'de> for __Field {
+                            #[inline]
+                            fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+                            where
+                                __D: _serde::Deserializer<'de>,
+                            {
+                                _serde::Deserializer::deserialize_identifier(__deserializer, __FieldVisitor)
+                            }
+                        }
+                        #[doc(hidden)]
+                        struct __Visitor<'de> {
+                            marker: _serde::__private::PhantomData<CreateUserResDto>,
+                            lifetime: _serde::__private::PhantomData<&'de ()>,
+                        }
+                        impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
+                            type Value = CreateUserResDto;
+                            fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
+                                _serde::__private::Formatter::write_str(__formatter, "struct CreateUserResDto")
+                            }
+                            #[inline]
+                            fn visit_seq<__A>(self, mut __seq: __A) -> _serde::__private::Result<Self::Value, __A::Error>
+                            where
+                                __A: _serde::de::SeqAccess<'de>,
+                            {
+                                let __field0 = match _serde::de::SeqAccess::next_element::<i32>(&mut __seq)? {
+                                    _serde::__private::Some(__value) => __value,
+                                    _serde::__private::None => {
+                                        return _serde::__private::Err(_serde::de::Error::invalid_length(
+                                            0usize,
+                                            &"struct CreateUserResDto with 2 elements",
+                                        ));
+                                    }
+                                };
+                                let __field1 = match _serde::de::SeqAccess::next_element::<String>(&mut __seq)? {
+                                    _serde::__private::Some(__value) => __value,
+                                    _serde::__private::None => {
+                                        return _serde::__private::Err(_serde::de::Error::invalid_length(
+                                            1usize,
+                                            &"struct CreateUserResDto with 2 elements",
+                                        ));
+                                    }
+                                };
+                                _serde::__private::Ok(CreateUserResDto { id: __field0, name: __field1 })
+                            }
+                            #[inline]
+                            fn visit_map<__A>(self, mut __map: __A) -> _serde::__private::Result<Self::Value, __A::Error>
+                            where
+                                __A: _serde::de::MapAccess<'de>,
+                            {
+                                let mut __field0: _serde::__private::Option<i32> = _serde::__private::None;
+                                let mut __field1: _serde::__private::Option<String> = _serde::__private::None;
+                                while let _serde::__private::Some(__key) = _serde::de::MapAccess::next_key::<__Field>(&mut __map)? {
+                                    match __key {
+                                        __Field::__field0 => {
+                                            if _serde::__private::Option::is_some(&__field0) {
+                                                return _serde::__private::Err(<__A::Error as _serde::de::Error>::duplicate_field("id"));
+                                            }
+                                            __field0 = _serde::__private::Some(_serde::de::MapAccess::next_value::<i32>(&mut __map)?);
+                                        }
+                                        __Field::__field1 => {
+                                            if _serde::__private::Option::is_some(&__field1) {
+                                                return _serde::__private::Err(<__A::Error as _serde::de::Error>::duplicate_field("name"));
+                                            }
+                                            __field1 = _serde::__private::Some(_serde::de::MapAccess::next_value::<String>(&mut __map)?);
+                                        }
+                                        _ => {
+                                            let _ = _serde::de::MapAccess::next_value::<_serde::de::IgnoredAny>(&mut __map)?;
+                                        }
+                                    }
+                                }
+                                let __field0 = match __field0 {
+                                    _serde::__private::Some(__field0) => __field0,
+                                    _serde::__private::None => _serde::__private::de::missing_field("id")?,
+                                };
+                                let __field1 = match __field1 {
+                                    _serde::__private::Some(__field1) => __field1,
+                                    _serde::__private::None => _serde::__private::de::missing_field("name")?,
+                                };
+                                _serde::__private::Ok(CreateUserResDto { id: __field0, name: __field1 })
+                            }
+                        }
+                        #[doc(hidden)]
+                        const FIELDS: &'static [&'static str] = &["id", "name"];
+                        _serde::Deserializer::deserialize_struct(
+                            __deserializer,
+                            "CreateUserResDto",
+                            FIELDS,
+                            __Visitor { marker: _serde::__private::PhantomData::<CreateUserResDto>, lifetime: _serde::__private::PhantomData },
+                        )
+                    }
+                }
+            };
+            #[automatically_derived]
+            impl ::core::fmt::Debug for CreateUserResDto {
+                #[inline]
+                fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                    ::core::fmt::Formatter::debug_struct_field2_finish(f, "CreateUserResDto", "id", &self.id, "name", &&self.name)
+                }
+            }
+            impl nidrs::valid::validator::Validator for CreateUserResDto {
+                fn valid(&self) -> nidrs::valid::validator::ValidResult {
+                    use nidrs::valid::ruleset;
+                    use nidrs::valid::ruleset::*;
+                    use nidrs::valid::validator::Rule;
+                    return Ok(());
+                }
+                fn example(&self) -> Vec<serde_json::Value> {
+                    ::alloc::vec::Vec::new()
+                }
+            }
+            impl utoipa::IntoParams for CreateUserResDto {
+                fn into_params(
+                    parameter_in_provider: impl Fn() -> Option<utoipa::openapi::path::ParameterIn>,
+                ) -> Vec<utoipa::openapi::path::Parameter> {
+                    [
+                        utoipa::openapi::path::ParameterBuilder::new()
+                            .name("id")
+                            .parameter_in(parameter_in_provider().unwrap_or_default())
+                            .required(utoipa::openapi::Required::True)
+                            .schema(Some(
+                                utoipa::openapi::ObjectBuilder::new()
+                                    .schema_type(utoipa::openapi::SchemaType::Integer)
+                                    .format(Some(utoipa::openapi::SchemaFormat::KnownFormat(utoipa::openapi::KnownFormat::Int32))),
+                            ))
+                            .build(),
+                        utoipa::openapi::path::ParameterBuilder::new()
+                            .name("name")
+                            .parameter_in(parameter_in_provider().unwrap_or_default())
+                            .required(utoipa::openapi::Required::True)
+                            .schema(Some(utoipa::openapi::ObjectBuilder::new().schema_type(utoipa::openapi::SchemaType::String)))
+                            .build(),
+                    ]
+                    .to_vec()
+                }
+            }
+            impl<'__s> utoipa::ToSchema<'__s> for CreateUserResDto {
+                fn schema() -> (&'__s str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>) {
+                    (
+                        "CreateUserResDto",
+                        utoipa::openapi::ObjectBuilder::new()
+                            .property(
+                                "id",
+                                utoipa::openapi::ObjectBuilder::new()
+                                    .schema_type(utoipa::openapi::SchemaType::Integer)
+                                    .format(Some(utoipa::openapi::SchemaFormat::KnownFormat(utoipa::openapi::KnownFormat::Int32))),
+                            )
+                            .required("id")
+                            .property("name", utoipa::openapi::ObjectBuilder::new().schema_type(utoipa::openapi::SchemaType::String))
+                            .required("name")
+                            .into(),
+                    )
+                }
+            }
+            impl nidrs::openapi::ToParamDto for CreateUserResDto {
+                fn to_param_dto(dto_type: nidrs::openapi::ParamDtoIn) -> nidrs::openapi::ParamDto {
+                    use nidrs::openapi::utoipa::IntoParams;
+                    use nidrs::openapi::utoipa::ToSchema;
+                    match dto_type {
+                        nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
+                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema(Self::schema()),
+                    }
+                }
+            }
         }
         pub mod service {
             use crate::app::service::AppService;
@@ -2502,8 +2804,8 @@ mod modules {
                 fn __meta() -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
                     meta.set_data(nidrs::datasets::ServiceType::from("Service"));
-                    meta.set_data(nidrs::datasets::ServiceName::from("UserService"));
                     meta.set("service", "UserService");
+                    meta.set_data(nidrs::datasets::ServiceName::from("UserService"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
@@ -2589,8 +2891,8 @@ mod modules {
             fn __meta() -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
                 meta.set_data(nidrs::datasets::ServiceType::from("Service"));
-                meta.set_data(nidrs::datasets::ServiceName::from("UserService"));
                 meta.set("service", "UserService");
+                meta.set_data(nidrs::datasets::ServiceName::from("UserService"));
                 meta.set("module", "UserModule");
                 meta.set("global", "app");
                 meta

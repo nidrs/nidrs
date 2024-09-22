@@ -1,4 +1,3 @@
-use nidrs::externs::serde::{Deserialize, Serialize};
 use nidrs::externs::serde_json;
 use nidrs::openapi::utoipa;
 use nidrs::{
@@ -11,7 +10,8 @@ use nidrs::{
 };
 use utoipa::ToSchema;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[nidrs::openapi::schema]
+#[dto]
 pub struct Status {
     pub db: String,
     pub redis: String,

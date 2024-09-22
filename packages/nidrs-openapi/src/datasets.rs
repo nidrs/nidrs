@@ -173,6 +173,8 @@ impl<T> ToRouterParamsByType for axum::extract::State<T> {}
 
 impl<T> ToRouterParamsByType for axum::extract::WebSocketUpgrade<T> {}
 
+impl<T> ToRouterParamsByType for axum::response::AppendHeaders<T> {}
+
 impl ToRouterParamsByType for String {
     fn to_router_parameters() -> RouterParams {
         RouterParams(vec![ParamType::Body(BodySchema { content_type: "text/plain", schema: None })])
@@ -182,5 +184,11 @@ impl ToRouterParamsByType for String {
 impl<T: ToRouterParamsByType, E> ToRouterParamsByType for Result<T, E> {
     fn to_router_parameters() -> RouterParams {
         T::to_router_parameters()
+    }
+}
+
+impl<T, B: ToRouterParamsByType, E> ToRouterParamsByType for Result<(T, B), E> {
+    fn to_router_parameters() -> RouterParams {
+        B::to_router_parameters()
     }
 }

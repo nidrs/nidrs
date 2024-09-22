@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use nidrs::externs::axum::{extract::Query, response::AppendHeaders, Json};
 use nidrs::macros::{controller, get, meta, post, uses};
+use nidrs::openapi::api;
 use nidrs::{version, Inject, Meta};
 
 use crate::AppResult;
@@ -21,6 +22,7 @@ pub struct AppController {
 }
 
 impl AppController {
+    #[api]
     #[uses(AppInterceptor)]
     #[meta(arr = ["user"])]
     #[meta(nidrs::datasets::DisableDefaultPrefix(false))]
@@ -30,7 +32,7 @@ impl AppController {
         &self,
         meta: Meta,
         Query(q): Query<HashMap<String, String>>,
-    ) -> AppResult<(AppendHeaders<[(String, String); 2]>, Status)> {
+    ) -> AppResult<(AppendHeaders<[(String, String); 2]>, Json<Status>)> {
         println!("Query {:?}", q);
         println!("Meta Keys {:?}", meta.keys());
         println!("Meta {:?}", meta.get::<&str>("role"));
@@ -39,7 +41,7 @@ impl AppController {
 
         Ok((
             AppendHeaders([("X-Custom-Header".to_string(), "hello".to_string()), ("X-Custom-Header".to_string(), "world".to_string())]),
-            Status { db: "ok".to_string(), redis: "ok".to_string() },
+            Json(Status { db: "ok".to_string(), redis: "ok".to_string() }),
         ))
     }
 
