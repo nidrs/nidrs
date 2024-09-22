@@ -187,8 +187,20 @@ impl<T: ToRouterParamsByType, E> ToRouterParamsByType for Result<T, E> {
     }
 }
 
-impl<T, B: ToRouterParamsByType, E> ToRouterParamsByType for Result<(T, B), E> {
-    fn to_router_parameters() -> RouterParams {
-        B::to_router_parameters()
-    }
+macro_rules! impl_for_tuples {
+    // 递归结束条件：空元组
+    () => {
+        impl ToRouterParamsByType for () {}
+    };
+    // 递归实现：匹配元组类型
+    ($T:ident $(, $Ts:ident)*) => {
+        impl<$T: ToRouterParamsByType, $($Ts: ToRouterParamsByType),*> ToRouterParamsByType for ($T, $($Ts),*) {
+            fn to_router_parameters() -> RouterParams {
+                $T::to_router_parameters().merge_type::<($($Ts),*)>()  // 调用元组成员的 to_router_parameters 方法，然后合并
+            }
+        }
+        impl_for_tuples!($($Ts),*);  // 递归调用宏
+    };
 }
+
+impl_for_tuples!(T1, T2);
