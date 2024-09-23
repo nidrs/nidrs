@@ -19,6 +19,7 @@ pub struct UserByIdDto {
 #[nidrs::openapi::schema]
 #[nidrs::valid::dto]
 pub struct FilterDto {
+    pub id: i32,
     pub filter: String,
     pub page: i32,
     pub size: i32,
