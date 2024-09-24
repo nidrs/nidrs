@@ -1,10 +1,10 @@
 [package]
 name = "nidrs-macro"
-version = "0.0.11"
+version = "0.1.0"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
 description = "a nidrs macro."
 keywords = ["nidrs"]
-categories = ["macros"]
+categories = ["development-tools"]
 publish = true
 edition.workspace = true
 homepage.workspace = true
