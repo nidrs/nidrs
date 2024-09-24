@@ -29,7 +29,6 @@ chrono = { version = "0.4.38", features = ["serde"] }
     services: [AppService],
     exports: [AppService],
 })]
-#[derive(Clone, Debug, Default)]
 pub struct AppModule;
 ```
 

@@ -82,7 +82,6 @@ use super::{dto::{Status}, service::AppService};
 #[meta(role = "admin", auth = "true")]
 #[meta(test = true)]
 #[controller("/app")]
-#[derive(Debug, Default)]
 pub struct AppController {
     app_service: Inject<AppService>,
 }
@@ -125,14 +124,13 @@ use nidrs_macro::{injectable, on_module_init};
 use crate::user::service::UserService;
 
 #[injectable()]
-#[derive(Clone, Debug, Default)]
 pub struct AppService{
     user_service: Inject<UserService>
 }
 
 impl AppService {
     pub fn get_hello_world(&self) -> String {
-        self.user_service.extract().get_hello_world()
+        self.user_service.get_hello_world()
     }
 
     pub fn get_hello_world2(&self) -> String {
@@ -172,7 +170,6 @@ use service::AppService;
     services: [AppService],
     exports: [AppService],
 })]
-#[derive(Clone, Debug, Default)]
 pub struct AppModule;
 
 ```
