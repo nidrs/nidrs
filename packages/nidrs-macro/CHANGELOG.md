@@ -2,6 +2,78 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-macro-v0.1.0 - 2024-09-24
+#### Bug Fixes
+- **(nidrs)** 修复框架 route_method 重复 - (95ed16f) - *WumaCoder*
+- **(nidrs)** 修复重构后的一些错误 - (7b7ec6f) - *Lyda*
+- **(nidrs)** uses macro bug - (5056320) - *Lyda*
+-  meta 支持回调参数 - (048e476) - Lyda
+- 支持自动识别返回类型 - (2723065) - WumaCoder
+- 使用新的路由注册逻辑 - (132a4fa) - WumaCoder
+- 修复 MetaData 的 value 解析失败的问题 - (b504060) - WumaCoder
+#### Documentation
+- update ifdian.net - (29a2255) - Lyda
+#### Features
+- **(nidrs)** 添加 disable_auto_json meta - (72ba90b) - *WumaCoder*
+- **(nidrs)** 支持 openapi 的参数解析 - (48a18d6) - *Lyda*
+- 创建 valid 包 - (8b8afb4) - WumaCoder
+#### Miscellaneous Chores
+- 使用 loose_mode - (c3df074) - WumaCoder
+- Revert "test: 零时提交" - (acfe461) - Lyda
+- 临时测试 - (d29ab9b) - WumaCoder
+- 升级基础库 - (48fb4d6) - WumaCoder
+- 临时提交 - (04f97b4) - WumaCoder
+- 重构 module 解析流程 - (e713538) - WumaCoder
+#### Refactoring
+- **(nidrs)** optimize macro generation - (aea3ad0) - *WumaCoder*
+- **(nidrs)** 修改命名 - (f10cb46) - *Lyda*
+- **(nidrs)** 删除旧的 Meta 实现 - (c037438) - *Lyda*
+- **(nidrs)** 简化抽象实现函数 - (b6b66cb) - *Lyda*
+- **(nidrs)** 使用 syn-args 重构细节 - (4c57b00) - *Lyda*
+- **(nidrs)** 使用通用的解析器去解析 - (01bafd6) - *Lyda*
+- **(nidrs)** 使用 syn-args 重构 version 宏 - (e63d4a4) - *WumaCoder*
+- **(nidrs)** 使用 syn-args 重构 controller - (ab4e73d) - *WumaCoder*
+- **(nidrs-macro)** 使用 UFnStruct 替换 InterceptorArgs - (15bed29) - *Lyda*
+- update localhost - (8b68402) - Lyda
+- 优化对泛型的支持 - (0a5c5fa) - Lyda
+- Remove unused code and update dependencies - (81e145e) - Lyda
+- 移除多余的代码 - (a7acea6) - Lyda
+- 删除无用的类型 - (b7e9217) - WumaCoder
+- 删除无用的类型 - (84ac0e9) - Lyda
+- 使用更通用的 Expr 类型去掉 PathIdent - (1291ef9) - Lyda
+- 使用新的方式重构 module - (3b82fcc) - WumaCoder
+- module args parse use syn-args - (ba8f5ac) - Lyda
+- 使用 syn-args 重构 expand_controller_register - (e7d963e) - WumaCoder
+- 尝试使用 syn-args 重构 nidrs - (eaf4d0f) - Lyda
+- Add ModuleArgs and ModuleSubObj structs for macro arguments parsing - (7908346) - WumaCoder
+- Add macro_args module and implement Formal struct for parsing macro arguments - (035ede0) - WumaCoder
+- Merge utils.rs and lib.rs changes - (92afff9) - Lyda
+- 文件改名 - (df37fa8) - WumaCoder
+- 移除 CURRENT_SERVICE 代码 - (d5bcfb8) - WumaCoder
+- 删除 CURRENT_CONTROLLER 相关代码 - (0d34ecf) - WumaCoder
+- 简化 ROUTES - (33bee54) - WumaCoder
+- 移除无用的代码 - (e3f511d) - WumaCoder
+- 完成拦截器的重构实现 - (76c3b69) - Lyda
+- 重构 meta 相关的细节实现 - (61f8251) - WumaCoder
+- 使用新的路由注册逻辑 - (31432cd) - WumaCoder
+- 初步重构路由注册 - (d9314ee) - Lyda
+- get_stack_data - (07c6295) - WumaCoder
+- 重构路由注册方法 - (e9a9745) - WumaCoder
+- 优化 cmeta.rs 文件中的代码结构 - (e8c3138) - WumaCoder
+- 优化 meta tokens 的 build 过程 - (ba7fdda) - WumaCoder
+- 添加 app_parse 模块以解析应用程序的宏参数 - (840f835) - WumaCoder
+- 优化 meta 的读取流程和堆栈模式 - (442b31e) - WumaCoder
+- 优化 meta 的读取流程和堆栈模式 - (ee2f0ec) - WumaCoder
+- 完成 meta 的读取流程 - (b5d1248) - WumaCoder
+- 设计 meta 堆栈的模式 - (3d19509) - WumaCoder
+- 确定了 meta 在框架中的重要性，并且规范了在编译环境下 meta 的读写规范 - (3a9deb4) - WumaCoder
+- 优化细节 - (c61c52d) - WumaCoder
+- 重新构想模块解析实现 - (6ae2b58) - WumaCoder
+#### Tests
+- 零时提交 - (730c2ed) - WumaCoder
+
+- - -
+
 ## nidrs-macro-v0.0.11 - 2024-06-12
 #### Refactoring
 - **(nidrs-macro)** 修改 metadata 为 datasets - (65f486d) - *WumaCoder*
