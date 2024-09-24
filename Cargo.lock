@@ -1341,7 +1341,7 @@ dependencies = [
 
 [[package]]
 name = "nidrs-valid"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "axum",
  "nidrs-valid-macro",
