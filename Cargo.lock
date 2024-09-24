@@ -1261,7 +1261,7 @@ dependencies = [
 
 [[package]]
 name = "nidrs"
-version = "0.0.11"
+version = "0.1.0"
 dependencies = [
  "nidrs-extern",
  "nidrs-macro",
