@@ -1352,7 +1352,7 @@ dependencies = [
 
 [[package]]
 name = "nidrs-valid-macro"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "nidrs-extern",
  "once_cell",

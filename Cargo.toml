@@ -14,7 +14,7 @@ nidrs-extern = { path = "packages/nidrs-extern", version = "0.1.0" }
 nidrs-macro = { path = "packages/nidrs-macro", version = "0.1.0" }
 nidrs-diesel = { path = "packages/nidrs-diesel", version = "0.0.3" }
 nidrs-valid = { path = "packages/nidrs-valid", version = "0.1.0" }
-nidrs-valid-macro = { path = "packages/nidrs-valid-macro", version = "0.0.1" }
+nidrs-valid-macro = { path = "packages/nidrs-valid-macro", version = "0.1.0" }
 nidrs-openapi = { path = "packages/nidrs-openapi", version = "0.0.1" }
 nidrs-openapi-macro = { path = "packages/nidrs-openapi-macro", version = "0.0.1" }
 syn-args = { path = "libs/syn-args", version = "0.3.0" }

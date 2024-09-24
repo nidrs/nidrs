@@ -1,6 +1,6 @@
 [package]
 name = "nidrs-valid-macro"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
 description = "a valid macro."
 keywords = ["nidrs"]
