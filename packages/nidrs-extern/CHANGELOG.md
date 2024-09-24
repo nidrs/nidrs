@@ -2,6 +2,33 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-extern-v0.1.0 - 2024-09-24
+#### Documentation
+- update ifdian.net - (29a2255) - Lyda
+#### Features
+- **(nidrs)** 支持 openapi 的参数解析 - (48a18d6) - *Lyda*
+- 初步完成 swagger 接入 - (a728aaa) - WumaCoder
+- 创建 valid 包 - (8b8afb4) - WumaCoder
+#### Miscellaneous Chores
+- update tower - (780f017) - WumaCoder
+- add openapi - (66a2aef) - WumaCoder
+- Update valid method in ruleset.rs to use a reference to self - (c01ba7c) - WumaCoder
+#### Refactoring
+- **(nidrs)** 简化 remove_value 方法的实现 - (1e9dd39) - *Lyda*
+- **(nidrs-openapi)** 将 openapi 的代码提炼到对应库中 - (991f97f) - *WumaCoder*
+- update localhost - (8b68402) - Lyda
+- 重构 meta 相关的细节实现 - (61f8251) - WumaCoder
+- meta extend method - (8b9acc9) - WumaCoder
+- 确定了 meta 在框架中的重要性，并且规范了在编译环境下 meta 的读写规范 - (3a9deb4) - WumaCoder
+- 修改名称 - (632e952) - WumaCoder
+- Update meta attribute in user controller - (497e873) - WumaCoder
+- Update router scheme to use body instead of query parameters - (641931c) - WumaCoder
+- 更合适的 Rule 类型 - (0396508) - WumaCoder
+#### Tests
+- 初步实验完成 - (b47d25b) - WumaCoder
+
+- - -
+
 ## nidrs-extern-v0.0.11 - 2024-06-12
 #### Refactoring
 - **(nidrs-extern)** 修改 metadata 为 datasets - (48c552d) - *WumaCoder*
