@@ -1,6 +1,6 @@
 [package]
 name = "nidrs-openapi"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
 description = "Nidrs openapi library."
 keywords = ["nidrs", "axum", "http", "web", "framework"]
@@ -20,7 +20,7 @@ utoipa = "4.2.3"
 utoipa-swagger-ui = { version = "7", features = ["axum"] }
 utoipa-redoc = { version = "4.0.0", features = ["axum"] }
 utoipa-scalar = { version = "0.1.0", features = ["axum"] }
-utoipa-rapidoc = { version = "*", features = ["axum"] }
+utoipa-rapidoc = { version = "4.0.0", features = ["axum"] }
 
 nidrs-openapi-macro = { workspace = true }
 nidrs-extern = { workspace = true }
