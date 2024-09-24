@@ -2,6 +2,19 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-diesel-v0.0.4 - 2024-09-24
+#### Bug Fixes
+- **(nidrs)** 修复重构后的一些错误 - (7b7ec6f) - *Lyda*
+#### Documentation
+- update - (c989f4d) - Lyda
+#### Miscellaneous Chores
+- **(deps)** bump diesel from 2.1.6 to 2.2.3 - (8a3e5c4) - dependabot[bot]
+#### Refactoring
+- 优化对泛型的支持 - (0a5c5fa) - Lyda
+- 重构 meta 相关的细节实现 - (61f8251) - WumaCoder
+
+- - -
+
 ## nidrs-diesel-v0.0.3 - 2024-06-12
 #### Bug Fixes
 - Update package dependencies and versions - (7a4d9e1) - WumaCoder
