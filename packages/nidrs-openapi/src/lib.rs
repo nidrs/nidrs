@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+/// version v0.2.0
 use nidrs_extern::{
     router::{MetaRouter, StateCtx},
     shared::convert_path_to_openapi,
