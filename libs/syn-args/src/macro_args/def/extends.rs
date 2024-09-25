@@ -46,3 +46,21 @@ where
         Err(Error::new(proc_macro2::Span::call_site(), "Expected Transform Into def::Extends"))
     }
 }
+
+impl<T: for<'a> TryFrom<&'a Value, Error = Error>> TryFrom<Arguments> for Extends<T> {
+    type Error = Error;
+
+    fn try_from(value: Arguments) -> Result<Self, Self::Error> {
+        if let Value::Array(v) = value.0 {
+            let mut res = Vec::new();
+            for i in 0..v.len() {
+                if let Some(v) = v.get(i) {
+                    let t: T = T::try_from(v)?;
+                    res.push(t);
+                }
+            }
+            return Ok(Self(res));
+        }
+        Err(Error::new(proc_macro2::Span::call_site(), "Arguments Extends"))
+    }
+}
