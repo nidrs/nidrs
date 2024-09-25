@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-openapi-macro-v0.2.0 - 2024-09-25
+#### Features
+- **(nidrs-openapi-macro)** update nidrs-extern version to "0.2.0" - (b3856cd) - *Lyda*
+
+- - -
+
 ## nidrs-openapi-macro-v0.1.0 - 2024-09-24
 #### Features
 - **(nidrs-openapi)** 支持宏生成的 Response - (e0da8ca) - *Lyda*
