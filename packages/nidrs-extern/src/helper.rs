@@ -5,6 +5,7 @@ use quote::{quote, ToTokens};
 use syn::ItemStruct;
 use syn_args::def;
 
+/// Merge derives from the function with the default derives
 pub fn merge_derives(func: &ItemStruct, default_derives: &[&str]) -> Vec<TokenStream> {
     let mut derives = HashSet::new();
     default_derives.iter().for_each(|derive| {
