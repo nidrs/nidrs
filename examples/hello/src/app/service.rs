@@ -1,7 +1,10 @@
 // use crate::modules::user::service::UserService;
-use nidrs::macros::injectable;
+use nidrs::{macros::injectable, meta};
 
+#[meta(test = true)]
+#[meta(test2 = true)]
 #[injectable()]
+#[derive(Default)]
 pub struct AppService {
     // user_service: Inject<UserService>,
 }

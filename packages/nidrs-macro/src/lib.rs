@@ -15,6 +15,7 @@ use std::{
 };
 
 use cmeta::CMetaValue;
+use impl_expand::merge_derives;
 use nidrs_extern::datasets::ServiceType;
 use once_cell::sync::Lazy;
 use proc_macro::{Ident, Span, TokenStream};
@@ -225,8 +226,10 @@ pub fn module(args: Args, input: TokenStream) -> TokenStream {
     EVENTS.lock().unwrap().clear();
     current_module::end_mod();
 
+    let derives_tokens = merge_derives(&func, &["Default"]);
+
     return TokenStream::from(quote! {
-        #[derive(Default)]
+        #(#derives_tokens)*
         #func
 
         impl #impl_generics nidrs::Module for #ident #ty_generics #where_clause  {

@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use super::DEFAULT_INTERS;
 use super::EVENTS;
 use super::ROUTES;
@@ -510,13 +512,16 @@ pub(crate) fn __service_derive(service_type: ServiceType, input: TokenStream) ->
 
     let inject_tokens: TokenStream2 = gen_service_inject_tokens(service_type, &func);
 
+    let derives_tokens = merge_derives(&func, &["Default"]);
+
     TokenStream::from(quote! {
-        #[derive(Default)]
+        #(#derives_tokens)*
         #func
 
         #inject_tokens
     })
 }
+
 
 pub(crate) fn expand_exports_append(exports: &def::Array<def::Expr>) -> TokenStream2 {
     let exports_names: Vec<String> = exports.iter().map(|export_tokens| export_tokens.to_string()).collect::<Vec<String>>();
@@ -549,4 +554,38 @@ pub(crate) fn merge_defaults_interceptors(interceptors: def::Array<def::Expr>) -
 
     let all_interceptors = defaults_interceptors.merge(interceptors);
     all_interceptors
+}
+
+
+pub(crate) fn merge_derives(func: &ItemStruct, default_derives: &[&str]) -> Vec<TokenStream2> {
+    let mut derives = HashSet::new();
+    default_derives.iter().for_each(|derive| {
+        derives.insert(derive.to_string());
+    });
+    
+    func.attrs.iter().for_each(|attr| {
+        let ident = attr.meta.path();
+        let ident = ident.to_token_stream().to_string();
+        if ident.contains("derive") {
+            let ext_derives = syn::parse2::<syn_args::SynArgs>(attr.meta.to_token_stream()).unwrap().arguments::<syn_args::Arguments>().unwrap();
+            let ext_derives: def::Extends<def::Expr> = ext_derives.try_into().unwrap();
+
+            ext_derives.iter().for_each(|derive| {
+                let t = derive.to_path_name().unwrap();
+                derives.remove(&t);
+            });
+
+        }
+    });
+
+    let derives_tokens = derives
+        .iter()
+        .map(|derive| {
+            let derive_ident = syn::Ident::new(derive, Span::call_site().into());
+            quote! {
+                #[derive(#derive_ident)]
+            }
+        })
+        .collect::<Vec<TokenStream2>>();
+    derives_tokens
 }
