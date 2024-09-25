@@ -12,7 +12,7 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
-nidrs-valid-macro = { workspace = true }
+nidrs-valid-macro = { workspace = true } # version: "0.2.0"
 serde_json = "1.0.115"
 serde = "1.0.197"
 thiserror = "1.0.58"
