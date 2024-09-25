@@ -2,6 +2,20 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-macro-v0.2.0 - 2024-09-25
+#### Documentation
+- update - (c989f4d) - Lyda
+#### Features
+- **(nidrs)** 封装 merge_derives - (9e50d30) - *WumaCoder*
+#### Miscellaneous Chores
+- **(version)** nidrs-macro-v0.1.0 - (a6e7c67) - *Lyda*
+#### Refactoring
+- **(nidrs-extern)** 迁移核心的方法 - (9666d39) - *WumaCoder*
+#### Style
+- code - (5be8aea) - Lyda
+
+- - -
+
 ## nidrs-macro-v0.1.0 - 2024-09-24
 #### Bug Fixes
 - **(nidrs)** 修复框架 route_method 重复 - (95ed16f) - *WumaCoder*
