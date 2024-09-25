@@ -523,7 +523,6 @@ pub(crate) fn __service_derive(service_type: ServiceType, input: TokenStream) ->
     })
 }
 
-
 pub(crate) fn expand_exports_append(exports: &def::Array<def::Expr>) -> TokenStream2 {
     let exports_names: Vec<String> = exports.iter().map(|export_tokens| export_tokens.to_string()).collect::<Vec<String>>();
     let exports_names_tokens = exports_names
@@ -556,4 +555,3 @@ pub(crate) fn merge_defaults_interceptors(interceptors: def::Array<def::Expr>) -
     let all_interceptors = defaults_interceptors.merge(interceptors);
     all_interceptors
 }
-

@@ -28,7 +28,7 @@ pub fn merge_derives(func: &ItemStruct, default_derives: &[&str]) -> Vec<TokenSt
     let derives_tokens = derives
         .iter()
         .map(|derive| {
-            let derive_ident = syn::Ident::new(derive, Span::call_site().into());
+            let derive_ident = syn::Ident::new(derive, Span::call_site());
             quote! {
                 #[derive(#derive_ident)]
             }
