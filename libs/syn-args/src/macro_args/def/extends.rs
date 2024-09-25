@@ -1,5 +1,6 @@
 use super::*;
 
+/// Extends type, used to parse multiple values
 #[derive(Debug, PartialEq, Clone)]
 pub struct Extends<T>(pub Vec<T>);
 
