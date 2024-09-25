@@ -2,6 +2,18 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-extern-v0.2.0 - 2024-09-25
+#### Documentation
+- update - (c989f4d) - Lyda
+#### Features
+- **(nidrs-extern)** add merge_derives helper - (1baffe5) - *Lyda*
+#### Refactoring
+- **(nidrs-extern)** 迁移核心的方法 - (9666d39) - *WumaCoder*
+#### Style
+- code - (5be8aea) - Lyda
+
+- - -
+
 ## nidrs-extern-v0.1.0 - 2024-09-24
 #### Documentation
 - update ifdian.net - (29a2255) - Lyda
