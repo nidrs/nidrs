@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-v0.2.0 - 2024-09-25
+#### Features
+- **(nidrs)** update nidrs_extern and nidrs_macro - (6944a0b) - *Lyda*
+
+- - -
+
 ## nidrs-v0.1.0 - 2024-09-24
 #### Bug Fixes
 - **(nidrs)** 修复缺少接口的问题 - (931d4c9) - *Lyda*
