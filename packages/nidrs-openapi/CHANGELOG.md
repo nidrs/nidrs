@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-openapi-v0.2.0 - 2024-09-25
+#### Features
+- **(nidrs-openapi)** 更新 nidrs-extern 版本至 "0.2.0" - (f794207) - *Lyda*
+#### Miscellaneous Chores
+- **(version)** nidrs-v0.2.0 - (a69044a) - *Lyda*
+- **(version)** nidrs-openapi-v0.1.0 - (8125fbd) - *Lyda*
+
+- - -
+
 ## nidrs-openapi-v0.1.0 - 2024-09-24
 #### Bug Fixes
 - **(nidrs-openapi)** 修复 Parameters 被覆盖问题 - (340333f) - *WumaCoder*
