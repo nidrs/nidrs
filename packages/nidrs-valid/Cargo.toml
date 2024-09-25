@@ -1,6 +1,6 @@
 [package]
 name = "nidrs-valid"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
 description = "Nidrs dto valid library."
 keywords = ["nidrs", "axum", "http", "web", "framework"]

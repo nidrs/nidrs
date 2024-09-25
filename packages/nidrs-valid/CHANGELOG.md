@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-valid-v0.2.0 - 2024-09-25
+#### Features
+- **(nidrs-valid)** 更新 nidrs-valid-macro 版本至 "0.2.0" - (d0d52ae) - *Lyda*
+
+- - -
+
 ## nidrs-valid-v0.1.0 - 2024-09-24
 #### Bug Fixes
 - 修复 example 读取入口 - (ddf96d4) - WumaCoder
