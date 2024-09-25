@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-valid-macro-v0.2.0 - 2024-09-25
+#### Features
+- **(nidrs-valid-macro)** 更新 nidrs-extern 版本至 "0.2.0" - (e832737) - *Lyda*
+#### Miscellaneous Chores
+- Update categories in nidrs-valid-macro Cargo.toml - (85f0465) - Lyda
+
+- - -
+
 ## nidrs-valid-macro-v0.1.0 - 2024-09-24
 #### Bug Fixes
 - 修复 example 读取入口 - (ddf96d4) - WumaCoder
