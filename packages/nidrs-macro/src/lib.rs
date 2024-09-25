@@ -15,8 +15,7 @@ use std::{
 };
 
 use cmeta::CMetaValue;
-use impl_expand::merge_derives;
-use nidrs_extern::datasets::ServiceType;
+use nidrs_extern::{datasets::ServiceType, helper::merge_derives};
 use once_cell::sync::Lazy;
 use proc_macro::{Ident, Span, TokenStream};
 use proc_macro2::TokenStream as TokenStream2;
@@ -226,7 +225,7 @@ pub fn module(args: Args, input: TokenStream) -> TokenStream {
     EVENTS.lock().unwrap().clear();
     current_module::end_mod();
 
-    let derives_tokens = merge_derives(&func, &["Default"]);
+    let derives_tokens: Vec<TokenStream2> = merge_derives(&func, &["Default"]);
 
     return TokenStream::from(quote! {
         #(#derives_tokens)*
