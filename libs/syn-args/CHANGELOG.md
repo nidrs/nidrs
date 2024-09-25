@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## syn-args-v0.4.0 - 2024-09-25
+#### Features
+- **(syn-args)** 为 Extends 类型实现 Arguments - (201bba8) - *Lyda*
+#### Refactoring
+- Update TryFrom implementation for Extends<T> - (feb1f9c) - WumaCoder
+
+- - -
+
 ## syn-args-v0.3.0 - 2024-08-31
 #### Bug Fixes
 - **(syn-args)** 兼容有名字的情况 - (92015b7) - *WumaCoder*
