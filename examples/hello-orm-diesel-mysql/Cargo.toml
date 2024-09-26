@@ -9,14 +9,14 @@ edition.workspace = true
 [dependencies]
 axum = { version = "0.7.4", features = ["ws", "json"] }
 axum-extra = { version = "0.9.2", features = ["typed-header", "typed-routing"] }
-tokio = {version = "1.36.0", features = ["full"]}
+tokio = { version = "1.36.0", features = ["full"] }
 tower = "0.4.13"
 serde_json = "1.0.115"
-serde = {version = "1.0.197", features = ["derive"]}
+serde = { version = "1.0.197", features = ["derive"] }
 thiserror = "1.0.58"
 anyhow = "1.0.82"
 
-nidrs = { workspace = true }
+nidrs = { workspace = true, features = ["tower", "serde", "openapi", "valid"] }
 nidrs-macro = { workspace = true }
 nidrs-extern = { workspace = true }
 

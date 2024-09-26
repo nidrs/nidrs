@@ -14,12 +14,14 @@ license.workspace = true
 [dependencies]
 nidrs-macro = { workspace = true }
 nidrs-extern = { workspace = true }
-nidrs-valid = { workspace = true }
-nidrs-openapi = { workspace = true }
+nidrs-valid = { workspace = true, optional = true }
+nidrs-openapi = { workspace = true, optional = true }
 
 [features]
 default = ["tower", "serde"]
 tower = ["nidrs-extern/tower"]
 serde = ["nidrs-extern/serde"]
+valid = ["nidrs-valid"]
+openapi = ["nidrs-openapi"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

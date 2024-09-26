@@ -176,11 +176,14 @@ impl<T: Module> NidrsFactory<T> {
 
         self.router = self.router.merge(sub_router);
 
-        self.router = self.router.merge(nidrs_openapi::register(&self.module_ctx.routers));
+        #[cfg(feature = "openapi")]
+        {
+            self.router = self.router.merge(nidrs_openapi::register(&self.module_ctx.routers));
 
-        nidrs_macro::log!("Swagger UI on {}", format!("http://127.0.0.1:{}/swagger-ui", self.port));
-        nidrs_macro::log!("Rapidoc UI on {}", format!("http://127.0.0.1:{}/rapidoc", self.port));
-        nidrs_macro::log!("Redoc UI on {}", format!("http://127.0.0.1:{}/redoc", self.port));
+            nidrs_macro::log!("Swagger UI on {}", format!("http://127.0.0.1:{}/swagger-ui", self.port));
+            nidrs_macro::log!("Rapidoc UI on {}", format!("http://127.0.0.1:{}/rapidoc", self.port));
+            nidrs_macro::log!("Redoc UI on {}", format!("http://127.0.0.1:{}/redoc", self.port));
+        }
 
         while let Some(apply) = self.inter_apply.pop() {
             self.router = apply(self.router);

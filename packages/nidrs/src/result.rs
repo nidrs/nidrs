@@ -1,6 +1,8 @@
 use axum::Json;
 use nidrs_extern::axum::{http::StatusCode, response::IntoResponse};
 use nidrs_extern::{colored::Colorize, *};
+
+#[cfg(feature = "valid")]
 use nidrs_valid::validator::ValidError;
 
 pub type AppResult<T = ()> = Result<T, AppError>;
@@ -19,6 +21,7 @@ pub enum AppError {
     #[error(transparent)]
     TokioJoinError(#[from] tokio::task::JoinError),
 
+    #[cfg(feature = "valid")]
     #[error(transparent)]
     ValidError(#[from] ValidError),
 

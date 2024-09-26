@@ -28,6 +28,8 @@ pub use nidrs_extern as externs;
 /// version v0.2.0
 pub use nidrs_macro as macros;
 
+#[cfg(feature = "valid")]
 pub use nidrs_valid as valid;
 
+#[cfg(feature = "openapi")]
 pub use nidrs_openapi as openapi;
