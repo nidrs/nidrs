@@ -10,5 +10,7 @@ pub use core::service::DieselService;
 
 #[cfg(feature = "mysql")]
 pub use core::pool_manager::mysql::MysqlPoolManager;
+#[cfg(feature = "postgres")]
+pub use core::pool_manager::postgres::PostgresPoolManager;
 #[cfg(feature = "sqlite")]
 pub use core::pool_manager::sqlite::SqlitePoolManager;
