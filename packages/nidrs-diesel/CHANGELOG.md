@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-diesel-v0.1.0 - 2024-10-06
+#### Features
+- **(nidrs-diesel)** postgres feature 添加 - (3ee7a9a) - *Lyda*
+
+- - -
+
 ## nidrs-diesel-v0.0.4 - 2024-09-24
 #### Bug Fixes
 - **(nidrs)** 修复重构后的一些错误 - (7b7ec6f) - *Lyda*
