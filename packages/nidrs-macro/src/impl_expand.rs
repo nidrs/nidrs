@@ -534,7 +534,7 @@ pub(crate) fn expand_exports_append(exports: &def::Array<def::Expr>) -> TokenStr
         })
         .collect::<Vec<TokenStream2>>();
     let exports_names_tokens = TokenStream2::from(quote! {
-        Vec::from([#(#exports_names_tokens),*])
+        Vec::<&str>::from([#(#exports_names_tokens),*])
     });
     exports_names_tokens
 }
