@@ -387,6 +387,14 @@ impl ModuleCtx {
         false
     }
 
+    pub fn register_module(&mut self, current_module_name: &str, module: Box<dyn Module>) -> bool {
+        if !self.modules.contains_key(current_module_name) {
+            self.modules.insert(current_module_name.to_string(), module);
+            return true;
+        }
+        false
+    }
+
     pub fn append_exports<T: Into<String>>(&mut self, current_module_name: &str, service_names: Vec<T>, is_global: bool) -> bool {
         let mut success = true;
         for service_name in service_names {
