@@ -2029,6 +2029,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1de1d4f81173b03af4c0cbed3c898f6bff5b870e4a7f5d6f4057d62a7a4b686e"
 
 [[package]]
+name = "single-hello"
+version = "0.1.0"
+dependencies = [
+ "nidrs",
+ "nidrs-extern",
+ "nidrs-macro",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "slab"
 version = "0.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"

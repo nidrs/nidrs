@@ -1,5 +1,6 @@
 [workspace]
 members = ["packages/*", "examples/*", "scripts/*", "libs/*"]
+exclude = ["examples/scapp"]                                  # 添加这一行
 resolver = "2"
 
 [workspace.package]
