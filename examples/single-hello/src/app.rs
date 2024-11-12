@@ -31,7 +31,7 @@ impl Creator for AppController {
 }
 impl Svc for AppController {
     fn register(&self, ctx: &ModuleCtx) {
-        ctx.register_router(self.register_router_hello(ctx));
+        self.register_router_hello(ctx);
     }
 }
 impl Controller for AppController {}
@@ -41,12 +41,12 @@ impl AppController {
         println!("hello");
     }
 
-    pub fn register_router_hello(&self, ctx: &ModuleCtx) -> Router {
+    pub fn register_router_hello(&self, ctx: &ModuleCtx) {
         let that = ctx.get_svc::<Self>();
-        Router::new().route("/hello", axum::routing::get( || async move { 
+        ctx.register_router(Router::new().route("/hello", axum::routing::get( || async move { 
             that.hello();
             "hello"
-        }))
+        })));
     }
 
 }

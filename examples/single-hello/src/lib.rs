@@ -1,4 +1,4 @@
-use std::{cell::OnceCell, collections::HashMap, sync::Arc};
+use std::{any::Any, cell::OnceCell, collections::HashMap, str, sync::Arc};
 
 pub trait Creator {
     fn create() -> Self;
@@ -23,7 +23,7 @@ pub trait Service:Svc {}
 pub struct ModuleCtx {
   modules: HashMap<String, Box<dyn Module>>,
   controllers: HashMap<String, Box<dyn Controller>>,
-  services: HashMap<String, Box<dyn Service>>,
+  services: HashMap<String, Provider<dyn Service>>,
 }
 
 impl ModuleCtx {
@@ -42,14 +42,17 @@ impl ModuleCtx {
   }
 
   pub fn register_controller<T: Controller>(&self, module_name: &str) {
-    // self.controllers.insert(name.to_string(), controller);
-    todo!()
   }
   
-  pub fn get_svc<T: Svc>(&self) -> Provider<T> {
-    // self.services.get(T::name()).unwrap()
-    todo!()
-  }
+  pub fn get_svc<T: Svc + Reflect>(&self) -> Provider<T> {
+    let svc_name = T::reflect().name.as_str();
+    let provider = self.services.get(svc_name).unwrap();
+    Provider {
+        svc: OnceCell::from(provider.svc.get().unwrap().as_ref() as Any
+            .downcast::<T>()
+            .expect("Failed to downcast service"))
+    }
+}
 }
 
 pub struct NidrsFactory<T: Module> {
@@ -76,7 +79,7 @@ impl<T: Module + Creator> Creator for NidrsFactory<T> {
 
 
 #[derive(Clone, Debug)]
-pub struct Provider<T: Svc> {
+pub struct Provider<T: Svc + ?Sized> {
   svc: OnceCell<Arc<T>>,
 }
 
@@ -104,3 +107,19 @@ impl<T: Svc> std::ops::Deref for Provider<T> {
 
 
 pub type Inject<T> = OnceCell<Arc<T>>;
+
+pub struct Meta{
+  value: HashMap<String, Box<dyn Any>>,
+}
+
+pub trait ImplMeta {
+    fn meta(&self) -> Meta;
+}
+
+pub struct ReflectMeta {
+    pub name: String,
+}
+
+trait Reflect {
+    fn reflect() -> ReflectMeta;
+}
