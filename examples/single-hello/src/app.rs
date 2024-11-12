@@ -1,15 +1,52 @@
-use nidrs::{Module, ModuleCtx};
+use single_hello::{Controller, Creator, Module, ModuleCtx, Svc};
+use axum::Router;
 
 pub struct AppModule;
 
-impl Module for AppModule {
-    fn init(self, mut ctx: ModuleCtx) -> ModuleCtx {
-        if !ctx.register_module("AppModule", Box::new(self)) {
-            return ctx;
-        }
+impl Creator for AppModule {
+    fn create() -> Self {
+        Self
+    }
+}
 
+impl Module for AppModule {
+    fn init(&self, ctx: ModuleCtx) -> ModuleCtx {
+        ctx.register_controller::<AppController>("crate::app::AppModule");
         ctx
     }
 
     fn destroy(&self, ctx: &ModuleCtx) {}
+}
+
+
+#[derive(Clone, Debug)]
+pub struct AppController {
+
+}
+
+impl Creator for AppController {
+    fn create() -> Self {
+        Self {}
+    }
+}
+impl Svc for AppController {
+    fn register(&self, ctx: &ModuleCtx) {
+        ctx.register_router(self.register_router_hello(ctx));
+    }
+}
+impl Controller for AppController {}
+
+impl AppController {
+    pub fn hello(&self) {
+        println!("hello");
+    }
+
+    pub fn register_router_hello(&self, ctx: &ModuleCtx) -> Router {
+        let that = ctx.get_svc::<Self>();
+        Router::new().route("/hello", axum::routing::get( || async move { 
+            that.hello();
+            "hello"
+        }))
+    }
+
 }
