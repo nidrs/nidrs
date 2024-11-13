@@ -46,6 +46,25 @@ static ROUTES: Lazy<Mutex<HashMap<String, Vec<String>>>> = Lazy::new(|| Mutex::n
 static EVENTS: Lazy<Mutex<HashMap<String, Vec<(String, String)>>>> = Lazy::new(|| Mutex::new(HashMap::new())); // HashMap<EventName, Vec<(ServiceName,FName)>>
 static DEFAULT_INTERS: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(vec![]));
 
+// #[proc_macro_attribute]
+// pub fn test(args: TokenStream, input: TokenStream) -> TokenStream {
+//     let input2 = TokenStream2::from(input.clone());
+//     let func = parse_macro_input!(input as UFnStruct);
+//     println!("test {}", func.ident.to_string());
+//     return TokenStream::from(quote! {
+//         #[nidrs::macros::__test]
+//         #input2
+//     });
+// }
+
+// #[proc_macro_attribute]
+// pub fn __test(args: TokenStream, input: TokenStream) -> TokenStream {
+//     let input2 = input.clone();
+//     let func = parse_macro_input!(input as UFnStruct);
+//     println!("__test {}", func.ident.to_string());
+//     return input2;
+// }
+
 #[proc_macro_attribute]
 pub fn get(args: TokenStream, input: TokenStream) -> TokenStream {
     return impl_expand::route("get", args, input);
@@ -118,7 +137,7 @@ pub fn controller(args: Args, input: TokenStream) -> TokenStream {
 
     import_path::push_path(&func.ident.to_string());
 
-    println!("// controller {} {:?}", ident.to_string(), func.attrs);
+    println!("controller {} {:?}", ident.to_string(), func.attrs);
     ROUTES.lock().unwrap().insert(ident.to_string(), Vec::new());
 
     TokenStream::from(quote! {
@@ -186,7 +205,7 @@ pub fn __service_derive(args: Args, input: TokenStream) -> TokenStream {
 
 #[syn_args::derive::declare(args::ModuleOptions)]
 #[syn_args::derive::proc_attribute]
-pub fn module(args: Args, input: TokenStream) -> TokenStream {
+pub fn __module_derive(args: Args, input: TokenStream) -> TokenStream {
     // 解析宏的参数
     let module_options: args::ModuleOptions = {
         if let Args::F1(options) = args {
@@ -280,6 +299,19 @@ pub fn module(args: Args, input: TokenStream) -> TokenStream {
             }
         }
     });
+}
+
+
+#[proc_macro_attribute]
+pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
+    let input2 = TokenStream2::from(input);
+    let args2 = TokenStream2::from(args);
+
+    TokenStream::from(quote! {
+        #[nidrs::macros::meta(__ = true)]
+        #[nidrs::macros::__module_derive(#args2)]
+        #input2
+    })
 }
 
 #[proc_macro_attribute]

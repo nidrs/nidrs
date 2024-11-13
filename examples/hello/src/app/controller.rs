@@ -22,6 +22,7 @@ pub struct AppController {
 }
 
 impl AppController {
+    #[nidrs::macros::test]
     #[api]
     #[uses(AppInterceptor)]
     #[meta(arr = ["user"])]
@@ -51,7 +52,7 @@ impl AppController {
     //     println!("Query {:?}", q);
     //     Ok(self.app_service.get_hello_world())
     // }
-
+    #[nidrs::macros::test]
     #[post("/hello")]
     pub async fn post_hello_world(&self, Query(q): Query<HashMap<String, String>>, Json(j): Json<ArgDto>) -> AppResult<String> {
         println!("Query {:?}", q);

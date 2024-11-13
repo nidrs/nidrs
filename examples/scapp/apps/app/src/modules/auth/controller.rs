@@ -13,7 +13,7 @@ pub struct AuthController {
 }
 
 impl AuthController {
-    #[meta(disable_auto_json = true)]
+    #[api]
     #[post("/wxlogin")]
     pub async fn wxlogin(&self, dto: Json<WxLoginDto>) -> AppResult<Json<WxLoginResDto>> {
         // let openid = dto.appid.to_string();
