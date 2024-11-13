@@ -137,7 +137,6 @@ pub fn controller(args: Args, input: TokenStream) -> TokenStream {
 
     import_path::push_path(&func.ident.to_string());
 
-    println!("controller {} {:?}", ident.to_string(), func.attrs);
     ROUTES.lock().unwrap().insert(ident.to_string(), Vec::new());
 
     TokenStream::from(quote! {
@@ -300,7 +299,6 @@ pub fn __module_derive(args: Args, input: TokenStream) -> TokenStream {
         }
     });
 }
-
 
 #[proc_macro_attribute]
 pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
