@@ -258,8 +258,8 @@ pub(crate) fn expand_controller_register(module_name: String, services: &def::Ar
                 .collect::<Vec<TokenStream2>>();
 
             quote! {
-                if ctx.register_controller(#module_name, #controller_name, Box::new(std::sync::Arc::new(controller::#controller_ident::default()))) {
-                    let t_controller = ctx.get_controller::<controller::#controller_ident>(#module_name, #controller_name);
+                if ctx.register_controller(#module_name, #controller_name, Box::new(std::sync::Arc::new(#controller_ident::default()))) {
+                    let t_controller = ctx.get_controller::<#controller_ident>(#module_name, #controller_name);
                     #(#router_path)*
                 }
             }
