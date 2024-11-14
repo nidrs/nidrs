@@ -7,9 +7,25 @@
 #![feature(liballoc_internals)]
 // >>Push: Global("app") -- [None]
 //  CMETA: []
+// >>Push: Service("AppController") -- [None]
+//  CMETA: ["ServiceType"]
+//  CMETA: ["ServiceName"]
+//  CMETA: ["ControllerPath"]
+// service_derive "AppController"
+// >>Push: Handler("get") -- [None]
+//  CMETA: ["RouterName"]
+//  CMETA: ["RouterMethod"]
+//  CMETA: ["RouterPath"]
+// route_derive "get"
+// route_derive is_tuple false
+// << Pop: Some(Handler("get")) ["handler", "RouterPath", "RouterName", "RouterMethod", "ControllerPath", "service", "ServiceName", "ServiceType", "global"]
+
+// << Pop: Some(Service("AppController")) ["ControllerPath", "service", "ServiceName", "ServiceType", "global"]
+
 // >>Push: Service("AppModule") -- [None]
 //  CMETA: ["__"]
-// << Pop: Some(Service("AppModule")) ["__", "service", "global"]
+// module "AppModule"
+// << Pop: Some(Service("AppModule")) ["service", "__", "global"]
 
 #![feature(prelude_import)]
 #[prelude_import]
@@ -18,7 +34,190 @@ use std::prelude::rust_2021::*;
 extern crate std;
 mod app {
     use nidrs::{controller, get, module, AppResult, Module, ModuleCtx};
-    impl AppController {}
+    pub struct AppController {}
+    #[automatically_derived]
+    impl ::core::default::Default for AppController {
+        #[inline]
+        fn default() -> AppController {
+            AppController {}
+        }
+    }
+    impl nidrs::Controller for AppController {}
+    impl nidrs::Service for AppController {
+        fn inject(&self, ctx: nidrs::ModuleCtx, module_name: &str) -> nidrs::ModuleCtx {
+            ctx
+        }
+    }
+    impl nidrs::ImplMeta for AppController {
+        fn __meta() -> nidrs::InnerMeta {
+            let mut meta = nidrs::InnerMeta::new();
+            meta.set_data(nidrs::datasets::ControllerPath::from("/app"));
+            meta.set("service", "AppController");
+            meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
+            meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+            meta.set("global", "app");
+            meta
+        }
+    }
+    impl AppController {
+        pub async fn get(&self) -> AppResult<String> {
+            Ok("hello".to_string())
+        }
+        pub fn __meta_get(&self) -> nidrs::InnerMeta {
+            let mut meta = nidrs::InnerMeta::new();
+            meta.set("handler", "get");
+            meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
+            meta.set_data(nidrs::datasets::RouterName::from("get"));
+            meta.set_data(nidrs::datasets::RouterMethod::from("get"));
+            meta.set_data(nidrs::datasets::ControllerPath::from("/app"));
+            meta.set("service", "AppController");
+            meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
+            meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+            meta.set("global", "app");
+            meta
+        }
+        pub fn __route_get(&self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
+            use nidrs::externs::axum;
+            use axum::response::IntoResponse;
+            use nidrs::externs::axum::{extract::Query, Json};
+            use nidrs::externs::meta::{InnerMeta, Meta};
+            use nidrs::Interceptor;
+            use serde_json::Value;
+            let mut meta = self.__meta_get();
+            let router_info = ctx.get_router_full(&meta);
+            if let Err(e) = router_info {
+                {
+                    ::core::panicking::panic_fmt(
+                        format_args!("[{0}] {1:?}", "__route_get", e),
+                    );
+                };
+            }
+            let full_path = router_info.unwrap();
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "Registering router \'{0} {1}\'.\n",
+                        "get".to_uppercase(),
+                        full_path,
+                    ),
+                );
+            };
+            meta.set_data(nidrs::datasets::RouterFullPath(full_path.clone()));
+            let meta = Meta::new(meta);
+            let module_name = meta.get::<&str>("module").unwrap();
+            let controller_name = meta
+                .get_data::<nidrs::datasets::ServiceName>()
+                .unwrap()
+                .value();
+            let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
+            let router = nidrs::externs::axum::Router::new()
+                .route(
+                    &full_path,
+                    nidrs::externs::axum::routing::get(|| async move {
+                        let r = t_controller.get().await;
+                        match r {
+                            Ok(r) => Json(r).into_response(),
+                            Err(e) => e.into_response(),
+                        }
+                    }),
+                )
+                .route_layer(nidrs::externs::axum::Extension(meta.clone()));
+            ctx.routers.push(nidrs::MetaRouter::new(router, meta));
+            ctx
+        }
+    }
+    pub struct AppModule;
+    #[automatically_derived]
+    impl ::core::default::Default for AppModule {
+        #[inline]
+        fn default() -> AppModule {
+            AppModule {}
+        }
+    }
+    impl nidrs::Module for AppModule {
+        fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
+            use nidrs::{
+                Service, Controller, Interceptor, InterCtx, InterceptorHandler,
+                ModuleCtx, StateCtx, ImplMeta,
+            };
+            if ctx.modules.contains_key("AppModule") {
+                return ctx;
+            }
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!("Registering module {0}.\n", "AppModule"),
+                );
+            };
+            ctx.modules.insert("AppModule".to_string(), Box::new(self));
+            ctx.imports.insert("AppModule".to_string(), Vec::from([]));
+            ctx.append_exports("AppModule", Vec::<&str>::from([]), false);
+            if ctx
+                .register_controller(
+                    "AppModule",
+                    "AppController",
+                    Box::new(std::sync::Arc::new(AppController::default())),
+                )
+            {
+                let t_controller = ctx
+                    .get_controller::<AppController>("AppModule", "AppController");
+                ctx = t_controller.__route_get(ctx);
+            }
+            let t = ctx.get_controller::<AppController>("AppModule", "AppController");
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(
+                    format_args!("Injecting {0}::{1}.\n", "AppModule", "AppController"),
+                );
+            };
+            let ctx = t.inject(ctx, &"AppModule");
+            ctx
+        }
+        fn destroy(&self, ctx: &nidrs::ModuleCtx) {
+            {
+                ::std::io::_print(
+                    format_args!(
+                        "{0} ",
+                        nidrs_extern::colored::Colorize::green("[nidrs]"),
+                    ),
+                );
+            };
+            {
+                ::std::io::_print(format_args!("Destroying module {0}.\n", "AppModule"));
+            };
+        }
+    }
+    impl nidrs::ImplMeta for AppModule {
+        fn __meta() -> nidrs::InnerMeta {
+            let mut meta = nidrs::InnerMeta::new();
+            meta.set("service", "AppModule");
+            meta.set("__", true);
+            meta.set("global", "app");
+            meta
+        }
+    }
 }
 use app::AppModule;
 use std::time::Duration;

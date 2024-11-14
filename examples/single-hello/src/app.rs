@@ -1,9 +1,5 @@
 use nidrs::{controller, get, module, AppResult, Module, ModuleCtx};
 
-#[module({
-    controllers:[AppController]
-})]
-pub struct AppModule;
 
 #[controller("/app")]
 pub struct AppController{}
@@ -14,3 +10,9 @@ impl AppController{
         Ok("hello".to_string())
     }
 }
+
+#[module({
+    controllers:[AppController]
+})]
+pub struct AppModule;
+
