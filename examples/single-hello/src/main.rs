@@ -1,5 +1,7 @@
 mod app;
 
+use app::AppModule;
+
 use std::time::Duration;
 
 use nidrs::externs::axum::{
@@ -16,7 +18,7 @@ pub use nidrs::AppResult;
 
 #[nidrs::main]
 fn main() {
-    let app = nidrs::NidrsFactory::create(app::AppModule);
+    let app = nidrs::NidrsFactory::create(AppModule);
 
     let app = app.default_prefix("/api/{version}");
     let app = app.default_version("v1");

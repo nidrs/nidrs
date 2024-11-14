@@ -137,7 +137,7 @@ pub fn controller(args: Args, input: TokenStream) -> TokenStream {
 
     import_path::push_path(&func.ident.to_string());
 
-    ROUTES.lock().unwrap().insert(ident.to_string(), Vec::new());
+    ROUTES.lock().expect("Failed to lock ROUTES in controller macro").insert(ident.to_string(), Vec::new());
 
     TokenStream::from(quote! {
         #[nidrs::meta(nidrs::datasets::ServiceType::from("Controller"))]
@@ -192,7 +192,7 @@ pub fn interceptor(args: TokenStream, input: TokenStream) -> TokenStream {
 #[syn_args::derive::proc_attribute]
 pub fn __service_derive(args: Args, input: TokenStream) -> TokenStream {
     let service_type = match args {
-        Args::F1(v) => match v.to_path_name().unwrap().as_str() {
+        Args::F1(v) => match v.to_path_name().expect("Failed to get path name in __service_derive").as_str() {
             "Controller" => ServiceType::Controller,
             "Service" => ServiceType::Service,
             "Interceptor" => ServiceType::Interceptor,
@@ -238,9 +238,10 @@ pub fn __module_derive(args: Args, input: TokenStream) -> TokenStream {
     let module_meta_tokens = cmeta::CMeta::build_tokens();
     let is_global_tokens = if let Some(CMetaValue::Bool(bool)) = cmeta::CMeta::get_stack_data("Global") { bool } else { false };
     println!("// module {:?}", ident.to_string());
-
-    ROUTES.lock().unwrap().clear();
-    EVENTS.lock().unwrap().clear();
+    {
+        ROUTES.lock().expect("Failed to lock ROUTES in module derive").clear();
+        EVENTS.lock().expect("Failed to lock EVENTS in module derive").clear();
+    }
     current_module::end_mod();
 
     let derives_tokens: Vec<TokenStream2> = merge_derives(&func, &["Default"]);
@@ -322,7 +323,7 @@ pub fn on_module_init(args: TokenStream, input: TokenStream) -> TokenStream {
     let current_service_name: String =
         cmeta::CMeta::get_stack_data("ServiceName").expect(&format!("[on_module_init] {} ServiceName not found", name));
 
-    EVENTS.lock().unwrap().entry("on_module_init".to_string()).or_insert(vec![]).push((current_service_name, name));
+    EVENTS.lock().expect("Failed to lock EVENTS in on_module_init").entry("on_module_init".to_string()).or_insert(vec![]).push((current_service_name, name));
 
     return TokenStream::from(quote! {
         #func
@@ -339,7 +340,7 @@ pub fn on_module_destroy(args: TokenStream, input: TokenStream) -> TokenStream {
     let current_service_name: String =
         cmeta::CMeta::get_stack_data("ServiceName").expect(&format!("[on_module_init] {} ServiceName not found", name));
 
-    EVENTS.lock().unwrap().entry("on_module_destroy".to_string()).or_insert(vec![]).push((current_service_name, name));
+    EVENTS.lock().expect("Failed to lock EVENTS in on_module_destroy").entry("on_module_destroy".to_string()).or_insert(vec![]).push((current_service_name, name));
 
     return TokenStream::from(quote! {
         #func
@@ -360,7 +361,7 @@ pub fn uses(args: Args, input: TokenStream) -> TokenStream {
     let raw = TokenStream2::from(input.clone());
     let func = parse_macro_input!(input as UFnStruct);
     let used_ident = &func.ident;
-    let inter_names = args.iter().map(|arg| arg.to_path_name().unwrap()).collect::<Vec<String>>();
+    let inter_names = args.iter().map(|arg| arg.to_path_name().expect("Failed to get path name in uses macro")).collect::<Vec<String>>();
 
     let expand = match &func.typ {
         TokenType::Fn(item) => {

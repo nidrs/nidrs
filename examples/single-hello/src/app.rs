@@ -1,15 +1,16 @@
-use nidrs::{Module, ModuleCtx};
+use nidrs::{controller, get, module, AppResult, Module, ModuleCtx};
 
+#[module({
+    controllers:[AppController]
+})]
 pub struct AppModule;
 
-impl Module for AppModule {
-    fn init(self, mut ctx: ModuleCtx) -> ModuleCtx {
-        if !ctx.register_module("AppModule", Box::new(self)) {
-            return ctx;
-        }
+#[controller("/app")]
+pub struct AppController{}
 
-        ctx
+impl AppController{
+    #[get("/hello")]
+    pub async fn get(&self)->AppResult<String>{
+        Ok("hello".to_string())
     }
-
-    fn destroy(&self, ctx: &ModuleCtx) {}
 }
