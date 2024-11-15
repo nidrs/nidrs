@@ -8,7 +8,7 @@ pub struct DieselOptions<D: Into<ConnectionDriver> = ConnectionDriver> {
 impl Service for DieselOptions {}
 
 impl ImplMeta for DieselOptions {
-    fn __meta() -> nidrs::InnerMeta {
+    fn __meta(&self) -> nidrs::InnerMeta {
         let mut meta = nidrs::InnerMeta::new();
         meta.set("service_name", "DieselOptions");
         meta
