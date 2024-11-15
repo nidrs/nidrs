@@ -5,7 +5,7 @@ pub mod dto;
 pub mod exception;
 pub mod service;
 
-use crate::{interceptors::json_interceptor::JsonInterceptor, modules::user::UserModule};
+use crate::modules::user::UserModule;
 use controller::AppController;
 use service::AppService;
 
@@ -22,7 +22,6 @@ use nidrs_diesel::MysqlPoolManager;
         }),
         UserModule,
     ],
-    interceptors: [JsonInterceptor],
     controllers: [AppController],
     services: [AppService],
     exports: [AppService],

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use axum::extract::Query;
-use nidrs::{Inject, InnerMeta};
+use nidrs::{Inject, Meta};
 use nidrs_macro::{controller, get};
 
 use crate::AppResult;
@@ -15,7 +15,7 @@ pub struct AppController {
 
 impl AppController {
     #[get("/hello")]
-    pub async fn get_hello_world(&self, meta: InnerMeta, Query(q): Query<HashMap<String, String>>) -> AppResult<String> {
+    pub async fn get_hello_world(&self, meta: Meta, Query(q): Query<HashMap<String, String>>) -> AppResult<String> {
         println!("Query {:?}", q);
         println!("Meta {:?}", meta.get::<&str>("role"));
 

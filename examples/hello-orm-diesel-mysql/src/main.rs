@@ -1,9 +1,7 @@
 mod app;
-mod interceptors;
 mod models;
 mod modules;
 mod shared;
-// mod test;
 
 pub use nidrs::AppError;
 pub use nidrs::AppResult;
