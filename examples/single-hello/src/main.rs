@@ -1,4 +1,5 @@
 mod app;
+mod user;
 
 use app::AppModule;
 
