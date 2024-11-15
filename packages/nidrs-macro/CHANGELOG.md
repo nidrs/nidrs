@@ -2,6 +2,18 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-macro-v0.2.1 - 2024-11-15
+#### Bug Fixes
+- **(nidrs)** 修复空 exports 选项引发的错误 - (25b26d6) - *WumaCoder*
+- **(nidrs-macro)** adapt impl meta - (04e316e) - *WumaCoder*
+- **(nidrs-macro)** 修复对文件系统的依赖 - (57f8ba7) - *WumaCoder*
+#### Miscellaneous Chores
+- 优化错误提示 - (3c92988) - WumaCoder
+- 移除无用代码 - (1522045) - Lyda
+- commit - (fa7c6c0) - WumaCoder
+
+- - -
+
 ## nidrs-macro-v0.2.0 - 2024-09-25
 #### Documentation
 - update - (c989f4d) - Lyda
