@@ -18,14 +18,14 @@
 //  CMETA: ["RouterPath"]
 // route_derive "get"
 // route_derive is_tuple false
-// << Pop: Some(Handler("get")) ["handler", "RouterPath", "RouterName", "RouterMethod", "ControllerPath", "service", "ServiceName", "ServiceType", "global"]
+// << Pop: Some(Handler("get")) ["RouterName", "handler", "RouterMethod", "RouterPath", "ServiceType", "service", "ServiceName", "ControllerPath", "global"]
 
-// << Pop: Some(Service("AppController")) ["ControllerPath", "service", "ServiceName", "ServiceType", "global"]
+// << Pop: Some(Service("AppController")) ["ServiceType", "service", "ServiceName", "ControllerPath", "global"]
 
 // >>Push: Service("AppModule") -- [None]
 //  CMETA: ["__"]
 // module "AppModule"
-// << Pop: Some(Service("AppModule")) ["service", "__", "global"]
+// << Pop: Some(Service("AppModule")) ["__", "service", "global"]
 
 #![feature(prelude_import)]
 #[prelude_import]
@@ -49,12 +49,12 @@ mod app {
         }
     }
     impl nidrs::ImplMeta for AppController {
-        fn __meta() -> nidrs::InnerMeta {
+        fn __meta(&self) -> nidrs::InnerMeta {
             let mut meta = nidrs::InnerMeta::new();
-            meta.set_data(nidrs::datasets::ControllerPath::from("/app"));
+            meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
             meta.set("service", "AppController");
             meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
-            meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+            meta.set_data(nidrs::datasets::ControllerPath::from("/app"));
             meta.set("global", "app");
             meta
         }
@@ -65,18 +65,22 @@ mod app {
         }
         pub fn __meta_get(&self) -> nidrs::InnerMeta {
             let mut meta = nidrs::InnerMeta::new();
-            meta.set("handler", "get");
-            meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
             meta.set_data(nidrs::datasets::RouterName::from("get"));
+            meta.set("handler", "get");
             meta.set_data(nidrs::datasets::RouterMethod::from("get"));
-            meta.set_data(nidrs::datasets::ControllerPath::from("/app"));
+            meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
+            meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
             meta.set("service", "AppController");
             meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
-            meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+            meta.set_data(nidrs::datasets::ControllerPath::from("/app"));
             meta.set("global", "app");
             meta
         }
-        pub fn __route_get(&self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
+        pub fn __route_get(
+            &self,
+            mut ctx: nidrs::ModuleCtx,
+            module: &str,
+        ) -> nidrs::ModuleCtx {
             use nidrs::externs::axum;
             use axum::response::IntoResponse;
             use nidrs::externs::axum::{extract::Query, Json};
@@ -112,7 +116,7 @@ mod app {
             };
             meta.set_data(nidrs::datasets::RouterFullPath(full_path.clone()));
             let meta = Meta::new(meta);
-            let module_name = meta.get::<&str>("module").unwrap();
+            let module_name = module;
             let controller_name = meta
                 .get_data::<nidrs::datasets::ServiceName>()
                 .unwrap()
@@ -176,7 +180,7 @@ mod app {
             {
                 let t_controller = ctx
                     .get_controller::<AppController>("AppModule", "AppController");
-                ctx = t_controller.__route_get(ctx);
+                ctx = t_controller.__route_get(ctx, "AppModule");
             }
             let t = ctx.get_controller::<AppController>("AppModule", "AppController");
             {
@@ -210,10 +214,10 @@ mod app {
         }
     }
     impl nidrs::ImplMeta for AppModule {
-        fn __meta() -> nidrs::InnerMeta {
+        fn __meta(&self) -> nidrs::InnerMeta {
             let mut meta = nidrs::InnerMeta::new();
-            meta.set("service", "AppModule");
             meta.set("__", true);
+            meta.set("service", "AppModule");
             meta.set("global", "app");
             meta
         }
