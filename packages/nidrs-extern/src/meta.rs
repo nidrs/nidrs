@@ -207,16 +207,16 @@ pub fn type_key<T: 'static>() -> String {
     format!("{:?}", TypeId::of::<T>())
 }
 
-pub trait ImplMeta {
-    fn __meta() -> InnerMeta;
+pub trait ImplMeta: Default {
+    fn __meta(&self) -> InnerMeta;
 }
 
 pub fn get_meta<T: ImplMeta>(_t: Arc<T>) -> InnerMeta {
-    T::__meta()
+    _t.__meta()
 }
 
 pub fn get_meta_by_type<T: ImplMeta>() -> InnerMeta {
-    T::__meta()
+    T::default().__meta()
 }
 
 #[cfg(test)]
