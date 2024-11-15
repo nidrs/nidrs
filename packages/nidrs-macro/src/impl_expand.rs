@@ -80,8 +80,7 @@ pub(crate) fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream
                 // println!("route_derive {:#?}", segment);
                 if segment.ident.to_string() == "AppResult" {
                     if let syn::PathArguments::AngleBracketed(args) = &segment.arguments {
-                        if let syn::GenericArgument::Type(ty) = args.args.first()
-                            .expect("Failed to get first argument in route_derive") {
+                        if let syn::GenericArgument::Type(ty) = args.args.first().expect("Failed to get first argument in route_derive") {
                             if let syn::Type::Tuple(_) = ty {
                                 is_tuple = true;
                             }
@@ -243,7 +242,8 @@ pub(crate) fn expand_controller_register(module_name: String, services: &def::Ar
         .map(|controller_token| {
             let controller_name = controller_token.to_string();
             let binding = ROUTES.lock().expect("Failed to lock ROUTES in expand_controller_register");
-            let controller: &Vec<String> = binding.get(&controller_name).expect(&format!("Failed to get controller {} in expand_controller_register", controller_name));
+            let controller: &Vec<String> =
+                binding.get(&controller_name).expect(&format!("Failed to get controller {} in expand_controller_register", controller_name));
             let controller_ident = syn::Ident::new(&controller_name, Span::call_site().into());
             let router_path = controller
                 .iter()
@@ -412,14 +412,12 @@ pub(crate) fn gen_service_inject_tokens(service_type: ServiceType, func: &ItemSt
             .named
             .iter()
             .map(|field| {
-                let field_ident = field.ident.as_ref()
-                    .expect("Failed to get field identifier in gen_service_inject_tokens");
+                let field_ident = field.ident.as_ref().expect("Failed to get field identifier in gen_service_inject_tokens");
                 let field_type = &field.ty;
 
                 if let Type::Path(type_path) = field_type {
-                    let type_ident = type_path.path.segments.first()
-                        .expect("Failed to get type identifier in gen_service_inject_tokens")
-                        .ident.to_string();
+                    let type_ident =
+                        type_path.path.segments.first().expect("Failed to get type identifier in gen_service_inject_tokens").ident.to_string();
                     if type_ident == "Inject" {
                         let type_args = type_path.path.segments.first().unwrap().arguments.to_owned();
                         if let syn::PathArguments::AngleBracketed(args) = type_args {

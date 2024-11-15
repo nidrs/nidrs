@@ -1,13 +1,12 @@
-use nidrs::{controller, get, injectable, module, AppResult, Module, ModuleCtx};
-
+use nidrs::{injectable, module};
 
 #[injectable]
-pub struct UserService{}
+pub struct UserService {}
 
 impl UserService {
-  pub async fn get_user(&self)->String{
-    return "call get_user".to_string();
-  }
+    pub async fn get_user(&self) -> String {
+        "call get_user".to_string()
+    }
 }
 
 #[module({
@@ -15,4 +14,3 @@ impl UserService {
   exports: [UserService]
 })]
 pub struct UserModule;
-

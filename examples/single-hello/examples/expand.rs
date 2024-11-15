@@ -26,7 +26,6 @@
 //  CMETA: ["__"]
 // module "AppModule"
 // << Pop: Some(Service("AppModule")) ["__", "service", "global"]
-
 #![feature(prelude_import)]
 #[prelude_import]
 use std::prelude::rust_2021::*;
@@ -76,13 +75,9 @@ mod app {
             meta.set("global", "app");
             meta
         }
-        pub fn __route_get(
-            &self,
-            mut ctx: nidrs::ModuleCtx,
-            module: &str,
-        ) -> nidrs::ModuleCtx {
-            use nidrs::externs::axum;
+        pub fn __route_get(&self, mut ctx: nidrs::ModuleCtx, module: &str) -> nidrs::ModuleCtx {
             use axum::response::IntoResponse;
+            use nidrs::externs::axum;
             use nidrs::externs::axum::{extract::Query, Json};
             use nidrs::externs::meta::{InnerMeta, Meta};
             use nidrs::Interceptor;
@@ -91,36 +86,20 @@ mod app {
             let router_info = ctx.get_router_full(&meta);
             if let Err(e) = router_info {
                 {
-                    ::core::panicking::panic_fmt(
-                        format_args!("[{0}] {1:?}", "__route_get", e),
-                    );
+                    ::core::panicking::panic_fmt(format_args!("[{0}] {1:?}", "__route_get", e));
                 };
             }
             let full_path = router_info.unwrap();
             {
-                ::std::io::_print(
-                    format_args!(
-                        "{0} ",
-                        nidrs_extern::colored::Colorize::green("[nidrs]"),
-                    ),
-                );
+                ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
             };
             {
-                ::std::io::_print(
-                    format_args!(
-                        "Registering router \'{0} {1}\'.\n",
-                        "get".to_uppercase(),
-                        full_path,
-                    ),
-                );
+                ::std::io::_print(format_args!("Registering router \'{0} {1}\'.\n", "get".to_uppercase(), full_path,));
             };
             meta.set_data(nidrs::datasets::RouterFullPath(full_path.clone()));
             let meta = Meta::new(meta);
             let module_name = module;
-            let controller_name = meta
-                .get_data::<nidrs::datasets::ServiceName>()
-                .unwrap()
-                .value();
+            let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
             let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
             let router = nidrs::externs::axum::Router::new()
                 .route(
@@ -148,65 +127,36 @@ mod app {
     }
     impl nidrs::Module for AppModule {
         fn init(self, mut ctx: nidrs::ModuleCtx) -> nidrs::ModuleCtx {
-            use nidrs::{
-                Service, Controller, Interceptor, InterCtx, InterceptorHandler,
-                ModuleCtx, StateCtx, ImplMeta,
-            };
+            use nidrs::{Controller, ImplMeta, InterCtx, Interceptor, InterceptorHandler, ModuleCtx, Service, StateCtx};
             if ctx.modules.contains_key("AppModule") {
                 return ctx;
             }
             {
-                ::std::io::_print(
-                    format_args!(
-                        "{0} ",
-                        nidrs_extern::colored::Colorize::green("[nidrs]"),
-                    ),
-                );
+                ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
             };
             {
-                ::std::io::_print(
-                    format_args!("Registering module {0}.\n", "AppModule"),
-                );
+                ::std::io::_print(format_args!("Registering module {0}.\n", "AppModule"));
             };
             ctx.modules.insert("AppModule".to_string(), Box::new(self));
             ctx.imports.insert("AppModule".to_string(), Vec::from([]));
             ctx.append_exports("AppModule", Vec::<&str>::from([]), false);
-            if ctx
-                .register_controller(
-                    "AppModule",
-                    "AppController",
-                    Box::new(std::sync::Arc::new(AppController::default())),
-                )
-            {
-                let t_controller = ctx
-                    .get_controller::<AppController>("AppModule", "AppController");
+            if ctx.register_controller("AppModule", "AppController", Box::new(std::sync::Arc::new(AppController::default()))) {
+                let t_controller = ctx.get_controller::<AppController>("AppModule", "AppController");
                 ctx = t_controller.__route_get(ctx, "AppModule");
             }
             let t = ctx.get_controller::<AppController>("AppModule", "AppController");
             {
-                ::std::io::_print(
-                    format_args!(
-                        "{0} ",
-                        nidrs_extern::colored::Colorize::green("[nidrs]"),
-                    ),
-                );
+                ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
             };
             {
-                ::std::io::_print(
-                    format_args!("Injecting {0}::{1}.\n", "AppModule", "AppController"),
-                );
+                ::std::io::_print(format_args!("Injecting {0}::{1}.\n", "AppModule", "AppController"));
             };
             let ctx = t.inject(ctx, &"AppModule");
             ctx
         }
         fn destroy(&self, ctx: &nidrs::ModuleCtx) {
             {
-                ::std::io::_print(
-                    format_args!(
-                        "{0} ",
-                        nidrs_extern::colored::Colorize::green("[nidrs]"),
-                    ),
-                );
+                ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
             };
             {
                 ::std::io::_print(format_args!("Destroying module {0}.\n", "AppModule"));
@@ -224,42 +174,40 @@ mod app {
     }
 }
 use app::AppModule;
-use std::time::Duration;
 use nidrs::externs::axum::{
-    error_handling::HandleErrorLayer, extract::Request, http::StatusCode,
+    error_handling::HandleErrorLayer,
+    extract::Request,
+    http::StatusCode,
     middleware::{self, Next},
-    response::Response, BoxError,
+    response::Response,
+    BoxError,
 };
 use nidrs::externs::tower::timeout::TimeoutLayer;
 pub use nidrs::AppError;
 pub use nidrs::AppResult;
+use std::time::Duration;
 fn main() {
     let app = nidrs::NidrsFactory::create(AppModule);
     let app = app.default_prefix("/api/{version}");
     let app = app.default_version("v1");
-    let app = app
-        .default_layer(
-            nidrs::externs::tower::ServiceBuilder::new()
-                .layer(
-                    HandleErrorLayer::new(|error: BoxError| async move {
-                        if error.is::<nidrs::externs::tower::timeout::error::Elapsed>() {
-                            Ok(StatusCode::REQUEST_TIMEOUT)
-                        } else {
-                            Err((
-                                StatusCode::INTERNAL_SERVER_ERROR,
-                                ::alloc::__export::must_use({
-                                    let res = ::alloc::fmt::format(
-                                        format_args!("Unhandled internal error: {0}", error),
-                                    );
-                                    res
-                                }),
-                            ))
-                        }
-                    }),
-                )
-                .layer(TimeoutLayer::new(Duration::from_secs(5)))
-                .layer(middleware::from_fn(auth)),
-        );
+    let app = app.default_layer(
+        nidrs::externs::tower::ServiceBuilder::new()
+            .layer(HandleErrorLayer::new(|error: BoxError| async move {
+                if error.is::<nidrs::externs::tower::timeout::error::Elapsed>() {
+                    Ok(StatusCode::REQUEST_TIMEOUT)
+                } else {
+                    Err((
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        ::alloc::__export::must_use({
+                            let res = ::alloc::fmt::format(format_args!("Unhandled internal error: {0}", error));
+                            res
+                        }),
+                    ))
+                }
+            }))
+            .layer(TimeoutLayer::new(Duration::from_secs(5)))
+            .layer(middleware::from_fn(auth)),
+    );
     let app = app.listen(3000);
     app.block();
 }
@@ -274,35 +222,21 @@ struct CurrentUser {
 impl ::core::clone::Clone for CurrentUser {
     #[inline]
     fn clone(&self) -> CurrentUser {
-        CurrentUser {
-            id: ::core::clone::Clone::clone(&self.id),
-            username: ::core::clone::Clone::clone(&self.username),
-        }
+        CurrentUser { id: ::core::clone::Clone::clone(&self.id), username: ::core::clone::Clone::clone(&self.username) }
     }
 }
 #[automatically_derived]
 impl ::core::fmt::Debug for CurrentUser {
     #[inline]
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        ::core::fmt::Formatter::debug_struct_field2_finish(
-            f,
-            "CurrentUser",
-            "id",
-            &self.id,
-            "username",
-            &&self.username,
-        )
+        ::core::fmt::Formatter::debug_struct_field2_finish(f, "CurrentUser", "id", &self.id, "username", &&self.username)
     }
 }
 async fn auth(mut req: Request, next: Next) -> Result<Response, StatusCode> {
     {
         ::std::io::_print(format_args!("auth {0:?}\n", req));
     };
-    req.extensions_mut()
-        .insert(CurrentUser {
-            id: 1,
-            username: "foo".to_string(),
-        });
+    req.extensions_mut().insert(CurrentUser { id: 1, username: "foo".to_string() });
     Ok(next.run(req).await)
 }
 extern crate alloc;

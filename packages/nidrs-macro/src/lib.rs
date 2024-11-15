@@ -323,7 +323,12 @@ pub fn on_module_init(args: TokenStream, input: TokenStream) -> TokenStream {
     let current_service_name: String =
         cmeta::CMeta::get_stack_data("ServiceName").expect(&format!("[on_module_init] {} ServiceName not found", name));
 
-    EVENTS.lock().expect("Failed to lock EVENTS in on_module_init").entry("on_module_init".to_string()).or_insert(vec![]).push((current_service_name, name));
+    EVENTS
+        .lock()
+        .expect("Failed to lock EVENTS in on_module_init")
+        .entry("on_module_init".to_string())
+        .or_insert(vec![])
+        .push((current_service_name, name));
 
     return TokenStream::from(quote! {
         #func
@@ -340,7 +345,12 @@ pub fn on_module_destroy(args: TokenStream, input: TokenStream) -> TokenStream {
     let current_service_name: String =
         cmeta::CMeta::get_stack_data("ServiceName").expect(&format!("[on_module_init] {} ServiceName not found", name));
 
-    EVENTS.lock().expect("Failed to lock EVENTS in on_module_destroy").entry("on_module_destroy".to_string()).or_insert(vec![]).push((current_service_name, name));
+    EVENTS
+        .lock()
+        .expect("Failed to lock EVENTS in on_module_destroy")
+        .entry("on_module_destroy".to_string())
+        .or_insert(vec![])
+        .push((current_service_name, name));
 
     return TokenStream::from(quote! {
         #func
