@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-extern-v0.2.1 - 2024-11-15
+#### Bug Fixes
+- **(nidrs-extern)** change ImplMeta - (5348ef7) - *WumaCoder*
+
+- - -
+
 ## nidrs-extern-v0.2.0 - 2024-09-25
 #### Documentation
 - update - (c989f4d) - Lyda
