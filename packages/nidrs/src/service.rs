@@ -37,6 +37,6 @@ impl<T> std::ops::Deref for Inject<T> {
 }
 
 pub fn provider<T: Service + 'static>(service: T) -> (String, Box<dyn Any>) {
-    let name = T::__meta().get_data::<ServiceName>().unwrap().value().clone();
+    let name = service.__meta().get_data::<ServiceName>().unwrap().value().clone();
     (name, Box::new(Arc::new(service)) as Box<dyn Any>)
 }

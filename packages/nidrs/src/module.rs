@@ -119,7 +119,7 @@ impl<T: Module> NidrsFactory<T> {
     }
 
     pub fn default_uses<I: Interceptor + 'static + Sync + Send>(mut self, inter: I) -> Self {
-        let service_name = I::__meta().get_data::<datasets::ServiceName>().unwrap().value().clone();
+        let service_name = inter.__meta().get_data::<datasets::ServiceName>().unwrap().value().clone();
         let interceptor = Arc::new(inter);
         self.module_ctx.register_interceptor(GLOBALS_KEY, &service_name, Box::new(interceptor.clone()));
 
