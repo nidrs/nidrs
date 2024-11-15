@@ -294,7 +294,7 @@ pub fn __module_derive(args: Args, input: TokenStream) -> TokenStream {
         }
 
         impl #impl_generics nidrs::ImplMeta for #ident #ty_generics #where_clause{
-            fn __meta() -> nidrs::InnerMeta {
+            fn __meta(&self) -> nidrs::InnerMeta {
                 #module_meta_tokens
             }
         }

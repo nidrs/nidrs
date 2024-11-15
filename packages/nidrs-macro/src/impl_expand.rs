@@ -150,7 +150,7 @@ pub(crate) fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream
 
             quote! {
                 .layer(axum::middleware::from_fn({
-                    let inter = ctx.get_interceptor::<#inter_ident>(module_name, #inter);
+                    let inter = ctx.get_interceptor::<#inter_ident>(module, #inter);
                     move |req: axum::extract::Request, next: axum::middleware::Next| {
                         let inter = std::sync::Arc::clone(&inter);
                         async move {
@@ -189,7 +189,7 @@ pub(crate) fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream
             #meta_tokens
         }
 
-        pub fn #route_fn_ident(&self, mut ctx: nidrs::ModuleCtx)->nidrs::ModuleCtx{
+        pub fn #route_fn_ident(&self, mut ctx: nidrs::ModuleCtx, module: &str)->nidrs::ModuleCtx{
             use nidrs::externs::axum;
             use axum::response::IntoResponse;
             use nidrs::externs::axum::{extract::Query, Json};
@@ -212,10 +212,9 @@ pub(crate) fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream
             meta.set_data(nidrs::datasets::RouterFullPath(full_path.clone()));
 
             let meta = Meta::new(meta);
-            let module_name = meta.get::<&str>("module").unwrap();
             let controller_name = meta.get_data::<nidrs::datasets::ServiceName>().unwrap().value();
 
-            let t_controller = ctx.get_controller::<Self>(module_name, controller_name);
+            let t_controller = ctx.get_controller::<Self>(module, controller_name);
 
             let router = nidrs::externs::axum::Router::new()
                 .route(
@@ -252,7 +251,7 @@ pub(crate) fn expand_controller_register(module_name: String, services: &def::Ar
                     let route_ident = syn::Ident::new(&format!("__route_{}", name), Span::call_site().into());
 
                     quote! {
-                        ctx = t_controller.#route_ident(ctx);
+                        ctx = t_controller.#route_ident(ctx, #module_name);
                     }
                 })
                 .collect::<Vec<TokenStream2>>();
@@ -474,7 +473,7 @@ pub(crate) fn gen_service_inject_tokens(service_type: ServiceType, func: &ItemSt
         }
 
         impl #impl_generics nidrs::ImplMeta for #service_name_ident #ty_generics #where_clause{
-            fn __meta() -> nidrs::InnerMeta {
+            fn __meta(&self) -> nidrs::InnerMeta {
                 #meta_tokens
             }
         }
