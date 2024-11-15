@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-v0.3.0 - 2024-11-15
+#### Bug Fixes
+- **(nidrs)** adapt impl meta - (c1a6873) - *WumaCoder*
+#### Features
+- **(nidrs)** add register_module - (cc0d2eb) - *Lyda*
+#### Miscellaneous Chores
+- remove commit - (e013008) - Lyda
+#### Refactoring
+- **(nidrs)** add valid and openapi features - (d23cd01) - *WumaCoder*
+
+- - -
+
 ## nidrs-v0.2.0 - 2024-09-25
 #### Features
 - **(nidrs)** update nidrs_extern and nidrs_macro - (6944a0b) - *Lyda*
