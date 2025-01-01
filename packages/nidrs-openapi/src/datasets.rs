@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
 use nidrs_extern::{datasets::MetaKey, meta::Meta};
-use utoipa::openapi::path::Parameter;
+use utoipa::openapi::{
+    path::{Parameter, ParameterBuilder, ParameterIn},
+    Required,
+};
 
 #[derive(Debug)]
 pub struct RouterIn(pub RouterParams);
@@ -44,8 +47,8 @@ pub enum ParamDtoIn {
 
 #[derive(Clone)]
 pub enum ParamType {
-    Param(Parameter),
-    Body(BodySchema),
+    Param(Parameter), // 路径参数, /path/to/resource/{id} | /path/to/resource?id=123 | header
+    Body(BodySchema), // 请求体参数
 }
 
 impl std::fmt::Debug for ParamType {
@@ -74,27 +77,59 @@ impl RouterParams {
         self.0.extend(other.0);
         self
     }
-    pub fn merge_type<T: ToRouterParamsByType>(mut self) -> Self {
-        let other = T::to_router_parameters();
+    pub fn merge_type<T: ToRouterParamsByType>(mut self, indent: &str) -> Self {
+        let other = T::to_router_parameters(indent);
         self.0.extend(other.0);
         self
     }
 }
 
 pub trait ToRouterParamsByType {
-    fn to_router_parameters() -> RouterParams {
+    fn to_router_parameters(indent: &str) -> RouterParams {
         RouterParams(vec![])
     }
 }
 
 pub trait ToParamDto {
-    fn to_param_dto(dto_type: ParamDtoIn) -> ParamDto {
+    fn to_param_dto(_: ParamDtoIn) -> ParamDto {
         ParamDto::None
+    }
+}
+fn build_path_param(indent: &str) -> Parameter {
+    ParameterBuilder::new()
+        .name(indent)
+        .parameter_in(ParameterIn::Path)
+        .required(Required::True)
+        // .description(Some("路径参数".to_string()))
+        .build()
+}
+
+impl ToRouterParamsByType for axum::extract::Path<String> {
+    fn to_router_parameters(indent: &str) -> RouterParams {
+        RouterParams(vec![ParamType::Param(build_path_param(indent))])
+    }
+}
+
+impl ToRouterParamsByType for axum::extract::Path<&str> {
+    fn to_router_parameters(indent: &str) -> RouterParams {
+        RouterParams(vec![ParamType::Param(build_path_param(indent))])
+    }
+}
+
+impl ToRouterParamsByType for axum::extract::Path<i32> {
+    fn to_router_parameters(indent: &str) -> RouterParams {
+        RouterParams(vec![ParamType::Param(build_path_param(indent))])
+    }
+}
+
+impl ToRouterParamsByType for axum::extract::Path<i64> {
+    fn to_router_parameters(indent: &str) -> RouterParams {
+        RouterParams(vec![ParamType::Param(build_path_param(indent))])
     }
 }
 
 impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Path<T> {
-    fn to_router_parameters() -> RouterParams {
+    fn to_router_parameters(_: &str) -> RouterParams {
         let t = T::to_param_dto(ParamDtoIn::Param(utoipa::openapi::path::ParameterIn::Path));
         if let ParamDto::ParamList(mut parameters) = t {
             RouterParams(parameters.drain(..).map(ParamType::Param).collect())
@@ -105,7 +140,7 @@ impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Path<T> {
 }
 
 impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Query<T> {
-    fn to_router_parameters() -> RouterParams {
+    fn to_router_parameters(_: &str) -> RouterParams {
         let t = T::to_param_dto(ParamDtoIn::Param(utoipa::openapi::path::ParameterIn::Query));
         if let ParamDto::ParamList(mut parameters) = t {
             RouterParams(parameters.drain(..).map(ParamType::Param).collect())
@@ -118,7 +153,7 @@ impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Query<T> {
 impl<K, V> ToParamDto for HashMap<K, V> {}
 
 impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Json<T> {
-    fn to_router_parameters() -> RouterParams {
+    fn to_router_parameters(_: &str) -> RouterParams {
         let t = T::to_param_dto(ParamDtoIn::Body);
         if let ParamDto::BodySchema(schema) = t {
             // let ref_scheme = Ref::new(format!("#/components/schemas/{}", schema.0));
@@ -134,7 +169,7 @@ impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Json<T> {
 }
 
 impl<T: ToParamDto> ToRouterParamsByType for axum::extract::Form<T> {
-    fn to_router_parameters() -> RouterParams {
+    fn to_router_parameters(_: &str) -> RouterParams {
         let t = T::to_param_dto(ParamDtoIn::Body);
         if let ParamDto::BodySchema(schema) = t {
             // let ref_scheme: Ref = Ref::new(format!("#/components/schemas/{}", schema.0));
@@ -176,14 +211,14 @@ impl<T> ToRouterParamsByType for axum::extract::WebSocketUpgrade<T> {}
 impl<T> ToRouterParamsByType for axum::response::AppendHeaders<T> {}
 
 impl ToRouterParamsByType for String {
-    fn to_router_parameters() -> RouterParams {
+    fn to_router_parameters(_: &str) -> RouterParams {
         RouterParams(vec![ParamType::Body(BodySchema { content_type: "text/plain", schema: None })])
     }
 }
 
 impl<T: ToRouterParamsByType, E> ToRouterParamsByType for Result<T, E> {
-    fn to_router_parameters() -> RouterParams {
-        T::to_router_parameters()
+    fn to_router_parameters(indent: &str) -> RouterParams {
+        T::to_router_parameters(indent)
     }
 }
 
@@ -195,8 +230,8 @@ macro_rules! impl_for_tuples {
     // 递归实现：匹配元组类型
     ($T:ident $(, $Ts:ident)*) => {
         impl<$T: ToRouterParamsByType, $($Ts: ToRouterParamsByType),*> ToRouterParamsByType for ($T, $($Ts),*) {
-            fn to_router_parameters() -> RouterParams {
-                $T::to_router_parameters().merge_type::<($($Ts),*)>()  // 调用元组成员的 to_router_parameters 方法，然后合并
+            fn to_router_parameters(indent: &str) -> RouterParams {
+                $T::to_router_parameters(indent).merge_type::<($($Ts),*)>(indent)  // 调用元组成员的 to_router_parameters 方法，然后合并
             }
         }
         impl_for_tuples!($($Ts),*);  // 递归调用宏

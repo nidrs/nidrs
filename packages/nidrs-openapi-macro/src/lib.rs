@@ -12,8 +12,9 @@ pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
     input.sig.inputs.iter().for_each(|arg| {
         if let syn::FnArg::Typed(pat) = arg {
             let tokens = pat.ty.to_token_stream();
+            let name = if let syn::Pat::Ident(pat_ident) = &*pat.pat { pat_ident.ident.to_string() } else { String::new() };
             router_in.push(quote! {
-                .merge_type::<#tokens>()
+                .merge_type::<#tokens>(#name)
             })
         }
     });
@@ -22,7 +23,7 @@ pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
 
     if let syn::ReturnType::Type(_, ty) = &input.sig.output {
         router_out.push(quote! {
-            .merge_type::<#ty>()
+            .merge_type::<#ty>("")
         });
     }
 
