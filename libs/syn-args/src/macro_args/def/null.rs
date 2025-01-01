@@ -16,7 +16,7 @@ impl TryFrom<&Value> for Null {
     }
 }
 
-impl<'a> TryInto<def::Null> for Transform<'a> {
+impl TryInto<def::Null> for Transform<'_> {
     type Error = Error;
 
     fn try_into(self) -> Result<def::Null, Self::Error> {

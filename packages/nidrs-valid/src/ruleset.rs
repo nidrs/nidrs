@@ -69,7 +69,7 @@ impl Rule<&i32> for Number {
 
 pub struct Valid<'a, T: Validator>(pub &'a T);
 
-impl<'a, T: Validator> Rule<&T> for Valid<'a, T> {
+impl<T: Validator> Rule<&T> for Valid<'_, T> {
     fn valid(&self, value: &T, field_path: &str, message: Option<String>) -> ValidResult {
         self.0.valid()
     }

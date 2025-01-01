@@ -72,25 +72,25 @@ pub(crate) fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream
     println!("// route_derive {:?}", func.sig.ident.to_string());
     // println!("route_derive {:?}", func.sig.output);
 
-    let disable_auto_json: bool = cmeta::CMeta::get_stack("disable_auto_json").unwrap_or(cmeta::CMetaValue::Bool(false)).into();
-    let mut is_tuple = false; // AppResult<(T,T)>
-    if let syn::ReturnType::Type(_, ty) = &func.sig.output {
-        if let syn::Type::Path(p) = ty.as_ref() {
-            if let Some(segment) = p.path.segments.first() {
-                // println!("route_derive {:#?}", segment);
-                if segment.ident.to_string() == "AppResult" {
-                    if let syn::PathArguments::AngleBracketed(args) = &segment.arguments {
-                        if let syn::GenericArgument::Type(ty) = args.args.first().expect("Failed to get first argument in route_derive") {
-                            if let syn::Type::Tuple(_) = ty {
-                                is_tuple = true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    println!("// route_derive is_tuple {:?}", is_tuple);
+    // let disable_auto_json: bool = cmeta::CMeta::get_stack("disable_auto_json").unwrap_or(cmeta::CMetaValue::Bool(false)).into();
+    // let mut is_tuple = false; // AppResult<(T,T)>
+    // if let syn::ReturnType::Type(_, ty) = &func.sig.output {
+    //     if let syn::Type::Path(p) = ty.as_ref() {
+    //         if let Some(segment) = p.path.segments.first() {
+    //             // println!("route_derive {:#?}", segment);
+    //             if segment.ident.to_string() == "AppResult" {
+    //                 if let syn::PathArguments::AngleBracketed(args) = &segment.arguments {
+    //                     if let syn::GenericArgument::Type(ty) = args.args.first().expect("Failed to get first argument in route_derive") {
+    //                         if let syn::Type::Tuple(_) = ty {
+    //                             is_tuple = true;
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+    // println!("// route_derive is_tuple {:?}", is_tuple);
 
     let route_fn_ident = syn::Ident::new(format!("__route_{}", func.sig.ident.to_string()).as_str(), func.span().clone());
     let route_fn_name = route_fn_ident.to_string();
@@ -168,17 +168,20 @@ pub(crate) fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream
 
     // println!(" route_derive {:?} {:?}", func.sig.ident.to_string(), func_args);
 
-    let handler_tokens = if is_tuple || disable_auto_json {
-        quote! {
-            r
-        }
-    } else {
-        quote! {
-            match r {
-                Ok(r) => Json(r).into_response(),
-                Err(e) => e.into_response(),
-            }
-        }
+    // let handler_tokens = if is_tuple || disable_auto_json {
+    //     quote! {
+    //         r
+    //     }
+    // } else {
+    //     quote! {
+    //         match r {
+    //             Ok(r) => Json(r).into_response(),
+    //             Err(e) => e.into_response(),
+    //         }
+    //     }
+    // };
+    let handler_tokens = quote! {
+        r
     };
 
     TokenStream::from(quote! {
