@@ -6,6 +6,7 @@ use nidrs_extern::{
 };
 pub use utoipa;
 use utoipa::openapi::{
+    extensions::ExtensionsBuilder,
     path::{OperationBuilder, PathItemBuilder},
     request_body::RequestBodyBuilder,
     tag::TagBuilder,
@@ -39,15 +40,14 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
         let tag_name = controller_name.to_string();
         tags.insert(tag_name.clone(), 1);
         let path_type = match method.as_str() {
-            "post" => utoipa::openapi::PathItemType::Post,
-            "put" => utoipa::openapi::PathItemType::Put,
-            "delete" => utoipa::openapi::PathItemType::Delete,
-            "patch" => utoipa::openapi::PathItemType::Patch,
-            "options" => utoipa::openapi::PathItemType::Options,
-            "head" => utoipa::openapi::PathItemType::Head,
-            "trace" => utoipa::openapi::PathItemType::Trace,
-            "connect" => utoipa::openapi::PathItemType::Connect,
-            _ => utoipa::openapi::PathItemType::Get,
+            "post" => utoipa::openapi::HttpMethod::Post,
+            "put" => utoipa::openapi::HttpMethod::Put,
+            "delete" => utoipa::openapi::HttpMethod::Delete,
+            "patch" => utoipa::openapi::HttpMethod::Patch,
+            "options" => utoipa::openapi::HttpMethod::Options,
+            "head" => utoipa::openapi::HttpMethod::Head,
+            "trace" => utoipa::openapi::HttpMethod::Trace,
+            _ => utoipa::openapi::HttpMethod::Get,
         };
 
         let opath = convert_path_to_openapi(path);
@@ -72,7 +72,7 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
                                 // components.schemas.insert(schema.0.to_string(), schema.1.to_owned());
                                 operation = operation.request_body(Some(
                                     RequestBodyBuilder::new()
-                                        .content(body.content_type, utoipa::openapi::ContentBuilder::new().schema(schema.to_owned().1).build())
+                                        .content(body.content_type, utoipa::openapi::ContentBuilder::new().schema(Some(schema.to_owned().1)).build())
                                         .build(),
                                 ));
                             }
@@ -85,7 +85,7 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
                     if let datasets::ParamType::Body(body) = param {
                         let mut content = utoipa::openapi::ContentBuilder::new();
                         if let Some(schema) = &body.schema {
-                            content = content.schema(schema.to_owned().1);
+                            content = content.schema(Some(schema.to_owned().1));
                         } else {
                             content = content.example(Some(serde_json::Value::String("String".to_string())));
                         }
@@ -94,15 +94,22 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
                     }
                 }
             }
-            path_item.operations.insert(
-                path_type.clone(),
-                operation
-                    .tag(tag_name)
-                    .extensions(Some(HashMap::from([
-                        ("x-controller".to_string(), serde_json::Value::String(controller_name.clone())),
-                        ("x-router".to_string(), serde_json::Value::String(router_name.clone())),
-                    ])))
-                    .description(Some(format!("{}::{}", controller_name, router_name)))
+
+            path_item.merge_operations(
+                PathItemBuilder::new()
+                    .operation(
+                        path_type,
+                        operation
+                            .tag(tag_name)
+                            .extensions(Some(
+                                ExtensionsBuilder::new()
+                                    .add("x-controller", serde_json::Value::String(controller_name.clone()))
+                                    .add("x-router", serde_json::Value::String(router_name.clone()))
+                                    .build(),
+                            ))
+                            .description(Some(format!("{}::{}", controller_name, router_name)))
+                            .build(),
+                    )
                     .build(),
             );
         }

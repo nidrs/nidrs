@@ -16,11 +16,11 @@ serde_json = "1.0.115"
 serde = "1.0.197"
 thiserror = "1.0.58"
 axum = "0.7.5"
-utoipa = "4.2.3"
-utoipa-swagger-ui = { version = "7", features = ["axum"] }
-utoipa-redoc = { version = "4.0.0", features = ["axum"] }
-utoipa-scalar = { version = "0.1.0", features = ["axum"] }
-utoipa-rapidoc = { version = "4.0.0", features = ["axum"] }
+utoipa = { version = "5", features = ["chrono", "macros"] }
+utoipa-swagger-ui = { version = "8", features = ["axum"] }
+utoipa-redoc = { version = "5.0.0", features = ["axum"] }
+utoipa-scalar = { version = "0.2.0", features = ["axum"] }
+utoipa-rapidoc = { version = "5.0.0", features = ["axum"] }
 
 nidrs-openapi-macro = { workspace = true } # version: "0.2.0"
 nidrs-extern = { workspace = true }        # version: "0.2.0"

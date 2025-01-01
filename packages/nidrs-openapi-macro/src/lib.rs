@@ -58,12 +58,20 @@ pub fn schema(args: TokenStream, input: TokenStream) -> TokenStream {
             fn to_param_dto(dto_type: nidrs::openapi::ParamDtoIn) -> nidrs::openapi::ParamDto {
                 use nidrs::openapi::utoipa::IntoParams;
                 use nidrs::openapi::utoipa::ToSchema;
+                use nidrs::openapi::utoipa::openapi::Schema;
+                use nidrs::openapi::utoipa::openapi::RefOr;
+                use nidrs::openapi::utoipa;
+                let schema: RefOr<Schema> = nidrs::openapi::utoipa::schema!(#[inline] Self).into();
                 match dto_type {
                     nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
-                    nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema(Self::schema()),
+                    nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((
+                        "body",
+                        schema
+                    )),
                 }
             }
         }
     }
     .into()
 }
+//                     utoipa::schema!()
