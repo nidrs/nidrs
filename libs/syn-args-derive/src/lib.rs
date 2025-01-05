@@ -154,7 +154,7 @@ fn expand_function_macro(proc_type: ProcType, input: TokenStream) -> TokenStream
                             #(#args_member)*
                         }
 
-                        let args: Args = parse_macro_input!(args as SynArgs).arguments().expect("Invalid argument");
+                        let args: Args = syn::parse_macro_input!(args as SynArgs).arguments().expect("Invalid argument");
 
                         return f(args, input);
 
@@ -176,7 +176,7 @@ fn expand_function_macro(proc_type: ProcType, input: TokenStream) -> TokenStream
                             #(#args_member)*
                         }
 
-                        let args: Args = parse_macro_input!(args as SynArgs).arguments().expect("Invalid argument");
+                        let args: Args = syn::parse_macro_input!(args as SynArgs).arguments().expect("Invalid argument");
 
                         return f(args);
 
