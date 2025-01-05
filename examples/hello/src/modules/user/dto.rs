@@ -1,6 +1,6 @@
 use nidrs::openapi::utoipa;
 
-#[nidrs::openapi::schema]
+#[nidrs::openapi::schema(ToSchema)]
 #[nidrs::valid::dto]
 pub struct CreateUserDto {
     // #[rule(Email, "age must be greater than 0")]
@@ -10,13 +10,13 @@ pub struct CreateUserDto {
     pub age: i32,
 }
 
-#[nidrs::openapi::schema]
+#[nidrs::openapi::schema(ToSchema)]
 #[nidrs::valid::dto]
 pub struct UserByIdDto {
     pub id: i32,
 }
 
-#[nidrs::openapi::schema]
+#[nidrs::openapi::schema(ToSchema)]
 #[nidrs::valid::dto]
 pub struct FilterDto {
     pub id: i32,
@@ -25,7 +25,7 @@ pub struct FilterDto {
     pub size: i32,
 }
 
-#[nidrs::openapi::schema]
+#[nidrs::openapi::schema(ToSchema)]
 #[nidrs::valid::dto]
 pub struct CreateUserResDto {
     pub id: i32,

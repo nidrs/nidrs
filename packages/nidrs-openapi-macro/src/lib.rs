@@ -1,7 +1,9 @@
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
+use syn::parse_macro_input;
 use syn::{ItemEnum, ItemFn, ItemStruct};
+use syn_args::{def, derive::ArgsParse, ArgsParse};
 
 #[proc_macro_attribute]
 pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
@@ -43,15 +45,75 @@ pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
     }
     .into()
 }
-#[proc_macro_attribute]
-pub fn schema(args: TokenStream, input: TokenStream) -> TokenStream {
+
+#[syn_args::derive::declare(def::Expr)]
+#[syn_args::derive::proc_attribute]
+pub fn schema(args: Args, input: TokenStream) -> TokenStream {
+    let ident: syn::Ident = {
+        if let Args::F1(def::Expr(syn::Expr::Path(expr_path))) = args {
+            if let Some(ident) = expr_path.path.get_ident() {
+                ident.clone()
+            } else {
+                syn::Ident::new("ToSchema", proc_macro2::Span::call_site())
+            }
+        } else {
+            syn::Ident::new("ToSchema", proc_macro2::Span::call_site())
+        }
+    };
+
     if let Ok(input_struct) = syn::parse::<ItemStruct>(input.clone()) {
         // Struct implementation
         let (impl_generics, ty_generics, where_clause) = input_struct.generics.split_for_impl();
         let ident = &input_struct.ident;
 
+        let impl_param_dto_in = quote! {
+            let ref_schema: RefOr<Schema> = utoipa::schema!(Self).into();
+            let mut schemas: Vec<(String, RefOr<Schema>)> = vec![
+                (
+                    <Self as utoipa::ToSchema>::name().to_string(),
+                    utoipa::schema!(#[inline] Self).into(),
+                )
+            ];
+
+            <Self as utoipa::ToSchema>::schemas(&mut schemas);
+            nidrs::openapi::ParamDto::BodySchema((
+                ref_schema,
+                schemas,
+            ))
+        };
+
+        let (impl_derive, impl_match) = if ident == "IntoParams" {
+            (
+                quote! {
+                    #[derive(nidrs::openapi::utoipa::ToSchema, nidrs::openapi::utoipa::IntoParams)]
+                },
+                quote! {
+                    match dto_type {
+                        nidrs::openapi::ParamDtoIn::Body => {
+                            #impl_param_dto_in
+                        },
+                        nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
+                    }
+                },
+            )
+        } else {
+            (
+                quote! {
+                    #[derive(nidrs::openapi::utoipa::ToSchema)]
+                },
+                quote! {
+                    match dto_type {
+                        nidrs::openapi::ParamDtoIn::Body => {
+                            #impl_param_dto_in
+                        },
+                        _ => nidrs::openapi::ParamDto::None,
+                    }
+                },
+            )
+        };
+
         quote! {
-            #[derive(nidrs::openapi::utoipa::IntoParams, nidrs::openapi::utoipa::ToSchema)]
+            #impl_derive
             #input_struct
 
             impl #impl_generics nidrs::openapi::ToParamDto for #ident #ty_generics #where_clause {
@@ -62,24 +124,7 @@ pub fn schema(args: TokenStream, input: TokenStream) -> TokenStream {
                     use nidrs::openapi::utoipa::openapi::RefOr;
                     use nidrs::openapi::utoipa;
 
-                    let ref_schema: RefOr<Schema> = utoipa::schema!(Self).into();
-                    let mut schemas: Vec<(String, RefOr<Schema>)> = vec![
-                        (
-                            <Self as utoipa::ToSchema>::name().to_string(),
-                            utoipa::schema!(#[inline] Self).into(),
-                        )
-                    ];
-
-                    <Self as utoipa::ToSchema>::schemas(&mut schemas);
-
-                    match dto_type {
-                        nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
-                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((
-                            ref_schema,
-                            schemas,
-                        )),
-                        _ => nidrs::openapi::ParamDto::None,
-                    }
+                    #impl_match
                 }
             }
         }

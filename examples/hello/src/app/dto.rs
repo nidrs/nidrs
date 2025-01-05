@@ -8,7 +8,6 @@ use nidrs::{
     },
     valid::dto,
 };
-use utoipa::IntoParams;
 use utoipa::ToSchema;
 
 // #[derive(nidrs::openapi::utoipa::ToSchema)]
@@ -62,7 +61,7 @@ impl IntoResponse for Status {
 //     }
 // }
 
-#[nidrs::openapi::schema]
+#[nidrs::openapi::schema(ToSchema)]
 #[dto]
 pub struct Mongo {
     pub count: u64,
