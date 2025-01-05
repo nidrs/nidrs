@@ -252,3 +252,9 @@ macro_rules! impl_for_tuples {
 }
 
 impl_for_tuples!(T1, T2, T3, T4, T5);
+
+impl<T: ToParamDto> ToParamDto for std::sync::Arc<T> {
+    fn to_param_dto(param: ParamDtoIn) -> ParamDto {
+        T::to_param_dto(param)
+    }
+}
