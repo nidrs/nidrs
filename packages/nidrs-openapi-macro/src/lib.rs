@@ -4,6 +4,8 @@ use quote::{quote, ToTokens};
 use syn::{ItemEnum, ItemFn, ItemStruct};
 use syn_args::{def, derive::ArgsParse, ArgsParse};
 
+static PARAM_NAMES: [&str; 7] = ["Body", "Path", "Query", "Header", "Cookie", "Form", "Json"];
+
 #[proc_macro_attribute]
 pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as ItemFn);
@@ -12,11 +14,16 @@ pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
 
     input.sig.inputs.iter().for_each(|arg| {
         if let syn::FnArg::Typed(pat) = arg {
-            let tokens = pat.ty.to_token_stream();
-            let name = if let syn::Pat::Ident(pat_ident) = &*pat.pat { pat_ident.ident.to_string() } else { String::new() };
-            router_in.push(quote! {
-                .comb::<#tokens>(#name)
-            })
+            let var_type = pat.ty.to_token_stream();
+            if let syn::Pat::Ident(pat_ident) = &*pat.pat {
+                let var_type_str = var_type.to_string();
+                if PARAM_NAMES.iter().any(|&param| var_type_str.starts_with(param)) {
+                    let name = pat_ident.ident.to_string();
+                    router_in.push(quote! {
+                        .comb::<#var_type>(#name)
+                    });
+                }
+            }
         }
     });
 
@@ -49,7 +56,7 @@ pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
 #[syn_args::derive::declare(def::Expr)]
 #[syn_args::derive::proc_attribute]
 pub fn schema(args: Args, input: TokenStream) -> TokenStream {
-    let ident: syn::Ident = {
+    let ident_arg: syn::Ident = {
         if let Args::F2(def::Expr(syn::Expr::Path(expr_path))) = args {
             if let Some(ident) = expr_path.path.get_ident() {
                 ident.clone()
@@ -82,7 +89,7 @@ pub fn schema(args: Args, input: TokenStream) -> TokenStream {
             ))
         };
 
-        let (impl_derive, impl_match) = if ident == "IntoParams" {
+        let (impl_derive, impl_match) = if ident_arg == "IntoParams" {
             (
                 quote! {
                     #[derive(nidrs::openapi::utoipa::ToSchema, nidrs::openapi::utoipa::IntoParams)]
