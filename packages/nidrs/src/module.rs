@@ -129,10 +129,9 @@ impl<T: Module> NidrsFactory<T> {
                     let inter = std::sync::Arc::clone(&interceptor);
                     async move {
                         let res = inter.intercept(req, next).await;
-                        if let Ok(res) = res {
-                            Ok(res.into_response())
-                        } else {
-                            Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+                        match res {
+                            Ok(res) => Ok(res.into_response()),
+                            Err(err) => Err(err),
                         }
                     }
                 }
