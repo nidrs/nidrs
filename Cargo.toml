@@ -19,5 +19,5 @@ nidrs-valid-macro = { path = "packages/nidrs-valid-macro", version = "0.2.0" }
 nidrs-openapi = { path = "packages/nidrs-openapi", version = "0.2.0" }
 nidrs-openapi-macro = { path = "packages/nidrs-openapi-macro", version = "0.2.0" }
 syn-args = { path = "libs/syn-args", version = "0.4.0" }
-syn-args-derive = { path = "libs/syn-args-derive", version = "0.3.0" }
+syn-args-derive = { path = "libs/syn-args-derive", version = "0.3.1" }
 metamap = { path = "libs/metamap", version = "0.3.0" }

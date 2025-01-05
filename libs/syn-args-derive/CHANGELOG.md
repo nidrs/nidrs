@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## syn-args-derive-v0.3.1 - 2025-01-05
+#### Bug Fixes
+- **(syn-args)** 支持空参数 - (c84618a) - *Lyda*
+- **(syn-args-derive)** use fully qualified path for parse_macro_input in expand_function_macro - (419ee1c) - *Lyda*
+
+- - -
+
 ## syn-args-derive-v0.3.0 - 2024-08-31
 #### Bug Fixes
 - 修复没有导出宏的问题 - (d59122a) - WumaCoder
