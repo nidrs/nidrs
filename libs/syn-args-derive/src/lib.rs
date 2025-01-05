@@ -130,11 +130,17 @@ fn expand_function_macro(proc_type: ProcType, input: TokenStream) -> TokenStream
             .map(|(index, args)| {
                 let f_name = format!("F{}", index + 1);
                 let f_ident = syn::Ident::new(&f_name, proc_macro2::Span::call_site());
-                let args = syn::parse_str::<syn::TypeTuple>(&format!("({},)", args))
-                    .expect("Invalid declare attribute, please check the declare attribute arguments");
+                if args.is_empty() {
+                    quote! {
+                        #f_ident (),
+                    }
+                } else {
+                    let args = syn::parse_str::<syn::TypeTuple>(&format!("({},)", args))
+                        .expect("Invalid declare attribute, please check the declare attribute arguments");
 
-                quote! {
-                    #f_ident #args,
+                    quote! {
+                        #f_ident #args,
+                    }
                 }
             })
             .collect::<Vec<_>>();
