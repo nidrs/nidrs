@@ -518,13 +518,13 @@ pub fn main(args: TokenStream, input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as ItemFn);
     let ident = func.sig.ident.clone();
 
-    let import_mod_tokens = import_path::gen_import_mod_tokens();
+    // let import_mod_tokens = import_path::gen_import_mod_tokens();
 
     // println!("main {:?} {}", func.sig.ident.to_string(), import_mod_tokens.to_string());
 
     let main_tokens = TokenStream2::from(quote! {
         #func
-        #import_mod_tokens
+        // #import_mod_tokens
     });
 
     return main_tokens.into();

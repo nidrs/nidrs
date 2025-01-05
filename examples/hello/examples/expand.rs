@@ -10,7 +10,7 @@
 // >>Push: Module("AppModule") -- [None]
 // >>Push: Service("AppController") -- [Some(String("AppModule"))]
 //  CMETA: ["version"]
-//  CMETA: ["role", "auth"]
+//  CMETA: ["auth", "role"]
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 //  CMETA: ["ControllerPath"]
@@ -25,7 +25,7 @@
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "get_hello_world"
-// << Pop: Some(Handler("get_hello_world")) ["RouterOut", "version", "RouterMethod", "arr", "method_uses", "RouterPath", "RouterName", "handler", "DisableDefaultPrefix", "RouterIn", "service", "role", "ServiceName", "ControllerPath", "ServiceType", "auth", "module", "global"]
+// << Pop: Some(Handler("get_hello_world")) ["version", "RouterIn", "DisableDefaultPrefix", "RouterPath", "method_uses", "arr", "handler", "RouterOut", "RouterName", "RouterMethod", "service", "role", "ServiceName", "ServiceType", "ControllerPath", "auth", "module", "global"]
 
 // >>Push: Handler("get_hello_world2") -- [Some(String("AppModule"))]
 //  CMETA: ["RouterIn", "RouterOut"]
@@ -37,23 +37,23 @@
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "get_hello_world2"
-// << Pop: Some(Handler("get_hello_world2")) ["method_uses", "RouterIn", "arr", "DisableDefaultPrefix", "RouterMethod", "RouterOut", "RouterPath", "RouterName", "handler", "version", "service", "role", "ServiceName", "ControllerPath", "ServiceType", "auth", "module", "global"]
+// << Pop: Some(Handler("get_hello_world2")) ["RouterOut", "method_uses", "version", "RouterIn", "RouterMethod", "RouterPath", "RouterName", "handler", "DisableDefaultPrefix", "arr", "service", "role", "ServiceName", "ServiceType", "ControllerPath", "auth", "module", "global"]
 
 // >>Push: Handler("post_hello_world") -- [Some(String("AppModule"))]
-//  CMETA: ["RouterIn", "RouterOut"]
+//  CMETA: ["RouterOut", "RouterIn"]
 //  CMETA: ["RouterName"]
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "post_hello_world"
-// << Pop: Some(Handler("post_hello_world")) ["RouterMethod", "RouterOut", "RouterPath", "RouterName", "RouterIn", "handler", "service", "role", "ServiceName", "version", "ControllerPath", "ServiceType", "auth", "module", "global"]
+// << Pop: Some(Handler("post_hello_world")) ["RouterName", "RouterPath", "RouterMethod", "RouterOut", "RouterIn", "handler", "service", "role", "ServiceName", "ServiceType", "ControllerPath", "version", "auth", "module", "global"]
 
-// << Pop: Some(Service("AppController")) ["service", "role", "ServiceName", "version", "ControllerPath", "ServiceType", "auth", "module", "global"]
+// << Pop: Some(Service("AppController")) ["service", "role", "ServiceName", "ServiceType", "ControllerPath", "version", "auth", "module", "global"]
 
 // >>Push: Service("AppInterceptor") -- [Some(String("AppModule"))]
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "AppInterceptor"
-// << Pop: Some(Service("AppInterceptor")) ["ServiceName", "service", "ServiceType", "module", "global"]
+// << Pop: Some(Service("AppInterceptor")) ["ServiceType", "service", "ServiceName", "module", "global"]
 
 // >>Push: Service("AppService") -- [Some(String("AppModule"))]
 //  CMETA: ["test"]
@@ -61,7 +61,7 @@
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "AppService"
-// << Pop: Some(Service("AppService")) ["ServiceName", "service", "test", "test2", "ServiceType", "module", "global"]
+// << Pop: Some(Service("AppService")) ["test", "ServiceType", "test2", "ServiceName", "service", "module", "global"]
 
 // >>Push: Service("AppModule") -- [Some(String("AppModule"))]
 //  CMETA: ["__"]
@@ -75,13 +75,13 @@
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "ConfOptions"
-// << Pop: Some(Service("ConfOptions")) ["service", "ServiceType", "ServiceName", "module", "global"]
+// << Pop: Some(Service("ConfOptions")) ["ServiceType", "service", "ServiceName", "module", "global"]
 
 // >>Push: Service("ConfService") -- [Some(String("ConfModule"))]
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "ConfService"
-// << Pop: Some(Service("ConfService")) ["ServiceType", "ServiceName", "service", "module", "global"]
+// << Pop: Some(Service("ConfService")) ["service", "ServiceType", "ServiceName", "module", "global"]
 
 // >>Push: Service("ConfModule") -- [Some(String("ConfModule"))]
 //  CMETA: ["__"]
@@ -97,12 +97,12 @@
 //  CMETA: ["ControllerPath"]
 // service_derive "UserController"
 // >>Push: Handler("get_all") -- [Some(String("UserModule"))]
-//  CMETA: ["RouterOut", "RouterIn"]
+//  CMETA: ["RouterIn", "RouterOut"]
 //  CMETA: ["RouterName"]
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "get_all"
-// << Pop: Some(Handler("get_all")) ["RouterPath", "RouterOut", "RouterIn", "handler", "RouterMethod", "RouterName", "ServiceType", "ControllerPath", "service", "ServiceName", "module", "global"]
+// << Pop: Some(Handler("get_all")) ["handler", "RouterPath", "RouterOut", "RouterIn", "RouterName", "RouterMethod", "ServiceName", "ServiceType", "service", "ControllerPath", "module", "global"]
 
 // >>Push: Handler("get_one") -- [Some(String("UserModule"))]
 //  CMETA: ["RouterIn", "RouterOut"]
@@ -110,7 +110,7 @@
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "get_one"
-// << Pop: Some(Handler("get_one")) ["RouterOut", "RouterMethod", "handler", "RouterIn", "RouterName", "RouterPath", "ServiceType", "ControllerPath", "service", "ServiceName", "module", "global"]
+// << Pop: Some(Handler("get_one")) ["RouterName", "RouterOut", "handler", "RouterIn", "RouterMethod", "RouterPath", "ServiceName", "ServiceType", "service", "ControllerPath", "module", "global"]
 
 // >>Push: Handler("create_user") -- [Some(String("UserModule"))]
 //  CMETA: ["RouterOut", "RouterIn"]
@@ -118,15 +118,15 @@
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "create_user"
-// << Pop: Some(Handler("create_user")) ["RouterOut", "RouterIn", "RouterPath", "RouterName", "handler", "RouterMethod", "ServiceType", "ControllerPath", "service", "ServiceName", "module", "global"]
+// << Pop: Some(Handler("create_user")) ["handler", "RouterPath", "RouterIn", "RouterName", "RouterMethod", "RouterOut", "ServiceName", "ServiceType", "service", "ControllerPath", "module", "global"]
 
-// << Pop: Some(Service("UserController")) ["ServiceType", "ControllerPath", "service", "ServiceName", "module", "global"]
+// << Pop: Some(Service("UserController")) ["ServiceName", "ServiceType", "service", "ControllerPath", "module", "global"]
 
 // >>Push: Service("UserService") -- [Some(String("UserModule"))]
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "UserService"
-// << Pop: Some(Service("UserService")) ["service", "ServiceType", "ServiceName", "module", "global"]
+// << Pop: Some(Service("UserService")) ["service", "ServiceName", "ServiceType", "module", "global"]
 
 // >>Push: Service("UserModule") -- [Some(String("UserModule"))]
 //  CMETA: ["__"]
@@ -176,9 +176,9 @@ mod app {
                 meta.set("service", "AppController");
                 meta.set("role", "admin");
                 meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
-                meta.set("version", "v1");
-                meta.set_data(nidrs::datasets::ControllerPath::from(""));
                 meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                meta.set_data(nidrs::datasets::ControllerPath::from(""));
+                meta.set("version", "v1");
                 meta.set("auth", "true");
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
@@ -210,25 +210,25 @@ mod app {
             }
             pub fn __meta_get_hello_world(&self) -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
-                meta.set_data(nidrs::openapi::RouterOut(
-                    nidrs::openapi::RouterParams::default().comb::<AppResult<(AppendHeaders<[(String, String); 2]>, Json<Status>)>>(""),
-                ));
                 meta.set("version", "v2");
-                meta.set_data(nidrs::datasets::RouterMethod::from("get"));
-                meta.set("arr", ["user"]);
-                meta.set("method_uses", ["AppInterceptor"]);
-                meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
-                meta.set_data(nidrs::datasets::RouterName::from("get_hello_world"));
-                meta.set("handler", "get_hello_world");
-                meta.set_data(nidrs::datasets::DisableDefaultPrefix(false));
                 meta.set_data(nidrs::openapi::RouterIn(
                     nidrs::openapi::RouterParams::default().comb::<Meta>("meta").comb::<Query<HashMap<String, String>>>(""),
                 ));
+                meta.set_data(nidrs::datasets::DisableDefaultPrefix(false));
+                meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
+                meta.set("method_uses", ["AppInterceptor"]);
+                meta.set("arr", ["user"]);
+                meta.set("handler", "get_hello_world");
+                meta.set_data(nidrs::openapi::RouterOut(
+                    nidrs::openapi::RouterParams::default().comb::<AppResult<(AppendHeaders<[(String, String); 2]>, Json<Status>)>>(""),
+                ));
+                meta.set_data(nidrs::datasets::RouterName::from("get_hello_world"));
+                meta.set_data(nidrs::datasets::RouterMethod::from("get"));
                 meta.set("service", "AppController");
                 meta.set("role", "admin");
                 meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
-                meta.set_data(nidrs::datasets::ControllerPath::from(""));
                 meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                meta.set_data(nidrs::datasets::ControllerPath::from(""));
                 meta.set("auth", "true");
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
@@ -309,25 +309,25 @@ mod app {
             }
             pub fn __meta_get_hello_world2(&self) -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
-                meta.set("method_uses", ["AppInterceptor"]);
-                meta.set_data(nidrs::openapi::RouterIn(
-                    nidrs::openapi::RouterParams::default().comb::<Meta>("meta").comb::<Query<HashMap<String, String>>>(""),
-                ));
-                meta.set("arr", ["user"]);
-                meta.set_data(nidrs::datasets::DisableDefaultPrefix(false));
-                meta.set_data(nidrs::datasets::RouterMethod::from("get"));
                 meta.set_data(nidrs::openapi::RouterOut(
                     nidrs::openapi::RouterParams::default().comb::<AppResult<(AppendHeaders<[(String, String); 2]>, Json<Status>)>>(""),
                 ));
+                meta.set("method_uses", ["AppInterceptor"]);
+                meta.set("version", "v2");
+                meta.set_data(nidrs::openapi::RouterIn(
+                    nidrs::openapi::RouterParams::default().comb::<Meta>("meta").comb::<Query<HashMap<String, String>>>(""),
+                ));
+                meta.set_data(nidrs::datasets::RouterMethod::from("get"));
                 meta.set_data(nidrs::datasets::RouterPath::from("/hello2"));
                 meta.set_data(nidrs::datasets::RouterName::from("get_hello_world2"));
                 meta.set("handler", "get_hello_world2");
-                meta.set("version", "v2");
+                meta.set_data(nidrs::datasets::DisableDefaultPrefix(false));
+                meta.set("arr", ["user"]);
                 meta.set("service", "AppController");
                 meta.set("role", "admin");
                 meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
-                meta.set_data(nidrs::datasets::ControllerPath::from(""));
                 meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                meta.set_data(nidrs::datasets::ControllerPath::from(""));
                 meta.set("auth", "true");
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
@@ -395,10 +395,10 @@ mod app {
             }
             pub fn __meta_post_hello_world(&self) -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
+                meta.set_data(nidrs::datasets::RouterName::from("post_hello_world"));
+                meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
                 meta.set_data(nidrs::datasets::RouterMethod::from("post"));
                 meta.set_data(nidrs::openapi::RouterOut(nidrs::openapi::RouterParams::default().comb::<AppResult<String>>("")));
-                meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
-                meta.set_data(nidrs::datasets::RouterName::from("post_hello_world"));
                 meta.set_data(nidrs::openapi::RouterIn(
                     nidrs::openapi::RouterParams::default().comb::<Query<HashMap<String, String>>>("").comb::<Json<ArgDto>>(""),
                 ));
@@ -406,9 +406,9 @@ mod app {
                 meta.set("service", "AppController");
                 meta.set("role", "admin");
                 meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
-                meta.set("version", "v1");
-                meta.set_data(nidrs::datasets::ControllerPath::from(""));
                 meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                meta.set_data(nidrs::datasets::ControllerPath::from(""));
+                meta.set("version", "v1");
                 meta.set("auth", "true");
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
@@ -464,7 +464,6 @@ mod app {
             },
             valid::dto,
         };
-        use utoipa::IntoParams;
         use utoipa::ToSchema;
         pub struct Status {
             pub db: String,
@@ -671,49 +670,6 @@ mod app {
                 ::alloc::vec::Vec::new()
             }
         }
-        impl utoipa::IntoParams for Status {
-            fn into_params(parameter_in_provider: impl Fn() -> Option<utoipa::openapi::path::ParameterIn>) -> Vec<utoipa::openapi::path::Parameter> {
-                [
-                    Some(
-                        utoipa::openapi::path::ParameterBuilder::new()
-                            .name("db")
-                            .parameter_in(parameter_in_provider().unwrap_or_default())
-                            .required(utoipa::openapi::Required::True)
-                            .schema(Some(
-                                utoipa::openapi::ObjectBuilder::new()
-                                    .schema_type(utoipa::openapi::schema::SchemaType::new(utoipa::openapi::schema::Type::String)),
-                            ))
-                            .build(),
-                    ),
-                    Some(
-                        utoipa::openapi::path::ParameterBuilder::new()
-                            .name("redis")
-                            .parameter_in(parameter_in_provider().unwrap_or_default())
-                            .required(utoipa::openapi::Required::True)
-                            .schema(Some(
-                                utoipa::openapi::ObjectBuilder::new()
-                                    .schema_type(utoipa::openapi::schema::SchemaType::new(utoipa::openapi::schema::Type::String)),
-                            ))
-                            .build(),
-                    ),
-                    Some(
-                        utoipa::openapi::path::ParameterBuilder::new()
-                            .name("mongo")
-                            .parameter_in(parameter_in_provider().unwrap_or_default())
-                            .required(utoipa::openapi::Required::True)
-                            .schema(Some(utoipa::openapi::schema::RefBuilder::new().ref_location_from_schema_name(::alloc::__export::must_use({
-                                let res = ::alloc::fmt::format(format_args!("{0}", <Mongo as utoipa::ToSchema>::name()));
-                                res
-                            }))))
-                            .build(),
-                    ),
-                ]
-                .into_iter()
-                .filter(Option::is_some)
-                .flatten()
-                .collect()
-            }
-        }
         impl utoipa::__dev::ComposeSchema for Status {
             fn compose(
                 mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>>,
@@ -770,29 +726,30 @@ mod app {
                 use nidrs::openapi::utoipa::openapi::Schema;
                 use nidrs::openapi::utoipa::IntoParams;
                 use nidrs::openapi::utoipa::ToSchema;
-                let ref_schema: RefOr<Schema> = {
-                    let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
-                    utoipa::openapi::schema::RefBuilder::new().ref_location_from_schema_name(::alloc::__export::must_use({
-                        let res = ::alloc::fmt::format(format_args!("{0}", <Self as utoipa::ToSchema>::name()));
-                        res
-                    }))
-                }
-                .into();
-                let mut schemas: Vec<(String, RefOr<Schema>)> = <[_]>::into_vec(
-                    #[rustc_box]
-                    ::alloc::boxed::Box::new([(
-                        <Self as utoipa::ToSchema>::name().to_string(),
-                        {
-                            let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
-                            <Self as utoipa::PartialSchema>::schema()
-                        }
-                        .into(),
-                    )]),
-                );
-                <Self as utoipa::ToSchema>::schemas(&mut schemas);
                 match dto_type {
-                    nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
-                    nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((ref_schema, schemas)),
+                    nidrs::openapi::ParamDtoIn::Body => {
+                        let ref_schema: RefOr<Schema> = {
+                            let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
+                            utoipa::openapi::schema::RefBuilder::new().ref_location_from_schema_name(::alloc::__export::must_use({
+                                let res = ::alloc::fmt::format(format_args!("{0}", <Self as utoipa::ToSchema>::name()));
+                                res
+                            }))
+                        }
+                        .into();
+                        let mut schemas: Vec<(String, RefOr<Schema>)> = <[_]>::into_vec(
+                            #[rustc_box]
+                            ::alloc::boxed::Box::new([(
+                                <Self as utoipa::ToSchema>::name().to_string(),
+                                {
+                                    let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
+                                    <Self as utoipa::PartialSchema>::schema()
+                                }
+                                .into(),
+                            )]),
+                        );
+                        <Self as utoipa::ToSchema>::schemas(&mut schemas);
+                        nidrs::openapi::ParamDto::BodySchema((ref_schema, schemas))
+                    }
                     _ => nidrs::openapi::ParamDto::None,
                 }
             }
@@ -968,27 +925,6 @@ mod app {
                 ::alloc::vec::Vec::new()
             }
         }
-        impl utoipa::IntoParams for Mongo {
-            fn into_params(parameter_in_provider: impl Fn() -> Option<utoipa::openapi::path::ParameterIn>) -> Vec<utoipa::openapi::path::Parameter> {
-                [Some(
-                    utoipa::openapi::path::ParameterBuilder::new()
-                        .name("count")
-                        .parameter_in(parameter_in_provider().unwrap_or_default())
-                        .required(utoipa::openapi::Required::True)
-                        .schema(Some(
-                            utoipa::openapi::ObjectBuilder::new()
-                                .schema_type(utoipa::openapi::schema::SchemaType::new(utoipa::openapi::schema::Type::Integer))
-                                .format(Some(utoipa::openapi::schema::SchemaFormat::KnownFormat(utoipa::openapi::schema::KnownFormat::Int64)))
-                                .minimum(Some(0f64)),
-                        ))
-                        .build(),
-                )]
-                .into_iter()
-                .filter(Option::is_some)
-                .flatten()
-                .collect()
-            }
-        }
         impl utoipa::__dev::ComposeSchema for Mongo {
             fn compose(
                 mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>>,
@@ -1024,29 +960,30 @@ mod app {
                 use nidrs::openapi::utoipa::openapi::Schema;
                 use nidrs::openapi::utoipa::IntoParams;
                 use nidrs::openapi::utoipa::ToSchema;
-                let ref_schema: RefOr<Schema> = {
-                    let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
-                    utoipa::openapi::schema::RefBuilder::new().ref_location_from_schema_name(::alloc::__export::must_use({
-                        let res = ::alloc::fmt::format(format_args!("{0}", <Self as utoipa::ToSchema>::name()));
-                        res
-                    }))
-                }
-                .into();
-                let mut schemas: Vec<(String, RefOr<Schema>)> = <[_]>::into_vec(
-                    #[rustc_box]
-                    ::alloc::boxed::Box::new([(
-                        <Self as utoipa::ToSchema>::name().to_string(),
-                        {
-                            let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
-                            <Self as utoipa::PartialSchema>::schema()
-                        }
-                        .into(),
-                    )]),
-                );
-                <Self as utoipa::ToSchema>::schemas(&mut schemas);
                 match dto_type {
-                    nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
-                    nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((ref_schema, schemas)),
+                    nidrs::openapi::ParamDtoIn::Body => {
+                        let ref_schema: RefOr<Schema> = {
+                            let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
+                            utoipa::openapi::schema::RefBuilder::new().ref_location_from_schema_name(::alloc::__export::must_use({
+                                let res = ::alloc::fmt::format(format_args!("{0}", <Self as utoipa::ToSchema>::name()));
+                                res
+                            }))
+                        }
+                        .into();
+                        let mut schemas: Vec<(String, RefOr<Schema>)> = <[_]>::into_vec(
+                            #[rustc_box]
+                            ::alloc::boxed::Box::new([(
+                                <Self as utoipa::ToSchema>::name().to_string(),
+                                {
+                                    let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
+                                    <Self as utoipa::PartialSchema>::schema()
+                                }
+                                .into(),
+                            )]),
+                        );
+                        <Self as utoipa::ToSchema>::schemas(&mut schemas);
+                        nidrs::openapi::ParamDto::BodySchema((ref_schema, schemas))
+                    }
                     _ => nidrs::openapi::ParamDto::None,
                 }
             }
@@ -1773,9 +1710,9 @@ mod app {
         impl nidrs::ImplMeta for AppInterceptor {
             fn __meta(&self) -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
-                meta.set_data(nidrs::datasets::ServiceName::from("AppInterceptor"));
-                meta.set("service", "AppInterceptor");
                 meta.set_data(nidrs::datasets::ServiceType::from("Service"));
+                meta.set("service", "AppInterceptor");
+                meta.set_data(nidrs::datasets::ServiceName::from("AppInterceptor"));
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -1812,11 +1749,11 @@ mod app {
         impl nidrs::ImplMeta for AppService {
             fn __meta(&self) -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
+                meta.set("test", true);
+                meta.set_data(nidrs::datasets::ServiceType::from("Service"));
+                meta.set("test2", true);
                 meta.set_data(nidrs::datasets::ServiceName::from("AppService"));
                 meta.set("service", "AppService");
-                meta.set("test", true);
-                meta.set("test2", true);
-                meta.set_data(nidrs::datasets::ServiceType::from("Service"));
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -1832,7 +1769,7 @@ mod app {
     use crate::modules::conf::ConfOptions;
     use crate::modules::user::UserModule;
     use controller::AppController;
-    use interceptor::AppInterceptor;
+    use interceptor::AppInterceptor as AppInterceptor2;
     use service::AppService;
     pub struct AppModule;
     #[automatically_derived]
@@ -1857,7 +1794,7 @@ mod app {
             ctx.modules.insert("AppModule".to_string(), Box::new(self));
             ctx.imports.insert("AppModule".to_string(), Vec::from(["ConfModule".to_string(), "UserModule".to_string()]));
             ctx.append_exports("AppModule", Vec::<&str>::from(["AppService"]), false);
-            ctx.register_interceptor("AppModule", "AppInterceptor", Box::new(std::sync::Arc::new(crate::import::AppInterceptor::default())));
+            ctx.register_interceptor("AppModule", "AppInterceptor2", Box::new(std::sync::Arc::new(AppInterceptor2::default())));
             if ctx.register_controller("AppModule", "AppController", Box::new(std::sync::Arc::new(AppController::default()))) {
                 let t_controller = ctx.get_controller::<AppController>("AppModule", "AppController");
                 ctx = t_controller.__route_get_hello_world(ctx, "AppModule");
@@ -1896,12 +1833,12 @@ mod app {
                 ::std::io::_print(format_args!("Injecting {0}::{1}.\n", "AppModule", "AppController"));
             };
             let ctx = t.inject(ctx, &"AppModule");
-            let t = ctx.get_interceptor::<AppInterceptor>("AppModule", "AppInterceptor");
+            let t = ctx.get_interceptor::<AppInterceptor2>("AppModule", "AppInterceptor2");
             {
                 ::std::io::_print(format_args!("{0} ", nidrs_extern::colored::Colorize::green("[nidrs]"),));
             };
             {
-                ::std::io::_print(format_args!("Injecting {0}::{1}.\n", "AppModule", "AppInterceptor"));
+                ::std::io::_print(format_args!("Injecting {0}::{1}.\n", "AppModule", "AppInterceptor2"));
             };
             let ctx = t.inject(ctx, &"AppModule");
             ctx
@@ -1955,8 +1892,8 @@ mod modules {
             impl nidrs::ImplMeta for ConfOptions {
                 fn __meta(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
-                    meta.set("service", "ConfOptions");
                     meta.set_data(nidrs::datasets::ServiceType::from("Service"));
+                    meta.set("service", "ConfOptions");
                     meta.set_data(nidrs::datasets::ServiceName::from("ConfOptions"));
                     meta.set("module", "ConfModule");
                     meta.set("global", "app");
@@ -1996,9 +1933,9 @@ mod modules {
             impl nidrs::ImplMeta for ConfService {
                 fn __meta(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
+                    meta.set("service", "ConfService");
                     meta.set_data(nidrs::datasets::ServiceType::from("Service"));
                     meta.set_data(nidrs::datasets::ServiceName::from("ConfService"));
-                    meta.set("service", "ConfService");
                     meta.set("module", "ConfModule");
                     meta.set("global", "app");
                     meta
@@ -2131,10 +2068,10 @@ mod modules {
             impl nidrs::ImplMeta for UserController {
                 fn __meta(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
-                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
-                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
-                    meta.set("service", "UserController");
                     meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
+                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                    meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
@@ -2149,16 +2086,16 @@ mod modules {
                 }
                 pub fn __meta_get_all(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
+                    meta.set("handler", "get_all");
                     meta.set_data(nidrs::datasets::RouterPath::from("/"));
                     meta.set_data(nidrs::openapi::RouterOut(nidrs::openapi::RouterParams::default().comb::<AppResult<String>>("")));
                     meta.set_data(nidrs::openapi::RouterIn(nidrs::openapi::RouterParams::default().comb::<Query<HashMap<String, String>>>("")));
-                    meta.set("handler", "get_all");
-                    meta.set_data(nidrs::datasets::RouterMethod::from("get"));
                     meta.set_data(nidrs::datasets::RouterName::from("get_all"));
-                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
-                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
-                    meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::RouterMethod::from("get"));
                     meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
+                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                    meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
@@ -2208,18 +2145,18 @@ mod modules {
                 }
                 pub fn __meta_get_one(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
+                    meta.set_data(nidrs::datasets::RouterName::from("get_one"));
                     meta.set_data(nidrs::openapi::RouterOut(nidrs::openapi::RouterParams::default().comb::<AppResult<String>>("")));
-                    meta.set_data(nidrs::datasets::RouterMethod::from("get"));
                     meta.set("handler", "get_one");
                     meta.set_data(nidrs::openapi::RouterIn(
                         nidrs::openapi::RouterParams::default().comb::<Path<UserByIdDto>>("id").comb::<Query<FilterDto>>("query"),
                     ));
-                    meta.set_data(nidrs::datasets::RouterName::from("get_one"));
+                    meta.set_data(nidrs::datasets::RouterMethod::from("get"));
                     meta.set_data(nidrs::datasets::RouterPath::from("/:id"));
-                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
-                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
-                    meta.set("service", "UserController");
                     meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
+                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                    meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
@@ -2266,16 +2203,16 @@ mod modules {
                 }
                 pub fn __meta_create_user(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
-                    meta.set_data(nidrs::openapi::RouterOut(nidrs::openapi::RouterParams::default().comb::<AppResult<Json<CreateUserResDto>>>("")));
-                    meta.set_data(nidrs::openapi::RouterIn(nidrs::openapi::RouterParams::default().comb::<Json<CreateUserDto>>("dto")));
-                    meta.set_data(nidrs::datasets::RouterPath::from("/"));
-                    meta.set_data(nidrs::datasets::RouterName::from("create_user"));
                     meta.set("handler", "create_user");
+                    meta.set_data(nidrs::datasets::RouterPath::from("/"));
+                    meta.set_data(nidrs::openapi::RouterIn(nidrs::openapi::RouterParams::default().comb::<Json<CreateUserDto>>("dto")));
+                    meta.set_data(nidrs::datasets::RouterName::from("create_user"));
                     meta.set_data(nidrs::datasets::RouterMethod::from("post"));
-                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
-                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
-                    meta.set("service", "UserController");
+                    meta.set_data(nidrs::openapi::RouterOut(nidrs::openapi::RouterParams::default().comb::<AppResult<Json<CreateUserResDto>>>("")));
                     meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
+                    meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                    meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
@@ -2509,43 +2446,6 @@ mod modules {
                     ::alloc::vec::Vec::new()
                 }
             }
-            impl utoipa::IntoParams for CreateUserDto {
-                fn into_params(
-                    parameter_in_provider: impl Fn() -> Option<utoipa::openapi::path::ParameterIn>,
-                ) -> Vec<utoipa::openapi::path::Parameter> {
-                    [
-                        Some(
-                            utoipa::openapi::path::ParameterBuilder::new()
-                                .name("name")
-                                .parameter_in(parameter_in_provider().unwrap_or_default())
-                                .required(utoipa::openapi::Required::True)
-                                .schema(Some(
-                                    utoipa::openapi::ObjectBuilder::new()
-                                        .schema_type(utoipa::openapi::schema::SchemaType::new(utoipa::openapi::schema::Type::String)),
-                                ))
-                                .build(),
-                        ),
-                        Some(
-                            utoipa::openapi::path::ParameterBuilder::new()
-                                .name("age")
-                                .parameter_in(parameter_in_provider().unwrap_or_default())
-                                .required(utoipa::openapi::Required::True)
-                                .schema(Some(
-                                    utoipa::openapi::ObjectBuilder::new()
-                                        .schema_type(utoipa::openapi::schema::SchemaType::new(utoipa::openapi::schema::Type::Integer))
-                                        .format(Some(utoipa::openapi::schema::SchemaFormat::KnownFormat(
-                                            utoipa::openapi::schema::KnownFormat::Int32,
-                                        ))),
-                                ))
-                                .build(),
-                        ),
-                    ]
-                    .into_iter()
-                    .filter(Option::is_some)
-                    .flatten()
-                    .collect()
-                }
-            }
             impl utoipa::__dev::ComposeSchema for CreateUserDto {
                 fn compose(
                     mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>>,
@@ -2587,29 +2487,30 @@ mod modules {
                     use nidrs::openapi::utoipa::openapi::Schema;
                     use nidrs::openapi::utoipa::IntoParams;
                     use nidrs::openapi::utoipa::ToSchema;
-                    let ref_schema: RefOr<Schema> = {
-                        let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
-                        utoipa::openapi::schema::RefBuilder::new().ref_location_from_schema_name(::alloc::__export::must_use({
-                            let res = ::alloc::fmt::format(format_args!("{0}", <Self as utoipa::ToSchema>::name()));
-                            res
-                        }))
-                    }
-                    .into();
-                    let mut schemas: Vec<(String, RefOr<Schema>)> = <[_]>::into_vec(
-                        #[rustc_box]
-                        ::alloc::boxed::Box::new([(
-                            <Self as utoipa::ToSchema>::name().to_string(),
-                            {
-                                let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
-                                <Self as utoipa::PartialSchema>::schema()
-                            }
-                            .into(),
-                        )]),
-                    );
-                    <Self as utoipa::ToSchema>::schemas(&mut schemas);
                     match dto_type {
-                        nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
-                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((ref_schema, schemas)),
+                        nidrs::openapi::ParamDtoIn::Body => {
+                            let ref_schema: RefOr<Schema> = {
+                                let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
+                                utoipa::openapi::schema::RefBuilder::new().ref_location_from_schema_name(::alloc::__export::must_use({
+                                    let res = ::alloc::fmt::format(format_args!("{0}", <Self as utoipa::ToSchema>::name()));
+                                    res
+                                }))
+                            }
+                            .into();
+                            let mut schemas: Vec<(String, RefOr<Schema>)> = <[_]>::into_vec(
+                                #[rustc_box]
+                                ::alloc::boxed::Box::new([(
+                                    <Self as utoipa::ToSchema>::name().to_string(),
+                                    {
+                                        let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
+                                        <Self as utoipa::PartialSchema>::schema()
+                                    }
+                                    .into(),
+                                )]),
+                            );
+                            <Self as utoipa::ToSchema>::schemas(&mut schemas);
+                            nidrs::openapi::ParamDto::BodySchema((ref_schema, schemas))
+                        }
                         _ => nidrs::openapi::ParamDto::None,
                     }
                 }
@@ -2776,28 +2677,6 @@ mod modules {
                     ::alloc::vec::Vec::new()
                 }
             }
-            impl utoipa::IntoParams for UserByIdDto {
-                fn into_params(
-                    parameter_in_provider: impl Fn() -> Option<utoipa::openapi::path::ParameterIn>,
-                ) -> Vec<utoipa::openapi::path::Parameter> {
-                    [Some(
-                        utoipa::openapi::path::ParameterBuilder::new()
-                            .name("id")
-                            .parameter_in(parameter_in_provider().unwrap_or_default())
-                            .required(utoipa::openapi::Required::True)
-                            .schema(Some(
-                                utoipa::openapi::ObjectBuilder::new()
-                                    .schema_type(utoipa::openapi::schema::SchemaType::new(utoipa::openapi::schema::Type::Integer))
-                                    .format(Some(utoipa::openapi::schema::SchemaFormat::KnownFormat(utoipa::openapi::schema::KnownFormat::Int32))),
-                            ))
-                            .build(),
-                    )]
-                    .into_iter()
-                    .filter(Option::is_some)
-                    .flatten()
-                    .collect()
-                }
-            }
             impl utoipa::__dev::ComposeSchema for UserByIdDto {
                 fn compose(
                     mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>>,
@@ -2832,29 +2711,30 @@ mod modules {
                     use nidrs::openapi::utoipa::openapi::Schema;
                     use nidrs::openapi::utoipa::IntoParams;
                     use nidrs::openapi::utoipa::ToSchema;
-                    let ref_schema: RefOr<Schema> = {
-                        let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
-                        utoipa::openapi::schema::RefBuilder::new().ref_location_from_schema_name(::alloc::__export::must_use({
-                            let res = ::alloc::fmt::format(format_args!("{0}", <Self as utoipa::ToSchema>::name()));
-                            res
-                        }))
-                    }
-                    .into();
-                    let mut schemas: Vec<(String, RefOr<Schema>)> = <[_]>::into_vec(
-                        #[rustc_box]
-                        ::alloc::boxed::Box::new([(
-                            <Self as utoipa::ToSchema>::name().to_string(),
-                            {
-                                let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
-                                <Self as utoipa::PartialSchema>::schema()
-                            }
-                            .into(),
-                        )]),
-                    );
-                    <Self as utoipa::ToSchema>::schemas(&mut schemas);
                     match dto_type {
-                        nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
-                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((ref_schema, schemas)),
+                        nidrs::openapi::ParamDtoIn::Body => {
+                            let ref_schema: RefOr<Schema> = {
+                                let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
+                                utoipa::openapi::schema::RefBuilder::new().ref_location_from_schema_name(::alloc::__export::must_use({
+                                    let res = ::alloc::fmt::format(format_args!("{0}", <Self as utoipa::ToSchema>::name()));
+                                    res
+                                }))
+                            }
+                            .into();
+                            let mut schemas: Vec<(String, RefOr<Schema>)> = <[_]>::into_vec(
+                                #[rustc_box]
+                                ::alloc::boxed::Box::new([(
+                                    <Self as utoipa::ToSchema>::name().to_string(),
+                                    {
+                                        let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
+                                        <Self as utoipa::PartialSchema>::schema()
+                                    }
+                                    .into(),
+                                )]),
+                            );
+                            <Self as utoipa::ToSchema>::schemas(&mut schemas);
+                            nidrs::openapi::ParamDto::BodySchema((ref_schema, schemas))
+                        }
                         _ => nidrs::openapi::ParamDto::None,
                     }
                 }
@@ -3110,71 +2990,6 @@ mod modules {
                     ::alloc::vec::Vec::new()
                 }
             }
-            impl utoipa::IntoParams for FilterDto {
-                fn into_params(
-                    parameter_in_provider: impl Fn() -> Option<utoipa::openapi::path::ParameterIn>,
-                ) -> Vec<utoipa::openapi::path::Parameter> {
-                    [
-                        Some(
-                            utoipa::openapi::path::ParameterBuilder::new()
-                                .name("id")
-                                .parameter_in(parameter_in_provider().unwrap_or_default())
-                                .required(utoipa::openapi::Required::True)
-                                .schema(Some(
-                                    utoipa::openapi::ObjectBuilder::new()
-                                        .schema_type(utoipa::openapi::schema::SchemaType::new(utoipa::openapi::schema::Type::Integer))
-                                        .format(Some(utoipa::openapi::schema::SchemaFormat::KnownFormat(
-                                            utoipa::openapi::schema::KnownFormat::Int32,
-                                        ))),
-                                ))
-                                .build(),
-                        ),
-                        Some(
-                            utoipa::openapi::path::ParameterBuilder::new()
-                                .name("filter")
-                                .parameter_in(parameter_in_provider().unwrap_or_default())
-                                .required(utoipa::openapi::Required::True)
-                                .schema(Some(
-                                    utoipa::openapi::ObjectBuilder::new()
-                                        .schema_type(utoipa::openapi::schema::SchemaType::new(utoipa::openapi::schema::Type::String)),
-                                ))
-                                .build(),
-                        ),
-                        Some(
-                            utoipa::openapi::path::ParameterBuilder::new()
-                                .name("page")
-                                .parameter_in(parameter_in_provider().unwrap_or_default())
-                                .required(utoipa::openapi::Required::True)
-                                .schema(Some(
-                                    utoipa::openapi::ObjectBuilder::new()
-                                        .schema_type(utoipa::openapi::schema::SchemaType::new(utoipa::openapi::schema::Type::Integer))
-                                        .format(Some(utoipa::openapi::schema::SchemaFormat::KnownFormat(
-                                            utoipa::openapi::schema::KnownFormat::Int32,
-                                        ))),
-                                ))
-                                .build(),
-                        ),
-                        Some(
-                            utoipa::openapi::path::ParameterBuilder::new()
-                                .name("size")
-                                .parameter_in(parameter_in_provider().unwrap_or_default())
-                                .required(utoipa::openapi::Required::True)
-                                .schema(Some(
-                                    utoipa::openapi::ObjectBuilder::new()
-                                        .schema_type(utoipa::openapi::schema::SchemaType::new(utoipa::openapi::schema::Type::Integer))
-                                        .format(Some(utoipa::openapi::schema::SchemaFormat::KnownFormat(
-                                            utoipa::openapi::schema::KnownFormat::Int32,
-                                        ))),
-                                ))
-                                .build(),
-                        ),
-                    ]
-                    .into_iter()
-                    .filter(Option::is_some)
-                    .flatten()
-                    .collect()
-                }
-            }
             impl utoipa::__dev::ComposeSchema for FilterDto {
                 fn compose(
                     mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>>,
@@ -3232,29 +3047,30 @@ mod modules {
                     use nidrs::openapi::utoipa::openapi::Schema;
                     use nidrs::openapi::utoipa::IntoParams;
                     use nidrs::openapi::utoipa::ToSchema;
-                    let ref_schema: RefOr<Schema> = {
-                        let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
-                        utoipa::openapi::schema::RefBuilder::new().ref_location_from_schema_name(::alloc::__export::must_use({
-                            let res = ::alloc::fmt::format(format_args!("{0}", <Self as utoipa::ToSchema>::name()));
-                            res
-                        }))
-                    }
-                    .into();
-                    let mut schemas: Vec<(String, RefOr<Schema>)> = <[_]>::into_vec(
-                        #[rustc_box]
-                        ::alloc::boxed::Box::new([(
-                            <Self as utoipa::ToSchema>::name().to_string(),
-                            {
-                                let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
-                                <Self as utoipa::PartialSchema>::schema()
-                            }
-                            .into(),
-                        )]),
-                    );
-                    <Self as utoipa::ToSchema>::schemas(&mut schemas);
                     match dto_type {
-                        nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
-                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((ref_schema, schemas)),
+                        nidrs::openapi::ParamDtoIn::Body => {
+                            let ref_schema: RefOr<Schema> = {
+                                let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
+                                utoipa::openapi::schema::RefBuilder::new().ref_location_from_schema_name(::alloc::__export::must_use({
+                                    let res = ::alloc::fmt::format(format_args!("{0}", <Self as utoipa::ToSchema>::name()));
+                                    res
+                                }))
+                            }
+                            .into();
+                            let mut schemas: Vec<(String, RefOr<Schema>)> = <[_]>::into_vec(
+                                #[rustc_box]
+                                ::alloc::boxed::Box::new([(
+                                    <Self as utoipa::ToSchema>::name().to_string(),
+                                    {
+                                        let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
+                                        <Self as utoipa::PartialSchema>::schema()
+                                    }
+                                    .into(),
+                                )]),
+                            );
+                            <Self as utoipa::ToSchema>::schemas(&mut schemas);
+                            nidrs::openapi::ParamDto::BodySchema((ref_schema, schemas))
+                        }
                         _ => nidrs::openapi::ParamDto::None,
                     }
                 }
@@ -3447,43 +3263,6 @@ mod modules {
                     ::alloc::vec::Vec::new()
                 }
             }
-            impl utoipa::IntoParams for CreateUserResDto {
-                fn into_params(
-                    parameter_in_provider: impl Fn() -> Option<utoipa::openapi::path::ParameterIn>,
-                ) -> Vec<utoipa::openapi::path::Parameter> {
-                    [
-                        Some(
-                            utoipa::openapi::path::ParameterBuilder::new()
-                                .name("id")
-                                .parameter_in(parameter_in_provider().unwrap_or_default())
-                                .required(utoipa::openapi::Required::True)
-                                .schema(Some(
-                                    utoipa::openapi::ObjectBuilder::new()
-                                        .schema_type(utoipa::openapi::schema::SchemaType::new(utoipa::openapi::schema::Type::Integer))
-                                        .format(Some(utoipa::openapi::schema::SchemaFormat::KnownFormat(
-                                            utoipa::openapi::schema::KnownFormat::Int32,
-                                        ))),
-                                ))
-                                .build(),
-                        ),
-                        Some(
-                            utoipa::openapi::path::ParameterBuilder::new()
-                                .name("name")
-                                .parameter_in(parameter_in_provider().unwrap_or_default())
-                                .required(utoipa::openapi::Required::True)
-                                .schema(Some(
-                                    utoipa::openapi::ObjectBuilder::new()
-                                        .schema_type(utoipa::openapi::schema::SchemaType::new(utoipa::openapi::schema::Type::String)),
-                                ))
-                                .build(),
-                        ),
-                    ]
-                    .into_iter()
-                    .filter(Option::is_some)
-                    .flatten()
-                    .collect()
-                }
-            }
             impl utoipa::__dev::ComposeSchema for CreateUserResDto {
                 fn compose(
                     mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>>,
@@ -3525,29 +3304,30 @@ mod modules {
                     use nidrs::openapi::utoipa::openapi::Schema;
                     use nidrs::openapi::utoipa::IntoParams;
                     use nidrs::openapi::utoipa::ToSchema;
-                    let ref_schema: RefOr<Schema> = {
-                        let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
-                        utoipa::openapi::schema::RefBuilder::new().ref_location_from_schema_name(::alloc::__export::must_use({
-                            let res = ::alloc::fmt::format(format_args!("{0}", <Self as utoipa::ToSchema>::name()));
-                            res
-                        }))
-                    }
-                    .into();
-                    let mut schemas: Vec<(String, RefOr<Schema>)> = <[_]>::into_vec(
-                        #[rustc_box]
-                        ::alloc::boxed::Box::new([(
-                            <Self as utoipa::ToSchema>::name().to_string(),
-                            {
-                                let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
-                                <Self as utoipa::PartialSchema>::schema()
-                            }
-                            .into(),
-                        )]),
-                    );
-                    <Self as utoipa::ToSchema>::schemas(&mut schemas);
                     match dto_type {
-                        nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
-                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((ref_schema, schemas)),
+                        nidrs::openapi::ParamDtoIn::Body => {
+                            let ref_schema: RefOr<Schema> = {
+                                let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
+                                utoipa::openapi::schema::RefBuilder::new().ref_location_from_schema_name(::alloc::__export::must_use({
+                                    let res = ::alloc::fmt::format(format_args!("{0}", <Self as utoipa::ToSchema>::name()));
+                                    res
+                                }))
+                            }
+                            .into();
+                            let mut schemas: Vec<(String, RefOr<Schema>)> = <[_]>::into_vec(
+                                #[rustc_box]
+                                ::alloc::boxed::Box::new([(
+                                    <Self as utoipa::ToSchema>::name().to_string(),
+                                    {
+                                        let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
+                                        <Self as utoipa::PartialSchema>::schema()
+                                    }
+                                    .into(),
+                                )]),
+                            );
+                            <Self as utoipa::ToSchema>::schemas(&mut schemas);
+                            nidrs::openapi::ParamDto::BodySchema((ref_schema, schemas))
+                        }
                         _ => nidrs::openapi::ParamDto::None,
                     }
                 }
@@ -3580,8 +3360,8 @@ mod modules {
                 fn __meta(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
                     meta.set("service", "UserService");
-                    meta.set_data(nidrs::datasets::ServiceType::from("Service"));
                     meta.set_data(nidrs::datasets::ServiceName::from("UserService"));
+                    meta.set_data(nidrs::datasets::ServiceType::from("Service"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta

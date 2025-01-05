@@ -300,9 +300,9 @@ pub(crate) fn expand_interceptor_register(module_name: String, services: &def::A
         .map(|interceptor_token| {
             let interceptor_name = interceptor_token.to_string();
             let interceptor_ident = interceptor_token.to_token_stream();
-            let import_interceptor_tokens = import_path::gen_import_tokens(&interceptor_name);
+            // let import_interceptor_tokens = import_path::gen_import_tokens(&interceptor_name);
             quote! {
-                ctx.register_interceptor(#module_name, #interceptor_name, Box::new(std::sync::Arc::new(#import_interceptor_tokens::default())));
+                ctx.register_interceptor(#module_name, #interceptor_name, Box::new(std::sync::Arc::new(#interceptor_ident::default())));
             }
         })
         .collect::<Vec<TokenStream2>>();
