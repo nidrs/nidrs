@@ -11,7 +11,7 @@ use nidrs::{
 use utoipa::ToSchema;
 
 // #[derive(nidrs::openapi::utoipa::ToSchema)]
-#[nidrs::openapi::schema(ToSchema)]
+#[nidrs::openapi::schema]
 #[dto]
 pub struct Status {
     pub db: String,

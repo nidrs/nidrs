@@ -1,7 +1,6 @@
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
-use syn::parse_macro_input;
 use syn::{ItemEnum, ItemFn, ItemStruct};
 use syn_args::{def, derive::ArgsParse, ArgsParse};
 
@@ -46,11 +45,12 @@ pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
     .into()
 }
 
+#[syn_args::derive::declare()]
 #[syn_args::derive::declare(def::Expr)]
 #[syn_args::derive::proc_attribute]
 pub fn schema(args: Args, input: TokenStream) -> TokenStream {
     let ident: syn::Ident = {
-        if let Args::F1(def::Expr(syn::Expr::Path(expr_path))) = args {
+        if let Args::F2(def::Expr(syn::Expr::Path(expr_path))) = args {
             if let Some(ident) = expr_path.path.get_ident() {
                 ident.clone()
             } else {
