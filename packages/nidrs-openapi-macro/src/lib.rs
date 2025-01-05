@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
-use syn::{ItemFn, ItemStruct};
+use syn::{ItemEnum, ItemFn, ItemStruct};
 
 #[proc_macro_attribute]
 pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
@@ -43,46 +43,85 @@ pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
     }
     .into()
 }
-
 #[proc_macro_attribute]
 pub fn schema(args: TokenStream, input: TokenStream) -> TokenStream {
-    let input = syn::parse_macro_input!(input as ItemStruct);
-    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
-    let ident = &input.ident;
+    if let Ok(input_struct) = syn::parse::<ItemStruct>(input.clone()) {
+        // Struct implementation
+        let (impl_generics, ty_generics, where_clause) = input_struct.generics.split_for_impl();
+        let ident = &input_struct.ident;
 
-    quote! {
-        #[derive(nidrs::openapi::utoipa::IntoParams, nidrs::openapi::utoipa::ToSchema)]
-        #input
+        quote! {
+            #[derive(nidrs::openapi::utoipa::IntoParams, nidrs::openapi::utoipa::ToSchema)]
+            #input_struct
 
-        impl #impl_generics nidrs::openapi::ToParamDto for #ident #ty_generics #where_clause {
-            fn to_param_dto(dto_type: nidrs::openapi::ParamDtoIn) -> nidrs::openapi::ParamDto {
-                use nidrs::openapi::utoipa::IntoParams;
-                use nidrs::openapi::utoipa::ToSchema;
-                use nidrs::openapi::utoipa::openapi::Schema;
-                use nidrs::openapi::utoipa::openapi::RefOr;
-                use nidrs::openapi::utoipa;
+            impl #impl_generics nidrs::openapi::ToParamDto for #ident #ty_generics #where_clause {
+                fn to_param_dto(dto_type: nidrs::openapi::ParamDtoIn) -> nidrs::openapi::ParamDto {
+                    use nidrs::openapi::utoipa::IntoParams;
+                    use nidrs::openapi::utoipa::ToSchema;
+                    use nidrs::openapi::utoipa::openapi::Schema;
+                    use nidrs::openapi::utoipa::openapi::RefOr;
+                    use nidrs::openapi::utoipa;
 
-                let ref_schema: RefOr<Schema> = utoipa::schema!(Self).into();
-                let mut schemas: Vec<(String, RefOr<Schema>)> = vec![
-                    (
-                        <Self as utoipa::ToSchema>::name().to_string(),
-                        utoipa::schema!(#[inline] Self).into(),
-                    )
-                ];
+                    let ref_schema: RefOr<Schema> = utoipa::schema!(Self).into();
+                    let mut schemas: Vec<(String, RefOr<Schema>)> = vec![
+                        (
+                            <Self as utoipa::ToSchema>::name().to_string(),
+                            utoipa::schema!(#[inline] Self).into(),
+                        )
+                    ];
 
-                <Self as utoipa::ToSchema>::schemas(&mut schemas);
+                    <Self as utoipa::ToSchema>::schemas(&mut schemas);
 
-                match dto_type {
-                    nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
-                    nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((
-                        ref_schema,
-                        schemas,
-                    )),
-                    _ => nidrs::openapi::ParamDto::None,
+                    match dto_type {
+                        nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
+                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((
+                            ref_schema,
+                            schemas,
+                        )),
+                        _ => nidrs::openapi::ParamDto::None,
+                    }
                 }
             }
         }
+        .into()
+    } else if let Ok(input_enum) = syn::parse::<ItemEnum>(input.clone()) {
+        // Enum implementation
+        let (impl_generics, ty_generics, where_clause) = input_enum.generics.split_for_impl();
+        let ident = &input_enum.ident;
+
+        quote! {
+            #[derive(nidrs::openapi::utoipa::ToSchema)]
+            #input_enum
+
+            impl #impl_generics nidrs::openapi::ToParamDto for #ident #ty_generics #where_clause {
+                fn to_param_dto(dto_type: nidrs::openapi::ParamDtoIn) -> nidrs::openapi::ParamDto {
+                    use nidrs::openapi::utoipa::ToSchema;
+                    use nidrs::openapi::utoipa::openapi::Schema;
+                    use nidrs::openapi::utoipa::openapi::RefOr;
+                    use nidrs::openapi::utoipa;
+
+                    let ref_schema: RefOr<Schema> = utoipa::schema!(Self).into();
+                    let mut schemas: Vec<(String, RefOr<Schema>)> = vec![
+                        (
+                            <Self as utoipa::ToSchema>::name().to_string(),
+                            utoipa::schema!(#[inline] Self).into(),
+                        )
+                    ];
+
+                    <Self as utoipa::ToSchema>::schemas(&mut schemas);
+
+                    match dto_type {
+                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((
+                            ref_schema,
+                            schemas,
+                        )),
+                        _ => nidrs::openapi::ParamDto::None,
+                    }
+                }
+            }
+        }
+        .into()
+    } else {
+        panic!("[nidrs-openapi-macro.schema] Invalid input type");
     }
-    .into()
 }
-//                     utoipa::schema!()

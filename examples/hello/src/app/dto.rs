@@ -8,10 +8,11 @@ use nidrs::{
     },
     valid::dto,
 };
+use utoipa::IntoParams;
 use utoipa::ToSchema;
 
 // #[derive(nidrs::openapi::utoipa::ToSchema)]
-#[nidrs::openapi::schema]
+#[nidrs::openapi::schema(ToSchema)]
 #[dto]
 pub struct Status {
     pub db: String,
@@ -72,9 +73,6 @@ pub struct Mongo {
 pub struct A {
     // #[rule(Email)]
     pub hello: String,
-
-    // #[rule(Valid(v))]
-    pub hello2: B,
 }
 
 #[derive(ToSchema)]
@@ -83,7 +81,7 @@ pub struct B {
     pub hello2: String,
 }
 
-#[derive(ToSchema)]
+#[nidrs::openapi::schema(ToSchema)]
 #[dto]
 pub enum ArgDto {
     A(A),
