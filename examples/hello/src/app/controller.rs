@@ -5,6 +5,7 @@ use nidrs::macros::{controller, get, meta, post, uses};
 use nidrs::openapi::api;
 use nidrs::{version, Inject, Meta};
 
+use crate::app::dto::Mongo;
 use crate::AppResult;
 
 use super::{
@@ -41,7 +42,29 @@ impl AppController {
 
         Ok((
             AppendHeaders([("X-Custom-Header".to_string(), "hello".to_string()), ("X-Custom-Header".to_string(), "world".to_string())]),
-            Json(Status { db: "ok".to_string(), redis: "ok".to_string() }),
+            Json(Status { db: "ok".to_string(), redis: "ok".to_string(), mongo: Mongo { count: 100 } }),
+        ))
+    }
+    #[api]
+    #[uses(AppInterceptor)]
+    #[meta(arr = ["user"])]
+    #[meta(nidrs::datasets::DisableDefaultPrefix(false))]
+    #[version("v2")]
+    #[get("/hello2")]
+    pub async fn get_hello_world2(
+        &self,
+        meta: Meta,
+        Query(q): Query<HashMap<String, String>>,
+    ) -> AppResult<(AppendHeaders<[(String, String); 2]>, Json<Status>)> {
+        println!("Query {:?}", q);
+        println!("Meta Keys {:?}", meta.keys());
+        println!("Meta {:?}", meta.get::<&str>("role"));
+        println!("Meta {:?}", meta.get_data::<nidrs::datasets::DisableDefaultPrefix>());
+        // fn_test()?;
+
+        Ok((
+            AppendHeaders([("X-Custom-Header".to_string(), "hello".to_string()), ("X-Custom-Header".to_string(), "world".to_string())]),
+            Json(Status { db: "ok".to_string(), redis: "ok".to_string(), mongo: Mongo { count: 100 } }),
         ))
     }
 

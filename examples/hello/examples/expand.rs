@@ -10,7 +10,7 @@
 // >>Push: Module("AppModule") -- [None]
 // >>Push: Service("AppController") -- [Some(String("AppModule"))]
 //  CMETA: ["version"]
-//  CMETA: ["auth", "role"]
+//  CMETA: ["role", "auth"]
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 //  CMETA: ["ControllerPath"]
@@ -25,22 +25,22 @@
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "get_hello_world"
-// << Pop: Some(Handler("get_hello_world")) ["arr", "RouterMethod", "method_uses", "RouterPath", "DisableDefaultPrefix", "RouterName", "RouterOut", "RouterIn", "handler", "version", "service", "role", "ServiceName", "auth", "ServiceType", "ControllerPath", "module", "global"]
+// << Pop: Some(Handler("get_hello_world")) ["handler", "method_uses", "arr", "DisableDefaultPrefix", "RouterPath", "RouterName", "RouterMethod", "RouterIn", "RouterOut", "version", "auth", "ServiceType", "ServiceName", "ControllerPath", "role", "service", "module", "global"]
 
 // >>Push: Handler("post_hello_world") -- [Some(String("AppModule"))]
 //  CMETA: ["RouterName"]
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "post_hello_world"
-// << Pop: Some(Handler("post_hello_world")) ["handler", "RouterMethod", "RouterPath", "RouterName", "service", "role", "ServiceName", "auth", "version", "ServiceType", "ControllerPath", "module", "global"]
+// << Pop: Some(Handler("post_hello_world")) ["handler", "RouterPath", "RouterName", "RouterMethod", "auth", "ServiceType", "ServiceName", "ControllerPath", "role", "version", "service", "module", "global"]
 
-// << Pop: Some(Service("AppController")) ["service", "role", "ServiceName", "auth", "version", "ServiceType", "ControllerPath", "module", "global"]
+// << Pop: Some(Service("AppController")) ["auth", "ServiceType", "ServiceName", "ControllerPath", "role", "version", "service", "module", "global"]
 
 // >>Push: Service("AppInterceptor") -- [Some(String("AppModule"))]
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "AppInterceptor"
-// << Pop: Some(Service("AppInterceptor")) ["service", "ServiceName", "ServiceType", "module", "global"]
+// << Pop: Some(Service("AppInterceptor")) ["ServiceType", "service", "ServiceName", "module", "global"]
 
 // >>Push: Service("AppService") -- [Some(String("AppModule"))]
 //  CMETA: ["test"]
@@ -48,7 +48,7 @@
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "AppService"
-// << Pop: Some(Service("AppService")) ["ServiceType", "test", "ServiceName", "service", "test2", "module", "global"]
+// << Pop: Some(Service("AppService")) ["test", "service", "test2", "ServiceType", "ServiceName", "module", "global"]
 
 // >>Push: Service("AppModule") -- [Some(String("AppModule"))]
 //  CMETA: ["__"]
@@ -68,7 +68,7 @@
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "ConfService"
-// << Pop: Some(Service("ConfService")) ["ServiceType", "service", "ServiceName", "module", "global"]
+// << Pop: Some(Service("ConfService")) ["ServiceType", "ServiceName", "service", "module", "global"]
 
 // >>Push: Service("ConfModule") -- [Some(String("ConfModule"))]
 //  CMETA: ["__"]
@@ -84,12 +84,12 @@
 //  CMETA: ["ControllerPath"]
 // service_derive "UserController"
 // >>Push: Handler("get_all") -- [Some(String("UserModule"))]
-//  CMETA: ["RouterOut", "RouterIn"]
+//  CMETA: ["RouterIn", "RouterOut"]
 //  CMETA: ["RouterName"]
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "get_all"
-// << Pop: Some(Handler("get_all")) ["RouterOut", "RouterIn", "RouterMethod", "RouterPath", "RouterName", "handler", "service", "ServiceType", "ServiceName", "ControllerPath", "module", "global"]
+// << Pop: Some(Handler("get_all")) ["RouterIn", "RouterOut", "RouterPath", "handler", "RouterName", "RouterMethod", "ServiceType", "ServiceName", "ControllerPath", "service", "module", "global"]
 
 // >>Push: Handler("get_one") -- [Some(String("UserModule"))]
 //  CMETA: ["RouterIn", "RouterOut"]
@@ -97,28 +97,28 @@
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "get_one"
-// << Pop: Some(Handler("get_one")) ["RouterMethod", "RouterPath", "RouterOut", "handler", "RouterIn", "RouterName", "service", "ServiceType", "ServiceName", "ControllerPath", "module", "global"]
+// << Pop: Some(Handler("get_one")) ["RouterOut", "RouterIn", "RouterName", "RouterMethod", "RouterPath", "handler", "ServiceType", "ServiceName", "ControllerPath", "service", "module", "global"]
 
 // >>Push: Handler("create_user") -- [Some(String("UserModule"))]
-//  CMETA: ["RouterIn", "RouterOut"]
+//  CMETA: ["RouterOut", "RouterIn"]
 //  CMETA: ["RouterName"]
 //  CMETA: ["RouterMethod"]
 //  CMETA: ["RouterPath"]
 // route_derive "create_user"
-// << Pop: Some(Handler("create_user")) ["handler", "RouterOut", "RouterName", "RouterPath", "RouterIn", "RouterMethod", "service", "ServiceType", "ServiceName", "ControllerPath", "module", "global"]
+// << Pop: Some(Handler("create_user")) ["RouterOut", "RouterMethod", "RouterIn", "handler", "RouterName", "RouterPath", "ServiceType", "ServiceName", "ControllerPath", "service", "module", "global"]
 
-// << Pop: Some(Service("UserController")) ["service", "ServiceType", "ServiceName", "ControllerPath", "module", "global"]
+// << Pop: Some(Service("UserController")) ["ServiceType", "ServiceName", "ControllerPath", "service", "module", "global"]
 
 // >>Push: Service("UserService") -- [Some(String("UserModule"))]
 //  CMETA: ["ServiceType"]
 //  CMETA: ["ServiceName"]
 // service_derive "UserService"
-// << Pop: Some(Service("UserService")) ["service", "ServiceType", "ServiceName", "module", "global"]
+// << Pop: Some(Service("UserService")) ["ServiceName", "service", "ServiceType", "module", "global"]
 
 // >>Push: Service("UserModule") -- [Some(String("UserModule"))]
 //  CMETA: ["__"]
 // module "UserModule"
-// << Pop: Some(Service("UserModule")) ["__", "service", "module", "global"]
+// << Pop: Some(Service("UserModule")) ["service", "__", "module", "global"]
 #![feature(prelude_import)]
 #[prelude_import]
 use std::prelude::rust_2021::*;
@@ -132,6 +132,7 @@ mod app {
             interceptor::AppInterceptor,
             service::AppService,
         };
+        use crate::app::dto::Mongo;
         use crate::AppResult;
         use nidrs::externs::axum::{extract::Query, response::AppendHeaders, Json};
         use nidrs::macros::{controller, get, meta, post, uses};
@@ -159,13 +160,13 @@ mod app {
         impl nidrs::ImplMeta for AppController {
             fn __meta(&self) -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
-                meta.set("service", "AppController");
-                meta.set("role", "admin");
-                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
                 meta.set("auth", "true");
-                meta.set("version", "v1");
                 meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
                 meta.set_data(nidrs::datasets::ControllerPath::from(""));
+                meta.set("role", "admin");
+                meta.set("version", "v1");
+                meta.set("service", "AppController");
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -191,31 +192,31 @@ mod app {
                 };
                 Ok((
                     AppendHeaders([("X-Custom-Header".to_string(), "hello".to_string()), ("X-Custom-Header".to_string(), "world".to_string())]),
-                    Json(Status { db: "ok".to_string(), redis: "ok".to_string() }),
+                    Json(Status { db: "ok".to_string(), redis: "ok".to_string(), mongo: Mongo { count: 100 } }),
                 ))
             }
             pub fn __meta_get_hello_world(&self) -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
-                meta.set("arr", ["user"]);
-                meta.set_data(nidrs::datasets::RouterMethod::from("get"));
-                meta.set("method_uses", ["AppInterceptor"]);
-                meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
-                meta.set_data(nidrs::datasets::DisableDefaultPrefix(false));
-                meta.set_data(nidrs::datasets::RouterName::from("get_hello_world"));
-                meta.set_data(nidrs::openapi::RouterOut(
-                    nidrs::openapi::RouterParams::default().merge_type::<AppResult<(AppendHeaders<[(String, String); 2]>, Json<Status>)>>(""),
-                ));
-                meta.set_data(nidrs::openapi::RouterIn(
-                    nidrs::openapi::RouterParams::default().merge_type::<Meta>("meta").merge_type::<Query<HashMap<String, String>>>(""),
-                ));
                 meta.set("handler", "get_hello_world");
+                meta.set("method_uses", ["AppInterceptor"]);
+                meta.set("arr", ["user"]);
+                meta.set_data(nidrs::datasets::DisableDefaultPrefix(false));
+                meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
+                meta.set_data(nidrs::datasets::RouterName::from("get_hello_world"));
+                meta.set_data(nidrs::datasets::RouterMethod::from("get"));
+                meta.set_data(nidrs::openapi::RouterIn(
+                    nidrs::openapi::RouterParams::default().comb::<Meta>("meta").comb::<Query<HashMap<String, String>>>(""),
+                ));
+                meta.set_data(nidrs::openapi::RouterOut(
+                    nidrs::openapi::RouterParams::default().comb::<AppResult<(AppendHeaders<[(String, String); 2]>, Json<Status>)>>(""),
+                ));
                 meta.set("version", "v2");
-                meta.set("service", "AppController");
-                meta.set("role", "admin");
-                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
                 meta.set("auth", "true");
                 meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
                 meta.set_data(nidrs::datasets::ControllerPath::from(""));
+                meta.set("role", "admin");
+                meta.set("service", "AppController");
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -283,16 +284,16 @@ mod app {
             pub fn __meta_post_hello_world(&self) -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
                 meta.set("handler", "post_hello_world");
-                meta.set_data(nidrs::datasets::RouterMethod::from("post"));
                 meta.set_data(nidrs::datasets::RouterPath::from("/hello"));
                 meta.set_data(nidrs::datasets::RouterName::from("post_hello_world"));
-                meta.set("service", "AppController");
-                meta.set("role", "admin");
-                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
+                meta.set_data(nidrs::datasets::RouterMethod::from("post"));
                 meta.set("auth", "true");
-                meta.set("version", "v1");
                 meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
+                meta.set_data(nidrs::datasets::ServiceName::from("AppController"));
                 meta.set_data(nidrs::datasets::ControllerPath::from(""));
+                meta.set("role", "admin");
+                meta.set("version", "v1");
+                meta.set("service", "AppController");
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -351,6 +352,7 @@ mod app {
         pub struct Status {
             pub db: String,
             pub redis: String,
+            pub mongo: Mongo,
         }
         #[doc(hidden)]
         #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
@@ -363,9 +365,10 @@ mod app {
                 where
                     __S: _serde::Serializer,
                 {
-                    let mut __serde_state = _serde::Serializer::serialize_struct(__serializer, "Status", false as usize + 1 + 1)?;
+                    let mut __serde_state = _serde::Serializer::serialize_struct(__serializer, "Status", false as usize + 1 + 1 + 1)?;
                     _serde::ser::SerializeStruct::serialize_field(&mut __serde_state, "db", &self.db)?;
                     _serde::ser::SerializeStruct::serialize_field(&mut __serde_state, "redis", &self.redis)?;
+                    _serde::ser::SerializeStruct::serialize_field(&mut __serde_state, "mongo", &self.mongo)?;
                     _serde::ser::SerializeStruct::end(__serde_state)
                 }
             }
@@ -386,6 +389,7 @@ mod app {
                     enum __Field {
                         __field0,
                         __field1,
+                        __field2,
                         __ignore,
                     }
                     #[doc(hidden)]
@@ -402,6 +406,7 @@ mod app {
                             match __value {
                                 0u64 => _serde::__private::Ok(__Field::__field0),
                                 1u64 => _serde::__private::Ok(__Field::__field1),
+                                2u64 => _serde::__private::Ok(__Field::__field2),
                                 _ => _serde::__private::Ok(__Field::__ignore),
                             }
                         }
@@ -412,6 +417,7 @@ mod app {
                             match __value {
                                 "db" => _serde::__private::Ok(__Field::__field0),
                                 "redis" => _serde::__private::Ok(__Field::__field1),
+                                "mongo" => _serde::__private::Ok(__Field::__field2),
                                 _ => _serde::__private::Ok(__Field::__ignore),
                             }
                         }
@@ -422,6 +428,7 @@ mod app {
                             match __value {
                                 b"db" => _serde::__private::Ok(__Field::__field0),
                                 b"redis" => _serde::__private::Ok(__Field::__field1),
+                                b"mongo" => _serde::__private::Ok(__Field::__field2),
                                 _ => _serde::__private::Ok(__Field::__ignore),
                             }
                         }
@@ -453,16 +460,22 @@ mod app {
                             let __field0 = match _serde::de::SeqAccess::next_element::<String>(&mut __seq)? {
                                 _serde::__private::Some(__value) => __value,
                                 _serde::__private::None => {
-                                    return _serde::__private::Err(_serde::de::Error::invalid_length(0usize, &"struct Status with 2 elements"));
+                                    return _serde::__private::Err(_serde::de::Error::invalid_length(0usize, &"struct Status with 3 elements"));
                                 }
                             };
                             let __field1 = match _serde::de::SeqAccess::next_element::<String>(&mut __seq)? {
                                 _serde::__private::Some(__value) => __value,
                                 _serde::__private::None => {
-                                    return _serde::__private::Err(_serde::de::Error::invalid_length(1usize, &"struct Status with 2 elements"));
+                                    return _serde::__private::Err(_serde::de::Error::invalid_length(1usize, &"struct Status with 3 elements"));
                                 }
                             };
-                            _serde::__private::Ok(Status { db: __field0, redis: __field1 })
+                            let __field2 = match _serde::de::SeqAccess::next_element::<Mongo>(&mut __seq)? {
+                                _serde::__private::Some(__value) => __value,
+                                _serde::__private::None => {
+                                    return _serde::__private::Err(_serde::de::Error::invalid_length(2usize, &"struct Status with 3 elements"));
+                                }
+                            };
+                            _serde::__private::Ok(Status { db: __field0, redis: __field1, mongo: __field2 })
                         }
                         #[inline]
                         fn visit_map<__A>(self, mut __map: __A) -> _serde::__private::Result<Self::Value, __A::Error>
@@ -471,6 +484,7 @@ mod app {
                         {
                             let mut __field0: _serde::__private::Option<String> = _serde::__private::None;
                             let mut __field1: _serde::__private::Option<String> = _serde::__private::None;
+                            let mut __field2: _serde::__private::Option<Mongo> = _serde::__private::None;
                             while let _serde::__private::Some(__key) = _serde::de::MapAccess::next_key::<__Field>(&mut __map)? {
                                 match __key {
                                     __Field::__field0 => {
@@ -485,6 +499,12 @@ mod app {
                                         }
                                         __field1 = _serde::__private::Some(_serde::de::MapAccess::next_value::<String>(&mut __map)?);
                                     }
+                                    __Field::__field2 => {
+                                        if _serde::__private::Option::is_some(&__field2) {
+                                            return _serde::__private::Err(<__A::Error as _serde::de::Error>::duplicate_field("mongo"));
+                                        }
+                                        __field2 = _serde::__private::Some(_serde::de::MapAccess::next_value::<Mongo>(&mut __map)?);
+                                    }
                                     _ => {
                                         let _ = _serde::de::MapAccess::next_value::<_serde::de::IgnoredAny>(&mut __map)?;
                                     }
@@ -498,11 +518,15 @@ mod app {
                                 _serde::__private::Some(__field1) => __field1,
                                 _serde::__private::None => _serde::__private::de::missing_field("redis")?,
                             };
-                            _serde::__private::Ok(Status { db: __field0, redis: __field1 })
+                            let __field2 = match __field2 {
+                                _serde::__private::Some(__field2) => __field2,
+                                _serde::__private::None => _serde::__private::de::missing_field("mongo")?,
+                            };
+                            _serde::__private::Ok(Status { db: __field0, redis: __field1, mongo: __field2 })
                         }
                     }
                     #[doc(hidden)]
-                    const FIELDS: &'static [&'static str] = &["db", "redis"];
+                    const FIELDS: &'static [&'static str] = &["db", "redis", "mongo"];
                     _serde::Deserializer::deserialize_struct(
                         __deserializer,
                         "Status",
@@ -516,7 +540,7 @@ mod app {
         impl ::core::fmt::Debug for Status {
             #[inline]
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                ::core::fmt::Formatter::debug_struct_field2_finish(f, "Status", "db", &self.db, "redis", &&self.redis)
+                ::core::fmt::Formatter::debug_struct_field3_finish(f, "Status", "db", &self.db, "redis", &self.redis, "mongo", &&self.mongo)
             }
         }
         impl nidrs::valid::validator::Validator for Status {
@@ -528,38 +552,6 @@ mod app {
             }
             fn example(&self) -> Vec<serde_json::Value> {
                 ::alloc::vec::Vec::new()
-            }
-        }
-        impl utoipa::IntoParams for Status {
-            fn into_params(parameter_in_provider: impl Fn() -> Option<utoipa::openapi::path::ParameterIn>) -> Vec<utoipa::openapi::path::Parameter> {
-                [
-                    Some(
-                        utoipa::openapi::path::ParameterBuilder::new()
-                            .name("db")
-                            .parameter_in(parameter_in_provider().unwrap_or_default())
-                            .required(utoipa::openapi::Required::True)
-                            .schema(Some(
-                                utoipa::openapi::ObjectBuilder::new()
-                                    .schema_type(utoipa::openapi::schema::SchemaType::new(utoipa::openapi::schema::Type::String)),
-                            ))
-                            .build(),
-                    ),
-                    Some(
-                        utoipa::openapi::path::ParameterBuilder::new()
-                            .name("redis")
-                            .parameter_in(parameter_in_provider().unwrap_or_default())
-                            .required(utoipa::openapi::Required::True)
-                            .schema(Some(
-                                utoipa::openapi::ObjectBuilder::new()
-                                    .schema_type(utoipa::openapi::schema::SchemaType::new(utoipa::openapi::schema::Type::String)),
-                            ))
-                            .build(),
-                    ),
-                ]
-                .into_iter()
-                .filter(Option::is_some)
-                .flatten()
-                .collect()
             }
         }
         impl utoipa::__dev::ComposeSchema for Status {
@@ -582,6 +574,15 @@ mod app {
                                 .schema_type(utoipa::openapi::schema::SchemaType::new(utoipa::openapi::schema::Type::String)),
                         )
                         .required("redis");
+                    object = object
+                        .property(
+                            "mongo",
+                            utoipa::openapi::schema::RefBuilder::new().ref_location_from_schema_name(::alloc::__export::must_use({
+                                let res = ::alloc::fmt::format(format_args!("{0}", <Mongo as utoipa::ToSchema>::name()));
+                                res
+                            })),
+                        )
+                        .required("mongo");
                     object
                 }
                 .into()
@@ -592,25 +593,14 @@ mod app {
                 std::borrow::Cow::Borrowed("Status")
             }
             fn schemas(schemas: &mut Vec<(String, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>)>) {
-                schemas.extend([]);
-            }
-        }
-        impl nidrs::openapi::ToParamDto for Status {
-            fn to_param_dto(dto_type: nidrs::openapi::ParamDtoIn) -> nidrs::openapi::ParamDto {
-                use nidrs::openapi::utoipa;
-                use nidrs::openapi::utoipa::openapi::RefOr;
-                use nidrs::openapi::utoipa::openapi::Schema;
-                use nidrs::openapi::utoipa::IntoParams;
-                use nidrs::openapi::utoipa::ToSchema;
-                let schema: RefOr<Schema> = {
-                    let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
-                    <Self as utoipa::PartialSchema>::schema()
-                }
-                .into();
-                match dto_type {
-                    nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
-                    nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema(("body", schema)),
-                }
+                schemas.extend([(
+                    String::from(::alloc::__export::must_use({
+                        let res = ::alloc::fmt::format(format_args!("{0}", <Mongo as utoipa::ToSchema>::name()));
+                        res
+                    })),
+                    <Mongo as utoipa::PartialSchema>::schema(),
+                )]);
+                <Mongo as utoipa::ToSchema>::schemas(schemas);
             }
         }
         impl IntoResponse for Status {
@@ -625,10 +615,261 @@ mod app {
                 res
             }
         }
+        impl nidrs::openapi::ToParamDto for Status {
+            fn to_param_dto(dto_type: nidrs::openapi::ParamDtoIn) -> nidrs::openapi::ParamDto {
+                use nidrs::openapi::utoipa;
+                use nidrs::openapi::utoipa::openapi::RefOr;
+                use nidrs::openapi::utoipa::openapi::Schema;
+                use nidrs::openapi::utoipa::IntoParams;
+                use nidrs::openapi::utoipa::ToSchema;
+
+                let ref_schema: RefOr<Schema> = utoipa::schema!(Self).into();
+                let mut schemas: Vec<(String, RefOr<Schema>)> = vec![(
+                    <Self as utoipa::ToSchema>::name().to_string(),
+                    utoipa::schema!(
+                        #[inline]
+                        Self
+                    )
+                    .into(),
+                )];
+
+                <Self as utoipa::ToSchema>::schemas(&mut schemas);
+
+                match dto_type {
+                    nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((ref_schema, schemas)),
+                    _ => nidrs::openapi::ParamDto::None,
+                }
+            }
+        }
+        pub struct Mongo {
+            pub count: u64,
+        }
+        #[doc(hidden)]
+        #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+        const _: () = {
+            #[allow(unused_extern_crates, clippy::useless_attribute)]
+            extern crate serde as _serde;
+            #[automatically_derived]
+            impl _serde::Serialize for Mongo {
+                fn serialize<__S>(&self, __serializer: __S) -> _serde::__private::Result<__S::Ok, __S::Error>
+                where
+                    __S: _serde::Serializer,
+                {
+                    let mut __serde_state = _serde::Serializer::serialize_struct(__serializer, "Mongo", false as usize + 1)?;
+                    _serde::ser::SerializeStruct::serialize_field(&mut __serde_state, "count", &self.count)?;
+                    _serde::ser::SerializeStruct::end(__serde_state)
+                }
+            }
+        };
+        #[doc(hidden)]
+        #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+        const _: () = {
+            #[allow(unused_extern_crates, clippy::useless_attribute)]
+            extern crate serde as _serde;
+            #[automatically_derived]
+            impl<'de> _serde::Deserialize<'de> for Mongo {
+                fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+                where
+                    __D: _serde::Deserializer<'de>,
+                {
+                    #[allow(non_camel_case_types)]
+                    #[doc(hidden)]
+                    enum __Field {
+                        __field0,
+                        __ignore,
+                    }
+                    #[doc(hidden)]
+                    struct __FieldVisitor;
+                    impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
+                        type Value = __Field;
+                        fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(__formatter, "field identifier")
+                        }
+                        fn visit_u64<__E>(self, __value: u64) -> _serde::__private::Result<Self::Value, __E>
+                        where
+                            __E: _serde::de::Error,
+                        {
+                            match __value {
+                                0u64 => _serde::__private::Ok(__Field::__field0),
+                                _ => _serde::__private::Ok(__Field::__ignore),
+                            }
+                        }
+                        fn visit_str<__E>(self, __value: &str) -> _serde::__private::Result<Self::Value, __E>
+                        where
+                            __E: _serde::de::Error,
+                        {
+                            match __value {
+                                "count" => _serde::__private::Ok(__Field::__field0),
+                                _ => _serde::__private::Ok(__Field::__ignore),
+                            }
+                        }
+                        fn visit_bytes<__E>(self, __value: &[u8]) -> _serde::__private::Result<Self::Value, __E>
+                        where
+                            __E: _serde::de::Error,
+                        {
+                            match __value {
+                                b"count" => _serde::__private::Ok(__Field::__field0),
+                                _ => _serde::__private::Ok(__Field::__ignore),
+                            }
+                        }
+                    }
+                    impl<'de> _serde::Deserialize<'de> for __Field {
+                        #[inline]
+                        fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+                        where
+                            __D: _serde::Deserializer<'de>,
+                        {
+                            _serde::Deserializer::deserialize_identifier(__deserializer, __FieldVisitor)
+                        }
+                    }
+                    #[doc(hidden)]
+                    struct __Visitor<'de> {
+                        marker: _serde::__private::PhantomData<Mongo>,
+                        lifetime: _serde::__private::PhantomData<&'de ()>,
+                    }
+                    impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
+                        type Value = Mongo;
+                        fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
+                            _serde::__private::Formatter::write_str(__formatter, "struct Mongo")
+                        }
+                        #[inline]
+                        fn visit_seq<__A>(self, mut __seq: __A) -> _serde::__private::Result<Self::Value, __A::Error>
+                        where
+                            __A: _serde::de::SeqAccess<'de>,
+                        {
+                            let __field0 = match _serde::de::SeqAccess::next_element::<u64>(&mut __seq)? {
+                                _serde::__private::Some(__value) => __value,
+                                _serde::__private::None => {
+                                    return _serde::__private::Err(_serde::de::Error::invalid_length(0usize, &"struct Mongo with 1 element"));
+                                }
+                            };
+                            _serde::__private::Ok(Mongo { count: __field0 })
+                        }
+                        #[inline]
+                        fn visit_map<__A>(self, mut __map: __A) -> _serde::__private::Result<Self::Value, __A::Error>
+                        where
+                            __A: _serde::de::MapAccess<'de>,
+                        {
+                            let mut __field0: _serde::__private::Option<u64> = _serde::__private::None;
+                            while let _serde::__private::Some(__key) = _serde::de::MapAccess::next_key::<__Field>(&mut __map)? {
+                                match __key {
+                                    __Field::__field0 => {
+                                        if _serde::__private::Option::is_some(&__field0) {
+                                            return _serde::__private::Err(<__A::Error as _serde::de::Error>::duplicate_field("count"));
+                                        }
+                                        __field0 = _serde::__private::Some(_serde::de::MapAccess::next_value::<u64>(&mut __map)?);
+                                    }
+                                    _ => {
+                                        let _ = _serde::de::MapAccess::next_value::<_serde::de::IgnoredAny>(&mut __map)?;
+                                    }
+                                }
+                            }
+                            let __field0 = match __field0 {
+                                _serde::__private::Some(__field0) => __field0,
+                                _serde::__private::None => _serde::__private::de::missing_field("count")?,
+                            };
+                            _serde::__private::Ok(Mongo { count: __field0 })
+                        }
+                    }
+                    #[doc(hidden)]
+                    const FIELDS: &'static [&'static str] = &["count"];
+                    _serde::Deserializer::deserialize_struct(
+                        __deserializer,
+                        "Mongo",
+                        FIELDS,
+                        __Visitor { marker: _serde::__private::PhantomData::<Mongo>, lifetime: _serde::__private::PhantomData },
+                    )
+                }
+            }
+        };
+        #[automatically_derived]
+        impl ::core::fmt::Debug for Mongo {
+            #[inline]
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                ::core::fmt::Formatter::debug_struct_field1_finish(f, "Mongo", "count", &&self.count)
+            }
+        }
+        impl nidrs::valid::validator::Validator for Mongo {
+            fn valid(&self) -> nidrs::valid::validator::ValidResult {
+                use nidrs::valid::ruleset;
+                use nidrs::valid::ruleset::*;
+                use nidrs::valid::validator::Rule;
+                return Ok(());
+            }
+            fn example(&self) -> Vec<serde_json::Value> {
+                ::alloc::vec::Vec::new()
+            }
+        }
+        impl utoipa::IntoParams for Mongo {
+            fn into_params(parameter_in_provider: impl Fn() -> Option<utoipa::openapi::path::ParameterIn>) -> Vec<utoipa::openapi::path::Parameter> {
+                [Some(
+                    utoipa::openapi::path::ParameterBuilder::new()
+                        .name("count")
+                        .parameter_in(parameter_in_provider().unwrap_or_default())
+                        .required(utoipa::openapi::Required::True)
+                        .schema(Some(
+                            utoipa::openapi::ObjectBuilder::new()
+                                .schema_type(utoipa::openapi::schema::SchemaType::new(utoipa::openapi::schema::Type::Integer))
+                                .format(Some(utoipa::openapi::schema::SchemaFormat::KnownFormat(utoipa::openapi::schema::KnownFormat::Int64)))
+                                .minimum(Some(0f64)),
+                        ))
+                        .build(),
+                )]
+                .into_iter()
+                .filter(Option::is_some)
+                .flatten()
+                .collect()
+            }
+        }
+        impl utoipa::__dev::ComposeSchema for Mongo {
+            fn compose(
+                mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>>,
+            ) -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+                {
+                    let mut object = utoipa::openapi::ObjectBuilder::new();
+                    object = object
+                        .property(
+                            "count",
+                            utoipa::openapi::ObjectBuilder::new()
+                                .schema_type(utoipa::openapi::schema::SchemaType::new(utoipa::openapi::schema::Type::Integer))
+                                .format(Some(utoipa::openapi::schema::SchemaFormat::KnownFormat(utoipa::openapi::schema::KnownFormat::Int64)))
+                                .minimum(Some(0f64)),
+                        )
+                        .required("count");
+                    object
+                }
+                .into()
+            }
+        }
+        impl utoipa::ToSchema for Mongo {
+            fn name() -> std::borrow::Cow<'static, str> {
+                std::borrow::Cow::Borrowed("Mongo")
+            }
+            fn schemas(schemas: &mut Vec<(String, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>)>) {
+                schemas.extend([]);
+            }
+        }
+        impl nidrs::openapi::ToParamDto for Mongo {
+            fn to_param_dto(dto_type: nidrs::openapi::ParamDtoIn) -> nidrs::openapi::ParamDto {
+                use nidrs::openapi::utoipa;
+                use nidrs::openapi::utoipa::openapi::RefOr;
+                use nidrs::openapi::utoipa::openapi::Schema;
+                use nidrs::openapi::utoipa::IntoParams;
+                use nidrs::openapi::utoipa::ToSchema;
+                let schema: RefOr<Schema> = {
+                    let mut generics: Vec<utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>> = Vec::new();
+                    <Self as utoipa::PartialSchema>::schema()
+                }
+                .into();
+                match dto_type {
+                    nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
+                    nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((schema, ::alloc::vec::Vec::new())),
+                    _ => nidrs::openapi::ParamDto::None,
+                }
+            }
+        }
         pub struct A {
-            #[rule(Email)]
             pub hello: String,
-            #[rule(Valid(v))]
             pub hello2: B,
         }
         #[doc(hidden)]
@@ -803,10 +1044,6 @@ mod app {
                 use nidrs::valid::ruleset;
                 use nidrs::valid::ruleset::*;
                 use nidrs::valid::validator::Rule;
-                let v = &self.hello;
-                Email.valid(v, "hello", None)?;
-                let v = &self.hello2;
-                Valid(v).valid(v, "hello2", None)?;
                 return Ok(());
             }
             fn example(&self) -> Vec<serde_json::Value> {
@@ -1360,9 +1597,9 @@ mod app {
         impl nidrs::ImplMeta for AppInterceptor {
             fn __meta(&self) -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
+                meta.set_data(nidrs::datasets::ServiceType::from("Service"));
                 meta.set("service", "AppInterceptor");
                 meta.set_data(nidrs::datasets::ServiceName::from("AppInterceptor"));
-                meta.set_data(nidrs::datasets::ServiceType::from("Service"));
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -1399,11 +1636,11 @@ mod app {
         impl nidrs::ImplMeta for AppService {
             fn __meta(&self) -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
-                meta.set_data(nidrs::datasets::ServiceType::from("Service"));
                 meta.set("test", true);
-                meta.set_data(nidrs::datasets::ServiceName::from("AppService"));
                 meta.set("service", "AppService");
                 meta.set("test2", true);
+                meta.set_data(nidrs::datasets::ServiceType::from("Service"));
+                meta.set_data(nidrs::datasets::ServiceName::from("AppService"));
                 meta.set("module", "AppModule");
                 meta.set("global", "app");
                 meta
@@ -1583,8 +1820,8 @@ mod modules {
                 fn __meta(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
                     meta.set_data(nidrs::datasets::ServiceType::from("Service"));
-                    meta.set("service", "ConfService");
                     meta.set_data(nidrs::datasets::ServiceName::from("ConfService"));
+                    meta.set("service", "ConfService");
                     meta.set("module", "ConfModule");
                     meta.set("global", "app");
                     meta
@@ -1717,10 +1954,10 @@ mod modules {
             impl nidrs::ImplMeta for UserController {
                 fn __meta(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
-                    meta.set("service", "UserController");
                     meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
                     meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
+                    meta.set("service", "UserController");
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
@@ -1735,16 +1972,16 @@ mod modules {
                 }
                 pub fn __meta_get_all(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
-                    meta.set_data(nidrs::openapi::RouterOut(nidrs::openapi::RouterParams::default().merge_type::<AppResult<String>>("")));
-                    meta.set_data(nidrs::openapi::RouterIn(nidrs::openapi::RouterParams::default().merge_type::<Query<HashMap<String, String>>>("")));
-                    meta.set_data(nidrs::datasets::RouterMethod::from("get"));
+                    meta.set_data(nidrs::openapi::RouterIn(nidrs::openapi::RouterParams::default().comb::<Query<HashMap<String, String>>>("")));
+                    meta.set_data(nidrs::openapi::RouterOut(nidrs::openapi::RouterParams::default().comb::<AppResult<String>>("")));
                     meta.set_data(nidrs::datasets::RouterPath::from("/"));
-                    meta.set_data(nidrs::datasets::RouterName::from("get_all"));
                     meta.set("handler", "get_all");
-                    meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::RouterName::from("get_all"));
+                    meta.set_data(nidrs::datasets::RouterMethod::from("get"));
                     meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
                     meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
+                    meta.set("service", "UserController");
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
@@ -1794,18 +2031,18 @@ mod modules {
                 }
                 pub fn __meta_get_one(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
-                    meta.set_data(nidrs::datasets::RouterMethod::from("get"));
-                    meta.set_data(nidrs::datasets::RouterPath::from("/:id"));
-                    meta.set_data(nidrs::openapi::RouterOut(nidrs::openapi::RouterParams::default().merge_type::<AppResult<String>>("")));
-                    meta.set("handler", "get_one");
+                    meta.set_data(nidrs::openapi::RouterOut(nidrs::openapi::RouterParams::default().comb::<AppResult<String>>("")));
                     meta.set_data(nidrs::openapi::RouterIn(
-                        nidrs::openapi::RouterParams::default().merge_type::<Path<UserByIdDto>>("id").merge_type::<Query<FilterDto>>("query"),
+                        nidrs::openapi::RouterParams::default().comb::<Path<UserByIdDto>>("id").comb::<Query<FilterDto>>("query"),
                     ));
                     meta.set_data(nidrs::datasets::RouterName::from("get_one"));
-                    meta.set("service", "UserController");
+                    meta.set_data(nidrs::datasets::RouterMethod::from("get"));
+                    meta.set_data(nidrs::datasets::RouterPath::from("/:id"));
+                    meta.set("handler", "get_one");
                     meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
                     meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
+                    meta.set("service", "UserController");
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
@@ -1852,18 +2089,16 @@ mod modules {
                 }
                 pub fn __meta_create_user(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
+                    meta.set_data(nidrs::openapi::RouterOut(nidrs::openapi::RouterParams::default().comb::<AppResult<Json<CreateUserResDto>>>("")));
+                    meta.set_data(nidrs::datasets::RouterMethod::from("post"));
+                    meta.set_data(nidrs::openapi::RouterIn(nidrs::openapi::RouterParams::default().comb::<Json<CreateUserDto>>("dto")));
                     meta.set("handler", "create_user");
-                    meta.set_data(nidrs::openapi::RouterOut(
-                        nidrs::openapi::RouterParams::default().merge_type::<AppResult<Json<CreateUserResDto>>>(""),
-                    ));
                     meta.set_data(nidrs::datasets::RouterName::from("create_user"));
                     meta.set_data(nidrs::datasets::RouterPath::from("/"));
-                    meta.set_data(nidrs::openapi::RouterIn(nidrs::openapi::RouterParams::default().merge_type::<Json<CreateUserDto>>("dto")));
-                    meta.set_data(nidrs::datasets::RouterMethod::from("post"));
-                    meta.set("service", "UserController");
                     meta.set_data(nidrs::datasets::ServiceType::from("Controller"));
                     meta.set_data(nidrs::datasets::ServiceName::from("UserController"));
                     meta.set_data(nidrs::datasets::ControllerPath::from("/user"));
+                    meta.set("service", "UserController");
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
@@ -1910,9 +2145,7 @@ mod modules {
         pub mod dto {
             use nidrs::openapi::utoipa;
             pub struct CreateUserDto {
-                #[rule(Email, "age must be greater than 0")]
                 pub name: String,
-                #[rule(Number::default().max(12).min(0))]
                 pub age: i32,
             }
             #[doc(hidden)]
@@ -2093,10 +2326,6 @@ mod modules {
                     use nidrs::valid::ruleset;
                     use nidrs::valid::ruleset::*;
                     use nidrs::valid::validator::Rule;
-                    let v = &self.name;
-                    Email.valid(v, "name", Some("age must be greater than 0".to_string()))?;
-                    let v = &self.age;
-                    Number::default().max(12).min(0).valid(v, "age", None)?;
                     return Ok(());
                 }
                 fn example(&self) -> Vec<serde_json::Value> {
@@ -2188,7 +2417,8 @@ mod modules {
                     .into();
                     match dto_type {
                         nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
-                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema(("body", schema)),
+                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((schema, ::alloc::vec::Vec::new())),
+                        _ => nidrs::openapi::ParamDto::None,
                     }
                 }
             }
@@ -2417,7 +2647,8 @@ mod modules {
                     .into();
                     match dto_type {
                         nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
-                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema(("body", schema)),
+                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((schema, ::alloc::vec::Vec::new())),
+                        _ => nidrs::openapi::ParamDto::None,
                     }
                 }
             }
@@ -2801,7 +3032,8 @@ mod modules {
                     .into();
                     match dto_type {
                         nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
-                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema(("body", schema)),
+                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((schema, ::alloc::vec::Vec::new())),
+                        _ => nidrs::openapi::ParamDto::None,
                     }
                 }
             }
@@ -3078,7 +3310,8 @@ mod modules {
                     .into();
                     match dto_type {
                         nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
-                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema(("body", schema)),
+                        nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((schema, ::alloc::vec::Vec::new())),
+                        _ => nidrs::openapi::ParamDto::None,
                     }
                 }
             }
@@ -3109,9 +3342,9 @@ mod modules {
             impl nidrs::ImplMeta for UserService {
                 fn __meta(&self) -> nidrs::InnerMeta {
                     let mut meta = nidrs::InnerMeta::new();
+                    meta.set_data(nidrs::datasets::ServiceName::from("UserService"));
                     meta.set("service", "UserService");
                     meta.set_data(nidrs::datasets::ServiceType::from("Service"));
-                    meta.set_data(nidrs::datasets::ServiceName::from("UserService"));
                     meta.set("module", "UserModule");
                     meta.set("global", "app");
                     meta
@@ -3196,8 +3429,8 @@ mod modules {
         impl nidrs::ImplMeta for UserModule {
             fn __meta(&self) -> nidrs::InnerMeta {
                 let mut meta = nidrs::InnerMeta::new();
-                meta.set("__", true);
                 meta.set("service", "UserModule");
+                meta.set("__", true);
                 meta.set("module", "UserModule");
                 meta.set("global", "app");
                 meta

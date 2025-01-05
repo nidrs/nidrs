@@ -1,9 +1,12 @@
 use std::collections::HashMap;
 
 use nidrs_extern::{datasets::MetaKey, meta::Meta};
-use utoipa::openapi::{
-    path::{Parameter, ParameterBuilder, ParameterIn},
-    Required,
+use utoipa::{
+    openapi::{
+        path::{Parameter, ParameterBuilder, ParameterIn},
+        Required,
+    },
+    ToSchema,
 };
 
 #[derive(Debug)]
@@ -36,7 +39,19 @@ impl RouterOut {
 pub enum ParamDto {
     None,
     ParamList(Vec<Parameter>),
-    BodySchema((&'static str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>)),
+    BodySchema((utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>, Vec<(String, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>)>)),
+}
+
+impl std::fmt::Debug for ParamDto {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::None => write!(f, "None"),
+            Self::ParamList(arg0) => {
+                f.debug_tuple("ParamList").field(&arg0.iter().map(|p| serde_json::to_string(p).unwrap()).collect::<Vec<_>>()).finish()
+            }
+            Self::BodySchema(arg0) => f.debug_tuple("BodySchema").field(&serde_json::to_string(arg0).unwrap()).finish(),
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -63,7 +78,8 @@ impl std::fmt::Debug for ParamType {
 #[derive(Clone)]
 pub struct BodySchema {
     pub content_type: &'static str,
-    pub schema: Option<(&'static str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>)>,
+    pub schema:
+        Option<(utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>, Vec<(String, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>)>)>,
 }
 
 #[derive(Clone, Default, Debug)]
@@ -73,11 +89,8 @@ impl RouterParams {
     pub fn value(&self) -> &Vec<ParamType> {
         &self.0
     }
-    pub fn merge(mut self, other: RouterParams) -> Self {
-        self.0.extend(other.0);
-        self
-    }
-    pub fn merge_type<T: ToRouterParamsByType>(mut self, indent: &str) -> Self {
+
+    pub fn comb<T: ToRouterParamsByType>(mut self, indent: &str) -> Self {
         let other = T::to_router_parameters(indent);
         self.0.extend(other.0);
         self
@@ -231,7 +244,7 @@ macro_rules! impl_for_tuples {
     ($T:ident $(, $Ts:ident)*) => {
         impl<$T: ToRouterParamsByType, $($Ts: ToRouterParamsByType),*> ToRouterParamsByType for ($T, $($Ts),*) {
             fn to_router_parameters(indent: &str) -> RouterParams {
-                $T::to_router_parameters(indent).merge_type::<($($Ts),*)>(indent)  // 调用元组成员的 to_router_parameters 方法，然后合并
+                $T::to_router_parameters(indent).comb::<($($Ts),*)>(indent)  // 调用元组成员的 to_router_parameters 方法，然后合并
             }
         }
         impl_for_tuples!($($Ts),*);  // 递归调用宏

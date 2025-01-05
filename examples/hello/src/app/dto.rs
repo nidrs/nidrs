@@ -10,11 +10,13 @@ use nidrs::{
 };
 use utoipa::ToSchema;
 
+// #[derive(nidrs::openapi::utoipa::ToSchema)]
 #[nidrs::openapi::schema]
 #[dto]
 pub struct Status {
     pub db: String,
     pub redis: String,
+    pub mongo: Mongo,
 }
 
 impl IntoResponse for Status {
@@ -35,13 +37,43 @@ impl IntoResponse for Status {
     }
 }
 
+// impl nidrs::openapi::ToParamDto for Status {
+//     fn to_param_dto(
+//         dto_type: nidrs::openapi::ParamDtoIn,
+//     ) -> nidrs::openapi::ParamDto {
+//         use nidrs::openapi::utoipa::IntoParams;
+//         use nidrs::openapi::utoipa::ToSchema;
+//         use nidrs::openapi::utoipa::openapi::Schema;
+//         use nidrs::openapi::utoipa::openapi::RefOr;
+//         use nidrs::openapi::utoipa;
+
+//         let schema: RefOr<Schema> = utoipa::schema!(Self).into();
+
+//         match dto_type {
+//             nidrs::openapi::ParamDtoIn::Body => {
+//                 nidrs::openapi::ParamDto::BodySchema((
+//                     schema,
+//                     vec![],
+//                 ))
+//             }
+//             _ => nidrs::openapi::ParamDto::None
+//         }
+//     }
+// }
+
+#[nidrs::openapi::schema]
+#[dto]
+pub struct Mongo {
+    pub count: u64,
+}
+
 #[derive(ToSchema)]
 #[dto]
 pub struct A {
-    #[rule(Email)]
+    // #[rule(Email)]
     pub hello: String,
 
-    #[rule(Valid(v))]
+    // #[rule(Valid(v))]
     pub hello2: B,
 }
 

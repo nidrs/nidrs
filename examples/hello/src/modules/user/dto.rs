@@ -3,10 +3,10 @@ use nidrs::openapi::utoipa;
 #[nidrs::openapi::schema]
 #[nidrs::valid::dto]
 pub struct CreateUserDto {
-    #[rule(Email, "age must be greater than 0")]
+    // #[rule(Email, "age must be greater than 0")]
     pub name: String,
 
-    #[rule(Number::default().max(12).min(0))]
+    // #[rule(Number::default().max(12).min(0))]
     pub age: i32,
 }
 

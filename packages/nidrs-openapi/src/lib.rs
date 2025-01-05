@@ -10,7 +10,7 @@ use utoipa::openapi::{
     path::{OperationBuilder, PathItemBuilder},
     request_body::RequestBodyBuilder,
     tag::TagBuilder,
-    Components, Info, OpenApiBuilder, PathsBuilder,
+    ComponentsBuilder, Info, OpenApiBuilder, PathsBuilder,
 };
 pub use utoipa_rapidoc;
 use utoipa_rapidoc::RapiDoc;
@@ -25,10 +25,12 @@ pub use datasets::*;
 
 pub use nidrs_openapi_macro::*;
 
+pub mod union_type;
+
 pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
     // OPENAPI IMPLEMENTATION
     let mut paths = PathsBuilder::new().build();
-    let components = Components::new();
+    let mut components = ComponentsBuilder::new();
     let mut tags = HashMap::new();
 
     for router in routers.iter() {
@@ -72,9 +74,12 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
                                 // components.schemas.insert(schema.0.to_string(), schema.1.to_owned());
                                 operation = operation.request_body(Some(
                                     RequestBodyBuilder::new()
-                                        .content(body.content_type, utoipa::openapi::ContentBuilder::new().schema(Some(schema.to_owned().1)).build())
+                                        .content(body.content_type, utoipa::openapi::ContentBuilder::new().schema(Some(schema.to_owned().0)).build())
                                         .build(),
                                 ));
+                                for schema in schema.1.to_owned() {
+                                    components = components.schema(schema.0.to_string(), schema.1.to_owned());
+                                }
                             }
                         }
                     }
@@ -85,7 +90,10 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
                     if let datasets::ParamType::Body(body) = param {
                         let mut content = utoipa::openapi::ContentBuilder::new();
                         if let Some(schema) = &body.schema {
-                            content = content.schema(Some(schema.to_owned().1));
+                            content = content.schema(Some(schema.0.to_owned()));
+                            for schema in schema.1.to_owned() {
+                                components = components.schema(schema.0.to_string(), schema.1.to_owned());
+                            }
                         } else {
                             content = content.example(Some(serde_json::Value::String("String".to_string())));
                         }
@@ -118,7 +126,7 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
     let api = OpenApiBuilder::new()
         .info(Info::new("Nidrs OpenAPI", "v1.0"))
         .paths(paths)
-        .components(Some(components))
+        .components(Some(components.build()))
         .tags(Some(
             tags.iter().map(|(name, order)| TagBuilder::new().name(name).description(Some(format!("Tag for {}", name))).build()).collect::<Vec<_>>(),
         ))

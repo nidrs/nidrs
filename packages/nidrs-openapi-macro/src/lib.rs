@@ -14,7 +14,7 @@ pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
             let tokens = pat.ty.to_token_stream();
             let name = if let syn::Pat::Ident(pat_ident) = &*pat.pat { pat_ident.ident.to_string() } else { String::new() };
             router_in.push(quote! {
-                .merge_type::<#tokens>(#name)
+                .comb::<#tokens>(#name)
             })
         }
     });
@@ -23,7 +23,7 @@ pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
 
     if let syn::ReturnType::Type(_, ty) = &input.sig.output {
         router_out.push(quote! {
-            .merge_type::<#ty>("")
+            .comb::<#ty>("")
         });
     }
 
@@ -61,13 +61,24 @@ pub fn schema(args: TokenStream, input: TokenStream) -> TokenStream {
                 use nidrs::openapi::utoipa::openapi::Schema;
                 use nidrs::openapi::utoipa::openapi::RefOr;
                 use nidrs::openapi::utoipa;
-                let schema: RefOr<Schema> = nidrs::openapi::utoipa::schema!(#[inline] Self).into();
+
+                let ref_schema: RefOr<Schema> = utoipa::schema!(Self).into();
+                let mut schemas: Vec<(String, RefOr<Schema>)> = vec![
+                    (
+                        <Self as utoipa::ToSchema>::name().to_string(),
+                        utoipa::schema!(#[inline] Self).into(),
+                    )
+                ];
+
+                <Self as utoipa::ToSchema>::schemas(&mut schemas);
+
                 match dto_type {
                     nidrs::openapi::ParamDtoIn::Param(p) => nidrs::openapi::ParamDto::ParamList(Self::into_params(|| Some(p.clone()))),
                     nidrs::openapi::ParamDtoIn::Body => nidrs::openapi::ParamDto::BodySchema((
-                        "body",
-                        schema
+                        ref_schema,
+                        schemas,
                     )),
+                    _ => nidrs::openapi::ParamDto::None,
                 }
             }
         }
