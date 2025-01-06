@@ -10,7 +10,7 @@ repository = "https://github.com/nidrs/nidrs.git"
 license = "MIT"
 
 [workspace.dependencies]
-nidrs = { path = "packages/nidrs", version = "0.3.0" }
+nidrs = { path = "packages/nidrs", version = "0.3.1" }
 nidrs-extern = { path = "packages/nidrs-extern", version = "0.2.1" }
 nidrs-macro = { path = "packages/nidrs-macro", version = "0.2.2" }
 nidrs-diesel = { path = "packages/nidrs-diesel", version = "0.1.1" }

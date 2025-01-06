@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-v0.3.1 - 2025-01-06
+#### Refactoring
+- **(nidrs)** simplify error handling in interceptor response - (5df6daf) - *Lyda*
+
+- - -
+
 ## nidrs-v0.3.0 - 2024-11-15
 #### Bug Fixes
 - **(nidrs)** adapt impl meta - (c1a6873) - *WumaCoder*
