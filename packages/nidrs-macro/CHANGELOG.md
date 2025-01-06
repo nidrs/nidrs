@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-macro-v0.2.2 - 2025-01-06
+#### Bug Fixes
+- **(nidrs)** 不使用 root import 方式导入拦截器 - (20b6657) - *Lyda*
+- remove disable_auto_json - (9fbb28e) - Lyda
+#### Refactoring
+- **(nidrs)** simplify error handling in interceptor response - (5df6daf) - *Lyda*
+- format code - (54773d6) - Lyda
+
+- - -
+
 ## nidrs-macro-v0.2.1 - 2024-11-15
 #### Bug Fixes
 - **(nidrs)** 修复空 exports 选项引发的错误 - (25b26d6) - *WumaCoder*
