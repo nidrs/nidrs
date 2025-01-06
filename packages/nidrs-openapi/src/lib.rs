@@ -9,8 +9,9 @@ use utoipa::openapi::{
     extensions::ExtensionsBuilder,
     path::{OperationBuilder, PathItemBuilder},
     request_body::RequestBodyBuilder,
+    security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
     tag::TagBuilder,
-    ComponentsBuilder, Info, OpenApiBuilder, PathsBuilder,
+    ComponentsBuilder, Info, OpenApiBuilder, PathsBuilder, SecurityRequirement,
 };
 pub use utoipa_rapidoc;
 use utoipa_rapidoc::RapiDoc;
@@ -62,7 +63,11 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
             let mut operation = OperationBuilder::new();
             let router_in = router.meta.get_data::<datasets::RouterIn>();
             let router_out = router.meta.get_data::<datasets::RouterOut>();
+            let router_security = router.meta.get_data::<datasets::RouterSecurity>();
             // println!("router_in: {:?}, router_out: {:?}", router_in, router_out);
+            if let Some(RouterSecurity(router_security)) = router_security {
+                operation = operation.security(SecurityRequirement::new(router_security, Vec::<String>::new()));
+            }
             if let Some(router_in) = router_in {
                 for param in router_in.value().value() {
                     match param {
@@ -126,10 +131,17 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
     let api = OpenApiBuilder::new()
         .info(Info::new("Nidrs OpenAPI", "v1.0"))
         .paths(paths)
-        .components(Some(components.build()))
-        .tags(Some(
-            tags.iter().map(|(name, order)| TagBuilder::new().name(name).description(Some(format!("Tag for {}", name))).build()).collect::<Vec<_>>(),
+        .components(Some(
+            components
+                .security_scheme("Bearer", SecurityScheme::Http(HttpBuilder::new().scheme(HttpAuthScheme::Bearer).bearer_format("JWT").build()))
+                .build(),
         ))
+        .tags(Some(tags.keys().map(|name| TagBuilder::new().name(name).description(Some(format!("Tag for {}", name))).build()).collect::<Vec<_>>()))
+        // .security(
+        //     Some([
+        //         SecurityRequirement::new("bearer", Vec::<String>::new())
+        //     ])
+        // )
         .build();
 
     axum::Router::new()

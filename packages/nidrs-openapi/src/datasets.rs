@@ -35,6 +35,24 @@ impl RouterOut {
     }
 }
 
+#[derive(Debug)]
+pub struct RouterSecurity(pub String);
+impl MetaKey for RouterSecurity {
+    fn meta_key() -> String {
+        "RouterSecurity".to_string()
+    }
+}
+impl From<&str> for RouterSecurity {
+    fn from(value: &str) -> Self {
+        RouterSecurity(value.to_string())
+    }
+}
+impl RouterSecurity {
+    pub fn value(&self) -> &String {
+        &self.0
+    }
+}
+
 #[derive(Clone)]
 pub enum ParamDto {
     None,
