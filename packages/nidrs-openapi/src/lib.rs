@@ -9,7 +9,7 @@ use utoipa::openapi::{
     extensions::ExtensionsBuilder,
     path::{OperationBuilder, PathItemBuilder},
     request_body::RequestBodyBuilder,
-    security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
+    security::{ApiKey, ApiKeyValue, HttpAuthScheme, HttpBuilder, SecurityScheme},
     tag::TagBuilder,
     ComponentsBuilder, Info, OpenApiBuilder, PathsBuilder, SecurityRequirement,
 };
@@ -66,7 +66,21 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
             let router_security = router.meta.get_data::<datasets::RouterSecurity>();
             // println!("router_in: {:?}, router_out: {:?}", router_in, router_out);
             if let Some(RouterSecurity(router_security)) = router_security {
-                operation = operation.security(SecurityRequirement::new(router_security, Vec::<String>::new()));
+                for security in router_security.to_owned() {
+                    match security.as_str() {
+                        "$bearer" => {
+                            components = components.security_scheme(
+                                "$bearer",
+                                SecurityScheme::Http(HttpBuilder::new().scheme(HttpAuthScheme::Bearer).bearer_format("JWT").build()),
+                            );
+                        }
+                        security_str => {
+                            components =
+                                components.security_scheme(security_str, SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::new(security_str))));
+                        }
+                    }
+                    operation = operation.security(SecurityRequirement::new(security, Vec::<String>::new()));
+                }
             }
             if let Some(router_in) = router_in {
                 for param in router_in.value().value() {
@@ -131,11 +145,7 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
     let api = OpenApiBuilder::new()
         .info(Info::new("Nidrs OpenAPI", "v1.0"))
         .paths(paths)
-        .components(Some(
-            components
-                .security_scheme("$bearer", SecurityScheme::Http(HttpBuilder::new().scheme(HttpAuthScheme::Bearer).bearer_format("JWT").build()))
-                .build(),
-        ))
+        .components(Some(components.build()))
         .tags(Some(tags.keys().map(|name| TagBuilder::new().name(name).description(Some(format!("Tag for {}", name))).build()).collect::<Vec<_>>()))
         // .security(
         //     Some([

@@ -52,11 +52,11 @@ pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
     .into()
 }
 
-#[syn_args::derive::declare(def::String)]
+#[syn_args::derive::declare(def::Extends<def::String>)]
 #[syn_args::derive::proc_attribute]
 pub fn api_security(args: Args, input: TokenStream) -> TokenStream {
-    let security_key = if let Args::F1(def::String(security_key)) = args {
-        security_key
+    let security_key = if let Args::F1(def::Extends::<def::String>(vec_keys)) = args {
+        vec_keys.into_iter().map(|key| key.to_string()).collect::<Vec<String>>()
     } else {
         panic!("[nidrs-openapi-macro.api_security] Invalid input type");
     };
@@ -64,7 +64,7 @@ pub fn api_security(args: Args, input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as ItemFn);
     quote! {
         #[nidrs::meta(
-            nidrs::openapi::RouterSecurity(#security_key.to_string())
+            nidrs::openapi::RouterSecurity(vec![#(#security_key.to_string()),*])
         )]
         #input
     }
