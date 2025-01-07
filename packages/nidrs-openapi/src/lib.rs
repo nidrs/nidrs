@@ -133,7 +133,7 @@ pub fn register(routers: &Vec<MetaRouter>) -> axum::Router<StateCtx> {
         .paths(paths)
         .components(Some(
             components
-                .security_scheme("Bearer", SecurityScheme::Http(HttpBuilder::new().scheme(HttpAuthScheme::Bearer).bearer_format("JWT").build()))
+                .security_scheme("$bearer", SecurityScheme::Http(HttpBuilder::new().scheme(HttpAuthScheme::Bearer).bearer_format("JWT").build()))
                 .build(),
         ))
         .tags(Some(tags.keys().map(|name| TagBuilder::new().name(name).description(Some(format!("Tag for {}", name))).build()).collect::<Vec<_>>()))

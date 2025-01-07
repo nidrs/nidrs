@@ -52,11 +52,11 @@ pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
     .into()
 }
 
-#[syn_args::derive::declare(def::Expr)]
+#[syn_args::derive::declare(def::String)]
 #[syn_args::derive::proc_attribute]
 pub fn api_security(args: Args, input: TokenStream) -> TokenStream {
-    let security_key = if let Args::F1(def::Expr(syn::Expr::Path(expr_path))) = args {
-        expr_path.to_token_stream().to_string()
+    let security_key = if let Args::F1(def::String(security_key)) = args {
+        security_key
     } else {
         panic!("[nidrs-openapi-macro.api_security] Invalid input type");
     };
