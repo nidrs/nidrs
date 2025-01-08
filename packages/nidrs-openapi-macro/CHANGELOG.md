@@ -2,6 +2,24 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-openapi-macro-v0.3.0 - 2025-01-08
+#### Bug Fixes
+- **(nidrs-openapi)** 支持空参数 - (b0dc54c) - *Lyda*
+- **(nidrs-openapi)** 完善对 Schema 的支持 - (ed5b0ad) - *Lyda*
+- comment out disable_auto_json in API macro - (54879f7) - Lyda
+#### Features
+- **(nidrs-openapi)** 支持自定义的 header 认证模式 - (572dd1c) - *Lyda*
+- **(nidrs-openapi)** add api_security macro - (3b9c962) - *Lyda*
+- **(nidrs-openapi)** enhance parameter handling in API macro - (00d9a68) - *Lyda*
+- **(nidrs-openapi)** 支持参数 - (5ba6937) - *Lyda*
+- **(nidrs-openapi)** 支持 enum 类型 - (a122ad0) - *Lyda*
+#### Refactoring
+- **(nidrs-openapi)** 修改 Bearer 为 字符串 $bearer - (7fd95b4) - *Lyda*
+- **(nidrs-openapi)** update utoipa 5 - (1112a40) - *Lyda*
+- **(nidrs-openapi)** enhance parameter handling in router and API macro - (9ba8f07) - *Lyda*
+
+- - -
+
 ## nidrs-openapi-macro-v0.2.0 - 2024-09-25
 #### Features
 - **(nidrs-openapi-macro)** update nidrs-extern version to "0.2.0" - (b3856cd) - *Lyda*
