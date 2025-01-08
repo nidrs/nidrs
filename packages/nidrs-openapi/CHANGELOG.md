@@ -2,6 +2,22 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-openapi-v0.3.0 - 2025-01-08
+#### Bug Fixes
+- **(nidrs-openapi)** 完善对 Schema 的支持 - (ed5b0ad) - *Lyda*
+#### Features
+- **(nidrs-openapi)** 支持自定义的 header 认证模式 - (572dd1c) - *Lyda*
+- **(nidrs-openapi)** add api_security macro - (3b9c962) - *Lyda*
+- **(nidrs-openapi)** implement ToParamDto for Arc<T> and improve router parameter handling - (28781f5) - *Lyda*
+#### Miscellaneous Chores
+- remove commit - (e013008) - Lyda
+#### Refactoring
+- **(nidrs-openapi)** 修改 Bearer 为 字符串 $bearer - (7fd95b4) - *Lyda*
+- **(nidrs-openapi)** update utoipa 5 - (1112a40) - *Lyda*
+- **(nidrs-openapi)** enhance parameter handling in router and API macro - (9ba8f07) - *Lyda*
+
+- - -
+
 ## nidrs-openapi-v0.2.0 - 2024-09-25
 #### Features
 - **(nidrs-openapi)** 更新 nidrs-extern 版本至 "0.2.0" - (f794207) - *Lyda*
