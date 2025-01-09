@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-openapi-v0.4.0 - 2025-01-09
+#### Features
+- **(nidrs-openapi)** implement ToParamDto for Vec<T> to enhance parameter handling in API schemas - (3654e87) - *Lyda*
+
+- - -
+
 ## nidrs-openapi-v0.3.0 - 2025-01-08
 #### Bug Fixes
 - **(nidrs-openapi)** 完善对 Schema 的支持 - (ed5b0ad) - *Lyda*
