@@ -271,3 +271,18 @@ impl<T: ToParamDto> ToParamDto for std::sync::Arc<T> {
         T::to_param_dto(param)
     }
 }
+impl<T: ToParamDto> ToParamDto for Vec<T> {
+    fn to_param_dto(param: ParamDtoIn) -> ParamDto {
+        match param {
+            ParamDtoIn::Param(p) => ParamDto::None,
+            ParamDtoIn::Body => {
+                if let ParamDto::BodySchema((item_schema, components)) = T::to_param_dto(ParamDtoIn::Body) {
+                    let array = utoipa::openapi::schema::ArrayBuilder::new().items(item_schema).build();
+                    ParamDto::BodySchema((array.into(), components))
+                } else {
+                    ParamDto::None
+                }
+            }
+        }
+    }
+}
