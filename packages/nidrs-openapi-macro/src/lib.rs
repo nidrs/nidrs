@@ -36,8 +36,7 @@ pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
     }
 
     quote! {
-        // #[meta(disable_auto_json = true)]
-        #[meta(
+        #[nidrs::meta(
             nidrs::openapi::RouterIn(
                 nidrs::openapi::RouterParams::default()
                 #(#router_in)*,
