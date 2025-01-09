@@ -1,6 +1,6 @@
 [package]
 name = "nidrs-openapi-macro"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["WumaCoder <wumacoder@gmail.com>"]
 description = "a openapi macro."
 keywords = ["nidrs"]

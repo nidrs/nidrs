@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-openapi-macro-v0.3.1 - 2025-01-09
+#### Bug Fixes
+- **(nidrs-openapi)** update meta attribute syntax in api macro for consistency - (e99fd67) - *Lyda*
+
+- - -
+
 ## nidrs-openapi-macro-v0.3.0 - 2025-01-08
 #### Bug Fixes
 - **(nidrs-openapi)** 支持空参数 - (b0dc54c) - *Lyda*
