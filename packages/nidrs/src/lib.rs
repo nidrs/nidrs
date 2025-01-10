@@ -15,7 +15,9 @@ pub use controller::*;
 pub mod module;
 pub use module::*;
 
+pub mod exceptions;
 pub mod shared;
+pub use exceptions::*;
 
 pub use nidrs_extern::datasets;
 pub use nidrs_extern::meta::*;
