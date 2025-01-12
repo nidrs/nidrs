@@ -1,8 +1,11 @@
-use axum::{
+use nidrs::externs::axum::{
     body::Body,
     http::{header, StatusCode},
     response::{IntoResponse, Response},
 };
+use nidrs::externs::serde;
+use nidrs::externs::serde_json;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]

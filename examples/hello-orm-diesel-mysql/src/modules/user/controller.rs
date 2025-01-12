@@ -1,3 +1,4 @@
+use nidrs::externs::axum;
 use std::collections::HashMap;
 
 use axum::{

@@ -1,8 +1,6 @@
 mod app;
 mod models;
 mod modules;
-mod shared;
-// mod test;
 
 pub use nidrs::AppError;
 pub use nidrs::AppResult;

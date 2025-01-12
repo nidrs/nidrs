@@ -1055,9 +1055,6 @@ dependencies = [
 name = "hello-orm-diesel-mysql"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "axum",
- "axum-extra",
  "chrono",
  "diesel",
  "dotenvy",
@@ -1067,9 +1064,6 @@ dependencies = [
  "nidrs-macro",
  "serde",
  "serde_json",
- "thiserror 1.0.63",
- "tokio",
- "tower 0.4.13",
 ]
 
 [[package]]

@@ -1,6 +1,7 @@
 use crate::models::schema::users;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use nidrs::externs::serde;
 use nidrs::{injectable, AppResult, Inject};
 use nidrs_diesel::{mysql::MysqlPoolManager, PoolManager};
 use serde::Serialize;
