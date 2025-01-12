@@ -10,12 +10,12 @@ macro_rules! define_http_exception {
         }
 
         impl $exception_name {
-            pub fn new(message: String) -> Self {
-                Self { message, reason: None }
+            pub fn new<T: Into<String>>(message: T) -> Self {
+                Self { message: message.into(), reason: None }
             }
 
-            pub fn with_reason(message: String, reason: String) -> Self {
-                Self { message, reason: Some(reason) }
+            pub fn with_reason<T: Into<String>, U: Into<String>>(message: T, reason: U) -> Self {
+                Self { message: message.into(), reason: Some(reason.into()) }
             }
 
             pub fn default() -> Self {
@@ -41,13 +41,13 @@ macro_rules! define_http_exception {
 
         impl Into<$crate::Exception> for $exception_name {
             fn into(self) -> $crate::Exception {
-                crate::Exception::new($status_code, anyhow::anyhow!(self.message))
+                $crate::Exception::new($status_code, anyhow::anyhow!(self.message))
             }
         }
 
-        impl Into<crate::AppError> for $exception_name {
-            fn into(self) -> crate::AppError {
-                crate::AppError::Exception(self.into())
+        impl Into<$crate::AppError> for $exception_name {
+            fn into(self) -> $crate::AppError {
+                $crate::AppError::Exception(self.into())
             }
         }
     };
