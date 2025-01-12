@@ -12,7 +12,7 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
-diesel = { version = "2.2.3", features = ["r2d2"] }
+diesel = { version = "2.2.3" }
 diesel-async = { version = "0.5.2" }
 
 nidrs = { workspace = true }
@@ -21,11 +21,12 @@ nidrs-extern = { workspace = true }
 
 [features]
 default = []
-mysql = ["diesel/mysql"]
-postgres = ["diesel/postgres"]
-sqlite = ["diesel/sqlite"]
+mysql = ["diesel/mysql", "not_async"]
+postgres = ["diesel/postgres", "not_async"]
+sqlite = ["diesel/sqlite", "not_async"]
+not_async = ["diesel/r2d2"]
 
-_async = ["diesel-async/mobc"]
-mysql_async = ["diesel-async/mysql", "_async"]
-postgres_async = ["diesel-async/postgres", "_async"]
-sqlite_async = ["diesel-async/sqlite", "_async"]
+mysql_async = ["diesel-async/mysql", "async"]
+postgres_async = ["diesel-async/postgres", "async"]
+sqlite_async = ["diesel-async/sqlite", "async"]
+async = ["diesel-async/mobc"]

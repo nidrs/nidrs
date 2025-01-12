@@ -2,7 +2,7 @@ use crate::models::schema::users;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use nidrs::{injectable, AppResult, Inject};
-use nidrs_diesel::{sqlite::SqlitePoolManager, PoolManager};
+use nidrs_diesel::sqlite::SqlitePoolManager;
 use serde::Serialize;
 
 #[derive(Selectable, Queryable, Debug, Serialize)]

@@ -1067,6 +1067,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "hello-orm-diesel-mysql-async"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "dotenvy",
+ "nidrs",
+ "nidrs-diesel",
+ "nidrs-extern",
+ "nidrs-macro",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "hello-orm-diesel-sqlite"
 version = "0.1.0"
 dependencies = [

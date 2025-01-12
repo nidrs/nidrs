@@ -6,7 +6,6 @@ pub mod drivers;
 pub mod options;
 pub mod service;
 
-pub use drivers::driver::PoolManager;
 pub use options::DieselOptions;
 pub use service::DieselService;
 
@@ -22,7 +21,7 @@ pub struct DieselModule;
 impl DieselModule {
     pub fn for_root<D: Into<ConnectionDriver>>(opts: DieselOptions<D>) -> DynamicModule<Self> {
         let d = DynamicModule::new(DieselModule);
-        #[cfg(not(feature = "_async"))]
+        #[cfg(not(feature = "async"))]
         match opts.driver.into() {
             #[cfg(feature = "sqlite")]
             drivers::driver::ConnectionDriver::Sqlite(pool) => d.export(pool),
@@ -32,7 +31,7 @@ impl DieselModule {
             drivers::driver::ConnectionDriver::Postgres(pool) => d.export(pool),
             _ => d,
         }
-        #[cfg(feature = "_async")]
+        #[cfg(feature = "async")]
         match opts.driver.into() {
             #[cfg(feature = "sqlite_async")]
             drivers::driver::ConnectionDriver::Sqlite(pool) => d.export(pool),

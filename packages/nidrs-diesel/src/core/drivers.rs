@@ -1,18 +1,5 @@
-#[cfg(not(feature = "_async"))]
+#[cfg(not(feature = "async"))]
 pub mod driver {
-    use std::{marker::Send, sync::Mutex};
-
-    use diesel::{
-        r2d2::{ConnectionManager, Pool},
-        QueryResult,
-    };
-    use nidrs::AppResult;
-    use nidrs_extern::{
-        anyhow,
-        axum::{async_trait, http},
-        tokio::task,
-    };
-
     #[derive(Default)]
     pub enum ConnectionDriver {
         #[cfg(feature = "sqlite")]
@@ -30,18 +17,22 @@ pub mod driver {
 
     #[cfg(feature = "sqlite")]
     pub mod sqlite {
+        use std::{marker::Send, sync::Mutex};
+
+        use diesel::{
+            r2d2::{ConnectionManager, Pool},
+            QueryResult, SqliteConnection,
+        };
+        use nidrs::AppResult;
+        use nidrs_extern::{
+            anyhow,
+            axum::{async_trait, http},
+            tokio::task,
+        };
+
         use crate::ConnectionDriver;
 
-        use super::PoolManager;
-
-        use diesel::SqliteConnection;
-
-        use diesel::r2d2::ConnectionManager;
-
-        use diesel::r2d2::Pool;
         use nidrs::injectable;
-
-        use std::sync::Mutex;
 
         type TConnection = SqliteConnection;
 
@@ -60,12 +51,31 @@ pub mod driver {
 
                 SqlitePoolManager { pool: Some(Mutex::new(pool)) }
             }
-        }
 
-        impl PoolManager for SqlitePoolManager {
-            type Connection = TConnection;
-            fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<TConnection>>>> {
+            pub fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<TConnection>>>> {
                 &self.pool
+            }
+
+            pub fn get(&self) -> diesel::r2d2::PooledConnection<ConnectionManager<TConnection>> {
+                let binding = self.get_pool().as_ref().unwrap();
+                let pool = binding.lock().unwrap();
+                pool.get().unwrap()
+            }
+
+            pub async fn query<F, R>(&self, f: F) -> AppResult<R>
+            where
+                F: FnOnce(diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>) -> QueryResult<R> + Send + 'static,
+                R: Send + 'static,
+            {
+                let conn = self.get();
+
+                let result = task::spawn_blocking(move || f(conn)).await?;
+
+                if let Err(e) = result {
+                    return Err(nidrs::AppError::Exception(nidrs::Exception::new(http::StatusCode::INTERNAL_SERVER_ERROR, anyhow::Error::new(e))));
+                }
+
+                Ok(result.unwrap())
             }
         }
 
@@ -78,18 +88,22 @@ pub mod driver {
 
     #[cfg(feature = "mysql")]
     pub mod mysql {
+        use std::{marker::Send, sync::Mutex};
+
+        use diesel::{
+            r2d2::{ConnectionManager, Pool},
+            MysqlConnection, QueryResult,
+        };
+        use nidrs::AppResult;
+        use nidrs_extern::{
+            anyhow,
+            axum::{async_trait, http},
+            tokio::task,
+        };
+
         use crate::ConnectionDriver;
 
-        use super::PoolManager;
-
-        use diesel::MysqlConnection;
-
-        use diesel::r2d2::ConnectionManager;
-
-        use diesel::r2d2::Pool;
         use nidrs::injectable;
-
-        use std::sync::Mutex;
 
         type TConnection = MysqlConnection;
 
@@ -106,12 +120,31 @@ pub mod driver {
 
                 MysqlPoolManager { pool: Some(Mutex::new(pool)) }
             }
-        }
 
-        impl PoolManager for MysqlPoolManager {
-            type Connection = TConnection;
-            fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<TConnection>>>> {
+            pub fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<TConnection>>>> {
                 &self.pool
+            }
+
+            pub fn get(&self) -> diesel::r2d2::PooledConnection<ConnectionManager<TConnection>> {
+                let binding = self.get_pool().as_ref().unwrap();
+                let pool = binding.lock().unwrap();
+                pool.get().unwrap()
+            }
+
+            pub async fn query<F, R>(&self, f: F) -> AppResult<R>
+            where
+                F: FnOnce(diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>) -> QueryResult<R> + Send + 'static,
+                R: Send + 'static,
+            {
+                let conn = self.get();
+
+                let result = task::spawn_blocking(move || f(conn)).await?;
+
+                if let Err(e) = result {
+                    return Err(nidrs::AppError::Exception(nidrs::Exception::new(http::StatusCode::INTERNAL_SERVER_ERROR, anyhow::Error::new(e))));
+                }
+
+                Ok(result.unwrap())
             }
         }
 
@@ -124,18 +157,22 @@ pub mod driver {
 
     #[cfg(feature = "postgres")]
     pub mod postgres {
+        use std::{marker::Send, sync::Mutex};
+
+        use diesel::{
+            r2d2::{ConnectionManager, Pool},
+            PgConnection, QueryResult,
+        };
+        use nidrs::AppResult;
+        use nidrs_extern::{
+            anyhow,
+            axum::{async_trait, http},
+            tokio::task,
+        };
+
         use crate::ConnectionDriver;
 
-        use super::PoolManager;
-
-        use diesel::PgConnection;
-
-        use diesel::r2d2::ConnectionManager;
-
-        use diesel::r2d2::Pool;
         use nidrs::injectable;
-
-        use std::sync::Mutex;
 
         type TConnection = PgConnection;
 
@@ -153,12 +190,31 @@ pub mod driver {
 
                 PostgresPoolManager { pool: Some(Mutex::new(pool)) }
             }
-        }
 
-        impl PoolManager for PostgresPoolManager {
-            type Connection = TConnection;
-            fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<TConnection>>>> {
+            pub fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<TConnection>>>> {
                 &self.pool
+            }
+
+            pub fn get(&self) -> diesel::r2d2::PooledConnection<ConnectionManager<TConnection>> {
+                let binding = self.get_pool().as_ref().unwrap();
+                let pool = binding.lock().unwrap();
+                pool.get().unwrap()
+            }
+
+            pub async fn query<F, R>(&self, f: F) -> AppResult<R>
+            where
+                F: FnOnce(diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>) -> QueryResult<R> + Send + 'static,
+                R: Send + 'static,
+            {
+                let conn = self.get();
+
+                let result = task::spawn_blocking(move || f(conn)).await?;
+
+                if let Err(e) = result {
+                    return Err(nidrs::AppError::Exception(nidrs::Exception::new(http::StatusCode::INTERNAL_SERVER_ERROR, anyhow::Error::new(e))));
+                }
+
+                Ok(result.unwrap())
             }
         }
 
@@ -168,50 +224,10 @@ pub mod driver {
             }
         }
     }
-
-    #[async_trait]
-    pub trait PoolManager {
-        type Connection: diesel::r2d2::R2D2Connection + 'static;
-        fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<Self::Connection>>>>;
-
-        fn get(&self) -> diesel::r2d2::PooledConnection<ConnectionManager<Self::Connection>> {
-            let binding = self.get_pool().as_ref().unwrap();
-            let pool = binding.lock().unwrap();
-            pool.get().unwrap()
-        }
-
-        async fn query<F, R>(&self, f: F) -> AppResult<R>
-        where
-            F: FnOnce(diesel::r2d2::PooledConnection<ConnectionManager<Self::Connection>>) -> QueryResult<R> + Send + 'static,
-            R: Send + 'static,
-        {
-            let conn = self.get();
-
-            let result = task::spawn_blocking(move || f(conn)).await?;
-
-            if let Err(e) = result {
-                return Err(nidrs::AppError::Exception(nidrs::Exception::new(http::StatusCode::INTERNAL_SERVER_ERROR, anyhow::Error::new(e))));
-            }
-
-            Ok(result.unwrap())
-        }
-    }
 }
 
-#[cfg(feature = "_async")]
+#[cfg(feature = "async")]
 pub mod driver {
-    use std::{marker::Send, sync::Mutex};
-
-    use diesel::{
-        r2d2::{ConnectionManager, Pool},
-        QueryResult,
-    };
-    use nidrs::AppResult;
-    use nidrs_extern::{
-        anyhow,
-        axum::{async_trait, http},
-        tokio::task,
-    };
 
     #[derive(Default)]
     pub enum ConnectionDriver {
@@ -231,40 +247,28 @@ pub mod driver {
     pub mod sqlite {
         use crate::ConnectionDriver;
 
-        use super::PoolManager;
-
-        use diesel::SqliteConnection;
-
-        use diesel::r2d2::ConnectionManager;
-
-        use diesel::r2d2::Pool;
         use nidrs::injectable;
 
-        use std::sync::Mutex;
+        use diesel_async::pooled_connection::AsyncDieselConnectionManager;
+        use diesel_async::{pooled_connection::mobc, AsyncMysqlConnection};
 
-        type TConnection = SqliteConnection;
+        type TConnection = AsyncMysqlConnection;
 
         #[injectable()]
         pub struct SqlitePoolManager {
-            pub pool: Option<Mutex<Pool<ConnectionManager<TConnection>>>>,
+            pub pool: Option<mobc::Pool<TConnection>>,
         }
 
         impl SqlitePoolManager {
             pub fn new<T: Into<String>>(url: T) -> SqlitePoolManager {
-                let manager: ConnectionManager<TConnection> = ConnectionManager::<TConnection>::new(url);
-                // Refer to the `r2d2` documentation for more methods to use
-                // when building a connection pool
-                let pool: Pool<ConnectionManager<TConnection>> =
-                    Pool::builder().test_on_check_out(true).build(manager).expect("Could not build connection pool");
-
-                SqlitePoolManager { pool: Some(Mutex::new(pool)) }
+                let config = AsyncDieselConnectionManager::<TConnection>::new(url);
+                let pool = mobc::Pool::new(config);
+                SqlitePoolManager { pool: Some(pool) }
             }
-        }
 
-        impl PoolManager for SqlitePoolManager {
-            type Connection = TConnection;
-            fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<TConnection>>>> {
-                &self.pool
+            pub async fn get(&self) -> mobc::PooledConnection<TConnection> {
+                let conn = self.pool.as_ref().unwrap().get().await.unwrap();
+                conn
             }
         }
 
@@ -279,38 +283,42 @@ pub mod driver {
     pub mod mysql {
         use crate::ConnectionDriver;
 
-        use super::PoolManager;
+        use diesel::QueryResult;
+        use nidrs::{injectable, AppResult};
 
-        use diesel::MysqlConnection;
+        use diesel_async::pooled_connection::AsyncDieselConnectionManager;
+        use diesel_async::{pooled_connection::mobc, AsyncMysqlConnection};
+        use nidrs_extern::tokio::sync::Mutex;
 
-        use diesel::r2d2::ConnectionManager;
-
-        use diesel::r2d2::Pool;
-        use nidrs::injectable;
-
-        use std::sync::Mutex;
-
-        type TConnection = MysqlConnection;
+        type TConnection = AsyncMysqlConnection;
 
         #[injectable()]
         pub struct MysqlPoolManager {
-            pub pool: Option<Mutex<Pool<ConnectionManager<TConnection>>>>,
+            pub pool: Option<Mutex<mobc::Pool<TConnection>>>,
         }
 
         impl MysqlPoolManager {
             pub fn new<T: Into<String>>(url: T) -> MysqlPoolManager {
-                let manager: ConnectionManager<TConnection> = ConnectionManager::<TConnection>::new(url);
-                let pool: Pool<ConnectionManager<TConnection>> =
-                    Pool::builder().test_on_check_out(true).build(manager).expect("Could not build connection pool");
-
+                let config = AsyncDieselConnectionManager::<TConnection>::new(url);
+                let pool = mobc::Pool::new(config);
                 MysqlPoolManager { pool: Some(Mutex::new(pool)) }
             }
-        }
 
-        impl PoolManager for MysqlPoolManager {
-            type Connection = TConnection;
-            fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<TConnection>>>> {
-                &self.pool
+            pub async fn get(&self) -> mobc::PooledConnection<TConnection> {
+                let binding = self.pool.as_ref().unwrap();
+                let pool = binding.lock().await;
+
+                pool.get().await.unwrap()
+            }
+
+            pub async fn query<F, R>(&self, f: F) -> AppResult<R>
+            where
+                F: FnOnce(mobc::PooledConnection<TConnection>) -> QueryResult<R> + Send + 'static,
+                R: Send + 'static,
+            {
+                let conn = self.get().await;
+                let result = f(conn).unwrap();
+                Ok(result)
             }
         }
 
@@ -318,34 +326,6 @@ pub mod driver {
             fn from(val: MysqlPoolManager) -> Self {
                 ConnectionDriver::Mysql(val)
             }
-        }
-    }
-
-    #[async_trait]
-    pub trait PoolManager {
-        type Connection: diesel::r2d2::R2D2Connection + 'static;
-        fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<Self::Connection>>>>;
-
-        fn get(&self) -> diesel::r2d2::PooledConnection<ConnectionManager<Self::Connection>> {
-            let binding = self.get_pool().as_ref().unwrap();
-            let pool = binding.lock().unwrap();
-            pool.get().unwrap()
-        }
-
-        async fn query<F, R>(&self, f: F) -> AppResult<R>
-        where
-            F: FnOnce(diesel::r2d2::PooledConnection<ConnectionManager<Self::Connection>>) -> QueryResult<R> + Send + 'static,
-            R: Send + 'static,
-        {
-            let conn = self.get();
-
-            let result = task::spawn_blocking(move || f(conn)).await?;
-
-            if let Err(e) = result {
-                return Err(nidrs::AppError::Exception(nidrs::Exception::new(http::StatusCode::INTERNAL_SERVER_ERROR, anyhow::Error::new(e))));
-            }
-
-            Ok(result.unwrap())
         }
     }
 }
