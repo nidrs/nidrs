@@ -195,8 +195,8 @@ pub(crate) fn route_derive(args: TokenStream, input: TokenStream) -> TokenStream
             use axum::response::IntoResponse;
             use nidrs::externs::axum::{extract::Query, Json};
             use nidrs::externs::meta::{InnerMeta, Meta};
+            use nidrs::externs::serde_json::Value;
             use nidrs::Interceptor;
-            use serde_json::Value;
 
             let mut meta = self.#meta_fn_ident();
 
