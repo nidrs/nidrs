@@ -2,12 +2,12 @@ use nidrs::datasets::Global;
 use nidrs::{meta, DynamicModule, Service};
 use nidrs_macro::module;
 
+pub mod drivers;
 pub mod options;
-pub mod pool_manager;
 pub mod service;
 
+pub use drivers::driver::PoolManager;
 pub use options::DieselOptions;
-pub use pool_manager::PoolManager;
 pub use service::DieselService;
 
 use crate::ConnectionDriver;
@@ -22,13 +22,24 @@ pub struct DieselModule;
 impl DieselModule {
     pub fn for_root<D: Into<ConnectionDriver>>(opts: DieselOptions<D>) -> DynamicModule<Self> {
         let d = DynamicModule::new(DieselModule);
+        #[cfg(not(feature = "_async"))]
         match opts.driver.into() {
             #[cfg(feature = "sqlite")]
-            options::ConnectionDriver::Sqlite(pool) => d.export(pool),
+            drivers::driver::ConnectionDriver::Sqlite(pool) => d.export(pool),
             #[cfg(feature = "mysql")]
-            options::ConnectionDriver::Mysql(pool) => d.export(pool),
+            drivers::driver::ConnectionDriver::Mysql(pool) => d.export(pool),
             #[cfg(feature = "postgres")]
-            options::ConnectionDriver::Postgres(pool) => d.export(pool),
+            drivers::driver::ConnectionDriver::Postgres(pool) => d.export(pool),
+            _ => d,
+        }
+        #[cfg(feature = "_async")]
+        match opts.driver.into() {
+            #[cfg(feature = "sqlite_async")]
+            drivers::driver::ConnectionDriver::Sqlite(pool) => d.export(pool),
+            #[cfg(feature = "mysql_async")]
+            drivers::driver::ConnectionDriver::Mysql(pool) => d.export(pool),
+            // #[cfg(feature = "postgres_async")]
+            // drivers::driver::ConnectionDriver::Postgres(pool) => d.export(pool),
             _ => d,
         }
     }

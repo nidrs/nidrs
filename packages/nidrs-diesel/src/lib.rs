@@ -1,16 +1,11 @@
 extern crate diesel;
 
 pub mod core;
-pub use core::*;
 
-pub use core::options::ConnectionDriver;
+pub use core::drivers::driver::ConnectionDriver;
+pub use core::drivers::driver::PoolManager;
 pub use core::options::DieselOptions;
-pub use core::pool_manager::PoolManager;
 pub use core::service::DieselService;
+pub use core::DieselModule;
 
-#[cfg(feature = "mysql")]
-pub use core::pool_manager::mysql::MysqlPoolManager;
-#[cfg(feature = "postgres")]
-pub use core::pool_manager::postgres::PostgresPoolManager;
-#[cfg(feature = "sqlite")]
-pub use core::pool_manager::sqlite::SqlitePoolManager;
+pub use core::drivers::driver::*;

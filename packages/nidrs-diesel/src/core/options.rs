@@ -1,5 +1,7 @@
 use nidrs::{ImplMeta, Service};
 
+use super::drivers::driver::ConnectionDriver;
+
 #[derive(Default)]
 pub struct DieselOptions<D: Into<ConnectionDriver> = ConnectionDriver> {
     pub driver: D,
@@ -13,19 +15,4 @@ impl ImplMeta for DieselOptions {
         meta.set("service_name", "DieselOptions");
         meta
     }
-}
-
-#[derive(Default)]
-pub enum ConnectionDriver {
-    #[cfg(feature = "sqlite")]
-    Sqlite(crate::pool_manager::sqlite::SqlitePoolManager),
-
-    #[cfg(feature = "mysql")]
-    Mysql(crate::pool_manager::mysql::MysqlPoolManager),
-
-    #[cfg(feature = "postgres")]
-    Postgres(crate::pool_manager::postgres::PostgresPoolManager),
-
-    #[default]
-    None,
 }

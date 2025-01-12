@@ -1,15 +1,13 @@
 use crate::models::schema::users;
 use chrono::NaiveDateTime;
-use diesel::{connection::LoadConnection, prelude::*};
+use diesel::prelude::*;
 use nidrs::{injectable, AppResult, Inject};
-// use nidrs_diesel::{PoolManager, MysqlPoolManager};
-use nidrs_diesel::{PoolManager, SqlitePoolManager};
+use nidrs_diesel::{sqlite::SqlitePoolManager, PoolManager};
 use serde::Serialize;
 
 #[derive(Selectable, Queryable, Debug, Serialize)]
 #[diesel(table_name = users)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
-// #[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct User {
     pub id: i32,
     pub name: String,
