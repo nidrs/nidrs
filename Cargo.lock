@@ -1098,6 +1098,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "hello-orm-diesel-sqlite-async"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "dotenvy",
+ "nidrs",
+ "nidrs-diesel",
+ "nidrs-extern",
+ "nidrs-macro",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "hermit-abi"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"

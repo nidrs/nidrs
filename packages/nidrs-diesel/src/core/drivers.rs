@@ -247,28 +247,24 @@ pub mod driver {
     pub mod sqlite {
         use crate::ConnectionDriver;
 
+        use diesel::{Connection, SqliteConnection};
+        use diesel_async::{sync_connection_wrapper::SyncConnectionWrapper, AsyncConnection};
         use nidrs::injectable;
 
-        use diesel_async::pooled_connection::AsyncDieselConnectionManager;
-        use diesel_async::{pooled_connection::mobc, AsyncMysqlConnection};
-
-        type TConnection = AsyncMysqlConnection;
+        type TConnection = SyncConnectionWrapper<SqliteConnection>;
 
         #[injectable()]
         pub struct SqlitePoolManager {
-            pub pool: Option<mobc::Pool<TConnection>>,
+            pub url: String,
         }
 
         impl SqlitePoolManager {
             pub fn new<T: Into<String>>(url: T) -> SqlitePoolManager {
-                let config = AsyncDieselConnectionManager::<TConnection>::new(url);
-                let pool = mobc::Pool::new(config);
-                SqlitePoolManager { pool: Some(pool) }
+                SqlitePoolManager { url: url.into() }
             }
 
-            pub async fn get(&self) -> mobc::PooledConnection<TConnection> {
-                let conn = self.pool.as_ref().unwrap().get().await.unwrap();
-                conn
+            pub async fn get(&self) -> TConnection {
+                SyncConnectionWrapper::<SqliteConnection>::establish(&self.url).await.unwrap()
             }
         }
 
