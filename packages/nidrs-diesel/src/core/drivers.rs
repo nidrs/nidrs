@@ -237,8 +237,9 @@ pub mod driver {
         #[cfg(feature = "mysql_async")]
         Mysql(mysql::MysqlPoolManager),
 
-        // #[cfg(feature = "postgres_async")]
-        // Postgres(postgres::PostgresPoolManager),
+        #[cfg(feature = "postgres_async")]
+        Postgres(postgres::PostgresPoolManager),
+
         #[default]
         None,
     }
@@ -321,6 +322,56 @@ pub mod driver {
         impl From<MysqlPoolManager> for ConnectionDriver {
             fn from(val: MysqlPoolManager) -> Self {
                 ConnectionDriver::Mysql(val)
+            }
+        }
+    }
+
+    #[cfg(feature = "postgres_async")]
+    pub mod postgres {
+        use crate::ConnectionDriver;
+
+        use diesel::QueryResult;
+        use nidrs::{injectable, AppResult};
+
+        use diesel_async::pooled_connection::AsyncDieselConnectionManager;
+        use diesel_async::{pooled_connection::mobc, AsyncPgConnection};
+        use nidrs_extern::tokio::sync::Mutex;
+
+        type TConnection = AsyncPgConnection;
+
+        #[injectable()]
+        pub struct PostgresPoolManager {
+            pub pool: Option<Mutex<mobc::Pool<TConnection>>>,
+        }
+
+        impl PostgresPoolManager {
+            pub fn new<T: Into<String>>(url: T) -> PostgresPoolManager {
+                let config = AsyncDieselConnectionManager::<TConnection>::new(url);
+                let pool = mobc::Pool::new(config);
+                PostgresPoolManager { pool: Some(Mutex::new(pool)) }
+            }
+
+            pub async fn get(&self) -> mobc::PooledConnection<TConnection> {
+                let binding = self.pool.as_ref().unwrap();
+                let pool = binding.lock().await;
+
+                pool.get().await.unwrap()
+            }
+
+            pub async fn query<F, R>(&self, f: F) -> AppResult<R>
+            where
+                F: FnOnce(mobc::PooledConnection<TConnection>) -> QueryResult<R> + Send + 'static,
+                R: Send + 'static,
+            {
+                let conn = self.get().await;
+                let result = f(conn).unwrap();
+                Ok(result)
+            }
+        }
+
+        impl From<PostgresPoolManager> for ConnectionDriver {
+            fn from(val: PostgresPoolManager) -> Self {
+                ConnectionDriver::Postgres(val)
             }
         }
     }

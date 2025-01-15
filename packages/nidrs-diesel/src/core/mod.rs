@@ -37,8 +37,8 @@ impl DieselModule {
             drivers::driver::ConnectionDriver::Sqlite(pool) => d.export(pool),
             #[cfg(feature = "mysql_async")]
             drivers::driver::ConnectionDriver::Mysql(pool) => d.export(pool),
-            // #[cfg(feature = "postgres_async")]
-            // drivers::driver::ConnectionDriver::Postgres(pool) => d.export(pool),
+            #[cfg(feature = "postgres_async")]
+            drivers::driver::ConnectionDriver::Postgres(pool) => d.export(pool),
             _ => d,
         }
     }
