@@ -1,0 +1,20 @@
+[package]
+name = "hello-orm-diesel-pg"
+version = "0.1.0"
+publish = false
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+nidrs = { workspace = true, features = ["tower", "serde", "openapi", "valid"] }
+nidrs-macro = { workspace = true }
+nidrs-extern = { workspace = true }
+
+nidrs-diesel = { workspace = true, features = ["postgres"] }
+diesel = { version = "2.2.3", default-features = false, features = ["chrono"] }
+
+serde_json = "1.0.115"
+serde = { version = "1.0.193", features = ["derive"] }
+chrono = { version = "0.4.38", features = ["serde"] }
+dotenvy = "0.15.7"
