@@ -60,6 +60,15 @@ impl UserEntity {
         Ok(users::table.find(id).first::<User>(&mut conn).await.unwrap())
     }
 
+    pub async fn find_by_id2(&self, id: i32) -> AppResult<User> {
+        self.pool
+            .query(move |mut conn| async move {
+                let user = users::table.find(id).first::<User>(&mut conn).await.unwrap();
+                Ok(user)
+            })
+            .await
+    }
+
     pub async fn remove_by_id(&self, id: i32) -> AppResult<usize> {
         let mut conn = self.pool.get().await?;
         Ok(diesel::delete(users::table.find(id)).execute(&mut conn).await.unwrap())

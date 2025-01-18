@@ -58,14 +58,17 @@ pub mod driver {
                 Ok(pool.get().unwrap())
             }
 
-            pub async fn query<F, R>(&self, f: F) -> AppResult<R>
+            pub async fn query<F, Fut, R>(&self, f: F) -> AppResult<R>
             where
-                F: FnOnce(diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>) -> QueryResult<R> + Send + 'static,
+                F: FnOnce(diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>) -> Fut + Send + 'static,
+                Fut: std::future::Future<Output = QueryResult<R>> + Send + 'static,
                 R: Send + 'static,
             {
                 let conn = self.get()?;
 
                 let result = task::spawn_blocking(move || f(conn)).await?;
+
+                let result = result.await;
 
                 if let Err(e) = result {
                     return Err(nidrs::AppError::Exception(nidrs::Exception::new(http::StatusCode::INTERNAL_SERVER_ERROR, anyhow::Error::new(e))));
@@ -123,14 +126,17 @@ pub mod driver {
                 Ok(pool.get().unwrap())
             }
 
-            pub async fn query<F, R>(&self, f: F) -> AppResult<R>
+            pub async fn query<F, Fut, R>(&self, f: F) -> AppResult<R>
             where
-                F: FnOnce(diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>) -> QueryResult<R> + Send + 'static,
+                F: FnOnce(diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>) -> Fut + Send + 'static,
+                Fut: std::future::Future<Output = QueryResult<R>> + Send + 'static,
                 R: Send + 'static,
             {
                 let conn = self.get()?;
 
                 let result = task::spawn_blocking(move || f(conn)).await?;
+
+                let result = result.await;
 
                 if let Err(e) = result {
                     return Err(nidrs::AppError::Exception(nidrs::Exception::new(http::StatusCode::INTERNAL_SERVER_ERROR, anyhow::Error::new(e))));
@@ -189,14 +195,17 @@ pub mod driver {
                 Ok(pool.get().unwrap())
             }
 
-            pub async fn query<F, R>(&self, f: F) -> AppResult<R>
+            pub async fn query<F, Fut, R>(&self, f: F) -> AppResult<R>
             where
-                F: FnOnce(diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>) -> QueryResult<R> + Send + 'static,
+                F: FnOnce(diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>) -> Fut + Send + 'static,
+                Fut: std::future::Future<Output = QueryResult<R>> + Send + 'static,
                 R: Send + 'static,
             {
                 let conn = self.get()?;
 
                 let result = task::spawn_blocking(move || f(conn)).await?;
+
+                let result = result.await;
 
                 if let Err(e) = result {
                     return Err(nidrs::AppError::Exception(nidrs::Exception::new(http::StatusCode::INTERNAL_SERVER_ERROR, anyhow::Error::new(e))));
