@@ -2,6 +2,18 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-diesel-v0.2.0 - 2025-01-18
+#### Bug Fixes
+- **(nidrs-diesel)** 修复 sqlite 的异步能力 - (52d576f) - *Lyda*
+#### Features
+- **(nidrs-diesel)** 优化 get 和 query 方法 - (639d4b7) - *Lyda*
+- **(nidrs-diesel)** 支持异步的 postgres - (025aa48) - *Lyda*
+- **(nidrs-diesel)** 支持异步方式 - (15ddda7) - *Lyda*
+#### Refactoring
+- **(nidrs-diesel)** 重新规范包 - (46e5ffb) - *Lyda*
+
+- - -
+
 ## nidrs-diesel-v0.1.1 - 2024-11-15
 #### Bug Fixes
 - **(nidrs-diesel)** adapt impl meta - (693bf0e) - *WumaCoder*
