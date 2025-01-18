@@ -29,12 +29,21 @@ pub struct UserEntity {
 
 impl UserEntity {
     pub async fn all(&self) -> AppResult<Vec<User>> {
-        let mut conn = self.pool.get().await;
+        let mut conn = self.pool.get().await?;
         Ok(users::table.load::<User>(&mut conn).await.unwrap())
     }
 
+    pub async fn all2(&self) -> AppResult<Vec<User>> {
+        self.pool
+            .query(|mut conn| async move {
+                let users = users::table.load::<User>(&mut conn).await.unwrap();
+                Ok(users)
+            })
+            .await
+    }
+
     pub async fn create(&self, name: String) -> AppResult<usize> {
-        let mut conn = self.pool.get().await;
+        let mut conn = self.pool.get().await?;
 
         let new_user = NewUser { name };
 
@@ -42,17 +51,17 @@ impl UserEntity {
     }
 
     pub async fn update(&self, id: i32, name: String) -> AppResult<usize> {
-        let mut conn = self.pool.get().await;
+        let mut conn = self.pool.get().await?;
         Ok(diesel::update(users::table.find(id)).set(users::name.eq(name)).execute(&mut conn).await.unwrap())
     }
 
     pub async fn find_by_id(&self, id: i32) -> AppResult<User> {
-        let mut conn = self.pool.get().await;
+        let mut conn = self.pool.get().await?;
         Ok(users::table.find(id).first::<User>(&mut conn).await.unwrap())
     }
 
     pub async fn remove_by_id(&self, id: i32) -> AppResult<usize> {
-        let mut conn = self.pool.get().await;
+        let mut conn = self.pool.get().await?;
         Ok(diesel::delete(users::table.find(id)).execute(&mut conn).await.unwrap())
     }
 }

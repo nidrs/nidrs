@@ -52,14 +52,10 @@ pub mod driver {
                 SqlitePoolManager { pool: Some(Mutex::new(pool)) }
             }
 
-            pub fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<TConnection>>>> {
-                &self.pool
-            }
-
-            pub fn get(&self) -> diesel::r2d2::PooledConnection<ConnectionManager<TConnection>> {
-                let binding = self.get_pool().as_ref().unwrap();
+            pub fn get(&self) -> AppResult<diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>> {
+                let binding = self.pool.as_ref().unwrap();
                 let pool = binding.lock().unwrap();
-                pool.get().unwrap()
+                Ok(pool.get().unwrap())
             }
 
             pub async fn query<F, R>(&self, f: F) -> AppResult<R>
@@ -67,7 +63,7 @@ pub mod driver {
                 F: FnOnce(diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>) -> QueryResult<R> + Send + 'static,
                 R: Send + 'static,
             {
-                let conn = self.get();
+                let conn = self.get()?;
 
                 let result = task::spawn_blocking(move || f(conn)).await?;
 
@@ -121,14 +117,10 @@ pub mod driver {
                 MysqlPoolManager { pool: Some(Mutex::new(pool)) }
             }
 
-            pub fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<TConnection>>>> {
-                &self.pool
-            }
-
-            pub fn get(&self) -> diesel::r2d2::PooledConnection<ConnectionManager<TConnection>> {
-                let binding = self.get_pool().as_ref().unwrap();
+            pub fn get(&self) -> AppResult<diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>> {
+                let binding = self.pool.as_ref().unwrap();
                 let pool = binding.lock().unwrap();
-                pool.get().unwrap()
+                Ok(pool.get().unwrap())
             }
 
             pub async fn query<F, R>(&self, f: F) -> AppResult<R>
@@ -136,7 +128,7 @@ pub mod driver {
                 F: FnOnce(diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>) -> QueryResult<R> + Send + 'static,
                 R: Send + 'static,
             {
-                let conn = self.get();
+                let conn = self.get()?;
 
                 let result = task::spawn_blocking(move || f(conn)).await?;
 
@@ -191,14 +183,10 @@ pub mod driver {
                 PostgresPoolManager { pool: Some(Mutex::new(pool)) }
             }
 
-            pub fn get_pool(&self) -> &Option<Mutex<Pool<ConnectionManager<TConnection>>>> {
-                &self.pool
-            }
-
-            pub fn get(&self) -> diesel::r2d2::PooledConnection<ConnectionManager<TConnection>> {
-                let binding = self.get_pool().as_ref().unwrap();
+            pub fn get(&self) -> AppResult<diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>> {
+                let binding = self.pool.as_ref().unwrap();
                 let pool = binding.lock().unwrap();
-                pool.get().unwrap()
+                Ok(pool.get().unwrap())
             }
 
             pub async fn query<F, R>(&self, f: F) -> AppResult<R>
@@ -206,7 +194,7 @@ pub mod driver {
                 F: FnOnce(diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>) -> QueryResult<R> + Send + 'static,
                 R: Send + 'static,
             {
-                let conn = self.get();
+                let conn = self.get()?;
 
                 let result = task::spawn_blocking(move || f(conn)).await?;
 
@@ -248,9 +236,11 @@ pub mod driver {
     pub mod sqlite {
         use crate::ConnectionDriver;
 
+        use diesel::QueryResult;
         use diesel::{Connection, SqliteConnection};
         use diesel_async::{sync_connection_wrapper::SyncConnectionWrapper, AsyncConnection};
         use nidrs::injectable;
+        use nidrs::AppResult;
 
         type TConnection = SyncConnectionWrapper<SqliteConnection>;
 
@@ -264,8 +254,19 @@ pub mod driver {
                 SqlitePoolManager { url: url.into() }
             }
 
-            pub async fn get(&self) -> TConnection {
-                SyncConnectionWrapper::<SqliteConnection>::establish(&self.url).await.unwrap()
+            pub async fn get(&self) -> AppResult<TConnection> {
+                Ok(SyncConnectionWrapper::<SqliteConnection>::establish(&self.url).await.unwrap())
+            }
+
+            pub async fn query<F, Fut, R>(&self, f: F) -> AppResult<R>
+            where
+                F: FnOnce(TConnection) -> Fut + Send + 'static,
+                Fut: std::future::Future<Output = QueryResult<R>> + Send + 'static,
+                R: Send + 'static,
+            {
+                let conn = self.get().await?;
+                let result = f(conn).await.unwrap();
+                Ok(result)
             }
         }
 
@@ -301,20 +302,21 @@ pub mod driver {
                 MysqlPoolManager { pool: Some(Mutex::new(pool)) }
             }
 
-            pub async fn get(&self) -> mobc::PooledConnection<TConnection> {
+            pub async fn get(&self) -> AppResult<mobc::PooledConnection<TConnection>> {
                 let binding = self.pool.as_ref().unwrap();
                 let pool = binding.lock().await;
 
-                pool.get().await.unwrap()
+                Ok(pool.get().await.unwrap())
             }
 
-            pub async fn query<F, R>(&self, f: F) -> AppResult<R>
+            pub async fn query<F, Fut, R>(&self, f: F) -> AppResult<R>
             where
-                F: FnOnce(mobc::PooledConnection<TConnection>) -> QueryResult<R> + Send + 'static,
+                F: FnOnce(mobc::PooledConnection<TConnection>) -> Fut + Send + 'static,
+                Fut: std::future::Future<Output = QueryResult<R>> + Send + 'static,
                 R: Send + 'static,
             {
-                let conn = self.get().await;
-                let result = f(conn).unwrap();
+                let conn = self.get().await?;
+                let result = f(conn).await.unwrap();
                 Ok(result)
             }
         }
@@ -351,20 +353,21 @@ pub mod driver {
                 PostgresPoolManager { pool: Some(Mutex::new(pool)) }
             }
 
-            pub async fn get(&self) -> mobc::PooledConnection<TConnection> {
+            pub async fn get(&self) -> AppResult<mobc::PooledConnection<TConnection>> {
                 let binding = self.pool.as_ref().unwrap();
                 let pool = binding.lock().await;
 
-                pool.get().await.unwrap()
+                Ok(pool.get().await.unwrap())
             }
 
-            pub async fn query<F, R>(&self, f: F) -> AppResult<R>
+            pub async fn query<F, Fut, R>(&self, f: F) -> AppResult<R>
             where
-                F: FnOnce(mobc::PooledConnection<TConnection>) -> QueryResult<R> + Send + 'static,
+                F: FnOnce(mobc::PooledConnection<TConnection>) -> Fut + Send + 'static,
+                Fut: std::future::Future<Output = QueryResult<R>> + Send + 'static,
                 R: Send + 'static,
             {
-                let conn = self.get().await;
-                let result = f(conn).unwrap();
+                let conn = self.get().await?;
+                let result = f(conn).await.unwrap();
                 Ok(result)
             }
         }
