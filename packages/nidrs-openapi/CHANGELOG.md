@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-openapi-v0.5.0 - 2025-01-19
+#### Features
+- **(nidrs-diesel)** support multi connect - (0c52f25) - *Lyda*
+
+- - -
+
 ## nidrs-openapi-v0.4.0 - 2025-01-09
 #### Features
 - **(nidrs-openapi)** implement ToParamDto for Vec<T> to enhance parameter handling in API schemas - (3654e87) - *Lyda*
