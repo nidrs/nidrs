@@ -15,9 +15,7 @@ use nidrs_diesel::DieselOptions;
 
 #[module({
     imports: [
-        DieselModule::for_root(DieselOptions{
-            driver: MysqlPoolManager::new("mysql://root:12345678@127.0.0.1/hello-diesel"),
-        }),
+        DieselModule::for_root(DieselOptions::new(MysqlPoolManager::new("mysql://root:12345678@127.0.0.1/hello-diesel"))),
         UserModule,
     ],
     controllers: [AppController],

@@ -15,9 +15,7 @@ use nidrs_diesel::DieselOptions;
 
 #[module({
     imports: [
-        DieselModule::for_root(DieselOptions{
-            driver: PostgresPoolManager::new("postgres://postgres:12345678@127.0.0.1:5432/hello-diesel"),
-        }),
+        DieselModule::for_root(DieselOptions::new(PostgresPoolManager::new("postgres://postgres:12345678@127.0.0.1:5432/hello-diesel"))),
         UserModule,
     ],
     controllers: [AppController],

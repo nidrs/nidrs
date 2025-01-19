@@ -63,6 +63,14 @@ where
         self.exports.push(name);
         self
     }
+
+    pub fn export2<T: Service + 'static, N: Into<String>>(mut self, service: T, name: Option<N>) -> Self {
+        let (raw_name, service) = provider(service);
+        let name = name.map(|n| n.into()).unwrap_or(raw_name);
+        self.services.insert(name.clone(), service);
+        self.exports.push(name);
+        self
+    }
 }
 
 impl<M> Module for DynamicModule<M>

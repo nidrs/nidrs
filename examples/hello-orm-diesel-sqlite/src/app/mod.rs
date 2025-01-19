@@ -15,9 +15,7 @@ use nidrs_diesel::DieselOptions;
 
 #[module({
     imports: [
-        DieselModule::for_root(DieselOptions{
-            driver: SqlitePoolManager::new("file:db.sqlite3"),
-        }),
+        DieselModule::for_root(DieselOptions::new(SqlitePoolManager::new("file:db.sqlite3"))),
         UserModule,
     ],
     controllers: [AppController],

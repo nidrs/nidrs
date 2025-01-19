@@ -24,21 +24,21 @@ impl DieselModule {
         #[cfg(not(feature = "async"))]
         match opts.driver.into() {
             #[cfg(feature = "sqlite")]
-            drivers::driver::ConnectionDriver::Sqlite(pool) => d.export(pool),
+            drivers::driver::ConnectionDriver::Sqlite(pool) => d.export2(pool, opts.name),
             #[cfg(feature = "mysql")]
-            drivers::driver::ConnectionDriver::Mysql(pool) => d.export(pool),
+            drivers::driver::ConnectionDriver::Mysql(pool) => d.export2(pool, opts.name),
             #[cfg(feature = "postgres")]
-            drivers::driver::ConnectionDriver::Postgres(pool) => d.export(pool),
+            drivers::driver::ConnectionDriver::Postgres(pool) => d.export2(pool, opts.name),
             _ => d,
         }
         #[cfg(feature = "async")]
         match opts.driver.into() {
             #[cfg(feature = "sqlite_async")]
-            drivers::driver::ConnectionDriver::Sqlite(pool) => d.export(pool),
+            drivers::driver::ConnectionDriver::Sqlite(pool) => d.export2(pool, opts.name),
             #[cfg(feature = "mysql_async")]
-            drivers::driver::ConnectionDriver::Mysql(pool) => d.export(pool),
+            drivers::driver::ConnectionDriver::Mysql(pool) => d.export2(pool, opts.name),
             #[cfg(feature = "postgres_async")]
-            drivers::driver::ConnectionDriver::Postgres(pool) => d.export(pool),
+            drivers::driver::ConnectionDriver::Postgres(pool) => d.export2(pool, opts.name),
             _ => d,
         }
     }

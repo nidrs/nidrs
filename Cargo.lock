@@ -1087,6 +1087,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "hello-orm-diesel-multi"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "dotenvy",
+ "nidrs",
+ "nidrs-diesel",
+ "nidrs-extern",
+ "nidrs-macro",
+ "serde",
+ "serde_json",
+ "utoipa",
+]
+
+[[package]]
 name = "hello-orm-diesel-mysql"
 version = "0.1.0"
 dependencies = [
