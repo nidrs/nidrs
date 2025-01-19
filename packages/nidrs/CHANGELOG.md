@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-v0.4.0 - 2025-01-19
+#### Features
+- **(nidrs)** add exception handling module with predefined HTTP exceptions - (62949c7) - *Lyda*
+- **(nidrs-diesel)** support multi connect - (0c52f25) - *Lyda*
+#### Refactoring
+- **(nidrs)** enhance exception constructors to accept generic message types - (d7540cc) - *Lyda*
+
+- - -
+
 ## nidrs-v0.3.1 - 2025-01-06
 #### Refactoring
 - **(nidrs)** simplify error handling in interceptor response - (5df6daf) - *Lyda*
