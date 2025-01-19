@@ -1749,7 +1749,7 @@ dependencies = [
 
 [[package]]
 name = "nidrs-openapi-macro"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "nidrs-extern",
  "once_cell",
