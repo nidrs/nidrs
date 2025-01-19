@@ -1683,7 +1683,7 @@ dependencies = [
 
 [[package]]
 name = "nidrs-diesel"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "diesel",
  "diesel-async",

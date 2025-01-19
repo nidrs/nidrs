@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-diesel-v0.5.0 - 2025-01-19
+#### Features
+- **(nidrs-diesel)** support multi connect - (0c52f25) - *Lyda*
+
+- - -
+
 ## nidrs-diesel-v0.4.0 - 2025-01-19
 #### Features
 - **(nidrs-diesel)** add AsyncQuery trait and implement async support for MySQL, PostgreSQL, and SQLite drivers - (afa49b7) - *Lyda*
