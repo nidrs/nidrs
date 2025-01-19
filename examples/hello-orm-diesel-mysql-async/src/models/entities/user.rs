@@ -5,6 +5,7 @@ use diesel_async::RunQueryDsl;
 use nidrs::externs::serde;
 use nidrs::{injectable, AppResult, Inject};
 use nidrs_diesel::mysql::MysqlPoolManager;
+use nidrs_diesel::AsyncQuery;
 use serde::Serialize;
 
 #[derive(Selectable, Queryable, Debug, Serialize)]

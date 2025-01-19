@@ -1,3 +1,47 @@
+use diesel::QueryResult;
+use nidrs::AppResult;
+use nidrs_extern::axum::async_trait;
+
+#[async_trait]
+pub trait AsyncQuery {
+    type PoolConnection: Send + 'static;
+
+    async fn get(&self) -> AppResult<Self::PoolConnection>;
+
+    #[cfg(feature = "async")]
+    async fn query<F, Fut, R>(&self, f: F) -> AppResult<R>
+    where
+        F: FnOnce(Self::PoolConnection) -> Fut + Send + 'static,
+        Fut: std::future::Future<Output = QueryResult<R>> + Send + 'static,
+        R: Send + 'static,
+    {
+        let conn = self.get().await?;
+        let result = f(conn).await.unwrap();
+        Ok(result)
+    }
+
+    #[cfg(not(feature = "async"))]
+    async fn query<F, Fut, R>(&self, f: F) -> AppResult<R>
+    where
+        F: FnOnce(Self::PoolConnection) -> Fut + Send + 'static,
+        Fut: std::future::Future<Output = QueryResult<R>> + Send + 'static,
+        R: Send + 'static,
+    {
+        use nidrs_extern::{anyhow, axum::http, tokio::task};
+        let conn = self.get().await?;
+
+        let result = task::spawn_blocking(move || f(conn)).await?;
+
+        let result = result.await;
+
+        if let Err(e) = result {
+            return Err(nidrs::AppError::Exception(nidrs::Exception::new(http::StatusCode::INTERNAL_SERVER_ERROR, anyhow::Error::new(e))));
+        }
+
+        Ok(result.unwrap())
+    }
+}
+
 #[cfg(not(feature = "async"))]
 pub mod driver {
     #[derive(Default)]
@@ -21,18 +65,16 @@ pub mod driver {
 
         use diesel::{
             r2d2::{ConnectionManager, Pool},
-            QueryResult, SqliteConnection,
+            SqliteConnection,
         };
         use nidrs::AppResult;
-        use nidrs_extern::{
-            anyhow,
-            axum::{async_trait, http},
-            tokio::task,
-        };
+        use nidrs_extern::axum::async_trait;
 
         use crate::ConnectionDriver;
 
         use nidrs::injectable;
+
+        use crate::AsyncQuery;
 
         type TConnection = SqliteConnection;
 
@@ -51,30 +93,16 @@ pub mod driver {
 
                 SqlitePoolManager { pool: Some(Mutex::new(pool)) }
             }
+        }
 
-            pub fn get(&self) -> AppResult<diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>> {
+        #[async_trait]
+        impl AsyncQuery for SqlitePoolManager {
+            type PoolConnection = diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>;
+
+            async fn get(&self) -> AppResult<Self::PoolConnection> {
                 let binding = self.pool.as_ref().unwrap();
                 let pool = binding.lock().unwrap();
                 Ok(pool.get().unwrap())
-            }
-
-            pub async fn query<F, Fut, R>(&self, f: F) -> AppResult<R>
-            where
-                F: FnOnce(diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>) -> Fut + Send + 'static,
-                Fut: std::future::Future<Output = QueryResult<R>> + Send + 'static,
-                R: Send + 'static,
-            {
-                let conn = self.get()?;
-
-                let result = task::spawn_blocking(move || f(conn)).await?;
-
-                let result = result.await;
-
-                if let Err(e) = result {
-                    return Err(nidrs::AppError::Exception(nidrs::Exception::new(http::StatusCode::INTERNAL_SERVER_ERROR, anyhow::Error::new(e))));
-                }
-
-                Ok(result.unwrap())
             }
         }
 
@@ -100,6 +128,8 @@ pub mod driver {
             tokio::task,
         };
 
+        use crate::AsyncQuery;
+
         use crate::ConnectionDriver;
 
         use nidrs::injectable;
@@ -119,30 +149,16 @@ pub mod driver {
 
                 MysqlPoolManager { pool: Some(Mutex::new(pool)) }
             }
+        }
 
-            pub fn get(&self) -> AppResult<diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>> {
+        #[async_trait]
+        impl AsyncQuery for MysqlPoolManager {
+            type PoolConnection = diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>;
+
+            async fn get(&self) -> AppResult<Self::PoolConnection> {
                 let binding = self.pool.as_ref().unwrap();
                 let pool = binding.lock().unwrap();
                 Ok(pool.get().unwrap())
-            }
-
-            pub async fn query<F, Fut, R>(&self, f: F) -> AppResult<R>
-            where
-                F: FnOnce(diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>) -> Fut + Send + 'static,
-                Fut: std::future::Future<Output = QueryResult<R>> + Send + 'static,
-                R: Send + 'static,
-            {
-                let conn = self.get()?;
-
-                let result = task::spawn_blocking(move || f(conn)).await?;
-
-                let result = result.await;
-
-                if let Err(e) = result {
-                    return Err(nidrs::AppError::Exception(nidrs::Exception::new(http::StatusCode::INTERNAL_SERVER_ERROR, anyhow::Error::new(e))));
-                }
-
-                Ok(result.unwrap())
             }
         }
 
@@ -170,6 +186,8 @@ pub mod driver {
 
         use crate::ConnectionDriver;
 
+        use crate::AsyncQuery;
+
         use nidrs::injectable;
 
         type TConnection = PgConnection;
@@ -188,30 +206,16 @@ pub mod driver {
 
                 PostgresPoolManager { pool: Some(Mutex::new(pool)) }
             }
+        }
 
-            pub fn get(&self) -> AppResult<diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>> {
+        #[async_trait]
+        impl AsyncQuery for PostgresPoolManager {
+            type PoolConnection = diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>;
+
+            async fn get(&self) -> AppResult<Self::PoolConnection> {
                 let binding = self.pool.as_ref().unwrap();
                 let pool = binding.lock().unwrap();
                 Ok(pool.get().unwrap())
-            }
-
-            pub async fn query<F, Fut, R>(&self, f: F) -> AppResult<R>
-            where
-                F: FnOnce(diesel::r2d2::PooledConnection<ConnectionManager<TConnection>>) -> Fut + Send + 'static,
-                Fut: std::future::Future<Output = QueryResult<R>> + Send + 'static,
-                R: Send + 'static,
-            {
-                let conn = self.get()?;
-
-                let result = task::spawn_blocking(move || f(conn)).await?;
-
-                let result = result.await;
-
-                if let Err(e) = result {
-                    return Err(nidrs::AppError::Exception(nidrs::Exception::new(http::StatusCode::INTERNAL_SERVER_ERROR, anyhow::Error::new(e))));
-                }
-
-                Ok(result.unwrap())
             }
         }
 
@@ -225,7 +229,6 @@ pub mod driver {
 
 #[cfg(feature = "async")]
 pub mod driver {
-
     #[derive(Default)]
     pub enum ConnectionDriver {
         #[cfg(feature = "sqlite_async")]
@@ -245,11 +248,13 @@ pub mod driver {
     pub mod sqlite {
         use crate::ConnectionDriver;
 
-        use diesel::QueryResult;
-        use diesel::{Connection, SqliteConnection};
+        use diesel::SqliteConnection;
         use diesel_async::{sync_connection_wrapper::SyncConnectionWrapper, AsyncConnection};
         use nidrs::injectable;
         use nidrs::AppResult;
+        use nidrs_extern::axum::async_trait;
+
+        use crate::AsyncQuery;
 
         type TConnection = SyncConnectionWrapper<SqliteConnection>;
 
@@ -262,20 +267,14 @@ pub mod driver {
             pub fn new<T: Into<String>>(url: T) -> SqlitePoolManager {
                 SqlitePoolManager { url: url.into() }
             }
+        }
 
-            pub async fn get(&self) -> AppResult<TConnection> {
+        #[async_trait]
+        impl AsyncQuery for SqlitePoolManager {
+            type PoolConnection = TConnection;
+
+            async fn get(&self) -> AppResult<Self::PoolConnection> {
                 Ok(SyncConnectionWrapper::<SqliteConnection>::establish(&self.url).await.unwrap())
-            }
-
-            pub async fn query<F, Fut, R>(&self, f: F) -> AppResult<R>
-            where
-                F: FnOnce(TConnection) -> Fut + Send + 'static,
-                Fut: std::future::Future<Output = QueryResult<R>> + Send + 'static,
-                R: Send + 'static,
-            {
-                let conn = self.get().await?;
-                let result = f(conn).await.unwrap();
-                Ok(result)
             }
         }
 
@@ -290,12 +289,14 @@ pub mod driver {
     pub mod mysql {
         use crate::ConnectionDriver;
 
-        use diesel::QueryResult;
         use nidrs::{injectable, AppResult};
 
         use diesel_async::pooled_connection::AsyncDieselConnectionManager;
         use diesel_async::{pooled_connection::mobc, AsyncMysqlConnection};
+        use nidrs_extern::axum::async_trait;
         use nidrs_extern::tokio::sync::Mutex;
+
+        use crate::AsyncQuery;
 
         type TConnection = AsyncMysqlConnection;
 
@@ -310,23 +311,16 @@ pub mod driver {
                 let pool = mobc::Pool::new(config);
                 MysqlPoolManager { pool: Some(Mutex::new(pool)) }
             }
+        }
 
-            pub async fn get(&self) -> AppResult<mobc::PooledConnection<TConnection>> {
+        #[async_trait]
+        impl AsyncQuery for MysqlPoolManager {
+            type PoolConnection = mobc::PooledConnection<TConnection>;
+
+            async fn get(&self) -> AppResult<Self::PoolConnection> {
                 let binding = self.pool.as_ref().unwrap();
                 let pool = binding.lock().await;
-
                 Ok(pool.get().await.unwrap())
-            }
-
-            pub async fn query<F, Fut, R>(&self, f: F) -> AppResult<R>
-            where
-                F: FnOnce(mobc::PooledConnection<TConnection>) -> Fut + Send + 'static,
-                Fut: std::future::Future<Output = QueryResult<R>> + Send + 'static,
-                R: Send + 'static,
-            {
-                let conn = self.get().await?;
-                let result = f(conn).await.unwrap();
-                Ok(result)
             }
         }
 
@@ -341,12 +335,14 @@ pub mod driver {
     pub mod postgres {
         use crate::ConnectionDriver;
 
-        use diesel::QueryResult;
         use nidrs::{injectable, AppResult};
 
         use diesel_async::pooled_connection::AsyncDieselConnectionManager;
         use diesel_async::{pooled_connection::mobc, AsyncPgConnection};
+        use nidrs_extern::axum::async_trait;
         use nidrs_extern::tokio::sync::Mutex;
+
+        use crate::AsyncQuery;
 
         type TConnection = AsyncPgConnection;
 
@@ -361,23 +357,16 @@ pub mod driver {
                 let pool = mobc::Pool::new(config);
                 PostgresPoolManager { pool: Some(Mutex::new(pool)) }
             }
+        }
 
-            pub async fn get(&self) -> AppResult<mobc::PooledConnection<TConnection>> {
+        #[async_trait]
+        impl AsyncQuery for PostgresPoolManager {
+            type PoolConnection = mobc::PooledConnection<TConnection>;
+
+            async fn get(&self) -> AppResult<Self::PoolConnection> {
                 let binding = self.pool.as_ref().unwrap();
                 let pool = binding.lock().await;
-
                 Ok(pool.get().await.unwrap())
-            }
-
-            pub async fn query<F, Fut, R>(&self, f: F) -> AppResult<R>
-            where
-                F: FnOnce(mobc::PooledConnection<TConnection>) -> Fut + Send + 'static,
-                Fut: std::future::Future<Output = QueryResult<R>> + Send + 'static,
-                R: Send + 'static,
-            {
-                let conn = self.get().await?;
-                let result = f(conn).await.unwrap();
-                Ok(result)
             }
         }
 

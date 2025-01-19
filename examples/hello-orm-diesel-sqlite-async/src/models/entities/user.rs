@@ -3,7 +3,7 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use nidrs::{injectable, AppResult, Inject};
-use nidrs_diesel::sqlite::SqlitePoolManager;
+use nidrs_diesel::{sqlite::SqlitePoolManager, AsyncQuery};
 use serde::Serialize;
 
 #[derive(Selectable, Queryable, Debug, Serialize)]

@@ -8,3 +8,4 @@ pub use core::service::DieselService;
 pub use core::DieselModule;
 
 pub use core::drivers::driver::*;
+pub use core::drivers::AsyncQuery;

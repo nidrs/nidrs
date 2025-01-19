@@ -5,6 +5,7 @@
     "./packages/nidrs-extern/Cargo.toml"
   ],
   "cSpell.words": [
+    "mobc",
     "Nidrs"
   ],
   "files.associations": {
