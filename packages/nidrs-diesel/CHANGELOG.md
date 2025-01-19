@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## nidrs-diesel-v0.4.0 - 2025-01-19
+#### Features
+- **(nidrs-diesel)** add AsyncQuery trait and implement async support for MySQL, PostgreSQL, and SQLite drivers - (afa49b7) - *Lyda*
+
+- - -
+
 ## nidrs-diesel-v0.3.0 - 2025-01-18
 #### Features
 - **(nidrs-diesel)** 统一 query 参数 - (a2c7fc9) - *Lyda*
