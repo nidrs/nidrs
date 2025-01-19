@@ -14,15 +14,28 @@ pub fn api(args: TokenStream, input: TokenStream) -> TokenStream {
 
     input.sig.inputs.iter().for_each(|arg| {
         if let syn::FnArg::Typed(pat) = arg {
+            // println!("pat {:#?}", pat);
             let var_type = pat.ty.to_token_stream();
-            if let syn::Pat::Ident(pat_ident) = &*pat.pat {
-                let var_type_str = var_type.to_string();
-                if PARAM_NAMES.iter().any(|&param| var_type_str.starts_with(param)) {
-                    let name = pat_ident.ident.to_string();
-                    router_in.push(quote! {
-                        .comb::<#var_type>(#name)
-                    });
+            match &*pat.pat {
+                syn::Pat::Ident(pat_ident) => {
+                    let var_type_str = var_type.to_string();
+                    if PARAM_NAMES.iter().any(|&param| var_type_str.starts_with(param)) {
+                        let name = pat_ident.ident.to_string();
+                        router_in.push(quote! {
+                            .comb::<#var_type>(#name)
+                        });
+                    }
                 }
+                syn::Pat::TupleStruct(pat_tuple) => {
+                    let var_type_str = var_type.to_string();
+                    if PARAM_NAMES.iter().any(|&param| var_type_str.starts_with(param)) {
+                        let name = pat_tuple.to_token_stream().to_string();
+                        router_in.push(quote! {
+                            .comb::<#var_type>(#name)
+                        });
+                    }
+                }
+                _ => {}
             }
         }
     });

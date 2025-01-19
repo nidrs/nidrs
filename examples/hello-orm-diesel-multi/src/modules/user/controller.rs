@@ -35,9 +35,9 @@ impl UserController {
 
     #[api]
     #[post("/")]
-    pub async fn create_user(&self, j: Json<CreateUserDto>) -> AppResult<String> {
+    pub async fn create_user(&self, Json(j): Json<CreateUserDto>) -> AppResult<String> {
         println!("Query {:?}", j);
 
-        Ok(self.user_service.create(j.0).await?.to_string())
+        Ok(self.user_service.create(j).await?.to_string())
     }
 }
