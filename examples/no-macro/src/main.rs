@@ -44,11 +44,7 @@ impl AppService {
 impl Provider for AppService {
     fn inject(&self, container: &Container) {
         println!("Injecting dependencies for AppService");
-        if let Some(user_service) = container.resolve::<UserService>() {
-            self.user_service.inject(user_service);
-        } else {
-            panic!("UserService not found in container");
-        }
+        self.user_service.inject(container);
     }
 
     fn as_any(&self) -> &dyn Any {
@@ -57,46 +53,28 @@ impl Provider for AppService {
 }
 
 // 应用模块
-struct AppModule {
-    user_service: Arc<UserService>,
-    app_service: Arc<AppService>,
-}
-
-impl AppModule {
-    fn new() -> Self {
-        Self {
-            user_service: Arc::new(UserService::new("John")),
-            app_service: Arc::new(AppService::default()),
-        }
-    }
-}
+struct AppModule { }
 
 impl Module for AppModule {
     fn configure(&self, container: &mut Container) {
+
+        let mut module = container.create_module::<AppModule>();
+
         // 首先注册UserService，因为AppService依赖它
-        container.register::<UserService>(Arc::clone(&self.user_service));
+        module.register::<UserService>(Inject::default());
         
         // 然后注册AppService
-        container.register::<AppService>(Arc::clone(&self.app_service));
-        
-        // 注入依赖
-        for provider in &self.providers() {
-            provider.inject(container);
-        }
+        module.register::<AppService>(Inject::default());
+
+        container.finalize(module);
     }
 
-    fn providers(&self) -> Vec<Arc<dyn Provider>> {
-        vec![
-            as_provider(&self.user_service),
-            as_provider(&self.app_service),
-        ]
-    }
 }
 
 fn main() {
     // 创建应用
     let mut builder = AppBuilder::new();
-    let app_module = AppModule::new();
+    let app_module = AppModule{ };
     
     // 注册模块
     builder.register_module(&app_module);

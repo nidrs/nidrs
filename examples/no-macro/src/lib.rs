@@ -11,12 +11,6 @@ impl Container {
         Self { services: HashMap::new() }
     }
 
-    // 注册单例服务
-    pub fn register<T: 'static + Send + Sync>(&mut self, instance: Arc<T>) {
-        println!("Registering service: {}", std::any::type_name::<T>());
-        self.services.insert(TypeId::of::<T>(), instance as Arc<dyn Any + Send + Sync>);
-    }
-
     // 解析服务
     pub fn resolve<T: 'static + Send + Sync>(&self) -> Option<Arc<T>> {
         let type_id = TypeId::of::<T>();
@@ -44,11 +38,39 @@ impl Container {
     pub fn resolve_or_panic<T: 'static + Send + Sync>(&self) -> Arc<T> {
         self.resolve::<T>().unwrap_or_else(|| panic!("Service of type {} not registered", std::any::type_name::<T>()))
     }
+
+    pub fn create_module<M: Module>(&self) -> DynModule {
+        DynModule::new()
+    }
+
+    pub fn finalize(&mut self, module: DynModule) {
+        for (type_id, service) in module.services {
+            // service.inject(self); //TODO: 这里需要注入依赖
+            self.services.insert(type_id, service);
+        }
+    }
+}
+
+
+pub struct DynModule {
+    services: HashMap<TypeId, Arc<dyn Any + Send + Sync>>,
+}
+
+impl DynModule {
+    pub fn new() -> Self {
+        Self { services: HashMap::new() }
+    }
+
+    // 注册单例服务
+    pub fn register<T: 'static + Send + Sync>(&mut self, instance: Inject<T>) {
+        println!("Registering service: {}", std::any::type_name::<T>());
+        self.services.insert(TypeId::of::<T>(), instance.extract() as Arc<dyn Any + Send + Sync>);
+    }
 }
 
 // 依赖注入注射器 - 用于惰性获取依赖
 #[derive(Debug, Clone)]
-pub struct Inject<T: 'static + Send + Sync> {
+pub struct Inject<T: Send + Sync> {
     value: Arc<OnceLock<Arc<T>>>,
 }
 
@@ -63,7 +85,7 @@ impl<T: 'static + Send + Sync> Inject<T> {
         Self::default()
     }
 
-    pub fn inject(&self, value: Arc<T>) {
+    fn inject_provide(&self, value: Arc<T>) {
         println!("Injecting {} into Inject container", std::any::type_name::<T>());
         match self.value.set(value) {
             Ok(_) => println!("  Injection successful"),
@@ -73,6 +95,14 @@ impl<T: 'static + Send + Sync> Inject<T> {
 
     pub fn extract(&self) -> Arc<T> {
         self.value.get().expect("Dependency not injected").clone()
+    }
+
+    pub fn inject(&self, container: &Container) {
+        if let Some(service) = container.resolve::<T>() {
+            self.inject_provide(service);
+        } else {
+            panic!("Service not found in container");
+        }
     }
 }
 
@@ -88,6 +118,7 @@ impl<T: 'static + Send + Sync> std::ops::Deref for Inject<T> {
     }
 }
 
+
 // 服务提供者接口
 pub trait Provider: Any + Send + Sync {
     fn inject(&self, container: &Container);
@@ -97,7 +128,6 @@ pub trait Provider: Any + Send + Sync {
 // 模块 - 用于组织服务
 pub trait Module {
     fn configure(&self, container: &mut Container);
-    fn providers(&self) -> Vec<Arc<dyn Provider>>;
 }
 
 // 应用构建器
